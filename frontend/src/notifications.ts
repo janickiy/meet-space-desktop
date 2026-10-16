@@ -1,4 +1,12 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router";
+import { isDesktopBuild } from "./platform/build";
+import { desktopBridge } from "./platform/desktop";
+import { getAccessToken } from "./api";
+import {
+  readDevicePreferences,
+  subscribeDevicePreferences,
+} from "./prejoinDevices";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { createNotificationSound } from "./notificationSound";
@@ -96,6 +104,24 @@ export function takeNotificationFrames(buffer: string): {
  */
 export function useNotificationStream(userId?: string) {
   const client = useQueryClient();
+  const location = useLocation();
+  useEffect(() => {
+    if (!isDesktopBuild) return;
+    const token = userId ? getAccessToken() : null;
+    const route = location.pathname + location.search;
+    const update = () => {
+      void desktopBridge()
+        .setNotificationContext({
+          token,
+          route,
+          soundEnabled:
+            !!userId && readDevicePreferences(userId).notificationSounds,
+        })
+        .catch(() => {}); // A stale profile/account cannot update its successor's context.
+    };
+    update();
+    return userId ? subscribeDevicePreferences(userId, update) : undefined;
+  }, [userId, location.pathname, location.search]);
   useEffect(
     /**
      * Обработчик useEffect связывает внешние ресурсы с временем жизни React-компонента и возвращает необходимую очистку.

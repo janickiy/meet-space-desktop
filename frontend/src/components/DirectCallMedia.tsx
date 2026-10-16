@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
+  LockKeyhole,
   Mic,
+  Phone,
   MicOff,
   MonitorUp,
   PhoneOff,
@@ -186,8 +188,14 @@ export function DirectCallMedia({
   return (
     <>
       <div className="direct-call-meta">
-        <span>{peer.displayName}</span>
-        <time aria-label={`Длительность звонка: ${elapsed}`}>{elapsed}</time>
+        <span className="direct-call-live-status">
+          <LockKeyhole size={15} aria-hidden="true" />
+          {status}
+        </span>
+        <time aria-label={`Длительность звонка: ${elapsed}`}>
+          <Phone size={16} aria-hidden="true" />
+          {elapsed}
+        </time>
       </div>
       <div ref={body} className="direct-call-body">
         <div className="direct-call-stage">
@@ -321,6 +329,9 @@ export function DirectCallMedia({
           >
             {media.view.microphoneEnabled ? <Mic /> : <MicOff />}
           </span>
+          <span className="direct-call-control-caption" aria-hidden="true">
+            Микрофон
+          </span>
         </button>
         <button
           type="button"
@@ -334,6 +345,9 @@ export function DirectCallMedia({
           onClick={() => void media.camera(!media.view.cameraEnabled)}
         >
           {media.view.cameraEnabled ? <Video /> : <VideoOff />}
+          <span className="direct-call-control-caption" aria-hidden="true">
+            Камера
+          </span>
         </button>
         <button
           type="button"
@@ -353,7 +367,9 @@ export function DirectCallMedia({
           }
         >
           <MonitorUp />
-          <span>Демонстрация</span>
+          <span className="direct-call-control-caption" aria-hidden="true">
+            Экран
+          </span>
         </button>
         <button
           type="button"
@@ -364,6 +380,9 @@ export function DirectCallMedia({
           onClick={(event) => openSettings?.(event.currentTarget)}
         >
           <Settings />
+          <span className="direct-call-control-caption" aria-hidden="true">
+            Настройки
+          </span>
         </button>
         <button
           type="button"
@@ -374,6 +393,9 @@ export function DirectCallMedia({
           onClick={onEnd}
         >
           <PhoneOff />
+          <span className="direct-call-control-caption" aria-hidden="true">
+            Завершить
+          </span>
         </button>
       </div>
     </>

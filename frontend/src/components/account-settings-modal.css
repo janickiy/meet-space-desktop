@@ -498,3 +498,190 @@
     padding: 6px;
   }
 }
+
+/* Archive 2 settings: current identity, quiet navigation and a separate content card. */
+.modal.account-settings-modal {
+  --account-panel-gutter: 30px;
+  width: min(1120px, 100%);
+  max-width: 1120px;
+  height: min(820px, calc(100dvh - 48px));
+  background: var(--canvas);
+  border-radius: 16px;
+}
+.modal.account-settings-modal > h2 {
+  border-bottom: 0;
+  padding-top: 26px;
+  padding-bottom: 22px;
+  font-size: calc(26px * var(--text-scale));
+  letter-spacing: -0.04em;
+}
+.account-dialog-layout {
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 24px;
+  padding: 0 26px 26px;
+}
+.account-dialog-layout:has(> .account-current-identity) {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.account-current-identity {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 21px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+.account-current-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 600;
+}
+.account-current-identity > div {
+  flex: 1;
+  min-width: 140px;
+  overflow-wrap: anywhere;
+}
+.account-current-identity strong {
+  display: block;
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 600;
+}
+.account-current-identity > div > span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+.account-current-identity > .button {
+  font-size: calc(12px * var(--text-scale));
+}
+.account-dialog-tabs {
+  padding: 6px 0;
+  border-right: 0;
+  background: transparent;
+  gap: 5px;
+}
+.account-dialog-tabs button {
+  padding: 14px 15px;
+  gap: 12px;
+  min-height: 46px;
+  border-radius: 8px;
+  font-size: calc(12px * var(--text-scale));
+}
+.account-dialog-tabs button[aria-selected="true"] {
+  box-shadow: none;
+}
+.account-dialog-tabs .account-tab-chevron {
+  display: block;
+  width: 13px;
+  height: 13px;
+  margin-left: auto;
+  opacity: 0;
+}
+.account-dialog-tabs button[aria-selected="true"] .account-tab-chevron {
+  opacity: 1;
+}
+.account-settings-modal .account-dialog-panel {
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.account-dialog-panel .profile-initials {
+  border-radius: 50%;
+  color: var(--primary);
+}
+.account-dialog-panel :is(.field, .field-hint) {
+  font-size: calc(12px * var(--text-scale));
+}
+.account-dialog-panel .field input,
+.account-dialog-panel .field select {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-color: var(--border);
+  border-radius: 7px;
+  font-size: calc(13px * var(--text-scale));
+}
+.appearance-preview-light {
+  background: #f5f7fb;
+  border-color: #e4e8f2;
+}
+.appearance-preview-light > span:first-child {
+  background: #e4e9fc;
+}
+.appearance-preview-dark {
+  background: #171c27;
+  border-color: #283043;
+}
+.appearance-preview-dark > span,
+.appearance-preview-dark > span:first-child {
+  background: #293245;
+}
+@media (max-width: 1000px) and (min-width: 768px) {
+  .account-dialog-layout {
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 18px;
+    padding-inline: 20px;
+  }
+  .modal.account-settings-modal {
+    --account-panel-gutter: 24px;
+  }
+  .account-dialog-tabs button {
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 767px) {
+  .modal.account-settings-modal {
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    --account-panel-gutter: 20px;
+  }
+  .modal.account-settings-modal > h2 {
+    font-size: calc(22px * var(--text-scale));
+    padding: 22px 60px 20px 20px;
+  }
+  .account-dialog-layout,
+  .account-dialog-layout:has(.account-media-panel) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding: 0 16px 16px;
+  }
+  .account-current-identity {
+    padding: 14px;
+    gap: 10px;
+  }
+  .account-current-identity > .button {
+    width: 100%;
+  }
+  .account-dialog-tabs {
+    padding: 0;
+  }
+  .account-dialog-tabs button {
+    min-height: 60px;
+    padding: 10px 12px;
+    background: var(--surface);
+  }
+  .account-dialog-tabs .account-tab-chevron {
+    opacity: 1;
+  }
+  .account-mobile-section > .account-current-identity {
+    display: none;
+  }
+  .account-mobile-section:has(> .account-current-identity) {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  .account-settings-modal .account-dialog-panel {
+    padding: 20px;
+  }
+}

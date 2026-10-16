@@ -1,0 +1,13 @@
+{
+  "source": "frontend/public/branding/meetspace-app-blue.svg",
+  "sourceSet": "MeetSpace-SVG supplied by user, 2026-10-16",
+  "sourceSetPath": "/Users/aleksandranickij/htdocs/лого/MeetSpace-SVG",
+  "sourceSHA256": "d27918f4a7644c8e4c16b1c08477e429d23f0130f86a13209aff9b55f3aba378",
+  "conversion": "SVG rendered with sharp 0.35.5; PNG 512px; ICO embeds PNG images at 16,24,32,48,64,128,256px; aspect ratio preserved; alpha transparency retained",
+  "usage": "User-provided MeetSpace application branding; native app, taskbar, tray and Windows installer use the blue app variant",
+  "outputs": {
+    "icon.svg": "d27918f4a7644c8e4c16b1c08477e429d23f0130f86a13209aff9b55f3aba378",
+    "icon.png": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa",
+    "icon.ico": "d6355188a4d58426706cc0427e23e70869ad723f3c1c280a8d15d618bc9587a1"
+  }
+}

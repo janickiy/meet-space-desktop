@@ -1,13 +1,22 @@
 import type { User } from "./types";
+import { isDesktopBuild } from "./platform/build";
+import { desktopServerID, serviceOrigin } from "./platform/urls";
 
 export const SESSION_KEY = "meet.session.v1";
 export const LOGOUT_KEY = "meet.auth.logout.v1";
 export const ACCOUNT_CHANGE_KEY = "meet.auth.account-change.v1";
+export const accountStorageKey = () => scopedAuthKey(ACCOUNT_CHANGE_KEY);
+export const logoutStorageKey = () => scopedAuthKey(LOGOUT_KEY);
+function scopedAuthKey(key: string): string {
+  return isDesktopBuild
+    ? `${key}:desktop:${desktopServerID() ?? "unselected"}`
+    : key;
+}
 // Only a public user ID and nonce are shared across tabs; never credentials.
 export function announceAccount(id: string | null) {
   try {
     localStorage.setItem(
-      ACCOUNT_CHANGE_KEY,
+      accountStorageKey(),
       JSON.stringify({ id, nonce: crypto.randomUUID() }),
     );
   } catch {
@@ -17,7 +26,7 @@ export function announceAccount(id: string | null) {
 export function selectedAccountID(): string | undefined {
   try {
     const value = JSON.parse(
-      localStorage.getItem(ACCOUNT_CHANGE_KEY) || "null",
+      localStorage.getItem(accountStorageKey()) || "null",
     );
     return typeof value?.id === "string" && /^[0-9a-f-]{36}$/.test(value.id)
       ? value.id
@@ -45,6 +54,10 @@ export interface Session {
  * @returns Session | null — вычисленное значение: data as Session; null.
  */
 export function readSession(): Session | null {
+  if (isDesktopBuild) {
+    clearDesktopBrowserSession();
+    return null;
+  }
   try {
     const data: unknown = JSON.parse(
       sessionStorage.getItem(SESSION_KEY) || "null",
@@ -96,6 +109,10 @@ export function readSession(): Session | null {
  * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
  */
 export function saveSession(session: Session | null) {
+  if (isDesktopBuild) {
+    clearDesktopBrowserSession();
+    return;
+  }
   try {
     if (session) sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
     else sessionStorage.removeItem(SESSION_KEY);
@@ -104,10 +121,21 @@ export function saveSession(session: Session | null) {
   }
 }
 
+/** Desktop credentials belong to the native session broker, never browser storage. */
+function clearDesktopBrowserSession() {
+  for (const name of ["sessionStorage", "localStorage"] as const) {
+    try {
+      window[name].removeItem(SESSION_KEY);
+    } catch {
+      /* An unavailable browser store must not cause a plaintext fallback. */
+    }
+  }
+}
+
 /** Contains only an explicit logout marker; credentials never enter localStorage. */
 export function hasLogoutMarker(): boolean {
   try {
-    return localStorage.getItem(LOGOUT_KEY) !== null;
+    return localStorage.getItem(logoutStorageKey()) !== null;
   } catch {
     return false;
   }
@@ -115,7 +143,10 @@ export function hasLogoutMarker(): boolean {
 
 export function markLogout(): void {
   try {
-    localStorage.setItem(LOGOUT_KEY, `${Date.now()}:${crypto.randomUUID()}`);
+    localStorage.setItem(
+      logoutStorageKey(),
+      `${Date.now()}:${crypto.randomUUID()}`,
+    );
   } catch {
     /* The current tab still clears its in-memory session. */
   }
@@ -123,7 +154,7 @@ export function markLogout(): void {
 
 export function clearLogoutMarker(): void {
   try {
-    localStorage.removeItem(LOGOUT_KEY);
+    localStorage.removeItem(logoutStorageKey());
   } catch {
     /* Storage may be unavailable. */
   }
@@ -180,8 +211,8 @@ export function inviteCode(value: string): string | null {
   const trimmed = value.trim();
   if (/^[A-Za-z0-9_-]{32}$/.test(trimmed)) return trimmed;
   try {
-    const url = new URL(trimmed, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
+    const url = new URL(trimmed, serviceOrigin());
+    if (url.origin !== serviceOrigin()) return null;
     const match = url.pathname.match(
       /^\/(?:i|api\/v1\/conference-invites)\/([A-Za-z0-9_-]{32})\/?$/,
     );
@@ -199,7 +230,7 @@ export function inviteCode(value: string): string | null {
  * @returns вычисленные данные текущего шага, которые использует вызывающая операция.
  */
 export const inviteLink = (code: string) =>
-  `${window.location.origin}/i/${encodeURIComponent(code)}`;
+  `${serviceOrigin()}/i/${encodeURIComponent(code)}`;
 /**
  * formatDate форматирует временную отметку для отображения даты и времени встречи.
  *

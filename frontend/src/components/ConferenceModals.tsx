@@ -1,3 +1,4 @@
+import { serviceOrigin } from "../platform/urls";
 import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -485,7 +486,7 @@ export function JoinByLink({
           <input
             id="invite-link"
             data-autofocus
-            placeholder={`${window.location.origin}/i/…`}
+            placeholder={`${serviceOrigin()}/i/…`}
             value={value}
             onChange={
               /**

@@ -1,3 +1,4 @@
+import { DesktopServerButton } from "./components/desktop/DesktopSessionGate";
 import { lazy, Suspense } from "react";
 import {
   Navigate,
@@ -125,6 +126,7 @@ function Protected() {
             Сервер недоступен. Ваш токен не удалён — попробуйте снова.
           </ErrorNotice>
           <Button onClick={auth.retry}>Попробовать снова</Button>
+          <DesktopServerButton />
           <Button
             variant="secondary"
             onClick={

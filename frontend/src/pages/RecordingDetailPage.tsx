@@ -14,16 +14,24 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { isDesktopBuild } from "../platform/build";
+import {
+  NativeAssetStatus,
+  NativeSaveButton,
+  useNativeAsset,
+} from "../components/desktop/NativeAssets";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import {
   formatRecordingDuration,
   formatRecordingSize,
   recordingDate,
   recordingMediaFile,
+  recordingFileAvailable,
   recordingPreviewFile,
   safeRecordingUrl,
 } from "../recordingPresentation";
 import "./recordings.css";
+import "./collections-redesign.css";
 
 const materialLabels: Record<string, string> = {
   final_mp4: "Видеозапись (MP4)",
@@ -100,6 +108,7 @@ function RecordingDetailContent({
   const [refreshing, setRefreshing] = useState(false);
   const [mediaRevision, setMediaRevision] = useState(0);
   const mounted = useRef(true);
+  const native = useNativeAsset(`${userId}:${conferenceId}:${recordingId}`);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -145,6 +154,7 @@ function RecordingDetailContent({
    */
   async function refresh() {
     if (refreshing) return;
+    if (isDesktopBuild) native.cancel();
     setRefreshing(true);
     try {
       const nextConference = await conference.refetch();
@@ -215,17 +225,28 @@ function RecordingDetailContent({
     item.mode === "audio_only"
       ? item.files.find(
           (file) =>
-            file.fileType === "final_audio" && safeRecordingUrl(file.url),
+            file.fileType === "final_audio" && recordingFileAvailable(file),
         )
       : recordingMediaFile(item);
-  const mediaUrl = safeRecordingUrl(media?.url);
+  const mediaUrl = isDesktopBuild
+    ? native.source
+    : safeRecordingUrl(media?.url);
   const previewUrl = safeRecordingUrl(recordingPreviewFile(item)?.url);
-  const playable = item.status === "ready" && !!mediaUrl;
+  const playable = item.status === "ready" && !!media;
+  const mediaAsset = media?.uuid
+    ? {
+        kind: "recording" as const,
+        conferenceId,
+        recordingId,
+        fileId: media.uuid,
+      }
+    : undefined;
   const audioOnly = media?.fileType === "final_audio";
   const materials = (item.status === "ready" ? item.files : []).flatMap(
     (file, index) => {
       const url = safeRecordingUrl(file.url);
-      return url && Object.hasOwn(materialLabels, file.fileType)
+      return recordingFileAvailable(file) &&
+        Object.hasOwn(materialLabels, file.fileType)
         ? [{ ...file, url, index }]
         : [];
     },
@@ -252,17 +273,27 @@ function RecordingDetailContent({
             </span>
           </p>
         </div>
-        {playable && (
-          <a
+        {playable && isDesktopBuild && mediaAsset ? (
+          <NativeSaveButton
+            asset={mediaAsset}
             className="button button-primary"
-            href={mediaUrl}
-            download
-            target="_blank"
-            rel="noreferrer"
           >
-            <Download size={17} aria-hidden="true" />
-            Скачать запись
-          </a>
+            <Download size={17} aria-hidden="true" /> Скачать запись
+          </NativeSaveButton>
+        ) : (
+          playable &&
+          !isDesktopBuild && (
+            <a
+              className="button button-primary"
+              href={mediaUrl}
+              download
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Download size={17} aria-hidden="true" />
+              Скачать запись
+            </a>
+          )
         )}
       </header>
       <div className="recording-detail-layout">
@@ -270,7 +301,25 @@ function RecordingDetailContent({
           <div
             className={`recording-detail-player${audioOnly ? " recording-detail-player-audio" : ""}${!playable || mediaFailed ? " recording-detail-player-unavailable" : ""}`}
           >
-            {playable && !mediaFailed ? (
+            {playable && isDesktopBuild && !mediaUrl && mediaAsset ? (
+              <div className="recordings-empty">
+                <FileVideo size={40} aria-hidden="true" />
+                <p>
+                  Откройте запись, чтобы проверить доступ и подготовить
+                  воспроизведение.
+                </p>
+                <Button
+                  busy={native.busy}
+                  onClick={() => {
+                    setMediaFailed(false);
+                    void native.run(mediaAsset, "play");
+                  }}
+                >
+                  Открыть запись
+                </Button>
+                <NativeAssetStatus operation={native} />
+              </div>
+            ) : playable && !!mediaUrl && !mediaFailed ? (
               audioOnly ? (
                 <div className="recording-detail-audio">
                   <FileAudio size={48} aria-hidden="true" />
@@ -377,24 +426,43 @@ function RecordingDetailContent({
                           <strong>{materialLabels[file.fileType]}</strong>
                           <span>{formatRecordingSize(file.sizeBytes)}</span>
                         </div>
-                        <a
-                          className="recording-detail-download"
-                          href={file.url}
-                          download
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Скачать: ${materialLabels[file.fileType]}`}
-                        >
-                          <Download size={18} aria-hidden="true" />
-                          <span>Скачать</span>
-                        </a>
+                        {isDesktopBuild && file.uuid ? (
+                          <NativeSaveButton
+                            asset={{
+                              kind: "recording",
+                              conferenceId,
+                              recordingId,
+                              fileId: file.uuid,
+                            }}
+                            className="recording-detail-download"
+                            aria-label={`Скачать: ${materialLabels[file.fileType]}`}
+                          >
+                            <Download size={18} aria-hidden="true" />
+                            <span>Скачать</span>
+                          </NativeSaveButton>
+                        ) : (
+                          !isDesktopBuild && (
+                            <a
+                              className="recording-detail-download"
+                              href={file.url}
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`Скачать: ${materialLabels[file.fileType]}`}
+                            >
+                              <Download size={18} aria-hidden="true" />
+                              <span>Скачать</span>
+                            </a>
+                          )
+                        )}
                       </li>
                     );
                   })}
                 </ul>
                 <p className="field-hint recording-detail-download-note">
-                  Если файл открылся в браузере, сохраните его через меню плеера
-                  или браузера.
+                  {isDesktopBuild
+                    ? "Выберите место сохранения в системном окне. Доступ к файлу проверяется заново."
+                    : "Если файл открылся в браузере, сохраните его через меню плеера или браузера."}
                 </p>
               </>
             ) : (

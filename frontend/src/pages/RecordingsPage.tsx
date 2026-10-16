@@ -31,6 +31,11 @@ import {
   recordingPreviewFile,
 } from "../recordingPresentation";
 import "./recordings.css";
+import "./collections-redesign.css";
+import {
+  CollectionViewToggle,
+  type CollectionView,
+} from "./CollectionViewToggle";
 
 const pageSize = 20;
 
@@ -105,17 +110,19 @@ export function RecordingCard({
                 </span>
               </span>
             ) : (
-              <span className="recordings-thumbnail-art" aria-hidden="true">
-                <Clapperboard size={27} />
-                <span>
-                  <i />
-                  <i />
-                  <i />
-                </span>
+              <span className="recordings-thumbnail-tiles" aria-hidden="true">
+                {[0, 1, 2, 3].map((tile) => (
+                  <i key={tile}>
+                    <Users size={19} strokeWidth={1.4} />
+                  </i>
+                ))}
               </span>
             )}
           </>
         )}
+        <span className="recordings-thumbnail-play" aria-hidden="true">
+          <Play size={19} />
+        </span>
         {record.durationSec !== undefined && (
           <span className="recordings-thumbnail-duration">
             {formatRecordingDuration(record.durationSec)}
@@ -155,6 +162,16 @@ export function RecordingCard({
           title={conference.title}
           path={path}
           downloadUrl={file?.url}
+          asset={
+            file?.uuid
+              ? {
+                  kind: "recording",
+                  conferenceId: conference.id,
+                  recordingId: record.uuid,
+                  fileId: file.uuid,
+                }
+              : undefined
+          }
         />
       </div>
     </article>
@@ -173,6 +190,7 @@ export function RecordingsPage() {
   const [meetingView, setMeetingView] = useState<"past" | "active">("past");
   const conferences = useConferences({ view: meetingView });
   const [search, setSearch] = useState("");
+  const [layout, setLayout] = useState<CollectionView>("grid");
   const [period, setPeriod] = useState("all");
   const [sort, setSort] = useState("newest");
   const selectionId = useId();
@@ -266,9 +284,14 @@ export function RecordingsPage() {
     <div className="recordings-page">
       <section className="page-heading recordings-heading">
         <div>
-          <h1>Записи</h1>
+          <h1>Записи встреч</h1>
           <p>Записи и материалы выбранной встречи.</p>
         </div>
+        <CollectionViewToggle
+          value={layout}
+          onChange={setLayout}
+          label="Вид записей"
+        />
       </section>
       <section className="recordings-selection" aria-label="Выбор встречи">
         <div
@@ -455,7 +478,7 @@ export function RecordingsPage() {
             <Loading />
           ) : (
             <>
-              <div className="recordings-list">
+              <div className={`recordings-list recordings-layout-${layout}`}>
                 {visible.map((record) => (
                   <RecordingCard
                     key={record.uuid}

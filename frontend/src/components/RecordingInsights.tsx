@@ -8,6 +8,12 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { api } from "../api";
+import { isDesktopBuild } from "../platform/build";
+import {
+  recordingFileAvailable,
+  safeRecordingUrl,
+} from "../recordingPresentation";
+import { NativeAssetStatus, useNativeAsset } from "./desktop/NativeAssets";
 import { isAdmitted } from "../collaboration";
 import { recordingTime } from "../intelligence";
 import { useCapabilities } from "../useCapabilities";
@@ -118,6 +124,10 @@ function RecordingMaterial({
   const [source, setSource] = useState<string>();
   const [playbackError, setPlaybackError] = useState(false);
   const [playerOpen, setPlayerOpen] = useState(false);
+  const native = useNativeAsset(
+    `${membership.userId}:${conferenceId}:${recordingId}`,
+  );
+  const playbackSource = isDesktopBuild ? native.source : source;
   const features =
     capabilities.isSuccess && !capabilities.isError
       ? capabilities.data.capabilities
@@ -140,6 +150,22 @@ function RecordingMaterial({
     retry: false,
   });
   const available = record.data?.item.status === "ready" && !record.isError;
+  const mediaFile = record.data?.item.files.find(
+    (file) =>
+      (record.data.item.mode === "audio_only" ||
+      record.data.item.mode === "individual_tracks"
+        ? file.fileType === "final_audio"
+        : file.fileType === "final_mp4" || file.fileType === "final_audio") &&
+      recordingFileAvailable(file),
+  );
+  const mediaAsset = mediaFile?.uuid
+    ? {
+        kind: "recording" as const,
+        conferenceId,
+        recordingId,
+        fileId: mediaFile.uuid,
+      }
+    : undefined;
   const transcript = useQuery({
     queryKey: ["transcript", ...key],
     queryFn: ({ signal }) => api.transcript(conferenceId, recordingId, signal),
@@ -235,11 +261,13 @@ function RecordingMaterial({
     setParams(next, { replace: true });
   }
   useEffect(() => {
+    if (isDesktopBuild) return;
     const url = record.data?.item.files?.find(
       (file) =>
         file.fileType === "final_mp4" || file.fileType === "final_audio",
     )?.url;
-    if (available && url) setSource((current) => current || url);
+    if (available && safeRecordingUrl(url))
+      setSource((current) => current || safeRecordingUrl(url));
   }, [record.data, available]);
   useEffect(() => {
     const milliseconds = seekOffset === null ? NaN : Number(seekOffset);
@@ -290,7 +318,7 @@ function RecordingMaterial({
         id={`${tabsId}-player`}
         hidden={materialOnly && !playerOpen}
       >
-        {source ? (
+        {playbackSource ? (
           record.data?.item.mode === "audio_only" ||
           record.data?.item.mode === "individual_tracks" ? (
             <audio
@@ -300,7 +328,7 @@ function RecordingMaterial({
               aria-label="Аудиозапись встречи"
               controls
               preload="metadata"
-              src={source}
+              src={playbackSource}
               onLoadedMetadata={applySeek}
               onError={() => setPlaybackError(true)}
             />
@@ -313,7 +341,7 @@ function RecordingMaterial({
               aria-label="Запись встречи"
               controls
               preload="metadata"
-              src={source}
+              src={playbackSource}
               onLoadedMetadata={applySeek}
               onError={() => setPlaybackError(true)}
             />
@@ -321,27 +349,66 @@ function RecordingMaterial({
         ) : (
           <div className="recording-placeholder" role="status">
             <Clapperboard size={40} aria-hidden="true" />
-            <p>Файл записи пока недоступен.</p>
+            {isDesktopBuild && mediaAsset ? (
+              <>
+                <p>
+                  Откройте запись, чтобы проверить доступ и подготовить
+                  воспроизведение.
+                </p>
+                <Button
+                  busy={native.busy}
+                  onClick={() => void native.run(mediaAsset, "play")}
+                >
+                  Открыть запись
+                </Button>
+              </>
+            ) : (
+              <p>Файл записи пока недоступен.</p>
+            )}
           </div>
         )}
+        {isDesktopBuild && <NativeAssetStatus operation={native} />}
         {playbackError && (
           <div role="alert">
             <p>Не удалось воспроизвести запись. Возможно, ссылка устарела.</p>
             <Button
               variant="outline"
-              busy={record.isFetching}
+              busy={record.isFetching || native.busy}
               onClick={async () => {
                 pendingSeek.current =
                   Math.max(0, video.current?.currentTime || 0) * 1000;
                 const result = await record.refetch();
                 if (result.data && !result.error) {
-                  setSource(
-                    result.data.item.files.find(
+                  if (isDesktopBuild) {
+                    native.cancel();
+                    const file = result.data.item.files.find(
                       (file) =>
-                        file.fileType === "final_mp4" ||
-                        file.fileType === "final_audio",
-                    )?.url,
-                  );
+                        recordingFileAvailable(file) &&
+                        (result.data.item.mode === "audio_only" ||
+                        result.data.item.mode === "individual_tracks"
+                          ? file.fileType === "final_audio"
+                          : ["final_mp4", "final_audio"].includes(
+                              file.fileType,
+                            )),
+                    );
+                    if (file?.uuid)
+                      void native.run(
+                        {
+                          kind: "recording",
+                          conferenceId,
+                          recordingId,
+                          fileId: file.uuid,
+                        },
+                        "play",
+                      );
+                  } else
+                    setSource(
+                      result.data.item.files.find(
+                        (file) =>
+                          file.fileType === "final_mp4" ||
+                          file.fileType === "final_audio",
+                      )?.url,
+                    );
                   setPlaybackError(false);
                 }
               }}

@@ -494,3 +494,109 @@
   flex-wrap: wrap;
   grid-template-columns: minmax(0, 1fr);
 }
+
+/* Archive 2 preparation: centred heading and a navy preview beside the devices. */
+.prejoin-heading {
+  text-align: center;
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+.prejoin-heading .eyebrow {
+  color: var(--primary);
+  font-size: calc(10px * var(--text-scale));
+  letter-spacing: 0.16em;
+}
+.prejoin-heading p {
+  font-size: calc(13px * var(--text-scale));
+}
+.prejoin-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.85fr);
+  gap: 48px;
+}
+.prejoin-grid > .prejoin-preview {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.prejoin-video-frame {
+  aspect-ratio: 1.35;
+  background: #1c2536;
+  border: 1px solid #354155;
+  border-radius: 16px;
+}
+.prejoin-initials {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  color: #666099;
+  background: #c2bfea;
+  font-size: calc(32px * var(--text-scale));
+  box-shadow: 0 0 0 14px #ffffff04;
+}
+.prejoin-camera-off {
+  gap: 24px;
+}
+.prejoin-preview-name {
+  background: #141c2b9c;
+  bottom: 20px;
+}
+.prejoin-toggles .button {
+  min-height: 44px;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: calc(12px * var(--text-scale));
+}
+.prejoin-settings h2 {
+  font-size: calc(20px * var(--text-scale));
+}
+.prejoin-settings .field {
+  font-size: calc(12px * var(--text-scale));
+}
+.prejoin-settings .field :is(select, input) {
+  min-height: 42px;
+  font-size: calc(13px * var(--text-scale));
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+.prejoin-settings .field-hint,
+.prejoin-preview .field-hint {
+  font-size: calc(11px * var(--text-scale));
+}
+.prejoin-settings .prejoin-join {
+  min-height: 46px;
+  font-size: calc(13px * var(--text-scale));
+}
+.prejoin-level > span {
+  font-size: calc(11px * var(--text-scale));
+}
+@media (max-width: 1023px) {
+  .prejoin-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .prejoin-video-frame {
+    aspect-ratio: 1.7;
+  }
+  .prejoin-grid > .prejoin-settings {
+    padding: 24px;
+  }
+}
+@media (max-width: 767px) {
+  .prejoin-heading {
+    margin: 24px auto;
+  }
+  .prejoin-heading h1 {
+    font-size: calc(24px * var(--text-scale));
+  }
+  .prejoin-initials {
+    width: 64px;
+    height: 64px;
+    font-size: calc(24px * var(--text-scale));
+  }
+  .prejoin-grid > .prejoin-settings {
+    padding: 12px 0;
+  }
+  .prejoin-settings .field :is(select, input) {
+    font-size: calc(16px * var(--text-scale));
+  }
+}

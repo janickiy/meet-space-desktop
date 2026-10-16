@@ -1,6 +1,8 @@
 import type { ClientRealtimeType } from "./realtime";
 import type { RealtimeEvent } from "./types";
 import { summarizeRtcStats, type RtcCounters } from "./mediaDiagnostics";
+import { isDesktopBuild } from "./platform/build";
+import { captureErrorMessage } from "./prejoinDevices";
 
 /**
  * MediaSource различает микрофон, камеру, экран и звук экрана при публикации медиа.
@@ -296,6 +298,8 @@ export class ConferenceMediaClient {
   private lastStatsCounters: RtcCounters | null = null;
   private local: MediaStream | null = null;
   private screen: MediaStream | null = null;
+  // Tracks returned by capture belong to us even while replaceTrack is pending.
+  private pendingCapture = new Map<MediaStreamTrack, MediaSource>();
   private policy: MediaPolicy = {};
   private capture = videoCapture(undefined);
   private sources = new Map<
@@ -450,14 +454,34 @@ export class ConferenceMediaClient {
         /* Очистка WS также закрывает медиа-соединение на воркере. */
       }
     }
-    this.pc?.close();
+    const tracks = new Set([
+      ...(this.local?.getTracks() || []),
+      ...(this.screen?.getTracks() || []),
+      ...this.pendingCapture.keys(),
+      ...Array.from(this.sources.values(), (slot) => slot.track).filter(
+        (track): track is MediaStreamTrack => !!track,
+      ),
+      ...Array.from(this.received.values(), (entry) => entry.track),
+      ...(this.pc?.getReceivers().map((receiver) => receiver.track) || []),
+    ]);
+    if (this.pc) {
+      this.pc.onicecandidate = null;
+      this.pc.ontrack = null;
+      this.pc.onconnectionstatechange = null;
+      this.pc.oniceconnectionstatechange = null;
+      this.pc.onsignalingstatechange = null;
+      this.pc.close();
+    }
     this.pc = null;
     this.lastStatsCounters = null;
-    for (const track of this.local?.getTracks() || []) track.stop();
-    for (const track of this.screen?.getTracks() || []) track.stop();
+    for (const track of tracks) {
+      track.onended = null;
+      track.stop();
+    }
     this.local = null;
     this.screen = null;
     this.sources.clear();
+    this.pendingCapture.clear();
     this.received.clear();
     this.ownPublished.clear();
     this.streams.clear();
@@ -621,9 +645,13 @@ export class ConferenceMediaClient {
       const name = typeof info?.name === "string" ? info.name : "";
       this.fail(
         error instanceof Error && error.message === "secure_context"
-          ? "Камера доступна только на HTTPS или localhost. Откройте защищённую страницу."
+          ? isDesktopBuild
+            ? "Захват устройств недоступен. Перезапустите MeetSpace и повторите подключение."
+            : "Камера доступна только на HTTPS или localhost. Откройте защищённую страницу."
           : name === "NotAllowedError" || name === "SecurityError"
-            ? "Доступ к камере и микрофону запрещён. Разрешите их для этого сайта в браузере и повторите."
+            ? isDesktopBuild
+              ? "Доступ к камере или микрофону запрещён. Разрешите доступ MeetSpace в настройках конфиденциальности системы и повторите."
+              : "Доступ к камере и микрофону запрещён. Разрешите их для этого сайта в браузере и повторите."
             : name === "NotFoundError"
               ? "Камера или микрофон не найдены. Подключите устройства и повторите."
               : name === "NotReadableError"
@@ -652,11 +680,15 @@ export class ConferenceMediaClient {
        */ () => {
         if (this.disposed || this.sources.get(source)?.track !== track) return;
         for (const publication of this.ownPublished.values()) {
-          if (publication.source === source)
+          if (publication.source !== source) continue;
+          try {
             this.send("media.unpublish", {
               mediaPeerId: this.view.mediaPeerId,
               trackId: publication.id,
             });
+          } catch {
+            // A lost signalling connection must not keep another capture alive.
+          }
         }
         if (source === "video/screen") void this.stopScreen();
         else
@@ -795,6 +827,45 @@ export class ConferenceMediaClient {
     }
   }
 
+  /** Release hardware immediately; sender renegotiation remains serialized. */
+  private stopCapturedSources(sources: MediaSource[]) {
+    const tracks = new Set<MediaStreamTrack>();
+    for (const source of sources) {
+      const stream = source.endsWith("/screen") ? this.screen : this.local;
+      const kind =
+        source === "microphone" || source === "audio/screen"
+          ? "audio"
+          : "video";
+      const track = this.sources.get(source)?.track;
+      if (track) tracks.add(track);
+      // Before media.joined there are no sender slots yet.
+      else
+        for (const candidate of stream?.getTracks() || [])
+          if (candidate.kind === kind) tracks.add(candidate);
+    }
+    for (const [track, source] of this.pendingCapture) {
+      if (sources.includes(source)) tracks.add(track);
+    }
+    for (const track of tracks) {
+      track.onended = null;
+      track.stop();
+    }
+    if (tracks.size) this.refreshLocal();
+    return tracks.size > 0;
+  }
+
+  private sourceBlocked(source: MediaSource) {
+    return source === "microphone"
+      ? !!this.policy.microphoneBlocked
+      : source === "camera"
+        ? !!this.policy.cameraBlocked
+        : !!(
+            this.policy.screenBlocked ||
+            this.policy.cameraBlocked ||
+            (source === "audio/screen" && this.policy.microphoneBlocked)
+          );
+  }
+
   private async replaceSource(
     source: MediaSource,
     track: MediaStreamTrack | null,
@@ -809,6 +880,13 @@ export class ConferenceMediaClient {
     if (this.disposed) {
       track?.stop();
       return;
+    }
+    // A moderator may revoke capture while replaceTrack is pending.
+    if (track && this.sourceBlocked(source)) {
+      track.stop();
+      track = null;
+      await slot.sender.replaceTrack(null);
+      if (this.disposed) return;
     }
     slot.track = track;
     slot.transceiver.direction = track ? "sendrecv" : "recvonly";
@@ -835,24 +913,15 @@ export class ConferenceMediaClient {
     // Запоздалый ответ со списком участников не должен отменять более новое ограничение реального времени.
     if ((policy.version ?? 0) < (this.policy.version ?? 0)) return;
     this.policy = { ...policy };
-    if (!this.pc || this.disposed) return;
+    if (this.disposed) return;
     const blocked: MediaSource[] = [];
     if (policy.microphoneBlocked) blocked.push("microphone", "audio/screen");
     if (policy.cameraBlocked) blocked.push("camera");
     if (policy.screenBlocked || policy.cameraBlocked)
       blocked.push("video/screen", "audio/screen");
-    if (
-      blocked.some(
-        /**
-         * Обработчик blocked.some проверяет условие поиска элемента или соответствия элементов набора.
-         *
-         * @args
-         *   - source — семантический источник медиа: микрофон, камера либо экран.
-         *
-         * @returns логический признак соответствия элемента условию.
-         */ (source) => this.sources.get(source)?.track,
-      )
-    )
+    this.stopCapturedSources(blocked);
+    if (!this.pc) return;
+    if (blocked.some((source) => this.sources.get(source)?.track))
       void this.mutate(
         /**
          * Обработчик mutate выполняет переданный шаг вызова mutate в состоянии связи и WebRTC-медиа.
@@ -896,6 +965,7 @@ export class ConferenceMediaClient {
       return;
     }
     this.update({ controlBusy: true, error: null });
+    if (!enabled) this.stopCapturedSources([source]);
     let captured: MediaStream | null = null;
     try {
       const constraints = (selected?: string): MediaStreamConstraints => ({
@@ -982,6 +1052,8 @@ export class ConferenceMediaClient {
           (t) => t.kind === (source === "microphone" ? "audio" : "video"),
         ) || null;
       if (enabled && !track) throw new Error("missing_track");
+      for (const owned of captured?.getTracks() || [])
+        this.pendingCapture.set(owned, source);
       await this.mutate(
         /**
          * Обработчик mutate выполняет переданный шаг вызова mutate в состоянии связи и WebRTC-медиа.
@@ -1003,7 +1075,7 @@ export class ConferenceMediaClient {
           else if (track) this.preferredInputs.delete(source);
         },
       );
-    } catch {
+    } catch (error) {
       captured?.getTracks().forEach(
         /**
          * Обработчик forEach выполняет переданный шаг вызова forEach в состоянии связи и WebRTC-медиа.
@@ -1016,12 +1088,16 @@ export class ConferenceMediaClient {
       );
       if (!this.disposed)
         this.update({
-          error:
-            "Не удалось открыть устройство. Проверьте разрешения браузера и выбор камеры или микрофона.",
+          error: captureErrorMessage(
+            error,
+            source === "microphone" ? "audio" : "video",
+          ),
         });
     } finally {
-      for (const track of captured?.getTracks() || [])
+      for (const track of captured?.getTracks() || []) {
+        this.pendingCapture.delete(track);
         if (this.sources.get(source)?.track !== track) track.stop();
+      }
       if (!this.disposed) this.update({ controlBusy: false });
     }
   }
@@ -1072,6 +1148,11 @@ export class ConferenceMediaClient {
         return;
       }
       const captured = stream;
+      for (const owned of stream.getTracks())
+        this.pendingCapture.set(
+          owned,
+          owned.kind === "audio" ? "audio/screen" : "video/screen",
+        );
       await this.mutate(
         /**
          * Обработчик mutate выполняет переданный шаг вызова mutate в состоянии связи и WebRTC-медиа.
@@ -1187,7 +1268,8 @@ export class ConferenceMediaClient {
             "Демонстрация не началась. Выберите окно или экран и разрешите доступ.",
         });
     } finally {
-      for (const track of stream?.getTracks() || [])
+      for (const track of stream?.getTracks() || []) {
+        this.pendingCapture.delete(track);
         if (
           ![...this.sources.values()].some(
             /**
@@ -1201,6 +1283,7 @@ export class ConferenceMediaClient {
           )
         )
           track.stop();
+      }
       if (!this.disposed) this.update({ controlBusy: false });
     }
   }
@@ -1211,6 +1294,7 @@ export class ConferenceMediaClient {
    * @returns вычисленные данные текущего шага, которые использует вызывающая операция.
    */
   stopScreen() {
+    this.stopCapturedSources(["video/screen", "audio/screen"]);
     return this.mutate(
       /**
        * Обработчик mutate выполняет переданный шаг вызова mutate в состоянии связи и WebRTC-медиа.
@@ -1241,6 +1325,14 @@ export class ConferenceMediaClient {
         event.type !== "ack")
     )
       return;
+    // Revocation cannot wait behind a browser sender or SDP operation.
+    if (event.type === "media.policy") {
+      const data = record(event.data);
+      const policy = record(data?.policy);
+      if (data?.mediaPeerId === this.view.mediaPeerId && policy)
+        this.setPolicy(policy as MediaPolicy);
+      return;
+    }
     this.queue = this.queue
       .then(
         /**

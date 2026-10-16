@@ -1,0 +1,13 @@
+MeetSpace Desktop — internal test build
+
+This installer is an unsigned development build provided for testing by the
+project owner. It is not a trusted production release. No application source
+license or distribution permission is granted by this notice; the application
+package remains UNLICENSED pending the owner's licensing decision.
+
+Third-party software retains its own license terms. See THIRD_PARTY_NOTICES.txt,
+third-party-licenses.json, LICENSE.electron.txt and LICENSES.chromium.html in the
+installation directory's resources / application files.
+
+Auto-updates are disabled. Windows runtime support requires testing on Windows
+10 22H2 x64, Windows 11 x64 and native Windows 11 ARM64.

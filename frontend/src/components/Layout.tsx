@@ -1,4 +1,9 @@
-import { MessageCircle } from "lucide-react";
+import { DesktopServerButton } from "./desktop/DesktopSessionGate";
+import { ChevronRight, ChevronsUpDown, MessageCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "../api";
+import { isDesktopBuild } from "../platform/build";
+import { WorkspaceSearch } from "./WorkspaceSearch";
 import { usePersonalRealtime } from "../personalRealtime";
 import "../pages/personal.css";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
@@ -10,7 +15,6 @@ import {
   Home,
   Folder,
   LogOut,
-  LayoutGrid,
   Ellipsis,
   Menu,
   CirclePlay,
@@ -27,7 +31,7 @@ import { NotificationBell } from "./NotificationBell";
 import { UnreadMessageCount } from "./UnreadMessageCount";
 import { useNotificationStream } from "../notifications";
 import { useCapabilities } from "../useCapabilities";
-import { PRODUCT_NAME, PRODUCT_TAGLINE } from "../brand";
+import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
 import { AccountSettingsModal } from "./AccountSettingsModal";
 import { AccountSettingsContext } from "./AccountSettingsContext";
 import { Copyright } from "./Copyright";
@@ -45,6 +49,11 @@ export function Layout() {
     user?.guestConferenceId ? undefined : user?.id,
   );
   const capabilities = useCapabilities();
+  const folders = useQuery({
+    queryKey: ["folders", user?.id],
+    queryFn: ({ signal }) => api.folders(undefined, signal),
+    enabled: !!user && !user.guestConferenceId,
+  });
   const navigate = useNavigate();
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -176,9 +185,11 @@ export function Layout() {
       </AccountSettingsContext.Provider>
     );
   const items = [
-    { to: "/app", label: "Главная", Icon: Home, end: true },
+    ...(!isDesktopBuild
+      ? [{ to: "/app", label: "Главная", Icon: Home, end: true }]
+      : []),
     { to: "/conferences", label: "Встречи", Icon: Video },
-    { to: "/personal", label: "Личные", Icon: MessageCircle },
+    { to: "/personal", label: "Чаты", Icon: MessageCircle },
     { to: "/calendar", label: "Календарь", Icon: CalendarDays },
     { to: "/recordings", label: "Записи", Icon: CirclePlay },
     ...(capabilities.isSuccess &&
@@ -205,11 +216,6 @@ export function Layout() {
       : location.pathname.startsWith("/notifications")
         ? "Уведомления"
         : "Встречи");
-  const sectionContext = location.pathname.startsWith("/personal")
-    ? "Общение"
-    : location.pathname.startsWith("/folders")
-      ? "Организация"
-      : sectionTitle;
   return (
     <AccountSettingsContext.Provider value={showAccountSettings}>
       <DirectCallsProvider>
@@ -237,21 +243,15 @@ export function Layout() {
           </a>
           <div className="app-chrome">
             <div className="chrome-context">
-              <LayoutGrid size={16} aria-hidden="true" />
+              <img
+                src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
+                alt=""
+                width="17"
+                height="17"
+              />
               <span>{PRODUCT_NAME}</span>
-              <span className="chrome-slash" aria-hidden="true">
-                /
-              </span>
-              <strong>{sectionContext}</strong>
             </div>
-            <Link
-              to="/conferences/new"
-              className="chrome-create"
-              aria-label="Создать встречу"
-              title="Создать встречу"
-            >
-              <Plus size={20} aria-hidden="true" />
-            </Link>
+            <span className="chrome-workspace">Рабочее пространство</span>
           </div>
           <aside
             id="app-sidebar"
@@ -262,7 +262,19 @@ export function Layout() {
             aria-label={open ? `Меню ${PRODUCT_NAME}` : undefined}
           >
             <div className="sidebar-head">
-              <Brand to="/app" />
+              <Link
+                to="/conferences"
+                className="workspace-brand"
+                aria-label={`${PRODUCT_NAME} — встречи`}
+              >
+                <img
+                  src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
+                  width="30"
+                  height="30"
+                  alt=""
+                />
+                <span>{PRODUCT_NAME}</span>
+              </Link>
               <button
                 className="icon-button mobile-only"
                 aria-label="Закрыть меню"
@@ -271,10 +283,20 @@ export function Layout() {
                 <X />
               </button>
             </div>
-            <p className="sidebar-tagline">
-              <span>{PRODUCT_TAGLINE.replace(/\s+в одном месте\.$/, "")}</span>{" "}
-              <strong>в одном месте.</strong>
-            </p>
+            <div className="sidebar-workspace-card">
+              {isDesktopBuild ? (
+                <DesktopServerButton />
+              ) : (
+                <Link to="/conferences" className="workspace-identity">
+                  <span className="workspace-symbol">М</span>
+                  <span>
+                    <strong>Моё пространство</strong>
+                    <small>Встречи и общение</small>
+                  </span>
+                  <ChevronsUpDown size={14} aria-hidden="true" />
+                </Link>
+              )}
+            </div>
             <p className="sidebar-caption">Рабочее пространство</p>
             <nav className="sidebar-nav" aria-label="Основная навигация">
               {items.map(({ to, label, Icon, ...props }) => (
@@ -288,7 +310,12 @@ export function Layout() {
                       : setOpen(false)
                   }
                   className={({ isActive }) =>
-                    isActive ? "nav-item nav-active" : "nav-item"
+                    isActive ||
+                    (isDesktopBuild &&
+                      to === "/conferences" &&
+                      location.pathname === "/app")
+                      ? "nav-item nav-active"
+                      : "nav-item"
                   }
                 >
                   <Icon size={22} aria-hidden="true" />
@@ -299,10 +326,33 @@ export function Layout() {
                 </NavLink>
               ))}
             </nav>
-            <p className="sidebar-caption sidebar-personal-caption">
-              Личное пространство
-            </p>
-            <nav className="sidebar-nav" aria-label="Личное пространство">
+            <div className="sidebar-caption sidebar-personal-caption">
+              <span>Мои папки</span>
+              <Link
+                to="/folders"
+                aria-label="Управление папками"
+                title="Управление папками"
+              >
+                <Plus size={16} />
+              </Link>
+            </div>
+            <nav
+              className="sidebar-nav sidebar-folders"
+              aria-label="Личное пространство"
+            >
+              {(folders.data?.items || []).slice(0, 3).map((folder) => (
+                <NavLink
+                  key={folder.id}
+                  to={`/folders/${folder.id}`}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    isActive ? "nav-item nav-active" : "nav-item"
+                  }
+                >
+                  <span className="sidebar-folder-dot" aria-hidden="true" />
+                  <span className="nav-label-text">{folder.name}</span>
+                </NavLink>
+              ))}
               <NavLink
                 to="/folders"
                 onClick={() => setOpen(false)}
@@ -311,7 +361,7 @@ export function Layout() {
                 }
               >
                 <Folder size={22} aria-hidden="true" />
-                <span className="nav-label-text">Папки</span>
+                <span className="nav-label-text">Все папки</span>
               </NavLink>
             </nav>
             <nav
@@ -356,8 +406,13 @@ export function Layout() {
                 </span>
                 <div>
                   <strong>{user?.displayName || "Мой аккаунт"}</strong>
-                  <span>{user?.email}</span>
+                  <span>Мой аккаунт</span>
                 </div>
+                <ChevronsUpDown
+                  size={14}
+                  className="profile-chevron"
+                  aria-hidden="true"
+                />
               </button>
               <button
                 className="logout-button"
@@ -396,23 +451,14 @@ export function Layout() {
               <div className="workspace-mobile-brand">
                 <Brand to="/app" />
               </div>
-              <span className="workspace-context">{sectionContext}</span>
+              <div className="workspace-context">
+                <span>Рабочее пространство</span>
+                <ChevronRight size={13} aria-hidden="true" />
+                <strong>{sectionTitle}</strong>
+              </div>
               <div className="workspace-account">
+                <WorkspaceSearch />
                 <NotificationBell />
-                <button
-                  type="button"
-                  className="topbar-profile"
-                  aria-label="Профиль и настройки аккаунта"
-                  onClick={(event) => showAccountSettings(event.currentTarget)}
-                >
-                  <span className="avatar">
-                    {initials(user?.displayName || user?.email || "")}
-                  </span>
-                  <span className="topbar-profile-text">
-                    <strong>{user?.displayName || "Мой аккаунт"}</strong>
-                    <small>{user?.email}</small>
-                  </span>
-                </button>
               </div>
             </header>
             <main id="workspace-main" className="workspace-main" tabIndex={-1}>
@@ -437,13 +483,13 @@ export function Layout() {
               </NavLink>
               <NavLink
                 to="/personal"
-                aria-label={`Личные — быстрая навигация${personal.unread ? `, непрочитанных: ${personal.unread}` : ""}`}
+                aria-label={`Чаты — быстрая навигация${personal.unread ? `, непрочитанных: ${personal.unread}` : ""}`}
               >
                 <span className="mobile-nav-message-icon">
                   <MessageCircle size={20} aria-hidden="true" />
                   <UnreadMessageCount count={personal.unread} />
                 </span>
-                Личные
+                Чаты
               </NavLink>
               <NavLink to="/recordings" aria-label="Записи — быстрая навигация">
                 <CirclePlay size={20} />

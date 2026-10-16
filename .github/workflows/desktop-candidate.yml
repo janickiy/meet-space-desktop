@@ -1,0 +1,102 @@
+name: Desktop signed candidate
+
+# A candidate is not a published release. No PR or workflow_run can reach secrets.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: desktop-signed-candidate
+  cancel-in-progress: false
+
+jobs:
+  candidate:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    environment: desktop-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: windows-2025
+          - arch: arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.19.0"
+          architecture: ${{ matrix.arch }}
+          package-manager-cache: false
+      - name: Validate reviewed, nonsecret release configuration
+        env:
+          RELEASE_CONFIG_JSON: ${{ vars.DESKTOP_RELEASE_CONFIG_JSON }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          node --input-type=module -e "import {validateReleaseConfig} from './desktop/scripts/release-policy.mjs'; import{writeFileSync}from'node:fs'; if(process.platform!=='win32'||process.arch!==process.env.TARGET_ARCH)throw Error('Native architecture required'); const c=validateReleaseConfig(JSON.parse(process.env.RELEASE_CONFIG_JSON||'null')); writeFileSync(process.env.RUNNER_TEMP+'/meetspace-release-config.json',JSON.stringify(c));"
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          node desktop/scripts/ci/source-inputs.mjs desktop/artifacts/ci/source-inputs.json --require-clean
+      - name: Verify local HTTPS fixture prerequisite
+        run: desktop/scripts/ci/check-windows-tools.ps1
+      - name: Install frozen dependencies and validate trusted source
+        run: |
+          pwsh -NoProfile -File desktop/tests/windows-acceptance-structure.ps1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm ci --prefix frontend
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm ci --prefix desktop
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix frontend run check
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix frontend run check:desktop-foundation
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix frontend run check:desktop-media
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix frontend run check:desktop-assets
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix desktop test
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Sign and independently verify both installer and embedded application
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+          SIGNING_PFX_BASE64: ${{ secrets.DESKTOP_SIGNING_PFX_BASE64 }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.DESKTOP_SIGNING_PFX_PASSWORD }}
+        run: |
+          $certificate = Join-Path $env:RUNNER_TEMP 'meetspace-signing.pfx'
+          try {
+            $config = Get-Content -Raw (Join-Path $env:RUNNER_TEMP 'meetspace-release-config.json') | ConvertFrom-Json
+            if ($config.signing.mode -eq 'pfx') {
+              if (-not $env:SIGNING_PFX_BASE64) { throw 'PFX signing is not configured' }
+              [System.IO.File]::WriteAllBytes($certificate, [Convert]::FromBase64String($env:SIGNING_PFX_BASE64))
+              $env:WIN_CSC_LINK = $certificate
+            }
+            node desktop/scripts/package.mjs $env:TARGET_ARCH --signed (Join-Path $env:RUNNER_TEMP 'meetspace-release-config.json')
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          } finally {
+            Remove-Item -LiteralPath $certificate -Force -ErrorAction SilentlyContinue
+            Remove-Item Env:WIN_CSC_LINK -ErrorAction SilentlyContinue
+            Remove-Item Env:WIN_CSC_KEY_PASSWORD -ErrorAction SilentlyContinue
+            Remove-Item Env:SIGNING_PFX_BASE64 -ErrorAction SilentlyContinue
+          }
+      - name: Record unchanged source and dependency SBOMs
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node desktop/scripts/ci/collect-build-evidence.mjs desktop/artifacts/ci $env:TARGET_ARCH
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: desktop-candidate-${{ matrix.arch }}-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            desktop/artifacts/signed/${{ matrix.arch }}/*-setup.exe
+            desktop/artifacts/signed/${{ matrix.arch }}/*-setup.exe.sha256
+            desktop/artifacts/signed/${{ matrix.arch }}/*-setup.exe.json
+            desktop/artifacts/ci/**

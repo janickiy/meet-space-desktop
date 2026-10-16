@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -20,6 +20,7 @@ import { formatDate } from "../utils";
 import { toLocalInput } from "../collaboration";
 import type { Conference } from "../types";
 import "./calendar.css";
+import "./collections-redesign.css";
 
 type CalendarView = "week" | "month";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -250,8 +251,16 @@ function CalendarMeetingDetails({
  * @return Адаптивный календарь с явной пагинацией, местным временем, созданием и управлением встречами.
  */
 export function CalendarPage() {
-  const [anchor, setAnchor] = useState(() => new Date());
-  const [view, setView] = useState<CalendarView>("week");
+  const [params] = useSearchParams();
+  const [anchor, setAnchor] = useState(() => {
+    const value = params.get("date");
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date();
+    const parsed = new Date(`${value}T12:00:00`);
+    return Number.isFinite(parsed.getTime()) && calendarDayKey(parsed) === value
+      ? parsed
+      : new Date();
+  });
+  const [view, setView] = useState<CalendarView>("month");
   const [selected, setSelected] = useState<Conference | null>(null);
   const [editing, setEditing] = useState<Conference | null>(null);
   const [agendaDay, setAgendaDay] = useState(() => calendarDayKey(new Date()));
@@ -395,7 +404,7 @@ export function CalendarPage() {
           <MeetingSkeleton rows={4} label="Загрузка календаря" />
         ) : (
           <>
-            {!!meetings.length && (
+            {
               <div
                 className={`calendar-grid-scroll ${view === "week" ? "calendar-week-scroll" : ""}`}
                 ref={scroll}
@@ -510,7 +519,7 @@ export function CalendarPage() {
                   </div>
                 )}
               </div>
-            )}
+            }
             {!!meetings.length && (
               <div
                 className="calendar-mobile-agenda"
@@ -562,7 +571,7 @@ export function CalendarPage() {
                   <CalendarDays size={28} aria-hidden="true" />
                 </span>
                 <h3>В этом периоде пока свободно</h3>
-                <p>Запланируйте встречу — она появится здесь.</p>
+                <p>Запланируйте встречу — она появится в календаре.</p>
                 <Link
                   className="button button-primary"
                   to="/meetings/new?scheduled=1&returnTo=calendar"

@@ -1,3 +1,9 @@
+import { isDesktopBuild } from "./platform/build";
+import { serviceOrigin } from "./platform/urls";
+import {
+  desktopRequest,
+  desktopNotificationStream,
+} from "./platform/transport";
 import type {
   PersonalPage,
   PersonalConversation,
@@ -221,13 +227,25 @@ async function request<T>(
   if (options.body !== undefined)
     headers.set("Content-Type", "application/json");
   if (usedToken) headers.set("Authorization", `Bearer ${usedToken}`);
-  const response = await fetch(`/api/v1${path}`, {
-    method: options.method || "GET",
-    headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    signal: options.signal,
-    credentials: options.sessionCookie ? "same-origin" : "omit",
-  });
+  const response = isDesktopBuild
+    ? await desktopRequest(
+        {
+          path: `/api/v1${path}`,
+          method: options.method || "GET",
+          body: options.body,
+          responseType: "json",
+          token: usedToken,
+        },
+        options.signal,
+      )
+    : await fetch(`/api/v1${path}`, {
+        method: options.method || "GET",
+        headers,
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
+        signal: options.signal,
+        credentials: options.sessionCookie ? "same-origin" : "omit",
+      });
   if (response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(
     /**
@@ -282,13 +300,25 @@ async function binaryRequest(
   });
   if (usedToken) headers.set("Authorization", `Bearer ${usedToken}`);
   if (options.body) headers.set("Content-Type", options.body.type);
-  const response = await fetch(`/api/v1${path}`, {
-    method: options.method || "GET",
-    body: options.body,
-    headers,
-    credentials: "omit",
-    signal: options.signal,
-  });
+  const response = isDesktopBuild
+    ? await desktopRequest(
+        {
+          path: `/api/v1${path}`,
+          method: options.method || "GET",
+          file: options.body,
+          contentType: options.body?.type,
+          responseType: "binary",
+          token: usedToken,
+        },
+        options.signal,
+      )
+    : await fetch(`/api/v1${path}`, {
+        method: options.method || "GET",
+        body: options.body,
+        headers,
+        credentials: "omit",
+        signal: options.signal,
+      });
   if (version !== identityVersion) {
     await response.body?.cancel();
     throw new DOMException("Account changed", "AbortError");
@@ -1359,24 +1389,34 @@ export const api = {
     const usedToken = accessToken;
     const version = identityVersion;
     const open = () =>
-      fetch("/api/v1/notifications/events", {
-        headers: {
-          Accept: "text/event-stream",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        credentials: "omit",
-        signal,
-      });
+      isDesktopBuild
+        ? desktopNotificationStream(accessToken, signal)
+        : fetch("/api/v1/notifications/events", {
+            headers: {
+              Accept: "text/event-stream",
+              ...(accessToken
+                ? { Authorization: `Bearer ${accessToken}` }
+                : {}),
+            },
+            credentials: "omit",
+            signal,
+          });
     let response = await open();
     if (
       response.status === 401 &&
       usedToken &&
       (await recoverSession(usedToken, version))
     ) {
+      await response.body?.cancel();
       signal.throwIfAborted();
       response = await open();
     }
+    if (version !== identityVersion) {
+      await response.body?.cancel();
+      throw new DOMException("Account changed", "AbortError");
+    }
     if (!response.ok) {
+      await response.body?.cancel();
       throw new ApiError(
         response.status,
         statuses[response.status] || "Уведомления временно недоступны.",
@@ -1415,9 +1455,9 @@ export function uploadAttachment(
   signal: AbortSignal,
   retry = true,
 ): Promise<void> {
-  const target = new URL(url, window.location.origin);
+  const target = new URL(url, serviceOrigin());
   if (
-    target.origin !== window.location.origin ||
+    target.origin !== serviceOrigin() ||
     !/^\/api\/v1\/(conferences|conversations)\/[^/]+\/attachments\/[^/]+\/content$/.test(
       target.pathname,
     ) ||
@@ -1425,6 +1465,44 @@ export function uploadAttachment(
     target.hash
   )
     return Promise.reject(new ApiError(502, "Некорректный адрес загрузки."));
+  if (isDesktopBuild) {
+    if (file.size > 10 * 1024 * 1024)
+      return Promise.reject(
+        new ApiError(413, "Файл слишком большой. Максимальный размер — 10 МБ."),
+      );
+    const usedToken = accessToken,
+      version = identityVersion;
+    return desktopRequest(
+      {
+        path: target.pathname,
+        method: "PUT",
+        file,
+        contentType: file.type || "application/octet-stream",
+        responseType: "json",
+        token: usedToken,
+      },
+      signal,
+      onProgress,
+    ).then(async (response) => {
+      if (version !== identityVersion)
+        throw new DOMException("Account changed", "AbortError");
+      if (
+        response.status === 401 &&
+        usedToken &&
+        retry &&
+        (await recoverSession(usedToken, version))
+      ) {
+        signal.throwIfAborted();
+        return uploadAttachment(url, file, onProgress, signal, false);
+      }
+      if (!response.ok)
+        throw new ApiError(
+          response.status,
+          statuses[response.status] || "Не удалось загрузить файл.",
+        );
+      onProgress(100);
+    });
+  }
   return new Promise(
     /**
      * Вложенный обработчик выполняет шаг «Вложенный обработчик» в типизированных HTTP-запросах.

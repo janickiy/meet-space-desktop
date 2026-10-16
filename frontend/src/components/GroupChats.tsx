@@ -40,6 +40,7 @@ import { ItemActions } from "./ItemActions";
 import { MessagingSkeleton } from "./MessagingSkeleton";
 import { UserInfoModal } from "./UserInfoModal";
 import "./group-chats.css";
+import "./chat-profiles.css";
 
 export function ConversationAvatar({
   conversation,
@@ -651,7 +652,7 @@ export function GroupInfoModal({
     <>
       <Modal
         title={titles[view]}
-        className="group-modal"
+        className="group-modal group-info-modal"
         returnFocus={returnFocus}
         onClose={() => {
           if (submitting.current) return;
@@ -660,7 +661,7 @@ export function GroupInfoModal({
           else onClose();
         }}
       >
-        {view !== "info" && (
+        {view !== "info" && view !== "members" && (
           <Button
             className="group-back"
             variant="outline"
@@ -677,13 +678,13 @@ export function GroupInfoModal({
         <ErrorNotice error={detail.error || mutation.error}>
           {validation || null}
         </ErrorNotice>
-        {view === "info" && (
+        {(view === "info" || view === "members") && (
           <>
             <div className="group-identity">
               <ConversationAvatar conversation={current} large />
               <div>
                 <h3>{current.name}</h3>
-                <p>{current.description}</p>
+                <p>Групповой чат · {current.memberCount} участн.</p>
                 <small>
                   {current.memberCount} участн. · {roles[current.myRole]}
                 </small>
@@ -710,14 +711,64 @@ export function GroupInfoModal({
                     }}
                   >
                     <Pencil size={20} />
-                    Изменить
+                    Управление группой
                   </Button>
                 </>
               )}
             </div>
           </>
         )}
-        {(view === "info" || view === "members" || view === "transfer") && (
+        {(view === "info" || view === "members") && (
+          <nav
+            className="group-profile-tabs"
+            aria-label="Разделы информации о группе"
+          >
+            <button
+              type="button"
+              aria-current={view === "info" ? "page" : undefined}
+              onClick={() => setView("info")}
+            >
+              Обзор
+            </button>
+            <button
+              type="button"
+              aria-current={view === "members" ? "page" : undefined}
+              onClick={() => setView("members")}
+            >
+              Участники · {current.memberCount}
+            </button>
+          </nav>
+        )}
+        {view === "info" && (
+          <div className="group-profile-overview">
+            <h3>Описание группы</h3>
+            <p>{current.description || "Описание пока не добавлено."}</p>
+            <dl className="personal-profile-details">
+              <div>
+                <dt>
+                  <Users size={16} aria-hidden="true" />
+                  Тип чата
+                </dt>
+                <dd>Групповой чат</dd>
+              </div>
+              <div>
+                <dt>
+                  <ShieldCheck size={16} aria-hidden="true" />
+                  Ваша роль
+                </dt>
+                <dd>{roles[current.myRole]}</dd>
+              </div>
+              <div>
+                <dt>
+                  <Users size={16} aria-hidden="true" />
+                  Участники
+                </dt>
+                <dd>{current.memberCount}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+        {(view === "members" || view === "transfer") && (
           <>
             <div className="group-members-heading">
               <h3>Участники</h3>

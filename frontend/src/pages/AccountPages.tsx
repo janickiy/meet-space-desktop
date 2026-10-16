@@ -14,18 +14,22 @@ import {
   Sun,
   UserRound,
   UsersRound,
+  Monitor,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "../auth";
 import { AccountManagement } from "../components/AccountManagement";
 import { PRODUCT_NAME } from "../brand";
-import { formatDate } from "../utils";
+import { formatDate, initials } from "../utils";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import { IntegrationsSettings } from "../components/IntegrationsSettings";
 import { AudioSettings, VideoSettings } from "../components/DeviceSettings";
 import { TEXT_SIZE_OPTIONS, useAppearance } from "../appearance";
 import type { TextSize } from "../appearance";
+import { isDesktopBuild } from "../platform/build";
+import { DesktopNativeSettings } from "../components/desktop/DesktopNativeSettings";
 import "./history-notifications.css";
 
 /** Показывает вкладки профиля, устройств, уведомлений и оформления внутри диалога аккаунта.
@@ -53,6 +57,9 @@ export function SettingsPage() {
       ? [{ id: "notifications", label: "Уведомления", Icon: Bell }]
       : []),
     { id: "appearance", label: "Оформление", Icon: Palette },
+    ...(isDesktopBuild
+      ? [{ id: "desktop", label: "Приложение", Icon: Monitor }]
+      : []),
   ] as const;
   const [activeSection, setActiveSection] = useState<string>(() => {
     const section = window.location.hash;
@@ -144,6 +151,31 @@ export function SettingsPage() {
     <div
       className={`account-dialog-layout ${mobileSectionOpen ? "account-mobile-section" : "account-mobile-categories"}`}
     >
+      {!guest && user && (
+        <section
+          className="account-current-identity"
+          aria-label="Текущий аккаунт"
+        >
+          <span className="account-current-avatar" aria-hidden="true">
+            {initials(user.displayName || user.email)}
+          </span>
+          <div>
+            <strong>{user.displayName || user.email}</strong>
+            <span>Активный аккаунт · {user.email}</span>
+          </div>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setActiveSection("accounts");
+              setMobileSectionOpen(true);
+              requestAnimationFrame(() => panel.current?.focus());
+            }}
+          >
+            <ChevronsUpDown size={16} aria-hidden="true" />
+            Сменить аккаунт
+          </Button>
+        </section>
+      )}
       <div
         className="account-dialog-tabs"
         role="tablist"
@@ -272,6 +304,9 @@ export function SettingsPage() {
         {activeSection === "accounts" && !guest && <AccountManagement />}
         {activeSection === "audio" && <AudioSettings />}
         {activeSection === "video" && <VideoSettings />}
+        {activeSection === "desktop" && isDesktopBuild && (
+          <DesktopNativeSettings />
+        )}
         {activeSection === "notifications" && (
           <IntegrationsSettings notificationsOnly />
         )}

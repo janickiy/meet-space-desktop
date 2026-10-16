@@ -1,3 +1,4 @@
+import { subscribeCaptureRelease } from "./platform/captureLifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConferenceMediaClient, emptyMediaView } from "./media";
 import type { MediaPolicy, MediaStartOptions } from "./media";
@@ -49,6 +50,11 @@ export function useMedia(
      * @returns функция освобождения созданных ресурсов, если эффект её объявляет; иначе значение не возвращается.
      */ () => {
       mounted.current = true;
+      const release = () => {
+        controller.current?.stop();
+        controller.current = null;
+      };
+      const unsubscribeRelease = subscribeCaptureRelease(release);
       /**
        * Освобождение ресурсов завершает ресурсы предыдущего эффекта перед повторным выполнением либо удалением компонента.
        *
@@ -57,8 +63,8 @@ export function useMedia(
        */
       return () => {
         mounted.current = false;
-        controller.current?.stop();
-        controller.current = null;
+        unsubscribeRelease();
+        release();
       };
     },
     [],

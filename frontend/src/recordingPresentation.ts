@@ -1,10 +1,20 @@
 import type { ConferenceRecording } from "./types";
 import { formatDate } from "./utils";
+import { isDesktopBuild } from "./platform/build";
 
 /** RecordingFile описывает реальный артефакт, разрешённый сервером для чтения.
  * @params fileType — вид материала; url — подписанная ссылка; sizeBytes — известный размер.
  */
 export type RecordingFile = ConferenceRecording["files"][number];
+
+/** Native access requires the server's file UUID; a signed URL is never an IPC input. */
+export function recordingFileAvailable(file: RecordingFile): boolean {
+  return isDesktopBuild
+    ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        file.uuid || "",
+      )
+    : !!safeRecordingUrl(file.url);
+}
 
 /** safeRecordingUrl проверяет ссылку из ответа backend перед показом медиа или скачиванием.
  * Не создаёт ссылку из ключа хранилища и отвергает исполняемые схемы, credentials
@@ -45,7 +55,7 @@ export function recordingMediaFile(
   const files = record.files || [];
   return ["final_mp4", "final_audio"].flatMap((type) =>
     files.filter(
-      (file) => file.fileType === type && safeRecordingUrl(file.url),
+      (file) => file.fileType === type && recordingFileAvailable(file),
     ),
   )[0];
 }
@@ -58,7 +68,10 @@ export function recordingPreviewFile(
   record: ConferenceRecording,
 ): RecordingFile | undefined {
   return record.files?.find(
-    (file) => file.fileType === "preview_jpg" && safeRecordingUrl(file.url),
+    (file) =>
+      !isDesktopBuild &&
+      file.fileType === "preview_jpg" &&
+      safeRecordingUrl(file.url),
   );
 }
 

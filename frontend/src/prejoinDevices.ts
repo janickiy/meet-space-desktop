@@ -1,3 +1,6 @@
+import { isDesktopBuild } from "./platform/build";
+import { desktopServerID } from "./platform/urls";
+
 export interface DevicePreferences {
   audioInputId: string;
   videoInputId: string;
@@ -14,12 +17,14 @@ export interface DevicePreferences {
 // A single explicit Connect click may start media after admission. This intent
 // lives only in this tab and is consumed once; reconnect never enables devices.
 const mediaEntries = new Map<string, number>();
+const scope = (value: string) =>
+  isDesktopBuild ? `${desktopServerID() ?? "unselected"}:${value}` : value;
 export function queueMediaEntry(conferenceId: string) {
-  mediaEntries.set(conferenceId, Date.now());
+  mediaEntries.set(scope(conferenceId), Date.now());
 }
 export function consumeMediaEntry(conferenceId: string): boolean {
-  const requestedAt = mediaEntries.get(conferenceId);
-  mediaEntries.delete(conferenceId);
+  const requestedAt = mediaEntries.get(scope(conferenceId));
+  mediaEntries.delete(scope(conferenceId));
   return requestedAt !== undefined && Date.now() - requestedAt < 60 * 60 * 1000;
 }
 
@@ -36,7 +41,7 @@ const emptyPreferences: DevicePreferences = {
   hideParticipantVideo: false,
 };
 
-const key = (userId: string) => `meet.devices.v1:${userId}`;
+const key = (userId: string) => `meet.devices.v1:${scope(userId)}`;
 const safeId = (value: unknown) =>
   typeof value === "string" && value.length <= 512 ? value : "";
 
@@ -143,7 +148,9 @@ export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
       : "";
   const label = kind === "audio" ? "микрофон" : "камеру";
   if (name === "NotAllowedError" || name === "PermissionDeniedError")
-    return `Доступ к устройству запрещён. Разрешите ${label} для этого сайта в настройках браузера и повторите.`;
+    return isDesktopBuild
+      ? `Доступ к устройству запрещён. Разрешите ${label} для MeetSpace в настройках конфиденциальности системы и повторите.`
+      : `Доступ к устройству запрещён. Разрешите ${label} для этого сайта в настройках браузера и повторите.`;
   if (name === "NotFoundError" || name === "DevicesNotFoundError")
     return `Устройство не найдено. Подключите ${label} или войдите без него.`;
   if (name === "NotReadableError" || name === "TrackStartError")
@@ -151,6 +158,8 @@ export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
   if (name === "OverconstrainedError")
     return `Выбранное устройство недоступно. Выберите другое или системное устройство.`;
   if (name === "SecurityError")
-    return "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost.";
+    return isDesktopBuild
+      ? "Захват устройств недоступен. Перезапустите MeetSpace и проверьте разрешения системы."
+      : "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost.";
   return `Не удалось включить ${label}. Проверьте разрешения и попробуйте снова.`;
 }

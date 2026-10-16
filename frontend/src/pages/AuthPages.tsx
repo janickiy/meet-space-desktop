@@ -1,3 +1,4 @@
+import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import { useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
@@ -110,6 +111,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
       </a>
       <header className="auth-business-header">
         <Brand />
+        <DesktopServerButton />
         <Link className="auth-back" to="/">
           <ArrowLeft size={16} aria-hidden="true" />
           На главную
@@ -117,15 +119,14 @@ export function AuthPage({ register = false }: { register?: boolean }) {
       </header>
       <main className="auth-business-layout">
         <aside className="auth-business-story" aria-label="О сервисе">
-          <AuthTeamVisual />
           <div className="auth-business-story-copy">
             <span className="auth-story-kicker">
               ДЕЛОВОЕ ОБЩЕНИЕ. ЕДИНОЕ ПРОСТРАНСТВО.
             </span>
             <h2>
-              Рабочие встречи.
+              В одной команде.
               <br />
-              Настоящее общение.
+              На одной волне.
             </h2>
             <p className="auth-story-description">
               Обсуждайте проекты с коллегами, проводите видеовстречи и
@@ -143,6 +144,7 @@ export function AuthPage({ register = false }: { register?: boolean }) {
               </li>
             </ul>
           </div>
+          <AuthTeamVisual />
         </aside>
         <section
           className={`auth-card ${register ? "register-card" : ""}`}
@@ -307,6 +309,7 @@ export function RegistrationSuccess() {
     <div className="auth-page auth-business-page auth-business-success">
       <header className="auth-business-header">
         <Brand />
+        <DesktopServerButton />
         <Link className="auth-back" to="/">
           <ArrowLeft size={16} aria-hidden="true" /> На главную
         </Link>

@@ -1,0 +1,238 @@
+/* Shared participant and group cards use the supplied profile layout. */
+.modal-backdrop .modal.personal-info-modal,
+.modal-backdrop .modal.group-info-modal {
+  width: min(700px, calc(100vw - 40px));
+  max-width: 700px;
+  padding: 28px 30px;
+  border-radius: 16px;
+}
+.modal.personal-info-modal > h2,
+.modal.group-info-modal > h2 {
+  margin: 0 36px 30px 0;
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 600;
+}
+.personal-info-modal .personal-user-info {
+  display: block;
+}
+.personal-profile-hero,
+.group-info-modal .group-identity {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 18px;
+}
+.personal-profile-hero .group-avatar-large,
+.group-info-modal .group-avatar-large {
+  position: relative;
+  flex: 0 0 68px;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: calc(23px * var(--text-scale));
+}
+.personal-profile-hero .group-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.personal-profile-online-dot {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  right: 1px;
+  bottom: 1px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--success);
+}
+.personal-profile-copy {
+  min-width: 0;
+}
+.personal-info-modal .personal-profile-copy h3,
+.group-info-modal .group-identity h3 {
+  margin: 0 0 6px;
+  text-align: left;
+  color: var(--text);
+  font-size: calc(25px * var(--text-scale));
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+.personal-profile-subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+.personal-profile-subtitle .personal-user-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+.personal-profile-subtitle .personal-user-presence-online {
+  color: var(--success);
+}
+.personal-profile-subtitle .personal-user-presence-dot {
+  width: 6px;
+  height: 6px;
+}
+.personal-profile-actions,
+.group-info-modal .group-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+  padding: 0;
+}
+.personal-profile-actions .button,
+.group-info-modal .group-info-actions .button {
+  min-height: 40px;
+  font-size: calc(12px * var(--text-scale));
+  border-radius: 8px;
+  padding: 9px 13px;
+}
+.group-info-modal .group-info-actions .button {
+  background: var(--surface);
+  border-color: var(--border);
+}
+.personal-profile-actions .button svg,
+.group-info-modal .group-info-actions .button svg {
+  width: 17px;
+  height: 17px;
+}
+.personal-profile-actions .error-notice {
+  flex-basis: 100%;
+}
+.personal-profile-section-label,
+.group-profile-tabs {
+  margin: 0 -30px 24px;
+  padding: 0 30px;
+  min-height: 48px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-soft);
+}
+.personal-profile-section-label {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 600;
+}
+.group-profile-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 28px;
+}
+.group-profile-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 13px 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  font-size: calc(13px * var(--text-scale));
+  cursor: pointer;
+}
+.group-profile-tabs button[aria-current="page"] {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+.personal-info-modal .personal-profile-details,
+.group-info-modal .personal-profile-details {
+  display: block;
+  align-self: stretch;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.personal-profile-details > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.personal-info-modal .personal-profile-details dt,
+.group-info-modal .personal-profile-details dt {
+  display: inline-flex;
+  gap: 9px;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  margin: 0;
+}
+.personal-info-modal .personal-profile-details dd,
+.group-info-modal .personal-profile-details dd {
+  margin: 0;
+  text-align: right;
+  font-size: calc(12px * var(--text-scale));
+  overflow-wrap: anywhere;
+}
+.personal-info-modal .personal-profile-details .personal-user-id {
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+.group-info-modal .group-identity p,
+.group-info-modal .group-identity small {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
+.group-profile-overview > h3 {
+  margin: 0 0 10px;
+  font-size: calc(13px * var(--text-scale));
+}
+.group-profile-overview > p {
+  margin: 0 0 20px;
+  line-height: 1.7;
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+}
+.group-info-modal .group-danger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 0;
+  border: 0;
+}
+.group-info-modal .group-danger-actions .button {
+  min-height: 36px;
+  font-size: calc(11px * var(--text-scale));
+}
+.group-info-modal .group-member-profile-button .avatar {
+  border-radius: 50%;
+}
+@media (max-width: 767px) {
+  .modal.personal-info-modal,
+  .modal.group-info-modal {
+    padding: 24px 18px;
+  }
+  .personal-profile-section-label,
+  .group-profile-tabs {
+    margin-inline: -18px;
+    padding-inline: 18px;
+  }
+  .personal-info-modal .personal-profile-copy h3,
+  .group-info-modal .group-identity h3 {
+    font-size: calc(21px * var(--text-scale));
+  }
+  .personal-profile-details > div {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .personal-profile-details > div:has(.personal-user-id) {
+    flex-direction: column;
+  }
+}

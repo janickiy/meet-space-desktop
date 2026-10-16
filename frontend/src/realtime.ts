@@ -1,3 +1,6 @@
+import { getAccessToken } from "./api";
+import { isDesktopBuild } from "./platform/build";
+import { DesktopSocket, type RealtimeSocket } from "./platform/transport";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, ApiError } from "./api";
@@ -92,7 +95,7 @@ export function useRealtime(
   const [error, setError] = useState<Error | null>(null);
   const [events, setEvents] = useState<string[]>([]);
   const [generation, setGeneration] = useState(0);
-  const socket = useRef<WebSocket | null>(null);
+  const socket = useRef<RealtimeSocket | null>(null);
   const listener = useRef<
     /**
      * Вложенный обработчик выполняет шаг «Вложенный обработчик» в состоянии связи и WebRTC-медиа.
@@ -233,16 +236,29 @@ export function useRealtime(
         if (disposed) return;
         setStatus(retry ? "Переподключение…" : "Подключение…");
         try {
-          const { ticket } = await api.wsTicket(
-            conferenceId,
-            abort.signal,
-            clientId,
-          );
-          if (disposed) return;
-          const ws = new WebSocket(
-            websocketURL(conferenceId, ticket),
-            "go-recorder.v1",
-          );
+          let ws: RealtimeSocket;
+          if (isDesktopBuild) {
+            ws = new DesktopSocket(
+              {
+                kind: "conference",
+                conferenceId,
+                clientId,
+                token: getAccessToken(),
+              },
+              abort.signal,
+            );
+          } else {
+            const { ticket } = await api.wsTicket(
+              conferenceId,
+              abort.signal,
+              clientId,
+            );
+            if (disposed) return;
+            ws = new WebSocket(
+              websocketURL(conferenceId, ticket),
+              "go-recorder.v1",
+            );
+          }
           socket.current = ws;
           ws.onopen =
             /**

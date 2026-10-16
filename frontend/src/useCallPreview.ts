@@ -1,3 +1,4 @@
+import { subscribeCaptureRelease } from "./platform/captureLifecycle";
 import { useEffect, useState } from "react";
 import { captureErrorMessage } from "./prejoinDevices";
 
@@ -76,11 +77,16 @@ export function useCallPreview(
         track.stop();
       });
     };
-    window.addEventListener("pagehide", release);
+    const unsubscribeRelease = subscribeCaptureRelease(() => {
+      release();
+      setStream(undefined);
+      setLoading(false);
+      onUnavailable();
+    });
     void capture();
     return () => {
       release();
-      window.removeEventListener("pagehide", release);
+      unsubscribeRelease();
     };
   }, [kind, enabled, deviceId, noiseSuppression, onUnavailable]);
   return {

@@ -399,7 +399,16 @@ func (c *Controller) join(ctx context.Context, binding domain.Binding, requestID
 	if result.ICEServers == nil {
 		result.ICEServers = []realtime.ICEServer{}
 	}
-	err = c.emit(ctx, binding, "media.joined", requestID, map[string]any{"mediaPeerId": result.MediaPeerID, "workerId": result.WorkerID, "maxPeers": result.MaxPeers, "iceServers": result.ICEServers, "tracks": result.Tracks, "videoCapture": result.VideoCapture, "policy": result.Policy})
+	joined := map[string]any{"mediaPeerId": result.MediaPeerID, "workerId": result.WorkerID, "maxPeers": result.MaxPeers, "iceServers": result.ICEServers, "tracks": result.Tracks, "videoCapture": result.VideoCapture, "policy": result.Policy}
+	// Preserve the worker's TURN policy and credential lifetime. Omitting relay
+	// would make the browser silently use its default ICE policy (all).
+	if result.ICETransportPolicy != "" {
+		joined["iceTransportPolicy"] = result.ICETransportPolicy
+	}
+	if result.ICEExpiresAt > 0 {
+		joined["iceExpiresAt"] = result.ICEExpiresAt
+	}
+	err = c.emit(ctx, binding, "media.joined", requestID, joined)
 	if err != nil {
 		c.Disconnected(context.Background(), realtime.Session{ConnectionID: binding.ConnectionID})
 	}

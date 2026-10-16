@@ -29,6 +29,8 @@ import {
   Video,
 } from "lucide-react";
 import { api } from "../api";
+import { isDesktopBuild } from "../platform/build";
+import { NativeSaveButton } from "./desktop/NativeAssets";
 import { useAuth } from "../auth";
 import { formatBytes } from "../collaboration";
 import { safeRecordingUrl } from "../recordingPresentation";
@@ -1117,6 +1119,22 @@ function ConferenceChatFile({
     return () => window.clearTimeout(timer);
   }, [download]);
   const url = safeRecordingUrl(download?.url);
+  if (isDesktopBuild)
+    return (
+      <NativeSaveButton
+        asset={{
+          kind: "attachment",
+          scope: "conference",
+          scopeId: conferenceId,
+          attachmentId: file.id,
+          filename: file.filename,
+        }}
+        className="button button-outline"
+      >
+        <Download size={16} aria-hidden="true" /> {file.filename} ·{" "}
+        {formatBytes(file.size)}
+      </NativeSaveButton>
+    );
   return (
     <div>
       <Button

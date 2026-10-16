@@ -6,6 +6,8 @@ import {
   Link as LinkIcon,
   LogOut,
   MessageCircle,
+  Mic,
+  MicOff,
   Square,
   Users,
   ShieldCheck,
@@ -18,6 +20,7 @@ import { Button, ErrorNotice, Modal } from "../ui";
 import { MeetingClock } from "./MeetingClock";
 import { ConferenceRoomSidebar } from "./ConferenceRoomSidebar";
 import type { ActiveConferenceViewProps } from "./types";
+import { initials } from "../../utils";
 
 /**
  * Отображает активную комнату: медиасвязь, верхнюю панель и диалоги записи/приглашения.
@@ -39,6 +42,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
     conference,
     membership,
     people,
+    onlinePeople,
     live,
     recordingAccess,
     recordingStatus,
@@ -77,14 +81,19 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           aria-label="К моим конференциям"
         >
           <ArrowLeft size={19} />
+          <span>К встречам</span>
         </Link>
         <div className="room-title">
           <h1>{conference.title}</h1>
-          <span>
-            {live.state ? "Встреча в эфире" : "Подключаемся к встрече"}
-          </span>
+          <div className="room-title-meta">
+            <MeetingClock startedAt={conference.startedAt} />
+            <span>
+              {live.state
+                ? `В эфире · Участников: ${onlinePeople.length}`
+                : "Подключаемся к встрече"}
+            </span>
+          </div>
         </div>
-        <MeetingClock startedAt={conference.startedAt} />
         <div className="room-header-actions">
           {activeRecording && (
             <span
@@ -235,6 +244,37 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
               </>
             }
           />
+          <ul
+            className="room-participant-filmstrip"
+            aria-label="Участники демонстрации"
+          >
+            {onlinePeople.map((person) => (
+              <li key={person.id}>
+                <span className="room-filmstrip-avatar" aria-hidden="true">
+                  {initials(person.displayName || "Участник")}
+                </span>
+                <div>
+                  <span title={person.displayName || "Участник"}>
+                    {person.displayName || "Участник"}
+                    {person.id === membership.id ? " (вы)" : ""}
+                  </span>
+                  <span
+                    aria-label={
+                      person.microphoneEnabled
+                        ? "Микрофон включён"
+                        : "Микрофон выключен"
+                    }
+                  >
+                    {person.microphoneEnabled ? (
+                      <Mic size={16} />
+                    ) : (
+                      <MicOff size={16} />
+                    )}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
         <ConferenceRoomSidebar {...props} />
       </section>

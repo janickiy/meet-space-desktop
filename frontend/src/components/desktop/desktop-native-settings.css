@@ -1,0 +1,43 @@
+.desktop-native-settings {
+  max-width: 760px;
+}
+.desktop-native-settings h2 {
+  margin-top: 0;
+}
+.desktop-native-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  cursor: pointer;
+}
+.desktop-native-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+  accent-color: var(--primary, #635bff);
+}
+.desktop-native-toggle + .field-hint {
+  margin-left: 30px;
+}
+.desktop-native-exit {
+  margin-top: 28px;
+}
+.desktop-native-updates {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border, #e0ddea);
+}
+.desktop-native-updates h3 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+.desktop-native-updates .desktop-native-exit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.desktop-native-updates .desktop-native-exit p {
+  flex-basis: 100%;
+}

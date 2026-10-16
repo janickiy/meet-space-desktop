@@ -1,0 +1,608 @@
+/* Desktop layout from the supplied October 2026 design. Shared by web and Electron. */
+:root {
+  --sidebar-width: 218px;
+  --workspace-gutter: 34px;
+}
+body {
+  font-size: calc(13px * var(--text-scale));
+}
+.app-shell {
+  grid-template-rows: 38px minmax(0, 1fr);
+  background: var(--canvas);
+}
+.app-chrome {
+  height: 38px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--chrome);
+  color: var(--muted);
+  position: sticky;
+}
+.chrome-context {
+  justify-content: flex-start;
+  flex: none;
+  gap: 9px;
+  font-size: calc(10px * var(--text-scale));
+  font-weight: 600;
+}
+.chrome-context img {
+  object-fit: contain;
+}
+.chrome-workspace {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(10px * var(--text-scale));
+}
+.sidebar {
+  top: 38px;
+  height: calc(100dvh - 38px);
+  padding: 26px 14px 12px;
+  border-right: 1px solid var(--border);
+  background: var(--sidebar-bg);
+}
+.sidebar-head {
+  padding: 0 10px 26px;
+}
+.workspace-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: calc(22px * var(--text-scale));
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  text-decoration: none;
+}
+.workspace-brand img {
+  flex: 0 0 30px;
+  object-fit: contain;
+}
+.sidebar-workspace-card {
+  margin: 0 1px 26px;
+}
+.workspace-identity,
+.sidebar-workspace-card .desktop-server-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  text-align: left;
+  background: var(--canvas);
+  color: var(--text);
+  box-shadow: none;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.6;
+}
+.sidebar-workspace-card .desktop-server-button svg {
+  flex: 0 0 29px;
+  padding: 5px;
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.sidebar-workspace-card .desktop-server-button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-identity small {
+  display: block;
+  font-size: calc(9px * var(--text-scale));
+  color: var(--muted);
+}
+.workspace-identity > svg {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.workspace-symbol {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 7px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.sidebar-caption {
+  font-size: calc(9px * var(--text-scale));
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
+  color: var(--sidebar-muted);
+  padding-inline: 12px;
+}
+.sidebar-nav {
+  gap: 3px;
+}
+.sidebar .nav-item {
+  min-height: 40px;
+  padding: 10px 12px;
+  gap: 12px;
+  font-size: calc(12px * var(--text-scale));
+  color: var(--sidebar-text);
+  font-weight: 400;
+  border-radius: 7px;
+  position: relative;
+}
+.sidebar .nav-item > svg {
+  width: 18px;
+  height: 18px;
+}
+.sidebar .nav-item:hover {
+  color: var(--text);
+  background: var(--canvas);
+}
+.sidebar .nav-item.nav-active {
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+.sidebar .nav-item.nav-active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 19px;
+  border-radius: 0 3px 3px 0;
+  background: var(--primary);
+}
+.sidebar .message-unread-count,
+.sidebar .nav-active .message-unread-count {
+  min-width: 18px;
+  min-height: 16px;
+  border-radius: 5px;
+  font-size: calc(9px * var(--text-scale));
+  color: var(--primary-contrast);
+  background: var(--primary);
+}
+.sidebar-personal-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  padding-top: 0;
+  margin: 30px 0 8px;
+}
+.sidebar-personal-caption a {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  min-width: 28px;
+  min-height: 28px;
+}
+.sidebar-folder-dot {
+  width: 7px;
+  height: 7px;
+  margin: 0 5px;
+  border-radius: 2px;
+  background: #b4afe4;
+  flex-shrink: 0;
+}
+.sidebar-folders .nav-item:nth-child(2) .sidebar-folder-dot {
+  background: #d0b29e;
+}
+.sidebar-folders .nav-item:nth-child(3) .sidebar-folder-dot {
+  background: #91bbaa;
+}
+.sidebar-service-nav {
+  padding-top: 26px;
+}
+.sidebar-bottom {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 8px;
+}
+.sidebar .profile {
+  padding: 10px 2px;
+  gap: 10px;
+}
+.sidebar .profile .avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: calc(10px * var(--text-scale));
+}
+.sidebar .profile strong {
+  display: block;
+  color: var(--text);
+  font-size: calc(10px * var(--text-scale));
+  line-height: 1.5;
+}
+.sidebar .profile span:not(.avatar) {
+  font-size: calc(9px * var(--text-scale));
+  color: var(--muted);
+}
+.sidebar .profile > div {
+  min-width: 0;
+}
+.sidebar .profile-chevron {
+  margin-left: auto;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.sidebar .profile:hover {
+  background: var(--canvas);
+}
+.sidebar .logout-button {
+  min-height: 32px;
+  padding: 5px 8px;
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
+}
+.sidebar .logout-button svg {
+  width: 15px;
+  height: 15px;
+}
+.sidebar :focus-visible,
+.app-chrome :focus-visible {
+  outline-color: var(--focus);
+}
+.workspace {
+  margin: 0;
+  min-height: calc(100dvh - 38px);
+  border-radius: 0;
+  background: var(--canvas);
+}
+.workspace-top {
+  min-height: 70px;
+  flex-shrink: 0;
+  padding: 0 32px;
+}
+.workspace-context {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
+  font-weight: 400;
+}
+.workspace-context strong {
+  color: var(--text);
+  font-weight: 400;
+}
+.workspace-account {
+  gap: 14px;
+}
+.workspace-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 280px;
+  min-height: 34px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--canvas);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: calc(10px * var(--text-scale));
+  text-align: left;
+}
+.workspace-search-trigger kbd {
+  margin-left: auto;
+  font-family: inherit;
+  font-size: calc(9px * var(--text-scale));
+  white-space: nowrap;
+}
+.workspace-top .notification-bell {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+}
+.workspace-top .notification-bell svg {
+  width: 20px;
+  height: 20px;
+}
+.workspace-main {
+  padding: 30px var(--workspace-gutter) 36px;
+}
+.workspace-footer {
+  background: var(--canvas);
+  border-top-color: var(--border);
+  padding-block: 10px;
+}
+.workspace-footer .copyright {
+  font-size: calc(10px * var(--text-scale));
+}
+.avatar {
+  border-radius: 50%;
+}
+.button {
+  min-height: 38px;
+  padding: 10px 16px;
+  font-size: calc(12px * var(--text-scale));
+  border-radius: 8px;
+}
+.button-secondary,
+.button-outline {
+  border-color: var(--border);
+}
+.icon-button {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 7px;
+}
+.page-heading p {
+  font-size: calc(12px * var(--text-scale));
+}
+.field input,
+.field textarea,
+.field select {
+  border-color: var(--border);
+  min-height: 40px;
+  font-size: calc(13px * var(--text-scale));
+}
+.content-card {
+  border-radius: 11px;
+  box-shadow: none;
+}
+.workspace-search-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+.workspace-search-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+}
+.workspace-search-input input {
+  border: 0;
+  background: transparent;
+  min-width: 0;
+  width: 100%;
+  padding: 2px;
+  color: var(--text);
+  font: inherit;
+}
+.workspace-search-caption {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin: 20px 0 8px;
+}
+.workspace-search-results {
+  display: grid;
+  gap: 4px;
+}
+.workspace-search-results a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+}
+.workspace-search-results a:hover {
+  background: var(--primary-soft);
+}
+.workspace-search-results a > svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.workspace-search-results a > svg:last-child {
+  margin-left: auto;
+}
+.workspace-search-results a span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workspace-search-results strong,
+.workspace-search-results small {
+  display: block;
+}
+.workspace-search-results strong {
+  font-size: var(--text-sm);
+}
+.workspace-search-results small {
+  color: var(--muted);
+  margin-top: 4px;
+  font-size: var(--text-xs);
+}
+:root[data-theme="light"]
+  .workspace-mobile-brand
+  .brand-lockup
+  > .brand-logo-light {
+  display: block;
+}
+:root[data-theme="light"]
+  .workspace-mobile-brand
+  .brand-lockup
+  > .brand-logo-dark {
+  display: none;
+}
+@media (min-width: 1600px) {
+  :root {
+    --sidebar-width: 238px;
+    --workspace-gutter: 50px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1179px) {
+  :root {
+    --sidebar-width: 188px;
+    --workspace-gutter: 24px;
+  }
+  .sidebar {
+    padding-inline: 10px;
+  }
+  .workspace-brand {
+    font-size: calc(20px * var(--text-scale));
+    gap: 7px;
+  }
+  .sidebar-head {
+    padding-inline: 6px;
+  }
+  .workspace-search-trigger {
+    width: 240px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --sidebar-width: 76px;
+    --workspace-gutter: 24px;
+  }
+  .sidebar {
+    padding: 25px 10px 12px;
+  }
+  .sidebar-head {
+    padding: 0 0 25px;
+  }
+  .workspace-brand {
+    justify-content: center;
+  }
+  .workspace-brand span,
+  .sidebar-workspace-card,
+  .sidebar-personal-caption,
+  .sidebar-folders,
+  .sidebar .profile-chevron {
+    display: none;
+  }
+  .sidebar .nav-item {
+    justify-content: center;
+    padding: 12px;
+  }
+  .workspace-context > span,
+  .workspace-context > svg {
+    display: none;
+  }
+  .workspace-search-trigger {
+    width: 220px;
+  }
+  .workspace-top {
+    padding-inline: 24px;
+  }
+}
+@media (max-width: 767px) {
+  :root {
+    --workspace-gutter: 16px;
+  }
+  .sidebar {
+    top: 0;
+    height: 100dvh;
+  }
+  .workspace {
+    min-height: 100dvh;
+  }
+  .workspace-top {
+    min-height: 64px;
+    padding-inline: 16px;
+    background: var(--surface);
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+  }
+  .workspace-context {
+    display: none;
+  }
+  .workspace-search-trigger {
+    width: 34px;
+    height: 34px;
+    padding: 8px;
+    justify-content: center;
+    background: transparent;
+    border: 0;
+  }
+  .workspace-search-trigger span,
+  .workspace-search-trigger kbd {
+    display: none;
+  }
+  .workspace-main {
+    padding: 24px 16px;
+  }
+  .workspace-footer {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-height: 850px) and (min-width: 1024px) {
+  .sidebar {
+    padding-top: 20px;
+  }
+  .sidebar-head {
+    padding-bottom: 20px;
+  }
+  .sidebar-workspace-card {
+    margin-bottom: 18px;
+  }
+  .sidebar-personal-caption {
+    margin-top: 18px;
+  }
+  .sidebar-service-nav {
+    padding-top: 16px;
+  }
+}
+
+/* Keep workspace navigation fixed while the current page scrolls independently. */
+@media (min-width: 768px) {
+  .app-shell {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .app-shell > .workspace {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .workspace-main {
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .workspace-footer {
+    flex-shrink: 0;
+  }
+}
+.sidebar-workspace-card .desktop-server-button > span {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+/* The wordmark is artwork; text scaling must not crop its name. */
+.workspace-brand > span {
+  font-size: 22px;
+}
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .workspace-brand > span {
+    font-size: 20px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .sidebar-workspace-card {
+    display: block;
+    margin: 0 0 20px;
+  }
+  .sidebar-workspace-card .desktop-server-button {
+    min-height: 44px;
+    width: 44px;
+    padding: 7px;
+    justify-content: center;
+  }
+  .sidebar-workspace-card .desktop-server-button > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .sidebar-workspace-card .workspace-identity {
+    display: none;
+  }
+}

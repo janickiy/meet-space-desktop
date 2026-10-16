@@ -1,10 +1,14 @@
-import { useState, type KeyboardEvent } from "react";
+import { isDesktopBuild } from "../platform/build";
+import { Fragment, useState, type KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   ArrowRight,
   ArrowUpRight,
   CalendarDays,
   FolderOpen,
+  CalendarClock,
+  Link2,
+  UserRound,
   Plus,
   MessageCircle,
   DoorOpen,
@@ -24,6 +28,12 @@ import type { Conference, ConferenceFilters } from "../types";
 import { localDayEnd, localSchedule } from "../collaboration";
 import "./dashboard.css";
 import "./dashboard-home.css";
+import "./collections-redesign.css";
+import {
+  CollectionViewToggle,
+  type CollectionView,
+} from "./CollectionViewToggle";
+import { MeetingsOverview } from "../components/MeetingsOverview";
 
 const views: { id: NonNullable<ConferenceFilters["view"]>; label: string }[] = [
   { id: "upcoming", label: "Предстоящие" },
@@ -70,32 +80,32 @@ function MeetingRow({
             })
           : "—"}
         <small>
-          {conference.status === "created"
-            ? "Без даты"
-            : Number.isFinite(date.getTime())
-              ? date.toLocaleDateString("ru-RU", {
-                  day: "numeric",
-                  month: "short",
-                })
-              : ""}
+          {conference.plannedDurationMin
+            ? `${conference.plannedDurationMin} мин`
+            : conference.status === "created"
+              ? "Без даты"
+              : Number.isFinite(date.getTime())
+                ? date.toLocaleDateString("ru-RU", {
+                    day: "numeric",
+                    month: "short",
+                  })
+                : ""}
         </small>
       </span>
       <div className="conference-row-copy">
+        <StatusBadge status={conference.status} />
         <Link to={target}>
           <h3>{conference.title}</h3>
         </Link>
         <p>
-          {conference.status === "created" ? "Создана: " : ""}
-          {formatDate(timestamp)}
-          {conference.plannedDurationMin
-            ? ` · ${conference.plannedDurationMin} мин`
+          <UserRound size={13} aria-hidden="true" />
+          {conference.ownerId === user?.id ? "Вы организатор" : "Вы участник"}
+          {conference.participantCount !== undefined
+            ? ` · ${conference.participantCount} участников`
             : ""}
-          {conference.ownerId === user?.id
-            ? " · Вы организатор"
-            : " · Вы участник"}
+          <span className="sr-only"> · {formatDate(timestamp)}</span>
         </p>
       </div>
-      <StatusBadge status={conference.status} />
       <div className="dashboard-meeting-action">
         {(past || showOpenAction) && (
           <Link className="button button-outline" to={target}>
@@ -105,6 +115,15 @@ function MeetingRow({
               <ArrowRight size={16} aria-hidden="true" />
             )}
             {past ? "Материалы" : "Открыть"}
+          </Link>
+        )}
+        {!past && !showOpenAction && (
+          <Link
+            className="icon-button meeting-open-link"
+            to={target}
+            aria-label={`Открыть встречу: ${conference.title}`}
+          >
+            <ArrowUpRight size={18} />
           </Link>
         )}
         {actions && <ConferenceChatActions conference={conference} />}
@@ -125,12 +144,18 @@ export function Dashboard({
   all?: boolean;
   create?: boolean;
 }) {
-  return all ? <ConferenceDashboard /> : <HomeDashboard create={create} />;
+  return all || (isDesktopBuild && !create) ? (
+    <ConferenceDashboard />
+  ) : (
+    <HomeDashboard create={create} />
+  );
 }
 
 function ConferenceDashboard() {
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
+  const [joining, setJoining] = useState(false);
+  const [layout, setLayout] = useState<CollectionView>("list");
   const tab: NonNullable<ConferenceFilters["view"]> =
     params.get("view") === "active"
       ? "active"
@@ -147,7 +172,17 @@ function ConferenceDashboard() {
     from: from ? localSchedule(`${from}T00:00`) || undefined : undefined,
     to: to ? localDayEnd(to) || undefined : undefined,
   });
-  const [search, setSearch] = useState("");
+  const search = params.get("search") || "";
+  const setSearch = (value: string) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (value) next.set("search", value);
+        else next.delete("search");
+        return next;
+      },
+      { replace: true },
+    );
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   /** @args view — серверная категория встреч. Сохраняет прочие параметры маршрута. */
@@ -181,20 +216,98 @@ function ConferenceDashboard() {
     item.title.toLocaleLowerCase("ru").includes(search.toLocaleLowerCase("ru")),
   );
   const visible = filtered;
+  const grouped = new Map<string, { label: string; items: Conference[] }>();
+  const today = new Date();
+  const tomorrow = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate() + 1,
+  );
+  for (const meeting of visible) {
+    const value =
+      meeting.status === "created"
+        ? null
+        : meeting.finishedAt || meeting.startedAt || meeting.scheduledAt;
+    const date = value ? new Date(value) : null;
+    const valid = date && Number.isFinite(date.getTime());
+    const key = valid ? date.toDateString() : "unscheduled";
+    const label = !valid
+      ? "Без даты"
+      : `${key === today.toDateString() ? "Сегодня · " : key === tomorrow.toDateString() ? "Завтра · " : ""}${date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}`;
+    const group = grouped.get(key) || { label, items: [] };
+    group.items.push(meeting);
+    grouped.set(key, group);
+  }
   return (
     <div className="dashboard-page dashboard-all">
       <section className="page-heading dashboard-heading">
         <div>
           <h1>Встречи</h1>
-          <p>Ваши разговоры, планы и общие результаты.</p>
+          <p>Хорошие идеи начинаются с разговора.</p>
         </div>
-        <Button type="button" onClick={() => setCreating(true)}>
-          <Plus size={18} aria-hidden="true" />
-          Новая встреча
-        </Button>
+        <span className="meetings-date">
+          <CalendarDays size={17} aria-hidden="true" />
+          {new Date().toLocaleDateString("ru-RU", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+        </span>
       </section>
+      <div
+        className="meetings-quick-actions"
+        aria-label="Действия со встречами"
+      >
+        <button
+          type="button"
+          className="meetings-quick-action meetings-quick-primary"
+          onClick={() => setCreating(true)}
+        >
+          <span className="meetings-quick-symbol">
+            <Video size={22} aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Новая встреча</strong>
+            <small>Начать разговор сейчас</small>
+          </span>
+          <ArrowUpRight size={17} aria-hidden="true" />
+        </button>
+        <Link className="meetings-quick-action" to="/meetings/new?scheduled=1">
+          <span className="meetings-quick-symbol">
+            <CalendarClock size={22} aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Запланировать</strong>
+            <small>Выбрать удобное время</small>
+          </span>
+          <ArrowUpRight size={17} aria-hidden="true" />
+        </Link>
+        <button
+          type="button"
+          className="meetings-quick-action"
+          onClick={() => setJoining(true)}
+        >
+          <span className="meetings-quick-symbol">
+            <Link2 size={22} aria-hidden="true" />
+          </span>
+          <span>
+            <strong>Подключиться</strong>
+            <small>По ссылке или коду встречи</small>
+          </span>
+          <ArrowUpRight size={17} aria-hidden="true" />
+        </button>
+      </div>
       <div className="dashboard-columns">
         <section className="conferences-panel">
+          <div className="meetings-section-heading">
+            <h2>Мои встречи</h2>
+            <CollectionViewToggle
+              value={layout}
+              onChange={setLayout}
+              label="Вид списка встреч"
+            />
+          </div>
           <div className="list-toolbar">
             <div
               className="tabs"
@@ -223,28 +336,11 @@ function ConferenceDashboard() {
                 <Search size={17} aria-hidden="true" />
                 <input
                   aria-label="Поиск конференции по названию"
-                  placeholder="Найти среди загруженных"
+                  placeholder="Найти встречу"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
               </label>
-              <Button
-                variant="outline"
-                className="dashboard-mobile-filter"
-                aria-label="Фильтры встреч"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-              >
-                <SlidersHorizontal size={18} />
-                Фильтры
-              </Button>
-            </div>
-          </div>
-          <div
-            className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
-          >
-            <label className="field">
-              Моё участие
               <select
                 aria-label="Моё участие"
                 value={scope}
@@ -260,7 +356,21 @@ function ConferenceDashboard() {
                 <option value="owned">Я организатор</option>
                 <option value="participating">Я участник</option>
               </select>
-            </label>
+              <Button
+                variant="outline"
+                className="dashboard-mobile-filter"
+                aria-label="Фильтры встреч"
+                aria-expanded={filtersOpen}
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                <SlidersHorizontal size={18} />
+                Фильтры
+              </Button>
+            </div>
+          </div>
+          <div
+            className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
+          >
             <label className="field">
               С даты
               <input
@@ -310,14 +420,19 @@ function ConferenceDashboard() {
             {query.isPending ? (
               <MeetingSkeleton rows={4} />
             ) : visible.length ? (
-              <div className="conference-list">
-                {visible.map((item) => (
-                  <MeetingRow
-                    key={item.id}
-                    conference={item}
-                    actions
-                    showOpenAction={false}
-                  />
+              <div className={`conference-list meeting-layout-${layout}`}>
+                {[...grouped].map(([key, group]) => (
+                  <Fragment key={key}>
+                    <h3 className="meetings-day-heading">{group.label}</h3>
+                    {group.items.map((item) => (
+                      <MeetingRow
+                        key={item.id}
+                        conference={item}
+                        actions
+                        showOpenAction={false}
+                      />
+                    ))}
+                  </Fragment>
                 ))}
               </div>
             ) : (
@@ -366,8 +481,10 @@ function ConferenceDashboard() {
             </Button>
           )}
         </section>
+        <MeetingsOverview meetings={conferences} />
       </div>
       {creating && <CreateConference onClose={() => setCreating(false)} />}
+      {joining && <JoinByLink onClose={() => setJoining(false)} />}
     </div>
   );
 }

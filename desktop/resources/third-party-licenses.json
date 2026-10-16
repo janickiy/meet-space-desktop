@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "applicationLicense": "UNLICENSED",
+  "inventory": "actual installed production closure plus Vite injected helper; conservative installed peers included",
+  "lockfiles": {
+    "frontend": "c9eda37c9f6a576fd52d7ffa31772c8eb720f2277f863889aedce181e4b0dc27",
+    "desktop": "c43700764809969aedb4204fa4d478b34f8e97bfe1fe53a418347d43f9cb80d9"
+  },
+  "noticesSha256": "8950057495c79f8610c0ff8005eaac8749145e748740e75303ac6adb0e82266d",
+  "separateNotices": [
+    "LICENSE.electron.txt",
+    "LICENSES.chromium.html"
+  ],
+  "components": [
+    {
+      "name": "@fontsource/inter",
+      "version": "5.3.0",
+      "license": "OFL-1.1",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "3b0a5fca3d17942cde889069889dedbbbd075e9b599968c82a95f4d944e9b345"
+        }
+      ]
+    },
+    {
+      "name": "@remix-run/route-pattern",
+      "version": "0.22.1",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "d6baf87f30d13d2d7770c18c858e7a31fa7ceede4bc9469a50f03dbafe455cb4"
+        }
+      ]
+    },
+    {
+      "name": "@tanstack/query-core",
+      "version": "5.104.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7"
+        }
+      ]
+    },
+    {
+      "name": "@tanstack/react-query",
+      "version": "5.104.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7"
+        }
+      ]
+    },
+    {
+      "name": "@types/react",
+      "version": "19.3.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "cookie-es",
+      "version": "3.1.1",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "f57270b85c3922414c061e36b93f7c74420b8facf5ccf729202d5ff5b7cd7608"
+        }
+      ]
+    },
+    {
+      "name": "csstype",
+      "version": "3.2.3",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "11d55bd4541c75ee7879547ac49089c489163dae49551389713c3d026cab383e"
+        }
+      ]
+    },
+    {
+      "name": "lucide-react",
+      "version": "1.49.0",
+      "license": "ISC",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+        }
+      ]
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "react-router",
+      "version": "8.4.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE.md",
+          "sha256": "77c9ee6a9c5d5782fb0c50b50d101189116314c14f7df0a1b0d385fc96a7ba49"
+        }
+      ]
+    },
+    {
+      "name": "react",
+      "version": "19.3.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "scheduler",
+      "version": "0.28.0",
+      "license": "MIT",
+      "scopes": [
+        "frontend production dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "vite",
+      "version": "8.3.1",
+      "license": "MIT",
+      "scopes": [
+        "bundled renderer build helper"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE.md",
+          "sha256": "387dd7baa307083401a27c58c362c30832f5ba1dba84f10cc22c33401523f45c"
+        }
+      ]
+    },
+    {
+      "name": "ws",
+      "version": "8.22.0",
+      "license": "MIT",
+      "scopes": [
+        "desktop runtime dependency closure (including installed peers)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "2b29dcfe0d6471f7e8c92c5fb38c9f93edee10330937055440192f1832b1ecef"
+        }
+      ]
+    }
+  ]
+}

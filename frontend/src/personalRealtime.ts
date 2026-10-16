@@ -1,3 +1,6 @@
+import { getAccessToken } from "./api";
+import { isDesktopBuild } from "./platform/build";
+import { DesktopSocket, type RealtimeSocket } from "./platform/transport";
 import { useEffect, useRef, useState } from "react";
 import {
   useQuery,
@@ -211,6 +214,10 @@ export function usePersonalRealtime(userId?: string) {
   const client = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
+  // Declarative routers change navigate's identity when the route changes.
+  // Keep event navigation current without reconnecting the account channel.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const pathname = useRef(location.pathname);
   pathname.current = location.pathname;
   const [notice, setNotice] = useState<{
@@ -235,7 +242,7 @@ export function usePersonalRealtime(userId?: string) {
     const connectionKey = ["personal-connection", userId];
     client.setQueryData(connectionKey, "connecting");
     const seen = new Map<string, number>();
-    let socket: WebSocket | undefined;
+    let socket: RealtimeSocket | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let attempts = 0;
     const refresh = () => {
@@ -256,12 +263,19 @@ export function usePersonalRealtime(userId?: string) {
     };
     const connect = async () => {
       try {
-        const ticket = await api.userWSTicket(controller.signal);
-        if (controller.signal.aborted) return;
-        const url = new URL("/api/v1/ws", window.location.origin);
-        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-        url.searchParams.set("ticket", ticket.ticket);
-        socket = new WebSocket(url);
+        if (isDesktopBuild) {
+          socket = new DesktopSocket(
+            { kind: "account", token: getAccessToken() },
+            controller.signal,
+          );
+        } else {
+          const ticket = await api.userWSTicket(controller.signal);
+          if (controller.signal.aborted) return;
+          const url = new URL("/api/v1/ws", window.location.origin);
+          url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+          url.searchParams.set("ticket", ticket.ticket);
+          socket = new WebSocket(url);
+        }
         socket.onopen = () => {
           if (controller.signal.aborted) return;
           client.setQueryData(connectionKey, "connected");
@@ -288,7 +302,7 @@ export function usePersonalRealtime(userId?: string) {
               const folderId = folderEvent.data.folderId!;
               purgeFolder(client, userId, folderId);
               if (pathname.current === `/folders/${folderId}`)
-                navigate("/folders", { replace: true });
+                navigateRef.current("/folders", { replace: true });
             }
             void invalidateFolders(client, userId);
             return;
@@ -307,7 +321,7 @@ export function usePersonalRealtime(userId?: string) {
             revokePersonalConversation(client, id, userId);
             setNotice((current) => (current?.id === id ? null : current));
             if (pathname.current === `/personal/${id}`)
-              navigate("/personal", { replace: true });
+              navigateRef.current("/personal", { replace: true });
             refresh();
             return;
           }
@@ -375,7 +389,7 @@ export function usePersonalRealtime(userId?: string) {
             revokePersonalConversation(client, id, userId);
             setNotice((current) => (current?.id === id ? null : current));
             if (pathname.current === `/personal/${id}`)
-              navigate("/personal", { replace: true });
+              navigateRef.current("/personal", { replace: true });
             refresh();
             return;
           }
@@ -396,6 +410,7 @@ export function usePersonalRealtime(userId?: string) {
               queryKey: ["personal-chat-search", id, userId],
             });
           if (
+            !isDesktopBuild &&
             event.type === "message.created" &&
             m &&
             m.senderId !== userId &&
@@ -429,7 +444,7 @@ export function usePersonalRealtime(userId?: string) {
       setNotice(null);
       client.removeQueries({ queryKey: connectionKey, exact: true });
     };
-  }, [userId, client, navigate]);
+  }, [userId, client]);
   return {
     unread: summary.data?.unreadCount ?? 0,
     notice,

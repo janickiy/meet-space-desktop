@@ -1,0 +1,9 @@
+MeetSpace Desktop
+
+Application package license: UNLICENSED. No license grant for the application
+source code is included. The project owner must review application licensing
+and distribution terms before authorizing a production release.
+
+Included third-party software is distributed under its respective license
+terms. Complete notices are provided in THIRD_PARTY_NOTICES.txt,
+third-party-licenses.json, LICENSE.electron.txt and LICENSES.chromium.html.

@@ -1,0 +1,11 @@
+MeetSpace Test — Stage 06
+
+Unsigned development build for internal Windows testing.
+This installer is not a signed production release and does not include an
+automatic update channel. Windows may show an unknown publisher warning.
+
+The executable, installer and shortcuts identify the application as MeetSpace Test.
+
+Application source licensing has not been specified by its owner. No third-party
+software license is granted for MeetSpace application source by this test build.
+Electron and bundled third-party components retain their own license notices.

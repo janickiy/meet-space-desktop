@@ -1,3 +1,4 @@
+import { subscribeCaptureRelease } from "../platform/captureLifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Play, Square, VideoOff } from "lucide-react";
 import { useAuth } from "../auth";
@@ -84,6 +85,26 @@ function usePreview(
     setStream(null);
     setError("");
     setLoading(enabled);
+    const ended = () => {
+      if (!active) return;
+      setStream(null);
+      setError("Устройство отключено. Подключите его и повторите проверку.");
+      void refresh();
+    };
+    const release = () => {
+      active = false;
+      owned?.getTracks().forEach((track) => {
+        track.removeEventListener("ended", ended);
+        track.stop();
+      });
+    };
+    const unsubscribeRelease = subscribeCaptureRelease(() => {
+      release();
+      setStream(null);
+      setLoading(false);
+      if (enabled)
+        setError("Предпросмотр остановлен. Повторите проверку устройства.");
+    });
     if (enabled && navigator.mediaDevices?.getUserMedia) {
       const constraints = {
         ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
@@ -102,6 +123,9 @@ function usePreview(
             return;
           }
           owned = next;
+          next
+            .getTracks()
+            .forEach((track) => track.addEventListener("ended", ended));
           setStream(next);
           setLoading(false);
           void refresh();
@@ -114,8 +138,8 @@ function usePreview(
         });
     } else setLoading(false);
     return () => {
-      active = false;
-      owned?.getTracks().forEach((track) => track.stop());
+      release();
+      unsubscribeRelease();
     };
   }, [kind, enabled, deviceId, noiseSuppression, refresh, retry]);
   return {

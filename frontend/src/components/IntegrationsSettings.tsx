@@ -1,3 +1,4 @@
+import { isDesktopBuild } from "../platform/build";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +58,10 @@ export function IntegrationsSettings({
     mutationFn: async (action: string) => {
       if (action === "mock") return api.connectMockCalendar();
       if (action === "connect") {
+        if (isDesktopBuild)
+          throw new Error(
+            "Calendar authorization is unavailable in this desktop version",
+          );
         const response = await api.calendarConnect("generic");
         const url = new URL(response.authUrl);
         if (url.protocol !== "https:")
@@ -169,12 +174,19 @@ export function IntegrationsSettings({
               capabilities.data.calendarOAuthConfigured && (
                 <Button
                   busy={calendarAction.isPending}
+                  disabled={isDesktopBuild}
                   onClick={() => calendarAction.mutate("connect")}
                 >
                   Подключить календарь
                 </Button>
               )}
           </div>
+          {isDesktopBuild && capabilities.data?.calendar === "http" && (
+            <p className="field-hint">
+              Подключение внешнего календаря пока доступно в веб-версии
+              MeetSpace.
+            </p>
+          )}
           {capabilities.data?.calendar === "noop" ||
           (capabilities.data?.calendar === "http" &&
             !capabilities.data.calendarOAuthConfigured) ? (
@@ -279,8 +291,9 @@ function PreferencesForm({
           <span className="preference-copy">
             <span className="preference-title">Звуковой сигнал</span>
             <span className="field-hint">
-              Новые сообщения, ответы и другие уведомления. Настройка
-              сохраняется в этом браузере.
+              {isDesktopBuild
+                ? "Звук системных уведомлений MeetSpace. Настройка сохраняется для этого аккаунта и сервера."
+                : "Новые сообщения, ответы и другие уведомления. Настройка сохраняется в этом браузере."}
             </span>
           </span>
         </label>
@@ -306,12 +319,16 @@ function PreferencesForm({
             );
           }}
         >
-          {previewing ? "Воспроизводится…" : "Проверить звук"}
+          {previewing
+            ? "Воспроизводится…"
+            : isDesktopBuild
+              ? "Проверить устройство"
+              : "Проверить звук"}
         </Button>
         <p className="field-hint">
-          Если браузер ограничивает воспроизведение, сначала нажмите любую
-          кнопку в приложении. В чатах с отключёнными уведомлениями сигнал не
-          звучит.
+          {isDesktopBuild
+            ? "Системные уведомления используют звук и устройство вывода Windows. Эта кнопка проверяет выбранное устройство приложения. В чатах с отключёнными уведомлениями сигнал не звучит."
+            : "Если браузер ограничивает воспроизведение, сначала нажмите любую кнопку в приложении. В чатах с отключёнными уведомлениями сигнал не звучит."}
         </p>
         <ErrorNotice error={soundError} />
       </fieldset>

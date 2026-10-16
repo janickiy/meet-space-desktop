@@ -1,3 +1,4 @@
+import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
@@ -19,6 +20,7 @@ export function InvitePage() {
       <main className="invite-entry-page">
         <div className="invite-entry-brand">
           <Brand />
+          <DesktopServerButton />
         </div>
         <Loading />
       </main>
@@ -28,6 +30,7 @@ export function InvitePage() {
       <main className="invite-entry-page">
         <div className="invite-entry-brand">
           <Brand />
+          <DesktopServerButton />
         </div>
         <section className="invite-entry-error">
           <h1>Приглашение недоступно</h1>

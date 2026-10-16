@@ -43,6 +43,11 @@ import {
   folderItemTarget,
 } from "../components/FolderItems";
 import "./folders-page.css";
+import "./collections-redesign.css";
+import {
+  CollectionViewToggle,
+  type CollectionView,
+} from "./CollectionViewToggle";
 
 type Management = {
   mode: "create" | "rename" | "delete";
@@ -64,6 +69,7 @@ function FolderList() {
   const visible = useFolderVisibility();
   const gate = useRef(false);
   const [manage, setManage] = useState<Management | null>(null);
+  const [layout, setLayout] = useState<CollectionView>("grid");
   const list = useQuery({
     queryKey: ["folders", user?.id],
     queryFn: ({ signal }) => api.folders(undefined, signal),
@@ -92,8 +98,8 @@ function FolderList() {
     <section className="folders-page" aria-label="Папки">
       <header className="folders-heading">
         <div>
-          <h1>Папки</h1>
-          <p className="muted">Соберите нужные чаты и встречи в одном месте.</p>
+          <h1>Мои папки</h1>
+          <p className="muted">Чаты и встречи, собранные по вашим проектам.</p>
         </div>
         <Button
           disabled={items.length >= 100}
@@ -103,6 +109,13 @@ function FolderList() {
           Новая папка
         </Button>
       </header>
+      <div className="collections-toolbar">
+        <CollectionViewToggle
+          value={layout}
+          onChange={setLayout}
+          label="Вид папок"
+        />
+      </div>
       <ErrorNotice error={list.error || order.error} />
       {list.isError && (
         <Button variant="outline" onClick={() => void list.refetch()}>
@@ -110,7 +123,10 @@ function FolderList() {
         </Button>
       )}
       {list.isPending && <MessagingSkeleton />}
-      <div className="folder-list" aria-busy={order.isPending || undefined}>
+      <div
+        className={`folder-list folder-collection folder-layout-${layout}`}
+        aria-busy={order.isPending || undefined}
+      >
         {items.map((folder, index) => (
           <div className="folder-row" key={folder.id}>
             <Link to={`/folders/${folder.id}`} className="folder-link">
@@ -131,36 +147,39 @@ function FolderList() {
                 {folder.itemCount}
               </span>
             </Link>
-            <ItemActions
-              label={`Действия с папкой: ${folder.name}`}
-              actions={[
-                {
-                  label: "Переименовать",
-                  icon: <Pencil size={18} aria-hidden="true" />,
-                  run: () => setManage({ mode: "rename", folder }),
-                  disabled: order.isPending,
-                },
-                {
-                  label: "Переместить выше",
-                  icon: <ArrowUp size={18} aria-hidden="true" />,
-                  run: () => move(index, -1),
-                  disabled: index === 0 || order.isPending,
-                },
-                {
-                  label: "Переместить ниже",
-                  icon: <ArrowDown size={18} aria-hidden="true" />,
-                  run: () => move(index, 1),
-                  disabled: index === items.length - 1 || order.isPending,
-                },
-                {
-                  label: "Удалить папку",
-                  icon: <Trash2 size={18} aria-hidden="true" />,
-                  run: () => setManage({ mode: "delete", folder }),
-                  danger: true,
-                  disabled: order.isPending,
-                },
-              ]}
-            />
+            <div className="folder-card-footer">
+              <span>Только для вас</span>
+              <ItemActions
+                label={`Действия с папкой: ${folder.name}`}
+                actions={[
+                  {
+                    label: "Переименовать",
+                    icon: <Pencil size={18} aria-hidden="true" />,
+                    run: () => setManage({ mode: "rename", folder }),
+                    disabled: order.isPending,
+                  },
+                  {
+                    label: "Переместить выше",
+                    icon: <ArrowUp size={18} aria-hidden="true" />,
+                    run: () => move(index, -1),
+                    disabled: index === 0 || order.isPending,
+                  },
+                  {
+                    label: "Переместить ниже",
+                    icon: <ArrowDown size={18} aria-hidden="true" />,
+                    run: () => move(index, 1),
+                    disabled: index === items.length - 1 || order.isPending,
+                  },
+                  {
+                    label: "Удалить папку",
+                    icon: <Trash2 size={18} aria-hidden="true" />,
+                    run: () => setManage({ mode: "delete", folder }),
+                    danger: true,
+                    disabled: order.isPending,
+                  },
+                ]}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -200,6 +219,7 @@ function FolderDetail({ id }: { id: string }) {
   ) as FolderItemFilters["type"];
   const paramSearch = params.get("search") || "";
   const [text, setText] = useState(paramSearch);
+  const [layout, setLayout] = useState<CollectionView>("list");
   useEffect(() => setText(paramSearch), [paramSearch]);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -356,6 +376,11 @@ function FolderDetail({ id }: { id: string }) {
                 </button>
               ))}
             </div>
+            <CollectionViewToggle
+              value={layout}
+              onChange={setLayout}
+              label="Вид содержимого папки"
+            />
             <label className="folder-detail-search">
               <Search size={18} aria-hidden="true" />
               <input
@@ -388,7 +413,9 @@ function FolderDetail({ id }: { id: string }) {
                     {kind === "conference" ? "Встречи" : "Чаты"}{" "}
                     <span>{section.length}</span>
                   </h2>
-                  <div className="folder-list">
+                  <div
+                    className={`folder-list folder-contents folder-layout-${layout}`}
+                  >
                     {section.map((entry) => (
                       <div
                         className="folder-row"

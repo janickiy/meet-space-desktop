@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Plus, Trash2, UserRound } from "lucide-react";
+import { Check, Info, Plus, Trash2, UserRound } from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "../api";
 import { useAuth } from "../auth";
@@ -82,10 +82,23 @@ export function AccountManagement() {
   }
   return (
     <section className="account-management" aria-labelledby="accounts-heading">
-      <h2 id="accounts-heading">Аккаунты</h2>
-      <p className="field-hint">
-        Подключите до 5 аккаунтов и переключайтесь между ними.
-      </p>
+      <header className="account-management-heading">
+        <div>
+          <h2 id="accounts-heading">Аккаунты</h2>
+          <p className="field-hint">
+            Переключайтесь между аккаунтами. У каждого — свой профиль, настройки
+            и переписки.
+          </p>
+        </div>
+        {!mode && (
+          <Button
+            disabled={busy || visible.length >= 5}
+            onClick={() => choose("login")}
+          >
+            <Plus size={18} aria-hidden="true" /> Добавить аккаунт
+          </Button>
+        )}
+      </header>
       {accounts.isPending && <Loading />}
       <ErrorNotice error={accounts.error} />
       {accounts.isError && (
@@ -95,7 +108,12 @@ export function AccountManagement() {
       )}
       <ul className="connected-accounts">
         {visible.map((item) => (
-          <li key={item.id}>
+          <li
+            key={item.id}
+            className={
+              item.id === auth.user?.id ? "connected-account-current" : ""
+            }
+          >
             <span className="connected-account-avatar" aria-hidden="true">
               {initials(item.displayName || item.email)}
             </span>
@@ -119,17 +137,17 @@ export function AccountManagement() {
           </li>
         ))}
       </ul>
+      <p className="account-management-note">
+        <Info size={15} aria-hidden="true" />
+        <span>
+          Можно подключить до 5 аккаунтов. Настройки в соседних разделах
+          относятся к активному аккаунту.
+        </span>
+      </p>
       <ErrorNotice error={error} />
       <ErrorNotice>{validation || null}</ErrorNotice>
       {!mode && (
         <div className="account-management-actions">
-          <Button
-            variant="secondary"
-            disabled={busy || visible.length >= 5}
-            onClick={() => choose("login")}
-          >
-            <Plus size={18} aria-hidden="true" /> Добавить аккаунт
-          </Button>
           <Button
             variant="danger"
             disabled={busy}

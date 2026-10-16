@@ -16,6 +16,7 @@ import {
 import {
   ArrowLeft,
   BellOff,
+  ChevronDown,
   MessageCircle,
   MessagesSquare,
   Search,
@@ -214,11 +215,11 @@ export function PersonalPage() {
         className={`personal-page ${id ? "personal-selected" : ""}`}
         data-keyboard-open={keyboardOpen || undefined}
         ref={root}
-        aria-label="Личные"
+        aria-label="Чаты"
       >
         <aside className="personal-sidebar">
           <div className="section-heading">
-            <h1>Личные</h1>
+            <h1>Чаты</h1>
             <ItemActions
               label="Новый чат"
               triggerIcon={<SquarePen size={20} aria-hidden="true" />}
@@ -242,7 +243,7 @@ export function PersonalPage() {
               type="search"
               aria-label="Поиск переписок"
               value={search}
-              placeholder="Найти переписку"
+              placeholder="Найти чат"
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
@@ -254,9 +255,9 @@ export function PersonalPage() {
             {(
               [
                 ["all", "Все"],
+                ["unread", "Новые"],
                 ["direct", "Личные"],
                 ["group", "Группы"],
-                ["unread", "Новые"],
               ] as const
             ).map(([value, label]) => (
               <button
@@ -408,12 +409,18 @@ export function PersonalPage() {
                         <small>{selected.memberCount} участн.</small>
                       )}
                     </span>
+                    <ChevronDown
+                      className="personal-peer-chevron"
+                      size={15}
+                      aria-hidden="true"
+                    />
                   </button>
                 )}
                 {selected?.type === "direct" && (
                   <DirectCallButton
                     userId={selected.peer.id}
                     name={selected.peer.displayName}
+                    label
                   />
                 )}
                 {selected && (

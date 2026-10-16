@@ -1,3 +1,6 @@
+import { serviceOrigin } from "../platform/urls";
+import { isDesktopBuild } from "../platform/build";
+import { NativeSaveButton } from "./desktop/NativeAssets";
 import { Fragment, useEffect, useRef, useState } from "react";
 import {
   useInfiniteQuery,
@@ -41,6 +44,7 @@ import { Button, ErrorNotice, Modal } from "./ui";
 import { MessagingSkeleton } from "./MessagingSkeleton";
 import { CallHistoryMessage } from "./CallHistoryMessage";
 import "./chat-design.css";
+import "./chat-redesign.css";
 
 function isAccessDenied(error: unknown) {
   return error instanceof ApiError && [403, 404].includes(error.status);
@@ -593,13 +597,13 @@ export function MessageThread({
     try {
       const result = await transport.attachmentDownload(scopeId, file.id);
       controller.signal.throwIfAborted();
-      const url = new URL(result.url, window.location.origin);
+      const url = new URL(result.url, serviceOrigin());
       if (requireAuthenticatedDownloads && result.authenticated !== true)
         throw new Error("unauthenticated_group_file");
       if (result.authenticated === true) {
         const path = `/api/v1/${personal ? "conversations" : "conferences"}/${encodeURIComponent(scopeId)}/attachments/${encodeURIComponent(file.id)}/content`;
         if (
-          url.origin !== window.location.origin ||
+          url.origin !== serviceOrigin() ||
           url.pathname !== path ||
           url.search ||
           url.hash
@@ -672,8 +676,8 @@ export function MessageThread({
       </span>
       <div className="chat-message-content">
         <header>
-          <strong>{user?.displayName || "Вы"}</strong>
-          <span className="chat-message-self">вы</span>
+          <strong>{personal ? "Вы" : user?.displayName || "Вы"}</strong>
+          {!personal && <span className="chat-message-self">вы</span>}
           <time dateTime={pending.createdAt}>
             {chatTime(pending.createdAt)}
           </time>
@@ -806,8 +810,12 @@ export function MessageThread({
                     </span>
                     <div className="chat-message-content">
                       <header>
-                        <strong>{message.senderName}</strong>
-                        {own && <span className="chat-message-self">вы</span>}
+                        <strong>
+                          {personal && own ? "Вы" : message.senderName}
+                        </strong>
+                        {own && !personal && (
+                          <span className="chat-message-self">вы</span>
+                        )}
                         <time
                           dateTime={message.createdAt}
                           title={formatDate(message.createdAt)}
@@ -870,7 +878,24 @@ export function MessageThread({
                                   · {formatBytes(file.size)}
                                 </small>
                               </span>
-                              {download?.id === file.id ? (
+                              {isDesktopBuild ? (
+                                <NativeSaveButton
+                                  asset={{
+                                    kind: "attachment",
+                                    scope: personal
+                                      ? "conversation"
+                                      : "conference",
+                                    scopeId,
+                                    attachmentId: file.id,
+                                    filename: file.filename,
+                                  }}
+                                  className="icon-button chat-file-download"
+                                  aria-label={`Скачать файл: ${file.filename}`}
+                                  title={file.filename}
+                                >
+                                  <Download size={18} aria-hidden="true" />
+                                </NativeSaveButton>
+                              ) : download?.id === file.id ? (
                                 <a
                                   className="icon-button chat-file-download"
                                   href={download.url}
@@ -1095,7 +1120,7 @@ export function MessageThread({
               </Button>
             </div>
             <p className="chat-compose-caption" aria-hidden="true">
-              Shift + Enter — новая строка
+              Enter — отправить · Shift + Enter — новая строка
             </p>
             <p className="sr-only">
               Enter — отправить, Shift + Enter — новая строка. Если связь

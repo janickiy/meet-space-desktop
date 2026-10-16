@@ -29,3 +29,10 @@ frontend/test-results/
 frontend/playwright-report/
 frontend/coverage/
 frontend/*.tsbuildinfo
+frontend/dist-desktop/
+
+desktop/node_modules/
+desktop/dist/
+desktop/renderer/
+desktop/artifacts/
+desktop/*.tsbuildinfo

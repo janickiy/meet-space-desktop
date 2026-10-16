@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { Circle, Download, Square } from "lucide-react";
 import { api } from "../api";
+import { isDesktopBuild } from "../platform/build";
+import { recordingFileAvailable } from "../recordingPresentation";
+import { NativeSaveButton } from "./desktop/NativeAssets";
 import type {
   Conference,
   ConferenceRecording,
@@ -61,7 +64,10 @@ export function RecordingPanel({
     account && membership?.status === "joined" && isAdmitted(membership);
   const client = useQueryClient();
   const capabilities = useCapabilities();
-  const recordingModes = capabilities.data?.capabilities.recordingModes ?? [];
+  const recordingModes =
+    capabilities.isSuccess && !capabilities.isError
+      ? capabilities.data.capabilities.recordingModes
+      : [];
   const [mode, setMode] = useState<RecordingMode>("composite");
   const commandPending = useRef(false);
   const selectedMode = recordingModes.includes(mode) ? mode : recordingModes[0];
@@ -209,7 +215,9 @@ export function RecordingPanel({
           {labels[current.status]}
         </p>
       )}
-      <ErrorNotice error={query.error || mutation.error} />
+      <ErrorNotice
+        error={query.error || mutation.error || capabilities.error}
+      />
       {joined && conference.status === "active" && (
         <div className="meeting-actions">
           {!current && recordingModes.length > 0 && (
@@ -348,10 +356,27 @@ export function RecordingPanel({
                   className="recording-row"
                   data-testid={`recording-${item.uuid}`}
                 >
-                  {preview?.url && (
-                    <a href={preview.url} target="_blank" rel="noreferrer">
-                      Посмотреть превью
-                    </a>
+                  {isDesktopBuild &&
+                  preview?.uuid &&
+                  recordingFileAvailable(preview) ? (
+                    <NativeSaveButton
+                      asset={{
+                        kind: "recording",
+                        conferenceId: conference.id,
+                        recordingId: item.uuid,
+                        fileId: preview.uuid,
+                      }}
+                      className="text-link"
+                    >
+                      Скачать превью
+                    </NativeSaveButton>
+                  ) : (
+                    !isDesktopBuild &&
+                    preview?.url && (
+                      <a href={preview.url} target="_blank" rel="noreferrer">
+                        Посмотреть превью
+                      </a>
+                    )
                   )}
                   <div>
                     <strong>{labels[item.status] || item.status}</strong>
@@ -360,33 +385,74 @@ export function RecordingPanel({
                       {item.durationSec ? ` · ${item.durationSec} с` : ""}
                     </p>
                   </div>
-                  {file?.url && item.status === "ready" && (
-                    <a
+                  {isDesktopBuild &&
+                  file?.uuid &&
+                  recordingFileAvailable(file) &&
+                  item.status === "ready" ? (
+                    <NativeSaveButton
+                      asset={{
+                        kind: "recording",
+                        conferenceId: conference.id,
+                        recordingId: item.uuid,
+                        fileId: file.uuid,
+                      }}
                       className="text-link"
-                      href={file.url}
-                      target="_blank"
-                      rel="noreferrer"
                     >
-                      <Download size={16} />
+                      <Download size={16} />{" "}
                       {file.fileType === "final_audio"
                         ? "Скачать аудио"
                         : "Скачать MP4"}
-                    </a>
+                    </NativeSaveButton>
+                  ) : (
+                    !isDesktopBuild &&
+                    file?.url &&
+                    item.status === "ready" && (
+                      <a
+                        className="text-link"
+                        href={file.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Download size={16} />
+                        {file.fileType === "final_audio"
+                          ? "Скачать аудио"
+                          : "Скачать MP4"}
+                      </a>
+                    )
                   )}
                   {item.status === "ready" &&
                     item.files
-                      .filter((f) => f.fileType === "tracks_archive" && f.url)
-                      .map((f) => (
-                        <a
-                          key={f.fileType}
-                          className="text-link"
-                          href={f.url}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Скачать дорожки и манифест (ZIP)
-                        </a>
-                      ))}
+                      .filter(
+                        (f) =>
+                          f.fileType === "tracks_archive" &&
+                          recordingFileAvailable(f),
+                      )
+                      .map((f) =>
+                        isDesktopBuild && f.uuid ? (
+                          <NativeSaveButton
+                            key={f.uuid}
+                            asset={{
+                              kind: "recording",
+                              conferenceId: conference.id,
+                              recordingId: item.uuid,
+                              fileId: f.uuid,
+                            }}
+                            className="text-link"
+                          >
+                            Скачать дорожки и манифест (ZIP)
+                          </NativeSaveButton>
+                        ) : (
+                          <a
+                            key={f.fileType}
+                            className="text-link"
+                            href={f.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Скачать дорожки и манифест (ZIP)
+                          </a>
+                        ),
+                      )}
                 </article>
               );
             },

@@ -1,3 +1,4 @@
+import { isDesktopBuild } from "./platform/build";
 import toneURL from "./assets/device-tone.wav";
 import {
   readDevicePreferences,
@@ -6,6 +7,8 @@ import {
 
 /** One reusable player per account stream; no microphone or browser push permission. */
 export function createNotificationSound(userId: string) {
+  // The native broker owns desktop delivery and its one OS sound. The bell stays shared.
+  if (isDesktopBuild) return { notify(_id: string) {}, dispose() {} };
   const audio = new Audio(toneURL);
   audio.preload = "auto";
   audio.volume = 0.35;

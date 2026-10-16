@@ -1,3 +1,4 @@
+import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import { Link } from "react-router";
 import {
   ArrowRight,
@@ -44,6 +45,7 @@ export function Landing() {
       </a>
       <header className="home-header home-container">
         <Brand />
+        <DesktopServerButton />
         <nav className="home-account-nav" aria-label="Аккаунт">
           {user ? (
             <Link className="home-button" to="/app">

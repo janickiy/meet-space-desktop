@@ -1,3 +1,5 @@
+import { subscribeCaptureRelease } from "../platform/captureLifecycle";
+import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import {
   useCallback,
   useEffect,
@@ -231,13 +233,8 @@ export function PreJoinPage({
   useEffect(() => {
     mounted.current = true;
     navigator.mediaDevices?.addEventListener?.("devicechange", refreshDevices);
-    return () => {
-      mounted.current = false;
-      navigator.mediaDevices?.removeEventListener?.(
-        "devicechange",
-        refreshDevices,
-      );
-      // При размонтировании страницы останавливаем устройства без обновления состояния React.
+    const release = () => {
+      // Stop pending permission results too, including during document navigation.
       for (const kind of ["audio", "video"] as const) {
         generation.current[kind] += 1;
         const track = tracks.current[kind];
@@ -247,6 +244,27 @@ export function PreJoinPage({
           track.stop();
         }
       }
+      if (mounted.current) {
+        setVideoStream(null);
+        setAudioTrack(null);
+        setCameraOn(false);
+        setMicrophoneOn(false);
+        setLevel(0);
+        setBusy({ audio: false, video: false });
+        setNotice(
+          "Предпросмотр остановлен. Включите камеру или микрофон снова, когда будете готовы.",
+        );
+      }
+    };
+    const unsubscribeRelease = subscribeCaptureRelease(release);
+    return () => {
+      mounted.current = false;
+      navigator.mediaDevices?.removeEventListener?.(
+        "devicechange",
+        refreshDevices,
+      );
+      unsubscribeRelease();
+      release();
     };
   }, [refreshDevices]);
 
@@ -627,6 +645,7 @@ export function PreJoinPage({
       <main className="invite-entry-page">
         <header className="invite-entry-brand">
           <Brand />
+          <DesktopServerButton />
         </header>
         <div className="prejoin-loading">
           <MeetingSkeleton rows={2} label="Готовим вход во встречу" />
@@ -639,6 +658,7 @@ export function PreJoinPage({
       <main className="invite-entry-page">
         <header className="invite-entry-brand">
           <Brand />
+          <DesktopServerButton />
         </header>
         <section className="invite-entry-error">
           <h1>Встреча недоступна</h1>
@@ -760,6 +780,7 @@ export function PreJoinPage({
     <main className="prejoin-page prejoin-parity-page">
       <header className="prejoin-brand">
         <Brand to={home} />
+        <DesktopServerButton />
         <Link
           className="icon-button"
           to={home}

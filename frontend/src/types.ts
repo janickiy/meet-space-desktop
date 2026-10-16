@@ -189,7 +189,12 @@ export interface ConferenceRecording {
   endedAt?: string;
   durationSec?: number;
   errorMessage?: string;
-  files: { fileType: string; url?: string; sizeBytes?: number }[];
+  files: {
+    uuid?: string;
+    fileType: string;
+    url?: string;
+    sizeBytes?: number;
+  }[];
 }
 /**
  * Invite передаёт ограниченные сведения встречи по приглашению.

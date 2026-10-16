@@ -1,3 +1,4 @@
+import { isDesktopBuild } from "./platform/build";
 import {
   Fragment,
   createContext,
@@ -12,12 +13,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, configureAuth } from "./api";
 import type { User, LoginResponse, Item, Participant } from "./types";
 import {
-  ACCOUNT_CHANGE_KEY,
+  accountStorageKey,
   announceAccount,
   selectedAccountID,
   clearLogoutMarker,
   hasLogoutMarker,
-  LOGOUT_KEY,
+  logoutStorageKey,
   markLogout,
   readSession,
   saveSession,
@@ -98,6 +99,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (generation.current !== expected || loggedOut.current) return false;
       if (
         !result.accessToken ||
+        (isDesktopBuild &&
+          !/^desktop-session:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+            result.accessToken,
+          )) ||
         !result.user?.id ||
         !Number.isFinite(result.expiresIn) ||
         result.expiresIn <= 0
@@ -268,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (document.visibilityState === "visible") check();
     };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === ACCOUNT_CHANGE_KEY && event.newValue !== null) {
+      if (event.key === accountStorageKey() && event.newValue !== null) {
         generation.current++;
         renewalController.current?.abort();
         identityController.current?.abort();
@@ -276,7 +281,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         window.location.replace("/app");
         return;
       }
-      if (event.key !== LOGOUT_KEY || event.newValue === null) return;
+      if (event.key !== logoutStorageKey() || event.newValue === null) return;
       accountRestoreBlocked.current = true;
       loggedOut.current = true;
       generation.current++;

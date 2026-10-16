@@ -1,6 +1,10 @@
+import { serviceOrigin } from "../platform/urls";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { Copy, Download, MoreVertical } from "lucide-react";
 import { safeRecordingUrl } from "../recordingPresentation";
+import { isDesktopBuild } from "../platform/build";
+import type { DesktopAsset } from "../platform/desktop-contracts";
+import { NativeAssetStatus, useNativeAsset } from "./desktop/NativeAssets";
 
 /** RecordingActions показывает только поддерживаемые действия одной записи.
  * Скопированная ссылка ведёт на защищённую страницу, а не предоставляет доступ
@@ -12,10 +16,12 @@ export function RecordingActions({
   title,
   path,
   downloadUrl,
+  asset,
 }: {
   title: string;
   path: string;
   downloadUrl?: string;
+  asset?: DesktopAsset;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -24,6 +30,7 @@ export function RecordingActions({
   const [copied, setCopied] = useState(false);
   const [manualLink, setManualLink] = useState("");
   const url = safeRecordingUrl(downloadUrl);
+  const native = useNativeAsset(JSON.stringify(asset));
   useEffect(() => {
     if (!open) return;
     root.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
@@ -41,7 +48,7 @@ export function RecordingActions({
    * @return завершение работы с буфером обмена; отказ не раскрывает технические ошибки.
    */
   async function copyLink() {
-    const link = new URL(path, window.location.origin).href;
+    const link = new URL(path, serviceOrigin()).href;
     setOpen(false);
     trigger.current?.focus();
     try {
@@ -120,21 +127,38 @@ export function RecordingActions({
           aria-label="Действия с записью"
           className="recordings-menu-popup"
         >
-          {url && (
-            <a
+          {isDesktopBuild && asset ? (
+            <button
+              type="button"
               role="menuitem"
               tabIndex={-1}
-              href={url}
-              download
-              target="_blank"
-              rel="noreferrer noopener"
+              disabled={native.busy}
               onClick={() => {
                 setOpen(false);
                 trigger.current?.focus();
+                void native.run(asset, "save");
               }}
             >
               <Download size={16} aria-hidden="true" /> Скачать
-            </a>
+            </button>
+          ) : (
+            !isDesktopBuild &&
+            url && (
+              <a
+                role="menuitem"
+                tabIndex={-1}
+                href={url}
+                download
+                target="_blank"
+                rel="noreferrer noopener"
+                onClick={() => {
+                  setOpen(false);
+                  trigger.current?.focus();
+                }}
+              >
+                <Download size={16} aria-hidden="true" /> Скачать
+              </a>
+            )
           )}
           <button
             type="button"
@@ -147,6 +171,7 @@ export function RecordingActions({
           <p>Для участников с доступом к встрече.</p>
         </div>
       )}
+      {isDesktopBuild && <NativeAssetStatus operation={native} />}
       {copied && (
         <span role="status" className="recordings-copy-notice">
           Ссылка скопирована
