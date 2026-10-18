@@ -31,6 +31,7 @@ import {
 import { api } from "../api";
 import { isDesktopBuild } from "../platform/build";
 import { NativeSaveButton } from "./desktop/NativeAssets";
+import { ExternalLink } from "./ExternalLink";
 import { useAuth } from "../auth";
 import { formatBytes } from "../collaboration";
 import { safeRecordingUrl } from "../recordingPresentation";
@@ -1055,9 +1056,7 @@ function ConferenceChatMessageCard({
       <p>{message.deletedAt ? "Сообщение удалено" : message.text}</p>
       {safeURL && (
         <div className="conference-chat-info-message-links">
-          <a href={safeURL} target="_blank" rel="noopener noreferrer">
-            {safeURL}
-          </a>
+          <ExternalLink href={safeURL}>{safeURL}</ExternalLink>
         </div>
       )}
       {!message.deletedAt && files.length > 0 && (

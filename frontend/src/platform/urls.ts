@@ -29,8 +29,13 @@ export function desktopServerID(): string | null {
   return selectedServerID;
 }
 
-/** The foundation only opens the selected service in the user's external browser. */
+/** Keep fixed application links exact; all other links must use the selected service. */
 export function externalServiceURL(value: string): string {
+  if (
+    value === "https://janickiy.com/" ||
+    value === "https://letsencrypt.org/repository/"
+  )
+    return value;
   if (value.length > 2048 || /[\u0000-\u0020\u007f\\]/u.test(value))
     throw new Error("Unsupported external address");
   const url = new URL(value);

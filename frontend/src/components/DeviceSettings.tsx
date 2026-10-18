@@ -11,6 +11,10 @@ import {
 } from "../prejoinDevices";
 import type { DevicePreferences } from "../prejoinDevices";
 import { playDeviceTone } from "../deviceSound";
+import {
+  captureWithDeviceFallback,
+  inputTrackConstraints,
+} from "../mediaDevices";
 import "./device-settings.css";
 
 function useSettings() {
@@ -105,19 +109,21 @@ function usePreview(
       if (enabled)
         setError("Предпросмотр остановлен. Повторите проверку устройства.");
     });
-    if (enabled && navigator.mediaDevices?.getUserMedia) {
-      const constraints = {
-        ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-        ...(kind === "audio"
-          ? { echoCancellation: true, noiseSuppression }
-          : {}),
-      };
-      void navigator.mediaDevices
-        .getUserMedia({
-          audio: kind === "audio" ? constraints : false,
-          video: kind === "video" ? constraints : false,
-        })
-        .then((next) => {
+    if (enabled && typeof navigator.mediaDevices?.getUserMedia === "function") {
+      const constraints = (id: string): MediaStreamConstraints => ({
+        audio:
+          kind === "audio" && inputTrackConstraints(kind, id, noiseSuppression),
+        video:
+          kind === "video" && inputTrackConstraints(kind, id, noiseSuppression),
+      });
+      void captureWithDeviceFallback(
+        constraints(deviceId),
+        deviceId ? constraints("") : undefined,
+        () => active,
+      )
+        .then((captured) => {
+          if (!captured) return;
+          const next = captured.stream;
           if (!active) {
             next.getTracks().forEach((track) => track.stop());
             return;
@@ -346,7 +352,7 @@ export function AudioSettings() {
   const preview = usePreview(
     "audio",
     checking,
-    availableDeviceId(devices, "audioinput", preferences.audioInputId),
+    preferences.audioInputId,
     preferences.noiseSuppression,
     settings.refresh,
   );
@@ -526,7 +532,7 @@ export function VideoSettings() {
   const preview = usePreview(
     "video",
     available,
-    availableDeviceId(devices, "videoinput", preferences.videoInputId),
+    preferences.videoInputId,
     true,
     settings.refresh,
   );

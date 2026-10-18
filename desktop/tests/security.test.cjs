@@ -115,6 +115,12 @@ test("external links cannot change the trusted HTTPS authority or invoke local h
 });
 
 test("external links are bound to the selected server origin including its port", () => {
+  assert.equal(isAllowedExternalUrl("https://janickiy.com/"), true);
+  for (const value of ["https://janickiy.com/extra", "https://janickiy.com/?token=x", "https://janickiy.com/#extra", "https://janickiy.com.evil/", "http://janickiy.com/"])
+    assert.equal(isAllowedExternalUrl(value), false);
+  assert.equal(isAllowedExternalUrl("https://letsencrypt.org/repository/"), true);
+  for (const suffix of ["?next=https://evil.invalid", "#extra", "../", "extra"])
+    assert.equal(isAllowedExternalUrl("https://letsencrypt.org/repository/" + suffix), false);
   const selected = "https://meet.example.com:8443";
   assert.equal(isAllowedExternalUrl(selected + "/i/invite_A-2", selected), true);
   assert.equal(isAllowedExternalUrl("https://meeting.janickiy.com/app", selected), false);

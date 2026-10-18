@@ -42,9 +42,13 @@ import type { DesktopRuntimeInfo } from "./shared/contracts";
 import { MediaPermissions } from "./media-permissions";
 import { NativeShell } from "./native-shell";
 import { NativeNotifications } from "./native-notifications";
+import { createLinuxAutostart } from "./platform/autostart";
 import { NativeAssets } from "./downloads";
 import { NativeUpdates } from "./updates";
+import { SshInstallerController } from "./ssh/controller";
 import type { AcceptanceBuild } from "./acceptance";
+import { createHostPlatform, createCredentialStore, displayCaptureMode } from "./platform";
+import type { HostPlatform, CredentialStore } from "./platform";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -72,6 +76,9 @@ let nativeShell: NativeShell | null = null;
 let notifications: NativeNotifications | null = null;
 let assets: NativeAssets | null = null;
 let updates: NativeUpdates | null = null;
+let sshInstaller: SshInstallerController | null = null;
+let hostPlatform: HostPlatform | null = null;
+let credentialStore: CredentialStore | null = null;
 let quitting = false;
 let quitPrepared = false;
 const mediaPermissions = new MediaPermissions({
@@ -79,6 +86,9 @@ const mediaPermissions = new MediaPermissions({
     ? { contents: mainWindow.webContents, frame: mainWindow.webContents.mainFrame } : null,
   development,
   platform: process.platform,
+  displayMode: () => displayCaptureMode({ platform: process.platform,
+    electronVersion: process.versions.electron, chromiumVersion: process.versions.chrome,
+    env: process.env, ozonePlatform: app.commandLine.getSwitchValue("ozone-platform") }),
   getSources: (thumbnails) => desktopCapturer.getSources({ types: ["screen", "window"], thumbnailSize: thumbnails ? { width: 240, height: 135 } : { width: 0, height: 0 }, fetchWindowIcons: false }),
   emit: (event) => {
     if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
@@ -116,7 +126,9 @@ const transportMessages: Record<string, string> = {
   redirect_not_allowed: "Сервер перенаправил запрос. Проверьте его адрес.",
   capture_source_unavailable: "Выбранный экран или окно больше недоступны. Повторите выбор.",
   preferences_unavailable: "Не удалось сохранить настройки приложения. Повторите попытку.",
-  startup_unavailable: "Автозапуск доступен в установленном приложении Windows. Проверьте настройки системы.",
+  startup_unavailable: "Автозапуск недоступен в этой среде. Проверьте настройки приложения и системы.",
+  startup_conflict: "Файл автозапуска изменён вне MeetSpace. Проверьте настройки автозапуска системы.",
+  tray_unavailable: "Системный трей недоступен. Закрытие окна завершает приложение.",
   asset_access_denied: "Доступ к файлу закрыт. Обновите страницу или обратитесь к организатору.",
   asset_unavailable: "Файл недоступен. Обновите страницу и повторите действие.",
   asset_unsupported: "Этот формат пока нельзя открыть в приложении. Сохраните файл для просмотра.",
@@ -209,6 +221,15 @@ function installIpc(): void {
         appVersion: app.getVersion(),
         isPackaged: app.isPackaged,
         capabilities: { serverConnection: true, windowControls: true },
+        host: {
+          session: hostPlatform!.desktopSession,
+          secureStorage: (() => { const state = credentialStore!.status(); return { available: state.available, backend: state.provider, reason: state.reason }; })(),
+          supports: {
+            startup: nativeShell?.preferences().startupSupported ?? hostPlatform!.nativeFeatures.startup,
+            absoluteWindowPosition: hostPlatform!.nativeFeatures.absoluteWindowPosition,
+            systemAudio: hostPlatform!.capture.systemAudio,
+          },
+        },
       };
     },
   );
@@ -238,6 +259,8 @@ function installIpc(): void {
     flushRoute();
   });
   const endpoints: Array<[string, number, (...args: unknown[]) => unknown]> = [
+    ["ssh:state", 0, () => sshInstaller!.state()],
+    ["ssh:action", 2, (action, input) => sshInstaller!.invoke(action, input)],
     ["servers:list", 0, () => broker!.serversState()],
     ["servers:probe", 1, (origin) => broker!.probeServer(origin)],
     ["servers:add", 1, (input) => broker!.addServer(input)],
@@ -356,6 +379,7 @@ export async function createFoundationWindow(
       assets?.reset();
       notifications?.setContext(null);
       broker?.resetConnections();
+      void sshInstaller?.invoke("detach").catch(() => {});
     }
   });
   window.webContents.on("render-process-gone", () => {
@@ -364,6 +388,7 @@ export async function createFoundationWindow(
     assets?.reset();
     notifications?.setContext(null);
     broker?.resetConnections();
+    void sshInstaller?.invoke("detach").catch(() => {});
   });
   window.webContents.on("will-attach-webview", (event) =>
     event.preventDefault(),
@@ -382,11 +407,20 @@ export async function createFoundationWindow(
     assets?.reset();
     notifications?.setContext(null);
     broker?.resetConnections();
+    void sshInstaller?.invoke("detach").catch(() => {});
   });
-  window.once("ready-to-show", () => {
-    if (show && !window.isDestroyed()) window.show();
-  });
+  const showInitially = () => {
+    if (show && !quitting && mainWindow === window && !window.isDestroyed() &&
+      !window.webContents.isDestroyed() && !window.isVisible()) window.show();
+  };
+  window.once("ready-to-show", showInitially);
   await window.loadURL(development ? DEV_ORIGIN : `${APP_ORIGIN}/`);
+  // An unmapped Wayland surface may never emit ready-to-show. A successfully
+  // loaded trusted document can be mapped without waiting for its first frame.
+  if (hostPlatform?.desktopSession === "wayland") {
+    window.removeListener("ready-to-show", showInitially);
+    showInitially();
+  }
   return window;
 }
 
@@ -402,6 +436,7 @@ export async function startApp(
   if (options.userDataDir && !app.isPackaged)
     app.setPath("userData", options.userDataDir);
   if (
+    !["win32", "darwin", "linux"].includes(process.platform) ||
     !["x64", "arm64"].includes(process.arch) ||
     (process.platform === "win32" &&
       !isSupportedWindows(release(), process.arch))
@@ -409,7 +444,7 @@ export async function startApp(
     await app.whenReady();
     dialog.showErrorBox(
       "MeetSpace",
-      "Требуется Windows 10 22H2 x64, Windows 11 x64 или Windows 11 ARM64.",
+      "Требуется Linux x64/ARM64, Windows 10 22H2 x64, Windows 11 x64 или Windows 11 ARM64.",
     );
     app.quit();
     return null;
@@ -443,6 +478,8 @@ export async function startApp(
     .filter((arg) => arg.startsWith("meetspace:"))
     .forEach(queueDeepLink);
   await app.whenReady();
+  hostPlatform = createHostPlatform({ platform: process.platform, arch: process.arch, osRelease: release(), packaged: app.isPackaged, env: process.env });
+  credentialStore = createCredentialStore(safeStorage, { platform: process.platform });
   notifications = new NativeNotifications({
     create: (options) => new Notification({
       ...options,
@@ -464,18 +501,18 @@ export async function startApp(
     onAccountEvent: (event) => notifications?.observeAccount(event),
     onNotificationPreferences: (value) => notifications?.setPreferences(value),
     onNotificationUnread: (count) => notifications?.setUnreadCount(count),
-    cipher: {
-      isAvailable: () => safeStorage.isEncryptionAvailable() &&
-        !(process.platform === "linux" && safeStorage.getSelectedStorageBackend() === "basic_text"),
-      encrypt: (value) => safeStorage.encryptString(value),
-      decrypt: (value) => safeStorage.decryptString(Buffer.from(value)),
-    },
+    cipher: credentialStore,
     emit: (event) => {
       if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
         mainWindow.webContents.send("meetspace:transport", event);
     },
   });
   await broker.initialize();
+  sshInstaller = new SshInstallerController({
+    storageDir: path.join(app.getPath("userData"), "ssh-installer"),
+    bundleRoot: path.join(app.isPackaged ? app.getAppPath() : path.resolve(__dirname, ".."), "resources/server-installer/v1"),
+  });
+  await sshInstaller.load();
   updates = new NativeUpdates({ trust: identity.trust, packaged: app.isPackaged, platform: process.platform, arch: process.arch,
     currentVersion: app.getVersion(), currentExecutable: process.execPath, cacheDir: path.join(app.getPath("userData"), "updates"),
     transport: createElectronTransport(net, session.fromPartition("meetspace-update-network")),
@@ -498,8 +535,14 @@ export async function startApp(
   });
   try { await assets.initialize(); }
   catch { await assets.dispose(); assets = null; }
-  nativeShell = new NativeShell({ window: () => mainWindow, quit: requestQuit,
-    hide: () => mediaPermissions.cancel(), preferencesChanged: (value) => notifications?.setEnabled(value.nativeNotifications) });
+  nativeShell = new NativeShell({ hostPlatform, window: () => mainWindow, quit: requestQuit,
+    startupProvider: process.platform === "linux" ? createLinuxAutostart({ packaged: app.isPackaged,
+      appId: identity.appId, execPath: process.execPath, env: process.env, homeDir: app.getPath("home"), uid: process.getuid!() }) : undefined,
+    hide: () => mediaPermissions.cancel(), preferencesChanged: (value) => {
+      notifications?.setEnabled(value.nativeNotifications);
+      const hideItem = Menu.getApplicationMenu()?.getMenuItemById("meetspace-hide-to-tray");
+      if (hideItem) hideItem.enabled = value.trayAvailable;
+    } });
   notifications.setEnabled(nativeShell.preferences().nativeNotifications);
   app.on("before-quit", (event) => {
     if (quitPrepared) return;
@@ -514,6 +557,7 @@ export async function startApp(
     // Give the shared client a short turn to stop capture and send media.leave before closing native sockets.
     setTimeout(() => {
       broker?.dispose();
+      sshInstaller?.dispose();
       notifications?.dispose();
       nativeShell?.dispose();
       const cleanup = Promise.allSettled([assets?.dispose(), updates?.dispose()]);
@@ -535,7 +579,7 @@ export async function startApp(
   const menu: MenuItemConstructorOptions[] = [
     { label: "MeetSpace", submenu: [
       { label: "Открыть MeetSpace", click: () => nativeShell?.show() },
-      { label: "Скрыть в трей", click: () => nativeShell?.hide() },
+      { id: "meetspace-hide-to-tray", label: "Скрыть в трей", enabled: nativeShell.preferences().trayAvailable, click: () => nativeShell?.hide() },
       { type: "separator" },
       { label: "Выход из MeetSpace", accelerator: "CommandOrControl+Q", click: requestQuit },
     ] },
@@ -564,7 +608,9 @@ export async function startApp(
     { role: "windowMenu" },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
-  if (app.isPackaged) app.setAsDefaultProtocolClient("meetspace");
+  // Linux handlers belong to the installed package's desktop entry (%u), not a
+  // process-start mutation of the user's MIME defaults. Direct argv links still work.
+  if (app.isPackaged && process.platform !== "linux") app.setAsDefaultProtocolClient("meetspace");
   installIpc();
   const window = await createFoundationWindow(
     options.show !== false,
@@ -580,13 +626,3 @@ export async function startApp(
   });
   return window;
 }
-
-if (require.main === module)
-  void startApp().catch(() => {
-    // Details can contain private URLs or paths; never forward raw exceptions to logs/UI.
-    dialog.showErrorBox(
-      "MeetSpace",
-      "Не удалось запустить приложение. Проверьте установку и повторите запуск.",
-    );
-    app.quit();
-  });

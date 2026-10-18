@@ -1,6 +1,10 @@
 import { subscribeCaptureRelease } from "./platform/captureLifecycle";
 import { useEffect, useState } from "react";
 import { captureErrorMessage } from "./prejoinDevices";
+import {
+  captureWithDeviceFallback,
+  inputTrackConstraints,
+} from "./mediaDevices";
 
 /** Local-only preview. Each effect owns its tracks, including late permission results. */
 export function useCallPreview(
@@ -26,33 +30,20 @@ export function useCallPreview(
       setError("");
       try {
         const constraints = (preferred: string): MediaStreamConstraints => ({
-          audio: kind === "audio" && {
-            ...(preferred ? { deviceId: { exact: preferred } } : {}),
-            echoCancellation: true,
-            noiseSuppression,
-            autoGainControl: true,
-          },
-          video: kind === "video" && {
-            ...(preferred ? { deviceId: { exact: preferred } } : {}),
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30, max: 30 },
-          },
+          audio:
+            kind === "audio" &&
+            inputTrackConstraints(kind, preferred, noiseSuppression),
+          video:
+            kind === "video" &&
+            inputTrackConstraints(kind, preferred, noiseSuppression),
         });
-        try {
-          owned = await navigator.mediaDevices.getUserMedia(
-            constraints(deviceId),
-          );
-        } catch (cause) {
-          if (disposed) return;
-          if (
-            !deviceId ||
-            !(cause instanceof DOMException) ||
-            !["NotFoundError", "OverconstrainedError"].includes(cause.name)
-          )
-            throw cause;
-          owned = await navigator.mediaDevices.getUserMedia(constraints(""));
-        }
+        const captured = await captureWithDeviceFallback(
+          constraints(deviceId),
+          deviceId ? constraints("") : undefined,
+          () => !disposed,
+        );
+        if (!captured) return;
+        owned = captured.stream;
         if (disposed) {
           owned.getTracks().forEach((track) => track.stop());
           return;

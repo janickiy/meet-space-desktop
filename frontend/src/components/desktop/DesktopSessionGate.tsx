@@ -14,6 +14,7 @@ import { platform } from "../../platform";
 import { desktopBridge } from "../../platform/desktop";
 import type {
   DesktopProbeResult,
+  DesktopRuntimeInfo,
   DesktopServerProfile,
   DesktopServerState,
 } from "../../platform/desktop-contracts";
@@ -21,6 +22,7 @@ import { desktopRoute, setDesktopServer } from "../../platform/urls";
 import { saveSession } from "../../utils";
 import "./desktop-foundation.css";
 import { DesktopScreenPicker } from "./DesktopScreenPicker";
+import { DesktopSshInstaller } from "./DesktopSshInstaller";
 import { AuthTeamVisual } from "../AuthTeamVisual";
 
 const ServerContext = createContext<{
@@ -55,6 +57,7 @@ export function DesktopSessionGate({
   children: (key: string) => ReactNode;
 }) {
   const [state, setState] = useState<DesktopServerState | null>(null);
+  const [runtime, setRuntime] = useState<DesktopRuntimeInfo | null>(null);
   const [error, setError] = useState(false);
   const [editing, setEditing] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -87,8 +90,9 @@ export function DesktopSessionGate({
     let offState = () => {};
     setError(false);
     void (async () => {
-      await platform.getRuntimeInfo();
+      const host = await platform.getRuntimeInfo();
       if (!alive) return;
+      setRuntime(host);
       offRoute = platform.onRoute((route) => {
         initialPath.current = route;
         navigateRef.current(route, { replace: true });
@@ -147,7 +151,12 @@ export function DesktopSessionGate({
     );
   if (!profile)
     return (
-      <ServerSettings state={state} onState={apply} onConnected={connected} />
+      <ServerSettings
+        state={state}
+        runtime={runtime}
+        onState={apply}
+        onConnected={connected}
+      />
     );
   return (
     <ServerContext.Provider value={{ profile, open: () => setEditing(true) }}>
@@ -157,6 +166,7 @@ export function DesktopSessionGate({
         <Modal title="Подключение к серверу" onClose={() => setEditing(false)}>
           <ServerSettings
             state={state}
+            runtime={runtime}
             onState={apply}
             onConnected={connected}
             embedded
@@ -212,11 +222,13 @@ function connectionMessage(error: unknown): string {
 
 function ServerSettings({
   state,
+  runtime,
   onState,
   onConnected,
   embedded = false,
 }: {
   state: DesktopServerState;
+  runtime: DesktopRuntimeInfo | null;
   onState: (state: DesktopServerState) => void;
   onConnected: (state: DesktopServerState) => void;
   embedded?: boolean;
@@ -228,6 +240,7 @@ function ServerSettings({
   );
   const [label, setLabel] = useState(selected?.label ?? "");
   const [probe, setProbe] = useState<DesktopProbeResult | null>(null);
+  const [installingServer, setInstallingServer] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const active = useRef(true);
@@ -248,7 +261,27 @@ function ServerSettings({
       if (active.current) setBusy(false);
     }
   }
-  const content = (
+  async function connectOrigin(serverOrigin: string, serverLabel?: string) {
+    const checked = await desktopBridge().probeServer(serverOrigin.trim());
+    if (!active.current) return;
+    setProbe(checked);
+    const saved = await desktopBridge().addServer({
+      origin: checked.origin,
+      label: serverLabel?.trim() || undefined,
+    });
+    if (!active.current) return;
+    const profile = saved.items.find((item) => item.origin === checked.origin);
+    if (!profile) throw new Error("server_missing");
+    const connected = await desktopBridge().selectServer(profile.id);
+    if (active.current) onConnected(connected);
+  }
+  const content = installingServer ? (
+    <DesktopSshInstaller
+      onBack={() => setInstallingServer(false)}
+      onConnect={(serverOrigin) => connectOrigin(serverOrigin)}
+      canConnect={state.storageAvailable}
+    />
+  ) : (
     <>
       {!embedded && (
         <>
@@ -262,8 +295,9 @@ function ServerSettings({
       )}
       {!state.storageAvailable && (
         <ErrorNotice>
-          Защищённое хранилище недоступно. Сохранение подключения и вход сейчас
-          недоступны.
+          {runtime?.platform === "linux"
+            ? "Защищённое хранилище паролей Linux недоступно. Разблокируйте системную связку ключей и перезапустите MeetSpace. Для входа требуется GNOME Keyring или KWallet; пароли без защиты не сохраняются."
+            : "Защищённое хранилище недоступно. Сохранение подключения и вход сейчас недоступны."}
         </ErrorNotice>
       )}
       {state.items.length > 0 && (
@@ -320,17 +354,7 @@ function ServerSettings({
         onSubmit={(event) => {
           event.preventDefault();
           void run(async () => {
-            const checked = await desktopBridge().probeServer(origin.trim());
-            if (active.current) setProbe(checked);
-            const saved = await desktopBridge().addServer({
-              origin: checked.origin,
-              label: label.trim() || undefined,
-            });
-            const profile = saved.items.find(
-              (item) => item.origin === checked.origin,
-            );
-            if (!profile) throw new Error("server_missing");
-            onConnected(await desktopBridge().selectServer(profile.id));
+            await connectOrigin(origin, label);
           });
         }}
       >
@@ -382,6 +406,21 @@ function ServerSettings({
           </Button>
         </div>
       </form>
+      <div className="desktop-ssh-entry">
+        <div>
+          <strong>Нужен свой сервер?</strong>
+          <p>Установите MeetSpace на Linux-хост и подключите команду.</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => setInstallingServer(true)}
+        >
+          <Server size={16} aria-hidden="true" />
+          Установить сервер по SSH
+        </Button>
+      </div>
       {selected && (
         <p className="desktop-foundation-description">
           При смене сервера текущие звонки и соединения будут закрыты. Аккаунты
@@ -393,7 +432,9 @@ function ServerSettings({
   return embedded ? (
     <div className="desktop-server-settings">{content}</div>
   ) : (
-    <main className="page-center desktop-foundation">
+    <main
+      className={`page-center desktop-foundation${installingServer ? " desktop-foundation-installing" : ""}`}
+    >
       <aside
         className="desktop-welcome"
         aria-label="Добро пожаловать в MeetSpace"
@@ -409,7 +450,9 @@ function ServerSettings({
       </aside>
       <section
         className="content-card desktop-foundation-card"
-        aria-labelledby="desktop-title"
+        aria-labelledby={
+          installingServer ? "desktop-ssh-title" : "desktop-title"
+        }
       >
         {content}
       </section>

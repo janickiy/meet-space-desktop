@@ -9,14 +9,22 @@ const { startApp } = require("../dist/main.js");
   const userDataDir = await fs.mkdtemp(
     path.join(os.tmpdir(), "meetspace-foundation-smoke-"),
   );
+  const wayland = process.platform === "linux" &&
+    (process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY);
   let window;
   try {
     window = await startApp({
-      show: false,
+      show: wayland,
       userDataDir,
       rendererRoot: path.resolve(__dirname, "../renderer"),
     });
     assert.ok(window, "single instance starts");
+    // Production startup must map the Wayland surface itself. Manually showing
+    // it here would conceal a broken initial-window lifecycle.
+    if (wayland) {
+      assert.equal(window.isVisible(), true, "Wayland startup displays the loaded window");
+      window.focus();
+    }
     const menu = Menu.getApplicationMenu();
     assert.ok(menu && menu.items.some((item) => item.label === "MeetSpace"));
     assert.equal(
@@ -58,7 +66,7 @@ const { startApp } = require("../dist/main.js");
     assert.match(state.text, /MeetSpace/);
     assert.match(state.text, /серверу/);
     assert.equal(state.hasNode, false);
-    assert.equal(state.bridgeVersion, 5);
+    assert.equal(state.bridgeVersion, 6);
     assert.equal(state.info.capabilities.serverConnection, true);
     assert.equal(state.info.arch, process.arch);
     assert.equal(state.apiStatus, 403);
@@ -89,7 +97,16 @@ const { startApp } = require("../dist/main.js");
     });
     for (const theme of ["dark", "light"]) {
       nativeTheme.themeSource = theme;
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      // React and native media-query delivery can take longer under a software
+      // virtual display. Wait for the required result with a finite deadline.
+      const deadline = Date.now() + 15000;
+      while (
+        (await window.webContents.executeJavaScript(
+          "document.documentElement.dataset.theme",
+        )) !== theme &&
+        Date.now() < deadline
+      )
+        await new Promise((resolve) => setTimeout(resolve, 50));
       assert.equal(
         await window.webContents.executeJavaScript(
           "document.documentElement.dataset.theme",
@@ -132,7 +149,13 @@ const { startApp } = require("../dist/main.js");
       "meetspace://open/i/" + "a".repeat(32),
     );
     await finishedLoading;
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    const routeDeadline = Date.now() + 15000;
+    while (
+      (await window.webContents.executeJavaScript("window.location.pathname")) !==
+        "/i/" + "a".repeat(32) &&
+      Date.now() < routeDeadline
+    )
+      await new Promise((resolve) => setTimeout(resolve, 50));
     assert.equal(
       await window.webContents.executeJavaScript("window.location.pathname"),
       "/i/" + "a".repeat(32),

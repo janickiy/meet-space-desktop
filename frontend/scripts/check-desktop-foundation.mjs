@@ -153,7 +153,9 @@ await test("web notification sound retains preference gating, dedup and audio cl
     assert.equal(players.length, 1);
     sound.notify("fixture-event");
     sound.notify("fixture-event");
-    await Promise.resolve();
+    // Output selection is serialized before playback; wait for the operation,
+    // rather than depending on its previous one-microtask implementation.
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(players[0].plays, 1);
     localStorage.setItem(
       "meet.devices.v1:fixture-user",
@@ -179,6 +181,12 @@ await test("renderer links require the selected HTTPS service and safe applicati
     urls.externalServiceURL("https://meeting.janickiy.com/"),
     "https://meeting.janickiy.com/",
   );
+  for (const fixed of [
+    "https://janickiy.com/",
+    "https://letsencrypt.org/repository/",
+  ]) {
+    assert.equal(urls.externalServiceURL(fixed), fixed);
+  }
   for (const url of [
     "http://meeting.janickiy.com/",
     "https://evil.invalid/",
@@ -191,6 +199,13 @@ await test("renderer links require the selected HTTPS service and safe applicati
     "https://meeting.janickiy.com/%2fsecret",
     "https://meeting.janickiy.com/#fragment",
     "javascript:alert(1)",
+    "https://janickiy.com",
+    "https://janickiy.com/private",
+    "https://janickiy.com/?redirect=elsewhere",
+    "https://janickiy.com/#fragment",
+    "https://janickiy.com.evil.invalid/",
+    "https://letsencrypt.org/",
+    "https://letsencrypt.org/repository/?redirect=elsewhere",
     "https://meeting.janickiy.com/" + "a".repeat(2048),
   ]) {
     assert.throws(() => urls.externalServiceURL(url));
@@ -210,6 +225,194 @@ await test("renderer links require the selected HTTPS service and safe applicati
   }
 });
 
+const nativePreferences = await compileModule(
+  "src/platform/nativePreferences.ts",
+  true,
+);
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => {
+    resolve = yes;
+    reject = no;
+  });
+  return { promise, resolve, reject };
+}
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+await test("native preferences serialize refresh and changes and reject an older read", async () => {
+  const calls = [];
+  const values = [],
+    errors = [],
+    busy = [];
+  const controller = nativePreferences.createNativePreferencesController(
+    {
+      getNativePreferences() {
+        const pending = deferred();
+        calls.push({ kind: "get", ...pending });
+        return pending.promise;
+      },
+      setNativePreferences(input) {
+        const pending = deferred();
+        calls.push({ kind: "set", input, ...pending });
+        return pending.promise;
+      },
+    },
+    {
+      value: (v) => values.push(v),
+      error: (e) => errors.push(e),
+      busy: (v) => busy.push(v),
+    },
+  );
+  controller.refresh();
+  controller.refresh();
+  controller.refresh();
+  controller.update({ closeToTray: false });
+  assert.equal(calls.length, 1, "no set overlaps a pending get");
+  calls[0].resolve({ closeToTray: true, trayStatus: "checking" });
+  await settle();
+  assert.deepEqual(
+    values,
+    [],
+    "old polling result cannot undo the pending user intent",
+  );
+  assert.deepEqual(
+    calls.map((call) => call.kind),
+    ["get", "set"],
+  );
+  assert.deepEqual(calls[1].input, { closeToTray: false });
+  const saved = {
+    closeToTray: false,
+    trayAvailable: true,
+    trayStatus: "available",
+  };
+  calls[1].resolve(saved);
+  await settle();
+  assert.deepEqual(values, [saved]);
+  assert.deepEqual(
+    calls.map((call) => call.kind),
+    ["get", "set", "get"],
+    "many refresh events coalesce into one subsequent read",
+  );
+  calls[2].resolve(saved);
+  await settle();
+  assert.equal(busy.at(-1), false);
+  assert.deepEqual(errors, []);
+  controller.dispose();
+});
+
+await test("native preference mutations retain order and disposal suppresses late results and errors", async () => {
+  const calls = [],
+    observed = [];
+  const controller = nativePreferences.createNativePreferencesController(
+    {
+      getNativePreferences() {
+        throw new Error("unexpected read");
+      },
+      setNativePreferences(input) {
+        const pending = deferred();
+        calls.push({ input, ...pending });
+        return pending.promise;
+      },
+    },
+    {
+      value: (v) => observed.push(v),
+      error: (e) => observed.push(e),
+      busy: () => {},
+    },
+  );
+  controller.update({ startAtLogin: true });
+  controller.update({ startAtLogin: false });
+  assert.equal(calls.length, 1);
+  calls[0].resolve({ startAtLogin: true });
+  await settle();
+  assert.deepEqual(observed, []);
+  assert.deepEqual(
+    calls.map((call) => call.input),
+    [{ startAtLogin: true }, { startAtLogin: false }],
+  );
+  controller.dispose();
+  calls[1].reject(new Error("late native error"));
+  await settle();
+  controller.refresh();
+  controller.update({ startAtLogin: true });
+  assert.equal(calls.length, 2);
+  assert.deepEqual(observed, []);
+});
+
+await test("failed native preference change releases busy state and a later refresh recovers", async () => {
+  const pending = deferred(),
+    errors = [],
+    values = [],
+    busy = [];
+  const controller = nativePreferences.createNativePreferencesController(
+    {
+      getNativePreferences: async () => ({
+        startAtLogin: false,
+        startupReason: "conflict",
+      }),
+      setNativePreferences: () => pending.promise,
+    },
+    {
+      value: (v) => values.push(v),
+      error: (e) => errors.push(e),
+      busy: (v) => busy.push(v),
+    },
+  );
+  controller.update({ startAtLogin: true });
+  const failure = new Error("native failed");
+  pending.reject(failure);
+  await settle();
+  assert.deepEqual(errors, [failure]);
+  assert.deepEqual(busy, [true, false]);
+  controller.refresh();
+  await settle();
+  assert.deepEqual(values, [
+    { startAtLogin: false, startupReason: "conflict" },
+  ]);
+  controller.dispose();
+});
+
+await test("native preference observation polls only while visible and removes timers and listeners", () => {
+  const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+  let nextID = 0,
+    reads = 0;
+  const timers = new Map();
+  const host = Object.assign(new EventTarget(), {
+    setInterval(callback, ms) {
+      assert.equal(ms, 5000);
+      timers.set(++nextID, callback);
+      return nextID;
+    },
+    clearInterval(id) {
+      timers.delete(id);
+    },
+  });
+  const stop = nativePreferences.watchNativePreferences(
+    () => reads++,
+    page,
+    host,
+  );
+  assert.equal(reads, 1);
+  assert.equal(timers.size, 1);
+  [...timers.values()][0]();
+  assert.equal(reads, 2);
+  page.visibilityState = "hidden";
+  page.dispatchEvent(new Event("visibilitychange"));
+  host.dispatchEvent(new Event("focus"));
+  assert.equal(reads, 2);
+  assert.equal(timers.size, 0);
+  page.visibilityState = "visible";
+  page.dispatchEvent(new Event("visibilitychange"));
+  host.dispatchEvent(new Event("focus"));
+  assert.equal(reads, 4);
+  assert.equal(timers.size, 1);
+  stop();
+  host.dispatchEvent(new Event("focus"));
+  page.dispatchEvent(new Event("visibilitychange"));
+  assert.equal(reads, 4);
+  assert.equal(timers.size, 0);
+});
+
 const { desktopPlatform } = await compileModule(
   "src/platform/desktop.ts",
   true,
@@ -220,11 +423,20 @@ const runtimeInfo = {
   appVersion: "0.1.0",
   isPackaged: true,
   capabilities: { serverConnection: true, windowControls: true },
+  host: {
+    session: "not-applicable",
+    secureStorage: { available: true, backend: "dpapi", reason: "available" },
+    supports: {
+      startup: true,
+      absoluteWindowPosition: true,
+      systemAudio: true,
+    },
+  },
 };
 
 function bridge(overrides = {}) {
   return {
-    bridgeVersion: 5,
+    bridgeVersion: 6,
     getRuntimeInfo: async () => runtimeInfo,
     openExternal: async () => {},
     onRoute: () => () => {},
@@ -232,7 +444,21 @@ function bridge(overrides = {}) {
     toggleMaximize: async () => {},
     close: async () => {},
     quit: async () => {},
-    getUpdateState: async () => ({ enabled: false, phase: "disabled", currentVersion: "0.6.0" }),
+    getUpdateState: async () => ({
+      enabled: false,
+      phase: "disabled",
+      currentVersion: "0.6.0",
+    }),
+    getSshInstallerState: async () => ({
+      busy: false,
+      phase: "idle",
+      hasCredentials: false,
+    }),
+    sshInstaller: async () => ({
+      busy: false,
+      phase: "idle",
+      hasCredentials: false,
+    }),
     checkUpdates: async () => ({}),
     downloadUpdate: async () => ({}),
     cancelUpdate: async () => ({}),
@@ -278,6 +504,7 @@ await test("desktop adapter rejects missing and incompatible bridge shapes", asy
   await assert.rejects(desktopPlatform.getRuntimeInfo(), /unavailable/);
   for (const invalid of [
     bridge({ bridgeVersion: 1 }),
+    bridge({ bridgeVersion: 5 }),
     bridge({ getRuntimeInfo: undefined }),
     bridge({ openExternal: "not a function" }),
     bridge({ onRoute: null }),
@@ -287,6 +514,21 @@ await test("desktop adapter rejects missing and incompatible bridge shapes", asy
     await assert.rejects(desktopPlatform.getRuntimeInfo(), /unavailable/);
   }
 });
+
+for (const method of ["getSshInstallerState", "sshInstaller"]) {
+  await test(`desktop adapter rejects a bridge missing ${method}`, async () => {
+    let runtimeCalls = 0;
+    window.meetspaceDesktop = bridge({
+      [method]: undefined,
+      getRuntimeInfo: async () => {
+        runtimeCalls++;
+        return runtimeInfo;
+      },
+    });
+    await assert.rejects(desktopPlatform.getRuntimeInfo(), /unavailable/);
+    assert.equal(runtimeCalls, 0);
+  });
+}
 
 await test("desktop adapter fails closed on unknown runtime capabilities", async () => {
   window.meetspaceDesktop = bridge({
@@ -298,6 +540,123 @@ await test("desktop adapter fails closed on unknown runtime capabilities", async
   await assert.rejects(desktopPlatform.getRuntimeInfo(), /Unsupported/);
   window.meetspaceDesktop = bridge();
   assert.deepEqual(await desktopPlatform.getRuntimeInfo(), runtimeInfo);
+});
+
+await test("desktop adapter rejects missing or malformed host metadata", async () => {
+  const { host } = runtimeInfo;
+  const invalidHosts = [
+    undefined,
+    null,
+    {},
+    { ...host, session: undefined },
+    { ...host, session: "xwayland" },
+    { ...host, session: "wayland" },
+    { ...host, secureStorage: undefined },
+    { ...host, secureStorage: null },
+    { ...host, secureStorage: {} },
+    { ...host, secureStorage: { ...host.secureStorage, available: undefined } },
+    { ...host, secureStorage: { ...host.secureStorage, available: "true" } },
+    { ...host, secureStorage: { ...host.secureStorage, backend: undefined } },
+    { ...host, secureStorage: { ...host.secureStorage, backend: "plaintext" } },
+    { ...host, secureStorage: { ...host.secureStorage, reason: undefined } },
+    { ...host, secureStorage: { ...host.secureStorage, reason: "trusted" } },
+    {
+      ...host,
+      secureStorage: {
+        available: true,
+        backend: "basic_text",
+        reason: "available",
+      },
+    },
+    {
+      ...host,
+      secureStorage: {
+        available: true,
+        backend: "unknown",
+        reason: "available",
+      },
+    },
+    {
+      ...host,
+      secureStorage: { ...host.secureStorage, reason: "unavailable" },
+    },
+    { ...host, secureStorage: { ...host.secureStorage, available: false } },
+    {
+      ...host,
+      secureStorage: {
+        ...host.secureStorage,
+        available: false,
+        reason: "insecure-backend",
+      },
+    },
+    { ...host, supports: undefined },
+    { ...host, supports: null },
+    { ...host, supports: {} },
+    ...["startup", "absoluteWindowPosition", "systemAudio"].flatMap((key) => [
+      { ...host, supports: { ...host.supports, [key]: undefined } },
+      { ...host, supports: { ...host.supports, [key]: "true" } },
+    ]),
+  ];
+  for (const invalid of invalidHosts) {
+    window.meetspaceDesktop = bridge({
+      getRuntimeInfo: async () => ({ ...runtimeInfo, host: invalid }),
+    });
+    await assert.rejects(desktopPlatform.getRuntimeInfo(), /Unsupported/);
+  }
+  window.meetspaceDesktop = bridge({
+    getRuntimeInfo: async () => ({ ...runtimeInfo, platform: "linux" }),
+  });
+  await assert.rejects(desktopPlatform.getRuntimeInfo(), /Unsupported/);
+  window.meetspaceDesktop = bridge();
+});
+
+await test("desktop adapter accepts host metadata for Linux session and storage availability", async () => {
+  for (const host of [
+    {
+      session: "x11",
+      secureStorage: {
+        available: true,
+        backend: "gnome-libsecret",
+        reason: "available",
+      },
+      supports: {
+        startup: false,
+        absoluteWindowPosition: true,
+        systemAudio: false,
+      },
+    },
+    {
+      session: "wayland",
+      secureStorage: {
+        available: false,
+        backend: "basic_text",
+        reason: "insecure-backend",
+      },
+      supports: {
+        startup: false,
+        absoluteWindowPosition: false,
+        systemAudio: false,
+      },
+    },
+    {
+      session: "unknown",
+      secureStorage: {
+        available: false,
+        backend: "unknown",
+        reason: "unavailable",
+      },
+      supports: {
+        startup: false,
+        absoluteWindowPosition: false,
+        systemAudio: false,
+      },
+    },
+  ]) {
+    const info = { ...runtimeInfo, platform: "linux", host };
+    window.meetspaceDesktop = bridge({ getRuntimeInfo: async () => info });
+    assert.deepEqual(await desktopPlatform.getRuntimeInfo(), info);
+  }
+  window.meetspaceDesktop = bridge();
 });
 
 await test("desktop route events are validated and listeners can unsubscribe", () => {
@@ -334,6 +693,94 @@ await test("desktop external link rejection happens before invoking the bridge",
   assert.deepEqual(opened, []);
   await desktopPlatform.openExternal("https://meeting.janickiy.com/");
   assert.deepEqual(opened, ["https://meeting.janickiy.com/"]);
+});
+
+await test("external links retain web navigation and require trusted desktop clicks before allowlisted dispatch", async () => {
+  const links = await compileModule("src/platform/externalLink.ts", true);
+  const opened = [];
+  window.meetspaceDesktop = bridge({
+    openExternal: async (url) => {
+      opened.push(url);
+    },
+  });
+  function click(isTrusted = true, defaultPrevented = false) {
+    return {
+      isTrusted,
+      defaultPrevented,
+      prevented: false,
+      preventDefault() {
+        this.prevented = true;
+      },
+    };
+  }
+  const web = click();
+  assert.equal(
+    links.externalLinkClick(
+      web,
+      false,
+      "https://other.invalid/",
+      desktopPlatform.openExternal,
+    ),
+    undefined,
+  );
+  assert.equal(
+    web.prevented,
+    false,
+    "web retains the actual href and target behavior",
+  );
+  const synthetic = click(false);
+  assert.equal(
+    links.externalLinkClick(
+      synthetic,
+      true,
+      "https://janickiy.com/",
+      desktopPlatform.openExternal,
+    ),
+    undefined,
+  );
+  assert.equal(synthetic.prevented, true);
+  const cancelled = click(true, true);
+  assert.equal(
+    links.externalLinkClick(
+      cancelled,
+      true,
+      "https://janickiy.com/",
+      desktopPlatform.openExternal,
+    ),
+    undefined,
+  );
+  assert.deepEqual(opened, []);
+  const trusted = click();
+  await links.externalLinkClick(
+    trusted,
+    true,
+    "https://janickiy.com/",
+    desktopPlatform.openExternal,
+  );
+  assert.equal(trusted.prevented, true);
+  assert.deepEqual(opened, ["https://janickiy.com/"]);
+  const rejected = click();
+  await assert.rejects(
+    links.externalLinkClick(
+      rejected,
+      true,
+      "https://other.invalid/",
+      desktopPlatform.openExternal,
+    ),
+  );
+  assert.equal(rejected.prevented, true);
+  assert.deepEqual(
+    opened,
+    ["https://janickiy.com/"],
+    "foreign chat domains never reach the native bridge",
+  );
+  const launchFailure = new Error("browser unavailable");
+  await assert.rejects(
+    links.externalLinkClick(click(), true, "https://janickiy.com/", () => {
+      throw launchFailure;
+    }),
+    (error) => error === launchFailure,
+  );
 });
 
 await test("desktop development refuses API traffic and supplies CSP nonces", async () => {

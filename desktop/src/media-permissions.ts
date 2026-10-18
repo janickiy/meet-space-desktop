@@ -2,12 +2,14 @@ import { randomUUID } from "node:crypto";
 import type { DesktopCapturerSource, DisplayMediaRequestHandlerHandlerRequest, Streams, WebContents, WebFrameMain } from "electron";
 import type { DesktopDisplayCaptureEvent } from "./shared/contracts";
 import { isTrustedRendererUrl } from "./security";
+import type { DisplayCaptureMode } from "./platform/display-capture";
 
 interface Owner { contents: WebContents; frame: WebFrameMain }
 interface MediaPermissionsOptions {
   owner(): Owner | null;
   development: boolean;
   platform: string;
+  displayMode?(): DisplayCaptureMode;
   getSources(thumbnails: boolean): Promise<DesktopCapturerSource[]>;
   emit(event: DesktopDisplayCaptureEvent): void;
   timeoutMs?: number;
@@ -25,6 +27,9 @@ interface Pending {
 /** Permission grants are document-scoped. Source IDs never cross the preload boundary. */
 export class MediaPermissions {
   private pending: Pending | null = null;
+  // Electron deduplicates concurrent getSources calls. A cancelled portal
+  // operation must settle before another document/request may enumerate.
+  private enumerating = false;
   constructor(private readonly options: MediaPermissionsOptions) {}
 
   private trusted(contents: WebContents | null, url: unknown, mainFrame: boolean): boolean {
@@ -61,10 +66,22 @@ export class MediaPermissions {
       owner.frame === pending.owner.frame && !owner.contents.isDestroyed() &&
       isTrustedRendererUrl(owner.frame.url, this.options.development);
   }
+  private async getSources(thumbnails: boolean): Promise<DesktopCapturerSource[]> {
+    if (this.enumerating) throw new Error("capture_enumeration_pending");
+    this.enumerating = true;
+    try { return await this.options.getSources(thumbnails); }
+    finally { this.enumerating = false; }
+  }
   async display(request: DisplayMediaRequestHandlerHandlerRequest, callback: (streams: Streams | null) => void): Promise<void> {
     const owner = this.options.owner();
-    if (!owner || this.pending || !request.userGesture || !request.videoRequested ||
+    if (!owner || this.pending || this.enumerating || !request.userGesture || !request.videoRequested ||
       request.frame !== owner.frame || !this.trusted(owner.contents, request.securityOrigin, true)) {
+      try { callback(null); } catch { /* The requesting document may have disappeared. */ }
+      return;
+    }
+    const mode = this.options.displayMode?.() ?? (this.options.platform === "linux" ? "unavailable" : "picker");
+    if (mode === "unavailable") {
+      try { this.options.emit({ type: "unavailable", requestId: randomUUID() }); } catch { /* The owner may be closing. */ }
       try { callback(null); } catch { /* The requesting document may have disappeared. */ }
       return;
     }
@@ -75,8 +92,17 @@ export class MediaPermissions {
     };
     this.pending = pending;
     try {
-      const sources = await this.options.getSources(true);
+      if (mode === "portal") this.options.emit({ type: "portal", requestId: pending.id });
+      const sources = await this.getSources(mode === "picker");
       if (!this.active(pending)) return;
+      if (mode === "portal") {
+        // In the pinned Linux backend, getSources already presented the portal
+        // and returned its consented source. Never enumerate again or substitute
+        // an X11 first-source choice for system consent.
+        if (sources.length !== 1 || !/^window:/.test(sources[0].id)) { this.cancel(); return; }
+        this.finish(pending, { video: sources[0] });
+        return;
+      }
       const available = sources.filter(source => /^(screen|window):/.test(source.id)).slice(0, 100);
       if (!available.length) { this.cancel(); return; }
       const publicSources = available.map(source => {
@@ -103,7 +129,7 @@ export class MediaPermissions {
     pending.choosing = true;
     try {
       // Windows may disappear while the picker is open; never substitute another source.
-      const current = await this.options.getSources(false);
+      const current = await this.getSources(false);
       if (!this.active(pending)) throw new Error("stale_request");
       const selected = current.find(item => item.id === source.id);
       if (!selected) throw new Error("capture_source_unavailable");
@@ -123,6 +149,6 @@ export class MediaPermissions {
     if (this.pending !== pending) return;
     this.pending = null; clearTimeout(pending.timer); pending.sources.clear();
     try { pending.callback(streams); } catch { /* The document may already be gone. */ }
-    this.options.emit({ type: "cancelled", requestId: pending.id });
+    try { this.options.emit({ type: "cancelled", requestId: pending.id }); } catch { /* The owner may be closing. */ }
   }
 }

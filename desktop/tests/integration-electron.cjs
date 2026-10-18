@@ -38,7 +38,7 @@ const { PASSWORD } = require("./fixtures/https-fixture.cjs");
     assert.fail(description);
   };
   assert.equal((await call("getRuntimeInfo")).capabilities.serverConnection, true);
-  assert.equal(await window.webContents.executeJavaScript("window.meetspaceDesktop.bridgeVersion"), 5);
+  assert.equal(await window.webContents.executeJavaScript("window.meetspaceDesktop.bridgeVersion"), 6);
   assert.equal(await window.webContents.executeJavaScript("typeof require === 'undefined' && typeof process === 'undefined'"), true);
   if (config.phase === "first") {
     await call("addServer", { origin: config.alpha.origin, label: "Integration Alpha" });

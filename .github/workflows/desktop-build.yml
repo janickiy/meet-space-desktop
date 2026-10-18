@@ -70,6 +70,8 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           npm --prefix desktop test
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          npm --prefix desktop run test:ssh
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
       - name: Build and inspect the actual NSIS payload
         env:
           TARGET_ARCH: ${{ matrix.arch }}

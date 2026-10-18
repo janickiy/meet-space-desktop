@@ -85,7 +85,7 @@ export function prepareWindowsAcceptance(build: AcceptanceBuild): { run(window: 
         window.__meetspaceAcceptanceRoute = null;
         bridge.onRoute(route => { window.__meetspaceAcceptanceRoute = route; });
         const denied = await fetch('app://meetspace/api/v1/auth/me');
-        return { bridge: bridge.bridgeVersion === 5,
+        return { bridge: bridge.bridgeVersion === 6,
           isolated: typeof process === 'undefined' && typeof require === 'undefined',
           runtime: runtime.platform === 'win32' && runtime.isPackaged === true,
           arch: runtime.arch, version: runtime.appVersion,

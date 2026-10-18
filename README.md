@@ -1,12 +1,13 @@
 # MeetSpace for Windows
 
-**Версия продукта: 0.1.0 beta.** Windows-приложение MeetSpace на Electron, React и TypeScript для Windows x64 и Windows 11 ARM64. С версии `0.1.0-beta` начинается новая нумерация выпусков.
+**Версия продукта: 0.1.1 beta.** Windows-приложение MeetSpace на Electron, React и TypeScript для Windows x64 и Windows 11 ARM64. С версии `0.1.0-beta` начинается новая нумерация выпусков.
 
 Приложение подключается к существующему HTTPS-серверу MeetSpace, поддерживает авторизацию, встречи, видеозвонки, демонстрацию экрана, чаты, группы, папки, записи, системный трей и уведомления. Рабочий сервер: [meeting.janickiy.com](https://meeting.janickiy.com/).
 
 - [Запуск, сборка установщиков и проверки Windows-приложения](desktop/README.md).
 - [Архитектура Windows](docs/desktop/01_AUDIT.md), [дизайн интерфейса](docs/desktop/DESIGN_V2.md).
 - [CI, подпись и выпуск](desktop/scripts/ci/README.md).
+- [Установка собственного сервера по SSH](docs/desktop/SSH_INSTALLER_REFERENCE.md).
 
 Для локального запуска нужны Node.js 24.15+ в ветке 24 либо поддерживаемая ветка 26+:
 

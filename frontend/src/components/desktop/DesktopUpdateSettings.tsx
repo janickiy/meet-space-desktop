@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { desktopBridge } from "../../platform/desktop";
-import type { DesktopUpdateState } from "../../platform/desktop-contracts";
+import type {
+  DesktopRuntimeInfo,
+  DesktopUpdateState,
+} from "../../platform/desktop-contracts";
 import { Button, ErrorNotice, Loading } from "../ui";
 
 const failures: Record<string, string> = {
@@ -19,7 +22,11 @@ const failures: Record<string, string> = {
     "Не удалось запустить установщик. Повторите проверку обновления.",
 };
 
-export function DesktopUpdateSettings() {
+export function DesktopUpdateSettings({
+  hostPlatform,
+}: {
+  hostPlatform?: DesktopRuntimeInfo["platform"];
+}) {
   const [state, setState] = useState<DesktopUpdateState | null>(null);
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);
@@ -73,9 +80,11 @@ export function DesktopUpdateSettings() {
           </p>
           <p role="status" aria-live="polite">
             {!state.enabled
-              ? state.code === "update_not_configured"
-                ? "Обновления недоступны в этой сборке. Издатель, подпись и канал выпуска ещё не настроены."
-                : "Обновления отключены: не удалось подтвердить доверие к приложению или эта среда не поддерживается."
+              ? hostPlatform === "linux"
+                ? "Автоматическое обновление Linux не настроено. Пакеты DEB/RPM обновляйте через системный менеджер пакетов. AppImage заменяйте новой проверенной версией."
+                : state.code === "update_not_configured"
+                  ? "Обновления недоступны в этой сборке. Издатель, подпись и канал выпуска ещё не настроены."
+                  : "Обновления отключены: не удалось подтвердить доверие к приложению или эта среда не поддерживается."
               : state.phase === "idle"
                 ? "Новых обновлений нет. Проверка выполняется автоматически."
                 : state.phase === "checking"

@@ -51,6 +51,7 @@ type driver struct {
 	conferenceID       string
 	clients            map[string]*client
 	clientByConnection sync.Map
+	maxPeers           int
 }
 
 func (d *driver) write(value any) { d.mu.Lock(); defer d.mu.Unlock(); _ = d.encoder.Encode(value) }
@@ -161,7 +162,7 @@ func (d *driver) handle(request command) (any, error) {
 		}
 		// These are the worker Result fields. Production controller propagation of
 		// ICETransportPolicy is audited separately; this is media-engine verification.
-		joined := map[string]any{"mediaPeerId": peer.MediaPeerID, "workerId": "local-real-pion", "maxPeers": 3,
+		joined := map[string]any{"mediaPeerId": peer.MediaPeerID, "workerId": "local-real-pion", "maxPeers": d.maxPeers,
 			"iceServers": ice.ICEServers, "iceTransportPolicy": ice.ICETransportPolicy, "iceExpiresAt": ice.ExpiresAt,
 			"tracks": tracks, "videoCapture": media.VideoCaptureTarget{MaxWidth: 640, MaxHeight: 360, MaxFrameRate: 15}, "policy": media.ParticipantPolicy{}}
 		d.event(request.ClientID, "media.joined", request.ID, joined)
@@ -221,8 +222,13 @@ func (d *driver) handle(request command) (any, error) {
 }
 func main() {
 	relay := flag.Bool("relay", false, "Use a real ephemeral local TURN server and force relay for Chromium peers")
+	maxPeers := flag.Int("max-peers", 3, "Maximum peers in this disposable integration fixture (2 through 5)")
 	flag.Parse()
-	d := &driver{encoder: json.NewEncoder(os.Stdout), conferenceID: uuid.NewString(), clients: map[string]*client{}}
+	if *maxPeers < 2 || *maxPeers > 5 {
+		fmt.Fprintln(os.Stderr, "local SFU fixture max-peers must be 2 through 5")
+		os.Exit(1)
+	}
+	d := &driver{encoder: json.NewEncoder(os.Stdout), conferenceID: uuid.NewString(), clients: map[string]*client{}, maxPeers: *maxPeers}
 	if *relay {
 		server, cfg, err := startTURN()
 		if err != nil {
@@ -233,7 +239,7 @@ func main() {
 		d.turnConfig = cfg
 		defer server.Close()
 	}
-	manager, err := sfu.NewManager(sfu.Options{WorkerID: "local-real-pion", MaxPeers: 3, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), Emit: func(binding media.Binding, kind string, data any) {
+	manager, err := sfu.NewManager(sfu.Options{WorkerID: "local-real-pion", MaxPeers: *maxPeers, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)), Emit: func(binding media.Binding, kind string, data any) {
 		if id, ok := d.clientByConnection.Load(binding.ConnectionID); ok {
 			d.event(id.(string), kind, "", data)
 		}
@@ -248,7 +254,7 @@ func main() {
 		defer cancel()
 		_ = manager.Shutdown(ctx)
 	}()
-	d.write(map[string]any{"ready": true, "relay": *relay, "conferenceId": d.conferenceID})
+	d.write(map[string]any{"ready": true, "relay": *relay, "maxPeers": *maxPeers, "conferenceId": d.conferenceID})
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Buffer(make([]byte, 65536), 1024*1024)
 	for scanner.Scan() {

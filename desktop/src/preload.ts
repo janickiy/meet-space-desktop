@@ -13,7 +13,7 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
 
 // Sandboxed preload is self-contained: only the Electron import exists at runtime.
 const bridge: DesktopBridge = {
-  bridgeVersion: 5,
+  bridgeVersion: 6,
   getRuntimeInfo: () => ipcRenderer.invoke("meetspace:runtime"),
   openExternal: (url) => ipcRenderer.invoke("meetspace:external", url),
   minimize: () => ipcRenderer.invoke("meetspace:minimize"),
@@ -21,6 +21,8 @@ const bridge: DesktopBridge = {
   close: () => ipcRenderer.invoke("meetspace:close"),
   quit: () => ipcRenderer.invoke("meetspace:quit"),
   getUpdateState: () => invoke("meetspace:update:state"),
+  getSshInstallerState: () => invoke("meetspace:ssh:state"),
+  sshInstaller: (action, input = {}) => invoke("meetspace:ssh:action", action, input),
   checkUpdates: () => invoke("meetspace:update:check"),
   downloadUpdate: () => invoke("meetspace:update:download"),
   cancelUpdate: () => invoke("meetspace:update:cancel"),

@@ -106,6 +106,81 @@ test("auth exposes only an opaque marker even when a response reflects the acces
   assert.match(response.body.accessToken, /^desktop-session:[0-9a-f-]{36}$/); assert.equal(response.body.reflected, "[redacted]"); assert.equal(JSON.stringify(response).includes(JWT), false);
 });
 
+test("auth and HTTP redact known credential literals in nested property names and allowed response headers", async (t) => {
+  const reflected = { stable: "public", nested: [{ [`bearer:${JWT}`]: "key", [SECRET]: { reflected: JWT } }] };
+  const headers = { "content-type": `application/json; reflected=${JWT}`, "retry-after": SECRET };
+  const { http } = await setup(t, { handle: (_request, resource) => {
+    if (resource === "/api/v1/auth/login") return json(200, { ...reflected, accessToken: JWT, expiresIn: 3600, user: { id: USER } },
+      { ...headers, "set-cookie": setCookie("meetrix_session", SECRET) });
+    if (resource === "/api/v1/conferences") return json(200, reflected, headers);
+  } });
+  const login = await http("/auth/login", { body: {} });
+  assert.match(login.body.accessToken, /^desktop-session:/);
+  const response = await http("/conferences", { method: "GET", token: login.body.accessToken });
+  for (const item of [login, response]) {
+    for (const secret of [JWT, SECRET]) assert.equal(JSON.stringify(item).includes(secret), false);
+    assert.equal(item.body.stable, "public");
+    assert.equal(item.body.nested[0]["bearer:[redacted]"], "key");
+    assert.equal(item.headers["content-type"], "application/json; reflected=[redacted]");
+    assert.equal(item.headers["retry-after"], "[redacted]");
+  }
+});
+
+test("WebSocket and SSE redact known credentials in property names and SSE metadata", async (t) => {
+  const ticket = "t".repeat(43);
+  const body = { stable: "public", nested: { [JWT]: "bearer", [`cookie:${SECRET}`]: "cookie" } };
+  const { broker, login, sockets, events } = await setup(t, { handle: async (request, resource) => {
+    if (resource !== "/api/v1/notifications/events") return;
+    request.onHeaders(200, { "content-type": `text/event-stream; reflected=${JWT}`, "retry-after": SECRET });
+    await request.onChunk(Buffer.from(`data: ${JSON.stringify(body)}\n\n`));
+    return { status: 200, headers: { "content-type": "text/event-stream" }, body: new Uint8Array() };
+  } });
+  const marker = await login();
+  await broker.socketOpen({ id: "reflected-socket", kind: "account", token: marker });
+  sockets.at(-1).emit("message", Buffer.from(JSON.stringify({ ...body, [ticket]: "ticket" })), false);
+  const socket = events.findLast(event => event.kind === "socket" && event.type === "message");
+  assert.ok(socket);
+  for (const secret of [JWT, SECRET, ticket]) assert.equal(socket.data.includes(secret), false);
+  assert.equal(JSON.parse(socket.data).stable, "public");
+  await broker.streamOpen({ id: "reflected-stream", token: marker });
+  await new Promise(resolve => setImmediate(resolve));
+  const headers = events.findLast(event => event.kind === "stream" && event.type === "headers");
+  const chunk = events.findLast(event => event.kind === "stream" && event.type === "chunk");
+  assert.ok(headers && chunk);
+  const data = Buffer.from(chunk.data).toString("utf8");
+  for (const secret of [JWT, SECRET]) {
+    assert.equal(JSON.stringify(headers).includes(secret), false);
+    assert.equal(data.includes(secret), false);
+  }
+  assert.equal(JSON.parse(data.slice(6).trim()).stable, "public");
+  assert.equal(headers.headers["content-type"], "text/event-stream; reflected=[redacted]");
+});
+
+test("binary attachments retain exact bytes while credential reflections are removed from metadata", async (t) => {
+  const bytes = new Uint8Array([0, 255, ...Buffer.from(JWT), 0, ...Buffer.from(SECRET)]);
+  const { http, login } = await setup(t, { handle: (_request, resource) => {
+    if (resource === `/api/v1/conversations/${USER}/attachments/${OTHER}/content`) return {
+      status: 200, body: bytes, headers: { "content-type": `application/octet-stream; reflected=${JWT}`, "retry-after": SECRET },
+    };
+  } });
+  const marker = await login();
+  const response = await http(`/conversations/${USER}/attachments/${OTHER}/content`, { method: "GET", responseType: "binary", token: marker });
+  assert.deepEqual(response.body, bytes);
+  for (const secret of [JWT, SECRET]) assert.equal(JSON.stringify(response.headers).includes(secret), false);
+});
+
+test("account deletion sanitizes response metadata before clearing native identity and cookies", async (t) => {
+  const { http, login } = await setup(t, { handle: (request, resource) => {
+    if (resource === "/api/v1/auth/me" && request.method === "DELETE") return json(200, { status: "success", [JWT]: SECRET },
+      { "content-type": `application/json; reflected=${JWT}`, "retry-after": SECRET });
+  } });
+  const marker = await login();
+  const response = await http("/auth/me", { method: "DELETE", token: marker });
+  assert.equal(response.status, 200);
+  for (const secret of [JWT, SECRET]) assert.equal(JSON.stringify(response).includes(secret), false);
+  await assert.rejects(http("/conferences", { method: "GET", token: marker }), /authentication_required/);
+});
+
 test("logout fences a delayed login response before it can restore local credentials", async (t) => {
   let release, started;
   const ready = new Promise((resolve) => { started = resolve; });

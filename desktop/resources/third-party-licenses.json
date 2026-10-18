@@ -3,10 +3,10 @@
   "applicationLicense": "UNLICENSED",
   "inventory": "actual installed production closure plus Vite injected helper; conservative installed peers included",
   "lockfiles": {
-    "frontend": "c9eda37c9f6a576fd52d7ffa31772c8eb720f2277f863889aedce181e4b0dc27",
-    "desktop": "c43700764809969aedb4204fa4d478b34f8e97bfe1fe53a418347d43f9cb80d9"
+    "frontend": "ee9f1765a377a0e5580a46a07db97646a85e87bc7e0b2c7b321218a906320932",
+    "desktop": "d66392949b85a6f676caeb413ad92837d709fc2b4ddac0c668784e8106d240c7"
   },
-  "noticesSha256": "8950057495c79f8610c0ff8005eaac8749145e748740e75303ac6adb0e82266d",
+  "noticesSha256": "d6c0637f9c0a27841c7937d168f70eee6f30c247d68c77c2d5a941ff1b2fe51a",
   "separateNotices": [
     "LICENSE.electron.txt",
     "LICENSES.chromium.html"
@@ -79,6 +79,34 @@
         {
           "filename": "LICENSE",
           "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
+        }
+      ]
+    },
+    {
+      "name": "asn1",
+      "version": "0.2.6",
+      "license": "MIT",
+      "scopes": [
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "f4b6bd1a9437d0f66ff46d8f4dca185c31a069ba11e437f3b8506ec4424be9cf"
+        }
+      ]
+    },
+    {
+      "name": "bcrypt-pbkdf",
+      "version": "1.0.2",
+      "license": "BSD-3-Clause",
+      "scopes": [
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "b5f71fac3ae50115c65ee70551bdbaeed89b4f7a76ac36dc8c576e3036bcd604"
         }
       ]
     },
@@ -167,6 +195,20 @@
       ]
     },
     {
+      "name": "safer-buffer",
+      "version": "2.1.2",
+      "license": "MIT",
+      "scopes": [
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "4bc935e71be198c67ddf3c2b5fddb195f6edc182bfc155a96a6db61b44b494b9"
+        }
+      ]
+    },
+    {
       "name": "scheduler",
       "version": "0.28.0",
       "license": "MIT",
@@ -177,6 +219,34 @@
         {
           "filename": "LICENSE",
           "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ]
+    },
+    {
+      "name": "ssh2",
+      "version": "1.17.0",
+      "license": "SEE LICENSE TEXT",
+      "scopes": [
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "d06b5d27bbbbe22c36b1fd88406b1208876e2d37d795f5b8eaed951a459a3111"
+        }
+      ]
+    },
+    {
+      "name": "tweetnacl",
+      "version": "0.14.5",
+      "license": "Unlicense",
+      "scopes": [
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
+      ],
+      "licenses": [
+        {
+          "filename": "LICENSE",
+          "sha256": "88d9b4eb60579c191ec391ca04c16130572d7eedc4a86daa58bf28c6e14c9bcd"
         }
       ]
     },
@@ -199,7 +269,7 @@
       "version": "8.22.0",
       "license": "MIT",
       "scopes": [
-        "desktop runtime dependency closure (including installed peers)"
+        "shipped desktop JavaScript runtime (optional native accelerators excluded)"
       ],
       "licenses": [
         {

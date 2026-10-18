@@ -21,16 +21,47 @@ const recording = { kind: "recording", conferenceId: ID, recordingId: ID, fileId
 function bridge(overrides = {}) {
   const listeners = new Set();
   const calls = { cancel: [], close: [], save: [], open: [] };
-  const value = new Proxy({ bridgeVersion: 5,
+  const value = { bridgeVersion: 6,
+    getRuntimeInfo: async () => ({
+      platform: "win32", arch: "x64", appVersion: "0.1.1-beta", isPackaged: true,
+      capabilities: { serverConnection: true, windowControls: true },
+      host: {
+        session: "not-applicable",
+        secureStorage: { available: true, backend: "dpapi", reason: "available" },
+        supports: { startup: true, absoluteWindowPosition: true, systemAudio: true },
+      },
+    }),
+    openExternal: async () => {}, onRoute: () => () => {},
+    minimize: async () => {}, toggleMaximize: async () => {}, close: async () => {}, quit: async () => {},
+    getUpdateState: async () => ({}), checkUpdates: async () => ({}), downloadUpdate: async () => ({}), cancelUpdate: async () => ({}), installUpdate: async () => ({}),
+    getSshInstallerState: async () => ({ busy: false, phase: "idle", hasCredentials: false }),
+    sshInstaller: async () => ({ busy: false, phase: "idle", hasCredentials: false }),
+    getNativePreferences: async () => ({}), setNativePreferences: async () => ({}), setNotificationContext: async () => {},
+    listServers: async () => ({ items: [], selectedId: null, generation: 0, storageAvailable: true }),
+    probeServer: async () => {}, addServer: async () => {}, selectServer: async () => {}, removeServer: async () => {},
+    http: async () => ({ status: 200, headers: {}, body: null }), abortRequest: async () => {},
+    openStream: async () => {}, closeStream: async () => {}, openSocket: async () => {}, sendSocket: async () => {}, closeSocket: async () => {},
+    onDisplayCaptureEvent: () => () => {}, selectDisplaySource: async () => {}, cancelDisplaySource: async () => {},
     onTransportEvent: handler => { listeners.add(handler); return () => listeners.delete(handler); },
     saveAsset: async input => { calls.save.push(input); return { saved: true, cancelled: false }; },
     openRecordingMedia: async input => { calls.open.push(input); return { id: input.id, url: `app://meetspace/native-media/${"a".repeat(43)}`, mimeType: "video/mp4" }; },
     cancelAsset: async id => { calls.cancel.push(id); }, closeRecordingMedia: async id => { calls.close.push(id); },
     ...overrides,
-  }, { get: (target, key) => key in target ? target[key] : async () => {} });
+  };
   globalThis.window = { meetspaceDesktop: value };
   return { calls, listeners, emit: event => { for (const listener of listeners) listener(event); } };
 }
+
+await test("asset operations reject incomplete bridges before starting native work", async () => {
+  bridge();
+  const methods = Object.keys(window.meetspaceDesktop).filter(key => typeof window.meetspaceDesktop[key] === "function");
+  for (const method of methods) {
+    const b = bridge({ [method]: undefined });
+    await assert.rejects(native.nativeAssetRequest(recording, "opaque", "save", new AbortController().signal), /unavailable/, method);
+    assert.equal(b.calls.save.length + b.calls.open.length, 0, method);
+    assert.equal(b.listeners.size, 0, method);
+  }
+});
 
 await test("save passes server IDs and opaque identity, never URLs or local paths", async () => {
   const b = bridge();

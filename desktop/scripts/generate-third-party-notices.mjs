@@ -2,6 +2,7 @@ import { readFile, readdir, mkdir, writeFile, realpath } from 'node:fs/promises'
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import runtimePolicy from './runtime-policy.cjs';
 
 const sha256 = data => createHash('sha256').update(data).digest('hex');
 const json = async file => JSON.parse(await readFile(file, 'utf8'));
@@ -20,7 +21,7 @@ async function installedPackage(from, name, optional = false) {
 /** Conservative production closure, including installed peers, with full local license texts. */
 export async function collectLicenseComponents(roots) {
   const components = new Map();
-  async function visit(directory, scope, recurse) {
+  async function visit(directory, scope, recurse, excluded = []) {
     const pkg = await json(path.join(directory, 'package.json'));
     const key = `${pkg.name}@${pkg.version}`;
     if (components.has(key)) { components.get(key).scopes.add(scope); return; }
@@ -38,17 +39,18 @@ export async function collectLicenseComponents(roots) {
     const optional = new Set(Object.keys(pkg.optionalDependencies ?? {}));
     const names = new Set([...Object.keys(pkg.dependencies ?? {}), ...optional, ...Object.keys(pkg.peerDependencies ?? {})]);
     for (const name of [...names].sort()) {
+      if (excluded.includes(name)) continue;
       const optionalPeer = Object.hasOwn(pkg.peerDependencies ?? {}, name) &&
         !Object.hasOwn(pkg.dependencies ?? {}, name) && pkg.peerDependenciesMeta?.[name]?.optional === true;
       const location = await installedPackage(directory, name, optional.has(name) || optionalPeer);
-      if (location) await visit(location, scope, true);
+      if (location) await visit(location, scope, true, excluded);
     }
   }
   for (const root of roots) {
     const pkg = await json(path.join(root.directory, 'package.json'));
     if (root.packageOnly) await visit(root.directory, root.scope, false);
     else for (const name of Object.keys(pkg.dependencies ?? {}).sort())
-      await visit(await installedPackage(root.directory, name), root.scope, true);
+      await visit(await installedPackage(root.directory, name), root.scope, true, root.excluded);
   }
   return [...components.values()].sort((a, b) => `${a.name}@${a.version}`.localeCompare(`${b.name}@${b.version}`, 'en'))
     .map(component => ({ ...component, scopes: [...component.scopes].sort() }));
@@ -59,7 +61,7 @@ export async function generateNotices() {
   const frontend = path.resolve(desktop, '../frontend');
   const components = await collectLicenseComponents([
     { directory: frontend, scope: 'frontend production dependency closure (including installed peers)' },
-    { directory: desktop, scope: 'desktop runtime dependency closure (including installed peers)' },
+    { directory: desktop, scope: 'shipped desktop JavaScript runtime (optional native accelerators excluded)', excluded: runtimePolicy.excludedOptionalPackages },
     // Vite injects its module-preload runtime helper into the bundled renderer.
     { directory: path.join(frontend, 'node_modules/vite'), scope: 'bundled renderer build helper', packageOnly: true },
   ]);

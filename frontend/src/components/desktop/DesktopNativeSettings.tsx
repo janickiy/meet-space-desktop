@@ -1,45 +1,71 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { desktopBridge } from "../../platform/desktop";
-import type { DesktopNativePreferences } from "../../platform/desktop-contracts";
+import { platform } from "../../platform";
+import type {
+  DesktopRuntimeInfo,
+  DesktopNativePreferences,
+} from "../../platform/desktop-contracts";
 import { Button, ErrorNotice, Loading } from "../ui";
 import "./desktop-native-settings.css";
 import { DesktopUpdateSettings } from "./DesktopUpdateSettings";
+import {
+  createNativePreferencesController,
+  watchNativePreferences,
+} from "../../platform/nativePreferences";
 
 export function DesktopNativeSettings() {
   const [settings, setSettings] = useState<DesktopNativePreferences | null>(
     null,
   );
+  const [runtime, setRuntime] = useState<DesktopRuntimeInfo | null>(null);
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);
+  const controller = useRef<ReturnType<
+    typeof createNativePreferencesController
+  > | null>(null);
   useEffect(() => {
     let alive = true;
-    void desktopBridge()
-      .getNativePreferences()
-      .then((value) => {
-        if (alive) setSettings(value);
+    const current = createNativePreferencesController(desktopBridge(), {
+      value(value) {
+        setSettings(value);
+        setError(undefined);
+      },
+      error: setError,
+      busy: setBusy,
+    });
+    controller.current = current;
+    const stopWatching = watchNativePreferences(
+      current.refresh,
+      document,
+      window,
+    );
+    void platform
+      .getRuntimeInfo()
+      .then((host) => {
+        if (alive) setRuntime(host);
       })
       .catch((value) => {
         if (alive) setError(value);
       });
     return () => {
       alive = false;
+      stopWatching();
+      current.dispose();
+      controller.current = null;
     };
   }, []);
-  const update = async (
+  const update = (
     input: Parameters<
       ReturnType<typeof desktopBridge>["setNativePreferences"]
     >[0],
   ) => {
-    setBusy(true);
     setError(undefined);
-    try {
-      setSettings(await desktopBridge().setNativePreferences(input));
-    } catch (value) {
-      setError(value);
-    } finally {
-      setBusy(false);
-    }
+    controller.current?.update(input);
   };
+  const trayStatus =
+    settings?.trayStatus ??
+    (settings?.trayAvailable ? "available" : "unavailable");
+  const trayAvailable = trayStatus === "available" && settings?.trayAvailable;
   return (
     <section
       className="content-card desktop-native-settings"
@@ -55,7 +81,7 @@ export function DesktopNativeSettings() {
             <input
               type="checkbox"
               checked={settings.closeToTray}
-              disabled={busy || !settings.trayAvailable}
+              disabled={busy || !trayAvailable}
               onChange={(event) =>
                 void update({ closeToTray: event.target.checked })
               }
@@ -63,12 +89,15 @@ export function DesktopNativeSettings() {
             <span>При закрытии окна сворачивать в трей</span>
           </label>
           <p className="field-hint">
-            Звонок и получение сообщений продолжатся. Для полного закрытия
-            выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже.
+            {trayAvailable && settings.closeToTray
+              ? "Звонок и получение сообщений продолжатся. Для полного закрытия выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже."
+              : "Закрытие окна завершает приложение. Для полного закрытия также можно нажать кнопку ниже."}
           </p>
-          {!settings.trayAvailable && (
+          {!trayAvailable && (
             <p role="status">
-              Системный трей недоступен. Закрытие окна завершает приложение.
+              {trayStatus === "checking"
+                ? "Проверяем доступность системного трея. Пока проверка не завершена, закрытие окна завершает приложение."
+                : "Системный трей недоступен в текущем сеансе."}
             </p>
           )}
           <label className="desktop-native-toggle">
@@ -98,24 +127,30 @@ export function DesktopNativeSettings() {
                 void update({ startAtLogin: event.target.checked })
               }
             />
-            <span>Запускать MeetSpace при входе в Windows</span>
+            <span>Запускать MeetSpace при входе в систему</span>
           </label>
           {!settings.startupSupported && (
             <p className="field-hint">
-              Автозапуск можно включить в установленном приложении Windows.
+              {settings.startupReason === "conflict"
+                ? "Автозапуск уже настроен другим способом. Измените существующую настройку автозапуска в системе."
+                : runtime?.platform === "linux"
+                  ? "Автозапуск можно включить в установленном приложении Linux, если он доступен в текущем сеансе. Пока открывайте MeetSpace через меню приложений."
+                  : runtime?.platform === "win32"
+                    ? "Автозапуск можно включить в установленном приложении Windows."
+                    : "Автозапуск в этой среде пока недоступен."}
             </p>
           )}
           <div className="desktop-native-exit">
             <Button
               variant="outline"
-              onClick={() => void desktopBridge().quit()}
+              onClick={() => void desktopBridge().quit().catch(setError)}
             >
               Выход из MeetSpace
             </Button>
           </div>
         </>
       )}
-      <DesktopUpdateSettings />
+      <DesktopUpdateSettings hostPlatform={runtime?.platform} />
     </section>
   );
 }

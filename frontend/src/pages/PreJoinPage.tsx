@@ -32,6 +32,10 @@ import {
 } from "../prejoinDevices";
 import type { DevicePreferences } from "../prejoinDevices";
 import {
+  captureWithDeviceFallback,
+  inputTrackConstraints,
+} from "../mediaDevices";
+import {
   Brand,
   Button,
   ErrorNotice,
@@ -363,50 +367,26 @@ export function PreJoinPage({
     }
     const request = generation.current[kind];
     setBusy((current) => ({ ...current, [kind]: true }));
-    const constraints = (deviceId: string): MediaStreamConstraints =>
-      kind === "audio"
-        ? {
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: preferences.noiseSuppression,
-              ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-            },
-            video: false,
-          }
-        : {
-            audio: false,
-            video: {
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
-            },
-          };
+    const constraints = (id: string): MediaStreamConstraints => ({
+      audio:
+        kind === "audio" &&
+        inputTrackConstraints(kind, id, preferences.noiseSuppression),
+      video:
+        kind === "video" &&
+        inputTrackConstraints(kind, id, preferences.noiseSuppression),
+    });
     try {
-      let stream: MediaStream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia(
-          constraints(preferredId),
-        );
-      } catch (error) {
-        const name =
-          error &&
-          typeof error === "object" &&
-          "name" in error &&
-          typeof error.name === "string"
-            ? error.name
-            : "";
-        if (
-          !preferredId ||
-          (name !== "NotFoundError" && name !== "OverconstrainedError")
-        )
-          throw error;
-        if (
-          !mounted.current ||
-          preferencesOwnerRef.current !== owner ||
-          generation.current[kind] !== request
-        )
-          return;
-        stream = await navigator.mediaDevices.getUserMedia(constraints(""));
+      const captured = await captureWithDeviceFallback(
+        constraints(preferredId),
+        preferredId ? constraints("") : undefined,
+        () =>
+          mounted.current &&
+          preferencesOwnerRef.current === owner &&
+          generation.current[kind] === request,
+      );
+      if (!captured) return;
+      const { stream } = captured;
+      if (captured.usedFallback) {
         if (
           mounted.current &&
           preferencesOwnerRef.current === owner &&

@@ -5,7 +5,10 @@ import { desktopBridge } from "../../platform/desktop";
 import type { DesktopDisplayCaptureEvent } from "../../platform/desktop-contracts";
 import "./desktop-screen-picker.css";
 
-type CaptureRequest = Extract<DesktopDisplayCaptureEvent, { type: "request" }>;
+type CaptureRequest = Extract<
+  DesktopDisplayCaptureEvent,
+  { type: "request" | "portal" | "unavailable" }
+>;
 
 /** A choice belongs to one pending native getDisplayMedia request only. */
 export function DesktopScreenPicker() {
@@ -49,7 +52,7 @@ export function DesktopScreenPicker() {
         .catch(() => {});
   }
   async function share() {
-    if (!request || !selected || busy) return;
+    if (!request || request.type !== "request" || !selected || busy) return;
     const id = request.requestId;
     setBusy(true);
     setError("");
@@ -74,19 +77,33 @@ export function DesktopScreenPicker() {
   }
   return (
     <Modal
-      title="Что показать участникам?"
+      title={
+        request.type === "portal"
+          ? "Выберите источник в системном диалоге"
+          : request.type === "unavailable"
+            ? "Демонстрация экрана"
+            : "Что показать участникам?"
+      }
       onClose={cancel}
       className="desktop-capture-modal"
     >
       <p className="desktop-capture-description">
-        Выберите экран или окно. Участники увидят всё содержимое выбранного
-        источника.
+        {request.type === "portal"
+          ? "Выберите экран или окно в системном диалоге. Если передумали, отмените выбор в нём."
+          : request.type === "unavailable"
+            ? "Демонстрация экрана недоступна в этом сеансе. Перезапустите MeetSpace в сеансе рабочего стола X11 или Wayland."
+            : "Выберите экран или окно. Участники увидят всё содержимое выбранного источника."}
       </p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
-      {!request.sources.length ? (
+      {request.type === "portal" ? (
+        <p className="desktop-capture-description" role="status">
+          Ожидаем ваш выбор в системном диалоге. Передаётся изображение без
+          звука компьютера.
+        </p>
+      ) : request.type === "unavailable" ? null : !request.sources.length ? (
         <ErrorNotice>
-          Нет доступных экранов и окон. Проверьте разрешение на запись экрана в
-          настройках системы и повторите попытку.
+          Не удалось получить экраны и окна. Повторите выбор и проверьте
+          системный диалог демонстрации.
         </ErrorNotice>
       ) : (
         <div
@@ -120,7 +137,7 @@ export function DesktopScreenPicker() {
           ))}
         </div>
       )}
-      {request.systemAudioAvailable && (
+      {request.type === "request" && request.systemAudioAvailable && (
         <label className="desktop-capture-audio">
           <input
             type="checkbox"
@@ -136,13 +153,24 @@ export function DesktopScreenPicker() {
           </span>
         </label>
       )}
+      {request.type === "request" && !request.systemAudioAvailable && (
+        <p className="desktop-capture-description">
+          Передаётся изображение без звука компьютера.
+        </p>
+      )}
       <div className="desktop-capture-actions">
         <Button variant="secondary" onClick={cancel}>
-          Отмена
+          {request.type === "portal"
+            ? "Отменить запрос"
+            : request.type === "unavailable"
+              ? "Закрыть"
+              : "Отмена"}
         </Button>
-        <Button disabled={!selected || busy} onClick={() => void share()}>
-          {busy ? "Подключение…" : "Поделиться"}
-        </Button>
+        {request.type === "request" && (
+          <Button disabled={!selected || busy} onClick={() => void share()}>
+            {busy ? "Подключение…" : "Поделиться"}
+          </Button>
+        )}
       </div>
     </Modal>
   );

@@ -71,6 +71,11 @@ test('compiled preload exposes fixed operations, drops update URL arguments and 
   const { bridge, ipc, calls } = await preload();
   assert.ok(Object.isFrozen(bridge));
   for (const forbidden of ['ipcRenderer', 'invoke', 'send', 'require', 'eval', 'openPath']) assert.equal(bridge[forbidden], undefined);
+  for (const forbidden of ['exec', 'ssh', 'sftp', 'readFile', 'spawn']) assert.equal(bridge[forbidden], undefined);
+  await bridge.getSshInstallerState('ignored');
+  assert.deepEqual(calls.at(-1), ['meetspace:ssh:state']);
+  await bridge.sshInstaller('discover', { endpoint: { host: 'fixture.invalid', port: 22, user: 'root' } }, 'ignored');
+  assert.deepEqual(calls.at(-1), ['meetspace:ssh:action', 'discover', { endpoint: { host: 'fixture.invalid', port: 22, user: 'root' } }]);
   for (const [method, channel] of Object.entries({ getUpdateState: 'state', checkUpdates: 'check', downloadUpdate: 'download', cancelUpdate: 'cancel', installUpdate: 'install' })) {
     await bridge[method]('https://untrusted.invalid/latest.json', { path: '/tmp/installer.exe' });
     assert.deepEqual(calls.at(-1), [`meetspace:update:${channel}`]);

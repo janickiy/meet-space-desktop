@@ -103,10 +103,14 @@ export class MeetSpaceBroker {
   private emit(event: DesktopTransportEvent): void { if (!this.disposed) this.options.emit(event); }
   private sanitize(value: unknown, extraSecrets: string[] = []): unknown {
     const secrets = [...extraSecrets, this.identity?.jwt ?? "", ...this.vault.header(this.profiles.selectedId ?? "", AUTH + "refresh").split("; ").map((cookie) => cookie.slice(cookie.indexOf("=") + 1))].filter((secret) => secret.length >= 32);
+    const redact = (text: string): string => {
+      for (const secret of secrets) text = text.replaceAll(secret, "[redacted]");
+      return text;
+    };
     const replace = (item: unknown): unknown => {
-      if (typeof item === "string") { for (const secret of secrets) item = (item as string).replaceAll(secret, "[redacted]"); return item; }
+      if (typeof item === "string") return redact(item);
       if (Array.isArray(item)) return item.map(replace);
-      if (record(item)) return Object.fromEntries(Object.entries(item).map(([key, nested]) => [key, replace(nested)]));
+      if (record(item)) return Object.fromEntries(Object.entries(item).map(([key, nested]) => [redact(key), replace(nested)]));
       return item;
     };
     return replace(redactCredentials(value));
@@ -408,7 +412,7 @@ export class MeetSpaceBroker {
         const options: Partial<NativeRequest> = { method: request.method, headers, body, maxResponseBytes: request.responseType === "binary" ? MAX_BINARY : MAX_JSON, onUploadProgress: request.bytes ? (loaded, total) => this.emit({ kind: "progress", id: request.id, percent: total ? Math.round(loaded * 100 / total) : 0 }) : undefined };
         let response = await this.request(profile.origin, request.path, operation, options);
         if (!publicRequest && !authResponse(pathname) && response.status === 401 && await this.refresh(operation)) response = await this.request(profile.origin, request.path, operation, { ...options, headers: { ...headers, Authorization: `Bearer ${this.identity!.jwt}` } });
-        if (request.responseType === "binary" && successful(response.status)) return { status: response.status, body: response.body, headers: publicHeaders(response.headers) };
+        if (request.responseType === "binary" && successful(response.status)) return { status: response.status, body: response.body, headers: this.sanitize(publicHeaders(response.headers)) as DesktopResponseHeaders };
         let value = decodeJSON(response);
         if (authResponse(pathname) && successful(response.status)) value = await this.acceptIdentity(value, response, profile.id, pathname, operation);
         else {
@@ -429,8 +433,11 @@ export class MeetSpaceBroker {
           strip(value.item);
           if (Array.isArray(value.items)) value.items.forEach(strip);
         }
+        // Metadata can reflect credentials too. Sanitize before account deletion
+        // clears the identity/cookies; downloaded file bytes remain untouched.
+        const responseHeaders = this.sanitize(publicHeaders(response.headers)) as DesktopResponseHeaders;
         if (request.method === "DELETE" && pathname === AUTH + "me" && successful(response.status)) { await this.vault.logout(profile.id, this.identity?.userId); this.invalidateIdentity(operation); }
-        return { status: response.status, body: value, headers: publicHeaders(response.headers) };
+        return { status: response.status, body: value, headers: responseHeaders };
       };
       const identityMutation = authResponse(pathname);
       return await (identityMutation ? this.ordered("auth", execute) : execute());
@@ -531,7 +538,7 @@ export class MeetSpaceBroker {
         if (code !== 200 || !/^text\/event-stream(?:\s*;|$)/i.test(header(headers, "content-type"))) throw new Error();
         // A reconnect recovers the initial preference read after a temporary outage.
         void this.loadNotificationPreferences().catch(() => {});
-        this.emit({ kind: "stream", id, type: "headers", status, headers: publicHeaders(headers) });
+        this.emit({ kind: "stream", id, type: "headers", status, headers: this.sanitize(publicHeaders(headers)) as DesktopResponseHeaders });
       }, onChunk: (chunk) => {
         this.check(operation);
         pending = (pending + decoder.decode(chunk, { stream: true })).replace(/\r\n/g, "\n");

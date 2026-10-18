@@ -1,5 +1,6 @@
-// Actual permission/IPC lifecycle; synthetic source enumeration prevents OS screen
-// prompts. Successful capture below uses a separate own-tab test handler only.
+// Actual permission/IPC lifecycle; synthetic sources and an explicit custom
+// picker strategy prevent OS prompts. Linux portal acceptance uses the separate
+// real-screen harness. Capture below uses a separate own-tab test handler only.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const WebSocket = require("ws");
@@ -9,6 +10,9 @@ app.setPath("userData", config.userDataDir);
 app.setPath("sessionData", config.userDataDir);
 app.commandLine.appendSwitch("use-fake-device-for-media-stream");
 const originalSources = desktopCapturer.getSources;
+const capturePolicy = require("../dist/platform/display-capture.js");
+const originalCaptureMode = capturePolicy.displayCaptureMode;
+capturePolicy.displayCaptureMode = () => "picker";
 let enumerations = 0;
 desktopCapturer.getSources = async () => {
   enumerations++;
@@ -38,12 +42,17 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
 (async () => {
   let certificates, server, window, foreign;
   const checks = [];
+  const wayland = process.platform === "linux" && (process.env.XDG_SESSION_TYPE === "wayland" || Boolean(process.env.WAYLAND_DISPLAY));
   try {
     certificates = await createCertificates();
     server = await createFixture({ name: "media", certificates, notifyOnConnect: true });
-    window = await startApp({ show: false, userDataDir: config.userDataDir, rendererRoot: config.rendererRoot,
+    window = await startApp({ show: wayland, userDataDir: config.userDataDir, rendererRoot: config.rendererRoot,
       brokerOptions: { transport: createNodeHttpsTransport({ ca: certificates.ca, timeoutMs: 3000 }),
         createSocket: (url, protocols, options) => new WebSocket(url, protocols, { ...options, ca: certificates.ca, rejectUnauthorized: true }) } });
+    if (wayland) {
+      assert.equal(window.isVisible(), true, "Production startup must map the Wayland window without a test-only show call");
+      window.focus();
+    }
     const js = (code, gesture = false) => window.webContents.executeJavaScript(code, gesture);
     const call = (method, ...args) => js(`window.meetspaceDesktop[${JSON.stringify(method)}](...${JSON.stringify(args)})`);
     const until = async (predicate, description) => {
@@ -65,11 +74,71 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
     const devices = await js("navigator.mediaDevices.getUserMedia({audio:true,video:true}).then(s=>{const kinds=s.getTracks().map(t=>t.kind).sort();s.getTracks().forEach(t=>t.stop());return {kinds,ended:s.getTracks().every(t=>t.readyState==='ended')}})", true);
     assert.deepEqual(devices, { kinds: ["audio", "video"], ended: true });
     checks.push("production permission handlers permit fake camera/microphone only in owned trusted window");
+    const output = await js(`(async () => {
+      const states = {};
+      for (const name of ['camera', 'microphone', 'speaker-selection'])
+        states[name] = await navigator.permissions.query({ name })
+          .then(result => result.state, error => error.name === 'TypeError' ? 'unsupported' : error.name);
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const counts = { audioinput: 0, videoinput: 0, audiooutput: 0 };
+      for (const device of devices) if (device.kind in counts) counts[device.kind]++;
+      const audio = document.createElement('audio');
+      const supported = typeof audio.setSinkId === 'function';
+      if (!supported) return { states, counts, supported };
+      await audio.setSinkId('');
+      const defaultSelected = audio.sinkId === '';
+      const selected = devices.find(device => device.kind === 'audiooutput');
+      let listedOutputSelected = null;
+      if (selected) {
+        await audio.setSinkId(selected.deviceId);
+        listedOutputSelected = audio.sinkId === selected.deviceId;
+      }
+      const unknownOutput = await audio.setSinkId('meetspace-output-does-not-exist')
+        .then(() => 'granted', error => error.name);
+      await audio.setSinkId('');
+      return { states, counts, supported, defaultSelected, listedOutputSelected, unknownOutput };
+    })()`);
+    assert.equal(output.states.camera, "granted");
+    assert.equal(output.states.microphone, "granted");
+    // Electron does not enable Chromium's optional Speaker Selection API on
+    // every platform. Do not turn on a test-only feature flag or confuse this
+    // with the supported HTMLMediaElement.setSinkId path used by the product.
+    assert.ok(["granted", "unsupported"].includes(output.states["speaker-selection"]));
+    assert.equal(output.supported, true);
+    assert.ok(output.counts.audioinput >= 1 && output.counts.videoinput >= 1);
+    assert.equal(output.defaultSelected, true);
+    if (output.counts.audiooutput) assert.equal(output.listedOutputSelected, true);
+    assert.equal(output.unknownOutput, "NotFoundError");
+    if (output.states["speaker-selection"] === "granted")
+      assert.ok(permissionTrace.some(event => event.method === "check" && event.permission === "speaker-selection" && event.allowed));
+    checks.push("real Chromium device enumeration, sink selection and missing-output rejection; optional speaker query recorded; no playback or physical sound asserted");
+
+    const subframe = await js(`(async () => {
+      const frame = document.createElement('iframe');
+      document.body.appendChild(frame);
+      try {
+        const child = frame.contentWindow;
+        const capture = await child.navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+          .then(stream => { stream.getTracks().forEach(track => track.stop()); return 'granted'; }, error => error.name);
+        const output = await child.navigator.permissions.query({ name: 'speaker-selection' })
+          .then(result => result.state, error => error.name === 'TypeError' ? 'unsupported' : error.name);
+        return { capture, output };
+      } finally { frame.remove(); }
+    })()`);
+    assert.deepEqual(subframe, { capture: "NotAllowedError", output: output.states["speaker-selection"] === "unsupported" ? "unsupported" : "denied" });
+    assert.ok(permissionTrace.some(event => event.isMainFrame === false && event.allowed === false));
+    checks.push("same-origin inherited blank subframe cannot acquire camera/microphone; optional speaker query denied when supported");
     foreign = new BrowserWindow({ show: false, webPreferences: { session: window.webContents.session,
       nodeIntegration: false, contextIsolation: true, sandbox: true } });
     await foreign.loadURL("app://meetspace/");
-    const denied = await foreign.webContents.executeJavaScript("navigator.mediaDevices.getUserMedia({video:true}).then(s=>{s.getTracks().forEach(t=>t.stop());return 'granted'},e=>e.name)", true);
-    assert.equal(denied, "NotAllowedError");
+    const denied = await foreign.webContents.executeJavaScript(`(async () => {
+      const capture = await navigator.mediaDevices.getUserMedia({audio:true,video:true})
+        .then(stream=>{stream.getTracks().forEach(track=>track.stop());return 'granted'},error=>error.name);
+      const output = await navigator.permissions.query({name:'speaker-selection'})
+        .then(result=>result.state,error=>error.name==='TypeError'?'unsupported':error.name);
+      return { capture, output };
+    })()`, true);
+    assert.deepEqual(denied, { capture: "NotAllowedError", output: output.states["speaker-selection"] === "unsupported" ? "unsupported" : "denied" });
     foreign.destroy(); foreign = null;
     checks.push("foreign WebContents sharing the trusted origin/session is denied");
     const beginDisplay = () => js("window.__displayResult=null; navigator.mediaDevices.getDisplayMedia({video:true,audio:false}).then(s=>{s.getTracks().forEach(t=>t.stop());window.__displayResult='granted'},e=>{window.__displayResult=e.name}); void 0", true);
@@ -111,11 +180,13 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
     const captured = await js("navigator.mediaDevices.getDisplayMedia({video:true,audio:false}).then(s=>{const t=s.getVideoTracks()[0];const value={live:t.readyState==='live',kind:t.kind};s.getTracks().forEach(track=>track.stop());return {...value,ended:t.readyState==='ended'}})", true);
     assert.deepEqual(captured, { live: true, kind: "video", ended: true });
     checks.push("separate own-tab synthetic handler exercises real getDisplayMedia track creation and cleanup");
-    console.log(JSON.stringify({ result: "PASS", checks, platform: process.platform, arch: process.arch,
+    console.log(JSON.stringify({ result: "PASS", checks, outputProbe: output, platform: process.platform, arch: process.arch,
       electron: process.versions.electron, physicalDevicesUsed: false, desktopPixelsCaptured: false,
-      physicalSleepTested: false, windowsRuntimeTested: false }));
+      nativeDisplayTestDoubles: ["desktopCapturer.getSources", "displayCaptureMode"],
+      linuxPortalTested: false, physicalSleepTested: false, windowsRuntimeTested: false }));
   } finally {
     desktopCapturer.getSources = originalSources;
+    capturePolicy.displayCaptureMode = originalCaptureMode;
     if (foreign && !foreign.isDestroyed()) foreign.destroy();
     if (window && !window.isDestroyed()) window.destroy();
     if (server) await server.close();

@@ -74,6 +74,8 @@ export function isAllowedNavigation(
 }
 
 export function isAllowedExternalUrl(value: unknown, selectedOrigin = PUBLIC_ORIGIN): value is string {
+  // Fixed public publisher page and the installer's explicit ACME terms page.
+  if (value === "https://letsencrypt.org/repository/" || value === "https://janickiy.com/") return true;
   const url = parseUrl(value);
   const server = parseUrl(selectedOrigin);
   return (

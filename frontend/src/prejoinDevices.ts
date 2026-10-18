@@ -163,3 +163,20 @@ export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
       : "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost.";
   return `Не удалось включить ${label}. Проверьте разрешения и попробуйте снова.`;
 }
+
+/** Browser errors cannot distinguish a cancelled system picker from denied consent. */
+export function screenCaptureErrorMessage(error: unknown) {
+  const name =
+    error && typeof error === "object" && "name" in error ? error.name : "";
+  if (name === "NotAllowedError" || name === "PermissionDeniedError")
+    return "Демонстрация не началась: выбор отменён или система не разрешила доступ. Повторите выбор, когда будете готовы.";
+  if (name === "NotSupportedError")
+    return "Демонстрация экрана недоступна в этой среде. Проверьте поддержку системной демонстрации и повторите.";
+  if (name === "InvalidStateError")
+    return "Чтобы начать демонстрацию, вернитесь в окно MeetSpace и нажмите «Экран» ещё раз.";
+  if (name === "NotFoundError")
+    return "Не удалось получить экран или окно. Проверьте доступные источники и повторите выбор.";
+  if (name === "NotReadableError" || name === "AbortError")
+    return "Не удалось захватить выбранный экран или окно. Проверьте системный диалог демонстрации и повторите.";
+  return "Демонстрация не началась. Выберите экран или окно и повторите попытку.";
+}

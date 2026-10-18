@@ -1,13 +1,13 @@
-/** Показывает единый копирайт с безопасной ссылкой на сайт автора.
- * @return Точный текст копирайта; сайт открывается в отдельной вкладке без доступа к исходной странице.
- */
+import { ExternalLink } from "./ExternalLink";
+
+/** Показывает единый копирайт со ссылкой на сайт автора. */
 export function Copyright() {
   return (
     <p className="copyright">
       © 2026{" "}
-      <a href="https://janickiy.com/" target="_blank" rel="noopener noreferrer">
+      <ExternalLink href="https://janickiy.com/">
         Яницкий Александр
-      </a>
+      </ExternalLink>
       . Все права защищены.
     </p>
   );

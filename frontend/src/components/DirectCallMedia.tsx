@@ -24,6 +24,7 @@ import { initials } from "../utils";
 import { MediaTile } from "./RealtimePanel";
 import { useAccountSettings } from "./AccountSettingsContext";
 import { Button, ErrorNotice } from "./ui";
+import { subscribeCaptureIntentRelease } from "../platform/captureLifecycle";
 
 /** A private two-person room uses the conference media client and account settings.
  * The owning call document keeps its streams alive while account settings open.
@@ -59,6 +60,7 @@ export function DirectCallMedia({
   const desired = useRef({ ...initialDevices });
   const peer = call.caller.id === userId ? call.callee : call.caller;
   const self = call.caller.id === userId ? call.caller : call.callee;
+  useEffect(() => subscribeCaptureIntentRelease(desired), []);
   useEffect(() => subscribeDevicePreferences(userId, setPreferences), [userId]);
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -352,7 +354,7 @@ export function DirectCallMedia({
         <button
           type="button"
           className="direct-call-control direct-call-control-wide"
-          disabled={busy}
+          disabled={busy && !media.view.screenSharing}
           aria-pressed={media.view.screenSharing}
           aria-label={
             media.view.screenSharing

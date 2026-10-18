@@ -34,6 +34,8 @@ import { meetingShortcut } from "../conferenceShortcuts";
 import { initials } from "../utils";
 import { useSpeakingParticipants } from "../useSpeakingParticipants";
 import { onlineParticipants } from "../presence";
+import type { AudioOutputResult } from "../mediaDevices";
+import { createRemotePlayback } from "../remotePlayback";
 
 /**
  * MediaTile воспроизводит существующий поток и показывает состояние участника.
@@ -75,8 +77,11 @@ export const MediaTile = memo(function MediaTile({
   covered?: boolean;
 }) {
   const element = useRef<HTMLMediaElement | null>(null);
+  const remotePlayback = useRef<ReturnType<typeof createRemotePlayback> | null>(
+    null,
+  );
   const [blocked, setBlocked] = useState(false);
-  const [sinkError, setSinkError] = useState(false);
+  const [sinkError, setSinkError] = useState<AudioOutputResult>("selected");
   const level =
     microphoneEnabled && !screen && !reconnecting && Number.isFinite(audioLevel)
       ? Math.max(0, Math.min(1, audioLevel))
@@ -89,6 +94,10 @@ export const MediaTile = memo(function MediaTile({
    * @returns Promise, который после завершения операции возвращает: значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
    */
   const play = async () => {
+    if (!local) {
+      await remotePlayback.current?.retry();
+      return;
+    }
     try {
       await element.current?.play();
       setBlocked(false);
@@ -105,6 +114,29 @@ export const MediaTile = memo(function MediaTile({
      */ () => {
       const media = element.current;
       if (!media || !stream) return;
+      if (!local) {
+        const playback = createRemotePlayback(media, stream, sinkId, {
+          readDevices:
+            typeof navigator.mediaDevices?.enumerateDevices === "function"
+              ? () => navigator.mediaDevices.enumerateDevices()
+              : undefined,
+          onOutput: setSinkError,
+          onBlocked: setBlocked,
+        });
+        remotePlayback.current = playback;
+        const route = () => {
+          void playback.refreshOutput();
+        };
+        route();
+        navigator.mediaDevices?.addEventListener?.("devicechange", route);
+        return () => {
+          navigator.mediaDevices?.removeEventListener?.("devicechange", route);
+          playback.dispose();
+          if (remotePlayback.current === playback)
+            remotePlayback.current = null;
+        };
+      }
+      media.muted = true;
       media.srcObject = stream;
       let active = true;
       void media.play().catch(
@@ -125,29 +157,12 @@ export const MediaTile = memo(function MediaTile({
        */
       return () => {
         active = false;
+        media.pause();
         media.srcObject = null;
       };
     },
-    [stream, video],
+    [stream, video, local, sinkId],
   );
-  useEffect(() => {
-    const media = element.current as
-      (HTMLMediaElement & { setSinkId?: (id: string) => Promise<void> }) | null;
-    if (local || !media?.setSinkId) return;
-    let active = true;
-    void media.setSinkId(sinkId).then(
-      () => {
-        if (active) setSinkError(false);
-      },
-      () => {
-        if (active) setSinkError(true);
-        void media.setSinkId?.("").catch(() => {});
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [local, sinkId, stream, video]);
   return (
     <>
       <div
@@ -178,9 +193,9 @@ export const MediaTile = memo(function MediaTile({
                 element.current = node;
               }
             }
-            autoPlay
+            autoPlay={local}
             playsInline
-            muted={local}
+            muted
             aria-label={name}
           />
         ) : (
@@ -204,8 +219,8 @@ export const MediaTile = memo(function MediaTile({
                     element.current = node;
                   }
                 }
-                autoPlay
-                muted={local}
+                autoPlay={local}
+                muted
                 aria-label={name}
               />
             )}
@@ -272,9 +287,11 @@ export const MediaTile = memo(function MediaTile({
             Включить воспроизведение
           </Button>
         )}
-        {sinkError && (
+        {sinkError !== "selected" && (
           <p className="field-hint" role="status">
-            Выбранный динамик недоступен. Используется системный.
+            {sinkError === "fallback"
+              ? "Выбранный динамик недоступен. Используется системный."
+              : "Не удалось выбрать динамик. Проверьте звуковые устройства системы."}
           </p>
         )}
       </div>
@@ -702,7 +719,10 @@ export function RealtimePanel({
                       : "Показать экран"
                   }
                   disabled={
-                    busy || membership.screenBlocked || membership.cameraBlocked
+                    !media.view.screenSharing &&
+                    (busy ||
+                      membership.screenBlocked ||
+                      membership.cameraBlocked)
                   }
                   onClick={
                     /**

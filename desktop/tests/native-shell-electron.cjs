@@ -5,6 +5,64 @@ const {startApp} = require('../dist/main.js');
 const config = JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 const pause = ms => new Promise(resolve=>setTimeout(resolve,ms));
 const until = async fn => {const end=Date.now()+15000; while(Date.now()<end){if(await fn())return;await pause(30);}throw Error('native_shell_condition_timeout');};
+async function verifyLinuxWindow(window, js, preferences) {
+  const runtime = await js('window.meetspaceDesktop.getRuntimeInfo()');
+  assert.equal(preferences.trayAvailable, false);
+  assert.equal(preferences.closeToTray, false);
+  assert.equal(preferences.startupSupported, false);
+  const submenu = Menu.getApplicationMenu().items.find(item => item.label === 'MeetSpace').submenu;
+  const hide = submenu.items.find(item => item.label === 'Скрыть в трей');
+  assert.equal(hide.enabled, false);
+  if (config.phase === 'first') {
+    await assert.rejects(js('window.meetspaceDesktop.setNativePreferences({closeToTray:true})'));
+    await assert.rejects(js('window.meetspaceDesktop.setNativePreferences({startAtLogin:true})'));
+    await assert.rejects(js('window.meetspaceDesktop.setNativePreferences({nativeNotifications:"false"})'));
+    await js('window.meetspaceDesktop.setNativePreferences({nativeNotifications:false})');
+    const foreign = new BrowserWindow({show:false,webPreferences:{preload:require('node:path').resolve(__dirname,'../dist/preload.js'),sandbox:true,contextIsolation:true,nodeIntegration:false,session:window.webContents.session}});
+    try {
+      await foreign.loadURL('app://meetspace/');
+      await assert.rejects(foreign.webContents.executeJavaScript('window.meetspaceDesktop.getNativePreferences()'));
+    } finally { foreign.destroy(); }
+    window.show();
+    hide.click();
+    assert.equal(window.isVisible(), true, 'unverified tray cannot hide the Linux window');
+    const work = screen.getPrimaryDisplay().workArea;
+    const size = {width:Math.min(1000,work.width),height:Math.min(700,work.height)};
+    if (runtime.host.supports.absoluteWindowPosition) window.setBounds({x:work.x+40,y:work.y+40,...size});
+    else window.setSize(size.width,size.height);
+    await pause(250);
+    await js('window.__routes=[];window.__quitSeen=false;window.meetspaceDesktop.onRoute(route=>{window.__routes.push(route);history.pushState({},"",route)});window.meetspaceDesktop.onTransportEvent(event=>{if(event.kind==="lifecycle"&&event.type==="quit")window.__quitSeen=true});void 0');
+    window.hide(); // Trusted fixture setup to exercise existing-instance activation.
+    console.log('NATIVE_SHELL_READY');
+    await until(() => js('window.__routes.length>0'));
+    assert.equal(await js('window.location.pathname'),config.expectedRoute);
+    assert.equal(window.isVisible(),true,'second instance opens the primary window');
+    let cleanupSeen = false;
+    app.once('before-quit', () => {
+      setTimeout(() => { void js('window.__quitSeen').then(value => { cleanupSeen=value; }); },50);
+    });
+    app.once('will-quit', () => {
+      assert.equal(cleanupSeen,true,'normal window close sends capture cleanup before quit');
+      const state=JSON.parse(fs.readFileSync(require('node:path').join(config.profile,'desktop-state.json'),'utf8'));
+      assert.equal(state.preferences.closeToTray,false);
+      assert.equal(state.preferences.nativeNotifications,false);
+      assert.equal(/token|userId|route|serverId/.test(JSON.stringify(state)),false);
+      console.log(JSON.stringify({result:'PASS',phase:'first',session:runtime.host.session,checks:['unverified tray cannot hide window','typed preferences and foreign-window rejection','single-instance activation and deep link','normal close exits with cleanup signal','non-secret preferences persisted']}));
+    });
+    await js('window.meetspaceDesktop.close()');
+  } else {
+    assert.equal(preferences.nativeNotifications,false);
+    const saved=JSON.parse(fs.readFileSync(require('node:path').join(config.profile,'desktop-state.json'),'utf8')).window;
+    const current=window.getNormalBounds();
+    assert.equal(current.width,saved.bounds.width);
+    assert.equal(current.height,saved.bounds.height);
+    if (runtime.host.supports.absoluteWindowPosition) assert.deepEqual(current,saved.bounds);
+    // GNOME/Wayland can acknowledge a maximize request asynchronously; the
+    // headless Xvfb fixture has no window manager. Neither implies a WM pass.
+    console.log(JSON.stringify({result:'PASS',phase:'restart',session:runtime.host.session,checks:['Linux preferences and window size restored',...(runtime.host.supports.absoluteWindowPosition?['X11 bounds restored']:[])],compositorMaximize:'NOT_TESTED'}));
+    app.quit();
+  }
+}
 (async()=>{
   const window=await startApp({userDataDir:config.profile,rendererRoot:config.renderer,show:false});
   if(config.phase==='secondary'){assert.equal(window,null);return;}
@@ -13,6 +71,7 @@ const until = async fn => {const end=Date.now()+15000; while(Date.now()<end){if(
   const js=code=>window.webContents.executeJavaScript(code,true);
   const preferences=await js('window.meetspaceDesktop.getNativePreferences()');
   assert.equal(preferences.startupSupported,process.platform==='win32'&&app.isPackaged);
+  if(process.platform==='linux') { await verifyLinuxWindow(window,js,preferences); return; }
   assert.equal(preferences.trayAvailable,true,'actual Electron Tray created');
   if(config.phase==='first'){
     assert.equal(preferences.closeToTray,false);

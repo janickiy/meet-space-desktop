@@ -5,6 +5,28 @@ export interface DesktopRuntimeInfo {
   appVersion: string;
   isPackaged: boolean;
   capabilities: { serverConnection: true; windowControls: true };
+  host: DesktopHostInfo;
+}
+export interface DesktopHostInfo {
+  session: "x11" | "wayland" | "unknown" | "not-applicable";
+  secureStorage: {
+    available: boolean;
+    backend:
+      | "dpapi"
+      | "keychain"
+      | "gnome-libsecret"
+      | "kwallet"
+      | "kwallet5"
+      | "kwallet6"
+      | "basic_text"
+      | "unknown";
+    reason: "available" | "unavailable" | "insecure-backend";
+  };
+  supports: {
+    startup: boolean;
+    absoluteWindowPosition: boolean;
+    systemAudio: boolean;
+  };
 }
 export interface DesktopServerProfile {
   id: string;
@@ -96,6 +118,8 @@ export type DesktopDisplayCaptureEvent =
       }>;
       systemAudioAvailable: boolean;
     }
+  | { type: "portal"; requestId: string }
+  | { type: "unavailable"; requestId: string }
   | { type: "cancelled"; requestId: string };
 export interface DesktopNativePreferences {
   closeToTray: boolean;
@@ -104,6 +128,8 @@ export interface DesktopNativePreferences {
   startupSupported: boolean;
   notificationsSupported: boolean;
   trayAvailable: boolean;
+  trayStatus?: "checking" | "available" | "unavailable";
+  startupReason?: "unpackaged" | "unavailable" | "conflict";
 }
 export interface DesktopUpdateState {
   enabled: boolean;
@@ -140,8 +166,107 @@ export interface DesktopAssetRequest {
   token: string;
   asset: DesktopAsset;
 }
+/** Public SSH wizard metadata only. Credentials are never returned or persisted. */
+export type SshInstallerAction =
+  | "discover"
+  | "acceptHostKey"
+  | "preflight"
+  | "plan"
+  | "apply"
+  | "status"
+  | "cancel"
+  | "resume"
+  | "detach"
+  | "forget";
+export type SshInstallerCredentials =
+  | { kind: "password"; password: string }
+  | { kind: "privateKey"; privateKey: string; passphrase?: string };
+export interface SshInstallerState {
+  busy: boolean;
+  phase:
+    | "idle"
+    | "host-key"
+    | "trusted"
+    | "preflight"
+    | "planned"
+    | "running"
+    | "completed"
+    | "error";
+  endpoint?: { host: string; port: number; user: string };
+  identity?: {
+    fingerprint: string;
+    algorithm: string;
+    previousFingerprint?: string;
+    changed: boolean;
+    trusted: boolean;
+  };
+  preflight?: {
+    domain: string;
+    ready: boolean;
+    checkedAt: string;
+    checks: Array<{
+      id: string;
+      title: string;
+      level: "pass" | "warn" | "blocked" | "unknown";
+      detail: string;
+    }>;
+  };
+  plan?: {
+    hash: string;
+    version: string;
+    commit: string;
+    options: { domain: string; publicIpv4: string; acmeEmail?: string };
+    architecture: "amd64" | "arm64";
+    installDocker: boolean;
+    expiresAt: number;
+    existingJobId?: string;
+    existingPlanHash?: string;
+    sourceSelection?: string;
+    sourceSha256: string;
+    resourceProfile?: "standard" | "compact-test";
+    installDockerPluginsOnly: boolean;
+    missingDockerPlugins: string[];
+    actions: string[];
+  };
+  ticket?: {
+    jobId: string;
+    domain: string;
+    host: string;
+    port: number;
+    user: string;
+    planHash: string;
+  };
+  status?: {
+    jobId: string;
+    state:
+      | "running"
+      | "cancel_requested"
+      | "cancelled"
+      | "needs_recovery"
+      | "failed"
+      | "completed";
+    phase: string;
+    completedPhases: string[];
+    events: Array<{
+      sequence: number;
+      phase: string;
+      state:
+        | "running"
+        | "cancel_requested"
+        | "cancelled"
+        | "needs_recovery"
+        | "failed"
+        | "completed";
+      errorCode?: string;
+    }>;
+    errorCode?: string;
+    terminal: boolean;
+  };
+  error?: { code: string; message: string };
+  hasCredentials: boolean;
+}
 export interface DesktopBridge {
-  readonly bridgeVersion: 5;
+  readonly bridgeVersion: 6;
   getRuntimeInfo(): Promise<DesktopRuntimeInfo>;
   openExternal(url: string): Promise<void>;
   onRoute(handler: (route: string) => void): () => void;
@@ -150,6 +275,11 @@ export interface DesktopBridge {
   close(): Promise<void>;
   quit(): Promise<void>;
   getUpdateState(): Promise<DesktopUpdateState>;
+  getSshInstallerState(): Promise<SshInstallerState>;
+  sshInstaller(
+    action: SshInstallerAction,
+    input?: unknown,
+  ): Promise<SshInstallerState>;
   checkUpdates(): Promise<DesktopUpdateState>;
   downloadUpdate(): Promise<DesktopUpdateState>;
   cancelUpdate(): Promise<DesktopUpdateState>;

@@ -12,7 +12,7 @@ function fixture(options = {}) {
   let currentOwner = { contents, frame };
   const events = [], grants = [], calls = [];
   const controller = new MediaPermissions({ owner: () => currentOwner, development: false,
-    platform: "win32", getSources: async (previews) => { calls.push(previews); return [source()]; },
+    platform: "win32", displayMode: () => "picker", getSources: async (previews) => { calls.push(previews); return [source()]; },
     emit: (event) => events.push(event), ...options });
   const request = (changes = {}) => ({ frame, securityOrigin: origin,
     userGesture: true, videoRequested: true, audioRequested: false, ...changes });
@@ -59,6 +59,59 @@ test("development permission is restricted to the explicit loopback Vite origin"
     assert.equal(f.controller.request(f.contents, "media", { ...details, requestingUrl }), false);
 });
 
+test("Linux camera, microphone and speaker permissions use the document-scoped policy", () => {
+  // The permission policy is intentionally independent of X11/Wayland and CPU
+  // architecture. Neither session metadata nor a platform label grants access.
+  const f = fixture({ platform: "linux" });
+  const details = { isMainFrame: true, requestingUrl: `${origin}/settings`, securityOrigin: origin };
+  for (const mediaTypes of [["audio"], ["video"], ["audio", "video"]])
+    assert.equal(f.controller.request(f.contents, "media", { ...details, mediaTypes }), true);
+  for (const mediaType of ["audio", "video", "unknown"])
+    assert.equal(f.controller.check(f.contents, "media", origin, { ...details, mediaType }), true);
+  for (const mediaType of ["screen", "audiooutput", "microphone", "camera", "invalid"])
+    assert.equal(f.controller.check(f.contents, "media", origin, { ...details, mediaType }), false);
+  for (const mediaTypes of [["audio", "screen"], ["audiooutput"], ["camera"], ["microphone"]])
+    assert.equal(f.controller.request(f.contents, "media", { ...details, mediaTypes }), false);
+
+  assert.equal(f.controller.request(f.contents, "speaker-selection", details), true);
+  assert.equal(f.controller.check(f.contents, "speaker-selection", origin, details), true);
+  for (const patch of [{ isMainFrame: false }, { requestingUrl: undefined }, { requestingUrl: "about:blank" },
+    { requestingUrl: "https://meeting.example/" }, { securityOrigin: "https://meeting.example" }]) {
+    assert.equal(f.controller.request(f.contents, "speaker-selection", { ...details, ...patch }), false);
+    assert.equal(f.controller.check(f.contents, "speaker-selection", origin, { ...details, ...patch }), false);
+  }
+  assert.equal(f.controller.check(f.contents, "speaker-selection", origin,
+    { ...details, embeddingOrigin: "https://meeting.example" }), false);
+  for (const permission of ["usb", "serial", "hid", "bluetooth", "local-network", "unknown"])
+    assert.equal(f.controller.request(f.contents, permission, details), false);
+});
+
+test("media and output grants disappear with the owner and do not transfer to another window", () => {
+  const f = fixture({ platform: "linux" });
+  const details = { isMainFrame: true, requestingUrl: `${origin}/`, securityOrigin: origin,
+    mediaTypes: ["audio", "video"], mediaType: "audio" };
+  const foreign = { isDestroyed: () => false };
+  for (const permission of ["media", "speaker-selection"]) {
+    assert.equal(f.controller.request(foreign, permission, details), false);
+    assert.equal(f.controller.check(foreign, permission, origin, details), false);
+    assert.equal(f.controller.check(null, permission, origin, details), false);
+  }
+  const replacement = { contents: foreign, frame: { url: `${origin}/` } };
+  f.setOwner(replacement);
+  for (const permission of ["media", "speaker-selection"]) {
+    assert.equal(f.controller.request(f.contents, permission, details), false);
+    assert.equal(f.controller.check(f.contents, permission, origin, details), false);
+    assert.equal(f.controller.request(foreign, permission, details), true);
+    assert.equal(f.controller.check(foreign, permission, origin, details), true);
+  }
+  replacement.contents.isDestroyed = () => true;
+  assert.equal(f.controller.request(foreign, "media", details), false);
+  assert.equal(f.controller.check(foreign, "speaker-selection", origin, details), false);
+  f.setOwner(null);
+  assert.equal(f.controller.request(f.contents, "media", details), false);
+  assert.equal(f.controller.check(f.contents, "speaker-selection", origin, details), false);
+});
+
 test("display capture denies foreign frames, missing activation and audio-only requests before enumeration", async () => {
   const f = fixture();
   for (const patch of [{ userGesture: false }, { frame: null }, { frame: { url: `${origin}/` } },
@@ -92,6 +145,7 @@ test("system audio requires Windows, an audio request and an explicit opt-in", a
   for (const [platform, audioRequested, systemAudio, expected] of [
     ["win32", true, true, "loopback"], ["win32", true, false, undefined],
     ["win32", false, true, "denied"], ["darwin", true, true, "denied"],
+    ["linux", true, true, "denied"], ["linux", true, false, undefined],
   ]) {
     const f = fixture({ platform });
     try {
@@ -168,4 +222,91 @@ test("pending consent expires and source refresh cannot resurrect an obsolete do
   refresh.resolve([source()]);
   await assert.rejects(choosing, /stale_request/);
   assert.deepEqual(g.grants, [null]);
+});
+
+test("Wayland portal uses one enumeration and grants only its consented video source", async () => {
+  const lookup = deferred();
+  const calls = [];
+  const f = fixture({ platform: "linux", displayMode: () => "portal", getSources: previews => { calls.push(previews); return lookup.promise; } });
+  const pending = f.display({ audioRequested: true });
+  assert.deepEqual(calls, [false]);
+  assert.equal(f.events[0].type, "portal");
+  assert.deepEqual(Object.keys(f.events[0]).sort(), ["requestId", "type"]);
+  assert.deepEqual(f.grants, []);
+  await assert.rejects(f.controller.select({ requestId: f.events[0].requestId, sourceId: "window:42:0", systemAudio: false }), /operation_not_allowed/);
+  lookup.resolve([source()]);
+  await pending;
+  assert.equal(f.grants.length, 1);
+  assert.equal(f.grants[0].video.id, "window:42:0");
+  assert.equal(f.grants[0].audio, undefined);
+  assert.deepEqual(calls, [false]);
+  assert.deepEqual(f.events.map(event => event.type), ["portal", "cancelled"]);
+  assert.equal(f.events[0].requestId, f.events[1].requestId);
+});
+
+test("portal rejects empty, ambiguous and unexpected mappings without a custom-picker fallback", async () => {
+  for (const sources of [[], [source("screen:1:0")], [source(), source("window:43:0")], [source("invalid")]]) {
+    const f = fixture({ platform: "linux", displayMode: () => "portal", getSources: async () => sources });
+    await f.display();
+    assert.deepEqual(f.grants, [null]);
+    assert.deepEqual(f.events.map(event => event.type), ["portal", "cancelled"]);
+  }
+  const denied = fixture({ platform: "linux", displayMode: () => "portal", getSources: async () => { throw new Error("portal denied or cancelled"); } });
+  await denied.display();
+  assert.deepEqual(denied.grants, [null]);
+});
+
+test("cancelled portal keeps an enumeration lease so another request cannot reuse its late consent", async () => {
+  const lookup = deferred();
+  let enumerations = 0;
+  const f = fixture({ platform: "linux", displayMode: () => "portal", getSources: () => {
+    enumerations++; return enumerations === 1 ? lookup.promise : Promise.resolve([source("window:99:0")]);
+  } });
+  const pending = f.display();
+  const id = f.events[0].requestId;
+  f.controller.cancelRequest(id);
+  await f.display();
+  assert.equal(enumerations, 1);
+  assert.deepEqual(f.grants, [null, null]);
+  lookup.resolve([source("window:42:0")]);
+  await pending;
+  assert.deepEqual(f.grants, [null, null]);
+  await f.display();
+  assert.equal(enumerations, 2);
+  assert.equal(f.grants[2].video.id, "window:99:0");
+});
+
+test("portal timeout and owner replacement reject late results and settle the callback once", async () => {
+  for (const cause of ["timeout", "navigation"]) {
+    const lookup = deferred();
+    const f = fixture({ platform: "linux", displayMode: () => "portal", timeoutMs: 20, getSources: () => lookup.promise });
+    const pending = f.display();
+    if (cause === "timeout") await new Promise(resolve => setTimeout(resolve, 35));
+    else { f.controller.cancel(); f.setOwner({ contents: f.contents, frame: { url: `${origin}/new` } }); }
+    lookup.resolve([source()]);
+    await pending;
+    assert.deepEqual(f.grants, [null]);
+    assert.deepEqual(f.events.map(event => event.type), ["portal", "cancelled"]);
+  }
+});
+
+test("unverified Linux capture mode fails closed before enumeration with a bounded unavailable event", async () => {
+  for (const displayMode of [undefined, () => "unavailable"]) {
+    const f = fixture({ platform: "linux", displayMode });
+    await f.display();
+    assert.deepEqual(f.calls, []);
+    assert.deepEqual(f.grants, [null]);
+    assert.equal(f.events[0].type, "unavailable");
+    assert.deepEqual(Object.keys(f.events[0]).sort(), ["requestId", "type"]);
+  }
+});
+
+test("a custom picker with one source still requires an explicit fresh selection", async () => {
+  const f = fixture({ platform: "linux" });
+  await f.display();
+  assert.deepEqual(f.grants, []);
+  assert.equal(f.events[0].type, "request");
+  await f.controller.select(f.choice());
+  assert.deepEqual(f.calls, [true, false]);
+  assert.equal(f.grants.length, 1);
 });

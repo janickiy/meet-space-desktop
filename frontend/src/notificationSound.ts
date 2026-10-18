@@ -1,5 +1,6 @@
 import { isDesktopBuild } from "./platform/build";
 import toneURL from "./assets/device-tone.wav";
+import { routeAudioOutput } from "./mediaDevices";
 import {
   readDevicePreferences,
   subscribeDevicePreferences,
@@ -16,6 +17,8 @@ export function createNotificationSound(userId: string) {
   let unlocked = false;
   let priming: Promise<void> | undefined;
   let lastPlayedAt = 0;
+  let playbackRevision = 0;
+  let soundPreferences = readDevicePreferences(userId);
   const seen = new Set<string>();
   const claimKey = `meet.notification-sound.v1:${userId}`;
 
@@ -47,6 +50,13 @@ export function createNotificationSound(userId: string) {
   window.addEventListener("pointerdown", prime);
   window.addEventListener("keydown", prime);
   const unsubscribe = subscribeDevicePreferences(userId, (preferences) => {
+    if (
+      preferences.notificationOutputId !==
+        soundPreferences.notificationOutputId ||
+      preferences.notificationSounds !== soundPreferences.notificationSounds
+    )
+      playbackRevision++;
+    soundPreferences = preferences;
     if (!preferences.notificationSounds) audio.pause();
   });
 
@@ -81,17 +91,29 @@ export function createNotificationSound(userId: string) {
     lastPlayedAt = Date.now();
     if (priming) await priming;
     if (disposed || !readDevicePreferences(userId).notificationSounds) return;
-    if (preferences.notificationOutputId && "setSinkId" in audio) {
-      try {
-        await audio.setSinkId(preferences.notificationOutputId);
-      } catch {
-        // An unavailable saved device must not break notifications.
-        try {
-          await audio.setSinkId("");
-        } catch {}
-      }
-    }
-    if (disposed || !readDevicePreferences(userId).notificationSounds) return;
+    const sinkId = readDevicePreferences(userId).notificationOutputId;
+    const revision = playbackRevision;
+    const isCurrent = () => {
+      const current = readDevicePreferences(userId);
+      return (
+        !disposed &&
+        revision === playbackRevision &&
+        current.notificationSounds &&
+        current.notificationOutputId === sinkId
+      );
+    };
+    const readDevices =
+      typeof navigator.mediaDevices?.enumerateDevices === "function"
+        ? () => navigator.mediaDevices.enumerateDevices()
+        : undefined;
+    const routed = await routeAudioOutput(
+      audio,
+      sinkId,
+      isCurrent,
+      readDevices,
+    );
+    if (routed === "unavailable" || routed === "superseded") return;
+    if (!isCurrent()) return;
     audio.currentTime = 0;
     await audio.play().catch(() => {});
   };

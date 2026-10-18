@@ -1,4 +1,5 @@
 import toneURL from "./assets/device-tone.wav";
+import { routeAudioOutput } from "./mediaDevices";
 
 /** Local playback only. No recording or device data is sent to a server. */
 export function playDeviceTone(
@@ -21,7 +22,10 @@ export function playDeviceTone(
   audio.onerror = () => finish(new Error("audio_playback_failed"));
   void (async () => {
     try {
-      if (sinkId && "setSinkId" in audio) await audio.setSinkId(sinkId);
+      const result = await routeAudioOutput(audio, sinkId, () => !stopped);
+      // A test of a selected headset must not report success from another sink.
+      if (result === "unavailable" || result === "fallback")
+        throw new Error("audio_output_unavailable");
       if (!stopped) await audio.play();
     } catch (error) {
       finish(error);

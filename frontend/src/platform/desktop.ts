@@ -9,7 +9,7 @@ export function desktopBridge(): DesktopBridge {
   const value = window.meetspaceDesktop;
   if (
     !value ||
-    value.bridgeVersion !== 5 ||
+    value.bridgeVersion !== 6 ||
     ![
       value.getRuntimeInfo,
       value.openExternal,
@@ -19,6 +19,8 @@ export function desktopBridge(): DesktopBridge {
       value.close,
       value.quit,
       value.getUpdateState,
+      value.getSshInstallerState,
+      value.sshInstaller,
       value.checkUpdates,
       value.downloadUpdate,
       value.cancelUpdate,
@@ -52,6 +54,51 @@ export function desktopBridge(): DesktopBridge {
   return value;
 }
 
+function validHost(value: DesktopRuntimeInfo): boolean {
+  const host = value.host;
+  if (
+    !host ||
+    typeof host !== "object" ||
+    !["x11", "wayland", "unknown", "not-applicable"].includes(host.session)
+  )
+    return false;
+  if ((value.platform === "linux") === (host.session === "not-applicable"))
+    return false;
+  const storage = host.secureStorage;
+  if (
+    !storage ||
+    typeof storage.available !== "boolean" ||
+    ![
+      "dpapi",
+      "keychain",
+      "gnome-libsecret",
+      "kwallet",
+      "kwallet5",
+      "kwallet6",
+      "basic_text",
+      "unknown",
+    ].includes(storage.backend) ||
+    !["available", "unavailable", "insecure-backend"].includes(storage.reason)
+  )
+    return false;
+  if (
+    storage.available !== (storage.reason === "available") ||
+    (storage.available &&
+      ["basic_text", "unknown"].includes(storage.backend)) ||
+    (storage.reason === "insecure-backend" && storage.backend !== "basic_text")
+  )
+    return false;
+  const supports = host.supports;
+  return (
+    !!supports &&
+    [
+      supports.startup,
+      supports.absoluteWindowPosition,
+      supports.systemAudio,
+    ].every((value) => typeof value === "boolean")
+  );
+}
+
 function runtimeInfo(value: DesktopRuntimeInfo): DesktopRuntimeInfo {
   if (
     !value ||
@@ -61,7 +108,8 @@ function runtimeInfo(value: DesktopRuntimeInfo): DesktopRuntimeInfo {
     value.appVersion.length > 80 ||
     typeof value.isPackaged !== "boolean" ||
     value.capabilities?.serverConnection !== true ||
-    value.capabilities?.windowControls !== true
+    value.capabilities?.windowControls !== true ||
+    !validHost(value)
   )
     throw new Error("Unsupported desktop runtime");
   return value;

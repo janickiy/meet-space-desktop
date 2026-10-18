@@ -11,6 +11,9 @@ const { app, ipcMain, powerMonitor } = require('electron');
 const WebSocket = require('ws');
 const { PASSWORD } = require('./fixtures/https-fixture.cjs');
 const { DIRECT } = require('./fixtures/product-fixture.cjs');
+const { collectLinuxProcessMetrics } = require('./helpers/linux-process-metrics.cjs');
+const { observeRendererJank } = require('./helpers/renderer-jank-observer.cjs');
+const profileStartedAt = performance.now();
 const config = JSON.parse(syncFs.readFileSync(process.argv[2], 'utf8'));
 app.setPath('userData', config.userDataDir); app.setPath('sessionData', config.userDataDir);
 v8.setFlagsFromString('--expose_gc');
@@ -48,13 +51,14 @@ const { createNodeHttpsTransport } = require('../dist/network/transport.js');
 const sleep = ms => new Promise(resolve => originalTimers.setTimeout(resolve, ms));
 const sockets = new Set();
 let socketsCreated = 0, socketsClosed = 0;
-const evidenceDir = path.resolve(__dirname, '../artifacts');
+const evidenceDir = config.evidenceDir ?? path.resolve(__dirname, '../artifacts');
 const report = { schemaVersion: 1, phase: config.phase, collectedAt: new Date().toISOString(),
   platform: process.platform, arch: process.arch, electron: process.versions.electron, chromium: process.versions.chrome,
+  sourceTreeSha256: config.sourceTreeSha256,
   scope: 'Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events',
-  windowsRuntimeTested: false, samples: [], checks: [], notMeasured: ['Windows HANDLE count', 'physical sleep/wake', 'camera/microphone/screen devices', 'physical Windows idle CPU'],
+  windowsRuntimeTested: process.platform === 'win32', samples: [], checks: [], notMeasured: ['Windows HANDLE count', 'physical sleep/wake', 'camera/microphone/screen devices', 'physical-machine idle CPU'],
 };
-let window;
+let window, jankObserver;
 const watchdog = originalTimers.setTimeout(() => { console.error('Profile watchdog'); app.exit(1); }, 225_000);
 const listeners = emitter => Object.fromEntries(emitter.eventNames().filter(name => typeof name === 'string').sort().map(name => [name, emitter.listenerCount(name)]));
 const size = value => value?.size ?? 0;
@@ -97,6 +101,10 @@ const lsof = pids => {
     const bridge = (method, ...args) => execute(`window.meetspaceDesktop[${JSON.stringify(method)}](...${JSON.stringify(args)})`);
     const idleConnections = () => until(() => owned.broker.operations.size === 0 && owned.broker.sockets.size === 1 && owned.broker.streams.size === 1 && sockets.size === 1, 'one account WS and one notification SSE');
     await visible('Подключиться к серверу');
+    report.startup = { harnessToConnectScreenMs: performance.now() - profileStartedAt,
+      scope: 'Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance' };
+    if (config.visible) { window.show(); jankObserver = await observeRendererJank(window.webContents); }
+    else report.jank = { status: 'NOT_MEASURED', reason: 'Hidden window RAF is throttled; use --visible in a dedicated display' };
     await field('#desktop-server-origin', config.alpha.origin); await field('#desktop-server-label', 'QA disposable server');
     await click('.desktop-server-form button[type=submit]');
     await until(() => execute('!!document.querySelector("#email")'), 'login screen');
@@ -115,7 +123,8 @@ const lsof = pids => {
         workingSetKiB: item.memory.workingSetSize, peakWorkingSetKiB: item.memory.peakWorkingSetSize,
         cpuPercent: item.cpu.percentCPUUsage, cumulativeCPUUsage: item.cpu.cumulativeCPUUsage }));
       const sample = { label, socketsCreated, socketsClosed, resources: resources(), mainHeap: v8.getHeapStatistics(), mainMemory: process.memoryUsage(), rendererHeap, dom,
-        processes, fd: lsof(processes.map(item => item.pid)) };
+        processes, fd: process.platform === 'linux' ? collectLinuxProcessMetrics(processes) : lsof(processes.map(item => item.pid)),
+        jank: jankObserver ? await jankObserver.snapshot() : null };
       report.samples.push(sample);
       console.log(JSON.stringify({ phase: config.phase, checkpoint: label, mainHeapBytes: sample.mainMemory.heapUsed,
         rendererHeapBytes: rendererHeap.usedSize, dom, resources: { ...sample.resources, listeners: undefined }, processCount: processes.length, fd: sample.fd }));
@@ -151,6 +160,9 @@ const lsof = pids => {
       await bridge('closeStream', id);
     }
     await idleConnections(); report.checks.push('100 additional typed IPC native WSS/SSE open/close cycles');
+    if (jankObserver) report.jank = { status: 'MEASURED', ...(await jankObserver.stop()),
+      scope: 'Instrumented mapped renderer, including forced GC and heap capture; display/backend must be recorded separately; not physical smoothness acceptance' };
+    // Stop the RAF observer before quiet CPU measurement so it cannot drive repaint work.
     // CPU is per logical core over a fixed 5 s quiet interval; system noise may vary.
     const cpuBefore = app.getAppMetrics(); await sleep(5000); const cpuAfter = app.getAppMetrics();
     report.idleCPU = { seconds: 5, processes: cpuAfter.map(item => {

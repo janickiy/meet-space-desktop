@@ -11,6 +11,7 @@ import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
+import runtimePolicy from "./runtime-policy.cjs";
 import path from "node:path";
 import {
   validateReleaseConfig,
@@ -58,6 +59,7 @@ const readWindowsSignature = signed
 const { getPath7za } = require("app-builder-lib/out/toolsets/7zip.js");
 const {
   extractFile,
+  extractAll,
   listPackage,
   statFile,
   getRawHeader,
@@ -289,7 +291,7 @@ for (const arch of architectures) {
           /^\/(tests|src)(\/|$)/.test(file) ||
           /\.node$/i.test(file) ||
           (file.startsWith("/node_modules/") &&
-            !/^\/node_modules\/ws(\/|$)/.test(file)),
+            !runtimePolicy.runtimePackages.some(name => file === `/node_modules/${name}` || file.startsWith(`/node_modules/${name}/`))),
       )
     ) {
       throw new Error(
@@ -297,6 +299,7 @@ for (const arch of architectures) {
       );
     }
     for (const required of [
+      "/dist/entry.js",
       "/dist/main.js",
       "/dist/preload.js",
       "/dist/build-provenance.json",
@@ -304,6 +307,7 @@ for (const arch of architectures) {
       "/dist/update-trust.json",
       "/renderer/index.html",
       "/renderer/version.json",
+      "/node_modules/ssh2/lib/protocol/crypto/poly1305.js",
     ]) {
       if (!packagedFiles.includes(required))
         throw new Error(`Required package file missing: ${required}`);
@@ -403,30 +407,43 @@ for (const arch of architectures) {
     );
     if (
       packagedMetadata.version !== pkg.version ||
-      packagedMetadata.main !== "dist/main.js" ||
-      Object.keys(packagedMetadata.dependencies || {}).length !== 1 ||
-      packagedMetadata.dependencies.ws !== pkg.dependencies.ws
+      packagedMetadata.main !== "dist/entry.js" ||
+      JSON.stringify(packagedMetadata.dependencies) !== JSON.stringify(pkg.dependencies)
     ) {
       throw new Error("Unexpected runtime package metadata or dependencies");
     }
-    const socketMetadata = JSON.parse(
-      extractFile(appAsar, "node_modules/ws/package.json").toString("utf8"),
-    );
-    if (socketMetadata.version !== pkg.dependencies.ws)
-      throw new Error("Unexpected packaged WebSocket dependency version");
-    for (const entry of packagedFiles.filter((file) =>
-      /^\/node_modules\/ws\/.*\.js$/.test(file),
-    )) {
-      const file = entry.slice(1);
-      if (
-        hash(extractFile(appAsar, file)) !==
-        hash(await readFile(path.join(desktop, file)))
-      ) {
-        throw new Error(
-          `Packaged WebSocket runtime differs from the pinned local dependency: ${file}`,
-        );
-      }
+    const lock = JSON.parse(await readFile(path.join(desktop, "package-lock.json"), "utf8"));
+    for (const name of runtimePolicy.runtimePackages) {
+      const metadata = JSON.parse(extractFile(appAsar, `node_modules/${name}/package.json`).toString("utf8"));
+      if (metadata.version !== lock.packages[`node_modules/${name}`].version)
+        throw new Error(`Unexpected packaged runtime dependency version: ${name}`);
+      const local = JSON.parse(await readFile(path.join(desktop, `node_modules/${name}/package.json`), "utf8"));
+      for (const field of ["name", "main", "type", "exports", "imports", "browser", "dependencies", "optionalDependencies"])
+        if (JSON.stringify(metadata[field]) !== JSON.stringify(local[field]))
+          throw new Error(`Packaged module resolution metadata changed: ${name}/${field}`);
     }
+    for (const entry of packagedFiles.filter(file => file.startsWith("/node_modules/"))) {
+      const file = entry.slice(1);
+      if (!statFile(appAsar, file).size) continue;
+      // Builder removes authoring fields/scripts from package.json. Runtime
+      // resolution and versions are checked structurally above.
+      if (file.endsWith("/package.json")) continue;
+      if (hash(extractFile(appAsar, file)) !== hash(await readFile(path.join(desktop, file))))
+        throw new Error(`Packaged runtime differs from the pinned local dependency: ${file}`);
+    }
+    // Verify all signed installer assets inside the final NSIS payload.
+    const { InstallerBundle } = require("../dist/ssh/protocol.js");
+    const bundleFiles = {};
+    for (const name of ["runner.py", "release.json", "release.sig", "trust-root.pem", "docker.asc"])
+      bundleFiles[name] = extractFile(appAsar, `resources/server-installer/v1/${name}`);
+    new InstallerBundle(bundleFiles);
+    const runtimeDirectory = path.join(temporary, "runtime");
+    extractAll(appAsar, runtimeDirectory);
+    const sshCheck = spawnSync(process.execPath, [path.join(desktop, "scripts/verify-ssh-runtime.cjs"), runtimeDirectory], {
+      encoding: "utf8", timeout: 20000, env: { ...process.env, NODE_PATH: "", NODE_OPTIONS: "" },
+    });
+    if (sshCheck.error || sshCheck.status !== 0)
+      throw new Error("Packaged SSH JavaScript runtime failed its local handshake check");
     provenance = JSON.parse(
       extractFile(appAsar, "dist/build-provenance.json").toString("utf8"),
     );
