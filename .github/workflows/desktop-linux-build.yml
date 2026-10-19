@@ -55,6 +55,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --assume-yes --no-install-recommends rpm cpio squashfs-tools binutils desktop-file-utils libglib2.0-bin ripgrep xvfb xauth dbus-x11 libsecret-1-0 libnss3 libnotify4 libxss1 libxtst6 libgbm1 "$GTK_PACKAGE" "$ALSA_PACKAGE" "$FUSE_PACKAGE"
+      - name: Prepare fresh Linux package output in the ephemeral checkout
+        # Published LFS outputs can have the same source hash as this build.
+        # Remove only Linux outputs on this disposable runner; keep immutable
+        # publication checks and all source/Windows files unchanged.
+        run: node -e 'require("node:fs").rmSync("desktop/artifacts/linux", {recursive:true,force:true})'
       - name: Record exact clean source and native Node architecture
         env:
           TARGET_ARCH: ${{ matrix.arch }}
