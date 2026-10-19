@@ -115,8 +115,9 @@ node desktop/scripts/package.mjs arm64 --signed <absolute-reviewed-config.json>
 
 ## Linux: пакеты и обновления
 
-Общий проект собирает внутренние тестовые DEB amd64/arm64, RPM x86_64 и
-AppImage x86_64. Запускайте на Linux соответствующей архитектуры:
+Общий проект собирает внутренние тестовые DEB amd64/arm64, RPM x86_64/aarch64 и
+AppImage x86_64/ARM64. Обе команды собирают все три формата; запускайте их
+на Linux соответствующей архитектуры:
 
 ```sh
 npm --prefix desktop run pack:linux:x64
@@ -126,15 +127,17 @@ npm --prefix desktop run pack:linux:arm64
 Вывод: `desktop/artifacts/linux/<DEB|RPM|AppImage>/<version>/<sourceTreeSha256>/<arch>/`.
 Например, DEB x64 находится в `desktop/artifacts/linux/DEB/0.1.1-beta/<sourceTreeSha256>/x64/`,
 а AppImage x64 — в `desktop/artifacts/linux/AppImage/0.1.1-beta/<sourceTreeSha256>/x64/`.
-Папка `DEB` содержит сборки x64 и ARM64; `RPM` и `AppImage` — только x64.
+Папки `DEB`, `RPM` и `AppImage` содержат сборки x64 и ARM64.
 В опубликованном Linux-каталоге сохранена только последняя сборка версии `0.1.1-beta`;
 новые сборки получают отдельный каталог `sourceTreeSha256`. Существующие итоговые каталоги
 не перезаписываются. Verifier читает настоящие
 архивы, проверяет ELF/GLIBC, ASAR, desktop entry, значки, лицензии, sandbox
 и SHA-256/SHA-512. Сборка не подтверждает полную совместимость дистрибутивов.
-Linux CI использует Ubuntu 22.04 x64 и native Ubuntu ARM64; отдельный Fedora
-container job проверяет только пакетный install/reinstall/remove, без запуска
-Electron в контейнере. Реальные запуски GitHub и результаты VM фиксируются
+Linux CI использует Ubuntu 22.04 x64 и native Ubuntu 24.04 ARM64, проверяет DEB
+и запуск исходного AppImage с песочницей на обеих архитектурах. Отдельная Fedora
+container matrix на нативных x64/ARM64 hosts проверяет только пакетный
+install/reinstall/remove, без запуска Electron в контейнере. Она не подтверждает
+работу приложения в графической сессии Fedora. Реальные запуски GitHub и результаты VM фиксируются
 отдельно в [отчёте Linux этапа 06](../docs/desktop/linux/06_RELEASE.md).
 
 DEB/RPM обновляются пакетным менеджером из проверенного локального файла;

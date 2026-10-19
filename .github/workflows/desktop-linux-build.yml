@@ -25,10 +25,12 @@ jobs:
             runner: ubuntu-22.04
             gtk: libgtk-3-0
             alsa: libasound2
+            fuse: libfuse2
           - arch: arm64
             runner: ubuntu-24.04-arm
             gtk: libgtk-3-0t64
             alsa: libasound2t64
+            fuse: libfuse2t64
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     defaults:
@@ -47,10 +49,10 @@ jobs:
         env:
           GTK_PACKAGE: ${{ matrix.gtk }}
           ALSA_PACKAGE: ${{ matrix.alsa }}
+          FUSE_PACKAGE: ${{ matrix.fuse }}
         run: |
           sudo apt-get update
-          sudo apt-get install --assume-yes --no-install-recommends rpm cpio squashfs-tools binutils desktop-file-utils libglib2.0-bin ripgrep xvfb xauth dbus-x11 libsecret-1-0 libnss3 libnotify4 libxss1 libxtst6 libgbm1 "$GTK_PACKAGE" "$ALSA_PACKAGE"
-          if [ "${{ matrix.arch }}" = x64 ]; then sudo apt-get install --assume-yes --no-install-recommends libfuse2; fi
+          sudo apt-get install --assume-yes --no-install-recommends rpm cpio squashfs-tools binutils desktop-file-utils libglib2.0-bin ripgrep xvfb xauth dbus-x11 libsecret-1-0 libnss3 libnotify4 libxss1 libxtst6 libgbm1 "$GTK_PACKAGE" "$ALSA_PACKAGE" "$FUSE_PACKAGE"
       - name: Record exact clean source and native Node architecture
         env:
           TARGET_ARCH: ${{ matrix.arch }}
@@ -91,7 +93,6 @@ jobs:
           [ "${#packages[@]}" = 1 ]
           dbus-run-session -- xvfb-run -a bash desktop/scripts/ci/linux-deb-acceptance.sh "${packages[0]}" "$PWD/desktop/artifacts/linux-ci/deb-acceptance" --disposable
       - name: Original AppImage sandboxed runtime smoke
-        if: matrix.arch == 'x64'
         env:
           ARTIFACT_DIRECTORY: ${{ steps.artifact.outputs.appimage-directory }}
         run: |
@@ -113,27 +114,55 @@ jobs:
             desktop/artifacts/linux-ci/**
 
   rpm-package-lifecycle:
-    name: Fedora 44 RPM package lifecycle (container only)
+    name: Fedora 44 ${{ matrix.arch }} RPM package lifecycle (container only)
     needs: packages
-    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-22.04
+            rpm-arch: x86_64
+            docker-arch: amd64
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            rpm-arch: aarch64
+            docker-arch: arm64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
     steps:
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.19.0"
+          architecture: ${{ matrix.arch }}
+          package-manager-cache: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: desktop-linux-test-x64-${{ github.sha }}
+          name: desktop-linux-test-${{ matrix.arch }}-${{ github.sha }}
           path: package-input
       - name: Install, reinstall and remove RPM without running Electron in a container
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+          RPM_ARCH: ${{ matrix.rpm-arch }}
+          DOCKER_ARCH: ${{ matrix.docker-arch }}
         run: |
+          node -e 'if(process.platform!=="linux"||process.arch!==process.env.TARGET_ARCH)process.exit(1)'
+          test "$(uname -m)" = "$RPM_ARCH"
           source_sha="$(node -e 'const source=require("./package-input/linux-ci/source-inputs.json"); if(!/^[a-f0-9]{64}$/.test(source.sourceTreeSha256))process.exit(1); console.log(source.sourceTreeSha256)')"
-          mapfile -t packages < <(find "$PWD/package-input/linux/RPM" -path "*/$source_sha/x64/*.rpm" -type f)
+          mapfile -t packages < <(find "$PWD/package-input/linux/RPM" -path "*/$source_sha/$TARGET_ARCH/*.rpm" -type f)
           [ "${#packages[@]}" = 1 ]
           mkdir rpm-evidence
-          docker pull fedora:44
+          docker pull --platform "linux/$DOCKER_ARCH" fedora:44
           docker image inspect fedora:44 > rpm-evidence/container-image.json
-          docker run --rm -v "$(dirname "${packages[0]}"):/packages:ro" -v "$PWD/rpm-evidence:/evidence" fedora:44 bash -euo pipefail -c '
+          docker run --rm --platform "linux/$DOCKER_ARCH" -e EXPECTED_RPM_ARCH="$RPM_ARCH" -v "$(dirname "${packages[0]}"):/packages:ro" -v "$PWD/rpm-evidence:/evidence" fedora:44 bash -euo pipefail -c '
             cat /etc/os-release > /evidence/os-release
+            test "$(uname -m)" = "$EXPECTED_RPM_ARCH"
             packages=(/packages/*.rpm)
             [ "${#packages[@]}" = 1 ]
+            test "$(rpm -qp --qf "%{ARCH}" "${packages[0]}")" = "$EXPECTED_RPM_ARCH"
             if rpm -q meetspace-desktop-test; then
               echo "Refusing an existing MeetSpace installation" >&2
               exit 1
@@ -154,7 +183,7 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
-          name: desktop-linux-rpm-container-${{ github.sha }}
+          name: desktop-linux-rpm-container-${{ matrix.arch }}-${{ github.sha }}
           path: rpm-evidence/**
           if-no-files-found: error
           retention-days: 14

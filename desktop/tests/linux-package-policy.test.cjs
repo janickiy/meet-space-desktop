@@ -34,10 +34,13 @@ const desktopEntry = (image = false) => `[Desktop Entry]\nName=MeetSpace Test\nT
 test("Linux packaging requires native explicit architecture and supported test formats", async () => {
   const api = await import("../scripts/linux-package-policy.mjs");
   assert.deepEqual(api.validateLinuxTarget({ arch: "x64", formats: ["deb", "rpm", "AppImage"], platform: "linux", hostArch: "x64" }).formats, ["deb", "rpm", "AppImage"]);
+  assert.deepEqual(api.validateLinuxTarget({ arch: "arm64", formats: ["deb", "rpm", "AppImage"], platform: "linux", hostArch: "arm64" }).formats, ["deb", "rpm", "AppImage"]);
   for (const invalid of [
     { arch: "x64", formats: ["deb"], platform: "darwin", hostArch: "x64" },
     { arch: "arm64", formats: ["deb"], platform: "linux", hostArch: "x64" },
-    { arch: "arm64", formats: ["rpm"], platform: "linux", hostArch: "arm64" },
+    { arch: "arm64", formats: ["snap"], platform: "linux", hostArch: "arm64" },
+    { arch: "arm64", formats: ["rpm", "rpm"], platform: "linux", hostArch: "arm64" },
+    { arch: "arm64", formats: ["AppImage"], platform: "darwin", hostArch: "arm64" },
     { arch: "x64", formats: ["deb", "deb"], platform: "linux", hostArch: "x64" },
   ]) assert.throws(() => api.validateLinuxTarget(invalid), /Linux package verification/);
   assert.equal(api.artifactFilename({ version: "0.1.1-beta", arch: "x64", format: "deb" }), "MeetSpace-0.1.1-beta-linux-amd64-test.deb");
@@ -51,6 +54,8 @@ test("artifact names match the pinned builder's format-specific architecture mac
     ["x64", "rpm", "MeetSpace-0.1.1-beta-linux-x86_64-test.rpm"],
     ["x64", "AppImage", "MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage"],
     ["arm64", "deb", "MeetSpace-0.1.1-beta-linux-arm64-test.deb"],
+    ["arm64", "rpm", "MeetSpace-0.1.1-beta-linux-aarch64-test.rpm"],
+    ["arm64", "AppImage", "MeetSpace-0.1.1-beta-linux-arm64-test.AppImage"],
   ]) {
     const actual = artifactFilename({ version: "0.1.1-beta", arch, format });
     assert.equal(actual, expected);
@@ -63,15 +68,18 @@ test("Electron packaged license references retain exact official distribution fi
   assert.equal(electronNoticeReference("LICENSES.chromium.html"), "LICENSES.chromium.html");
   assert.throws(() => electronNoticeReference("../LICENSE"), /unapproved Electron notice/);
 });
-test("actual builder AppInfo separates a sandbox-safe install path from display names and one URL argument", async () => {
+for (const arch of ["x64", "arm64"]) test(`actual ${arch} builder AppInfo separates a sandbox-safe install path from display names and one URL argument`, async () => {
   const vm = require("node:vm");
   const { createRequire } = require("node:module");
   const filename = path.resolve(__dirname, "../electron-builder.linux.config.cjs");
   const context = { module: { exports: {} }, require: createRequire(filename), process: {
-    platform: "linux", arch: "x64", env: { MEETSPACE_TARGET_ARCH: "x64", MEETSPACE_LINUX_OUTPUT: "/tmp/meetspace-policy-unused", MEETSPACE_BUILD_MODE: "test" },
+    platform: "linux", arch, env: { MEETSPACE_TARGET_ARCH: arch, MEETSPACE_LINUX_OUTPUT: "/tmp/meetspace-policy-unused", MEETSPACE_BUILD_MODE: "test" },
   } };
   vm.runInNewContext(await fs.readFile(filename, "utf8"), context, { filename });
   const config = context.module.exports();
+  assert.deepEqual(Array.from(config.linux.target), ["deb", "rpm", "AppImage"]);
+  assert.equal(config.publish, null);
+  assert.equal(config.appId, "com.janickiy.meetspace.desktop.test");
   // Check the real builder configuration. An unversioned libasound2 alternative
   // also admits the OSS compatibility shim, which lacks Chromium's ALSA ABI.
   const alsaDependencies = Array.from(config.deb.depends).filter((dependency) => /\blibasound2(?:t64)?\b/.test(dependency));
@@ -166,6 +174,12 @@ test("DEB/RPM architecture, package name, pre-release ordering and dependencies 
   assert.equal(validatePackageMetadata(actual, { arch: "x64", format: "deb", version: "0.1.1-beta" }), actual);
   for (const mutation of [{ name: "meetspace-desktop" }, { arch: "arm64" }, { version: "0.1.1" }, { release: "2" }, { dependencies: ["libnss3"] }])
     assert.throws(() => validatePackageMetadata({ ...actual, ...mutation }, { arch: "x64", format: "deb", version: "0.1.1-beta" }));
+  const rpm = { ...actual, arch: "aarch64", dependencies: ["nss", "gtk3", "alsa-lib", "mesa-libgbm", "libXScrnSaver"] };
+  assert.equal(validatePackageMetadata(rpm, { arch: "arm64", format: "rpm", version: "0.1.1-beta" }), rpm);
+  for (const wrongArch of ["x86_64", "arm64", "amd64"])
+    assert.throws(() => validatePackageMetadata({ ...rpm, arch: wrongArch }, { arch: "arm64", format: "rpm", version: "0.1.1-beta" }), /architecture mismatch/);
+  const x64Rpm = { ...rpm, arch: "x86_64" };
+  assert.equal(validatePackageMetadata(x64Rpm, { arch: "x64", format: "rpm", version: "0.1.1-beta" }), x64Rpm);
 });
 test("verification receipts never overwrite files or follow symlinks", async (t) => {
   const { writeNewReceipt, validateArtifactDirectory } = await import("../scripts/linux-package-policy.mjs");

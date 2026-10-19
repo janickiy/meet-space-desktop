@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { sourceInputs } from "./ci/source-inputs.mjs";
-import { artifactFilename, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
+import { artifactFilename, LINUX_PACKAGE_FORMATS, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -76,7 +76,7 @@ export function parsePackagingArguments(args) {
   if (!["x64", "arm64"].includes(arch) ||
       ![1, 3].includes(args.length) || (args.length === 3 && args[1] !== "--formats"))
     throw new Error("Use package-linux.mjs x64|arm64 [--formats deb,rpm,AppImage]");
-  const formats = args.length === 3 ? args[2].split(",") : (arch === "arm64" ? ["deb"] : ["deb", "rpm", "AppImage"]);
+  const formats = args.length === 3 ? args[2].split(",") : [...LINUX_PACKAGE_FORMATS];
   return validateLinuxTarget({ arch, formats });
 }
 
@@ -159,7 +159,7 @@ export async function publishLinuxArtifacts({ artifactRoot, stage, version, sour
 async function main() {
   const request = parsePackagingArguments(process.argv.slice(2));
   if (!request) {
-    console.log("Usage: node scripts/package-linux.mjs x64|arm64 [--formats deb,rpm,AppImage]\nNative Linux process required. ARM64 supports deb; x64 supports deb,rpm,AppImage.\nInternal test packages only; automatic updates and publication stay disabled.");
+    console.log("Usage: node scripts/package-linux.mjs x64|arm64 [--formats deb,rpm,AppImage]\nNative Linux process required. Both x64 and ARM64 support deb,rpm,AppImage.\nInternal test packages only; automatic updates and publication stay disabled.");
     return;
   }
   const { arch, formats } = request;

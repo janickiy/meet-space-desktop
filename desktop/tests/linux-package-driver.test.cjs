@@ -28,10 +28,11 @@ async function fixture() {
   return { launcher, source, ...await import(driverUrl) };
 }
 
-test("AppImage packaging generates the reviewed launcher instead of upstream's sandbox fallback", async () => {
+for (const arch of [1, 3]) test(`AppImage ${arch === 3 ? "ARM64" : "x64"} packaging generates the reviewed launcher instead of upstream's sandbox fallback`, async () => {
   const { launcher, source, appImageLauncherTransform } = await fixture();
   const transformed = appImageLauncherTransform(source, launcher, "26.17.0");
   const writes = new Map();
+  const directoryCopies = [];
   const exports = {};
   const noOp = async () => {};
   const filesystem = {
@@ -41,10 +42,15 @@ test("AppImage packaging generates the reviewed launcher instead of upstream's s
     open: async () => ({}), write: noOp, close: noOp,
   };
   const modules = new Map([
-    ["builder-util", { Arch: { ia32: 0, x64: 1 }, exists: async () => true, exec: noOp, copyDir: noOp, log: { warn() {} } }],
+    ["builder-util", { Arch: { ia32: 0, x64: 1, arm64: 3 }, exists: async () => true, exec: noOp,
+      copyDir: async (source, destination) => directoryCopies.push([source, destination]), log: { warn() {} } }],
     ["fs-extra", filesystem],
     ["path", path],
-    ["../../toolsets/linux", { getAppImageTools: async () => ({ runtime: "/runtime", mksquashfs: "/mksquashfs", runtimeLibraries: "/libraries" }) }],
+    ["../../toolsets/linux", { getAppImageTools: async (version, targetArch) => {
+      assert.equal(version, "0.0.0");
+      assert.equal(targetArch, arch);
+      return { runtime: "/runtime", mksquashfs: "/mksquashfs", runtimeLibraries: "/libraries" };
+    } }],
     ["./appLauncher", { copyIcons: noOp, copyMimeTypes: async () => null }],
     ["../differentialUpdateInfoBuilder", { appendBlockmap: noOp }],
     ["./AppImageTarget", { APP_RUN_ENTRYPOINT: "AppRun" }],
@@ -54,7 +60,7 @@ test("AppImage packaging generates the reviewed launcher instead of upstream's s
     require(name) { assert.ok(modules.has(name), `unexpected builder dependency: ${name}`); return modules.get(name); },
   });
   await exports.buildLegacyFuse2AppImage({
-    stageDir: "/stage", output: "/test.AppImage", appDir: "/application", arch: 1,
+    stageDir: "/stage", output: "/test.AppImage", appDir: "/application", arch,
     options: {
       executableName: "meetspace-test", productName: "MeetSpace Test", productFilename: "meetspace-test",
       desktopBaseName: "com.janickiy.meetspace.desktop.test", desktopEntry: "[Desktop Entry]\nExec=AppRun %U\n",
@@ -63,6 +69,8 @@ test("AppImage packaging generates the reviewed launcher instead of upstream's s
   assert.equal(writes.get("/stage/AppRun"), launcher);
   assert.doesNotMatch(writes.get("/stage/AppRun"), /--no-sandbox|--disable-setuid-sandbox|unshare/);
   assert.match(writes.get("/stage/AppRun"), /exec "\$APPDIR\/meetspace-test" "\$@"/);
+  assert.deepEqual(directoryCopies, arch === 3 ? [["/application", "/stage"]] : [["/libraries", "/stage/usr/lib"], ["/application", "/stage"]],
+    "ARM64 must not copy the FUSE2 toolset's x64-only support libraries");
   assert.equal(transformed.evidence.upstreamSha256, upstreamSha256);
   assert.equal(transformed.evidence.patchedSha256, sha256(transformed.source));
   assert.equal(transformed.evidence.launcherSha256, sha256(launcher));
@@ -102,16 +110,17 @@ function parseAs(platform, arch, args) {
   return JSON.parse(execFileSync(process.execPath, ["--input-type=module", "-e", program], { encoding: "utf8" }));
 }
 
-test("Linux package CLI permits native x64 formats and native ARM64 DEB only", () => {
+test("Linux package CLI permits all three formats for native x64 and native ARM64", () => {
   assert.deepEqual(parseAs("linux", "x64", ["x64"]), { ok: true, value: { arch: "x64", formats: ["deb", "rpm", "AppImage"] } });
-  assert.deepEqual(parseAs("linux", "arm64", ["arm64"]), { ok: true, value: { arch: "arm64", formats: ["deb"] } });
+  assert.deepEqual(parseAs("linux", "arm64", ["arm64"]), { ok: true, value: { arch: "arm64", formats: ["deb", "rpm", "AppImage"] } });
   assert.deepEqual(parseAs("linux", "x64", ["x64", "--formats", "rpm,deb"]), { ok: true, value: { arch: "x64", formats: ["rpm", "deb"] } });
-  assert.equal(parseAs("linux", "arm64", ["arm64", "--formats", "AppImage"]).ok, false);
+  assert.deepEqual(parseAs("linux", "arm64", ["arm64", "--formats", "rpm,AppImage"]), { ok: true, value: { arch: "arm64", formats: ["rpm", "AppImage"] } });
 });
 
 test("Linux package CLI rejects cross-builds, duplicate formats and hidden extra arguments", () => {
   for (const [platform, arch, args] of [
     ["darwin", "x64", ["x64"]], ["win32", "arm64", ["arm64"]], ["linux", "arm64", ["x64"]],
+    ["linux", "x64", ["arm64", "--formats", "rpm,AppImage"]], ["darwin", "arm64", ["arm64", "--formats", "rpm,AppImage"]],
     ["linux", "x64", ["x64", "--formats", "deb,deb"]], ["linux", "x64", ["x64", "--formats", ""]],
     ["linux", "x64", ["x64", "--formats", "snap"]], ["linux", "x64", ["x64", "--formats", "deb", "--publish", "always"]],
     ["linux", "x64", []], ["linux", "x64", ["all"]], ["linux", "x64", ["x64", "--signed", "config.json"]],
@@ -121,7 +130,7 @@ test("Linux package CLI rejects cross-builds, duplicate formats and hidden extra
 
 const publicationTest = { skip: typeof process.getuid !== "function" && "Unix ownership policy requires a Unix filesystem host" };
 
-async function publicationFixture(t) {
+async function publicationFixture(t, arch = "x64") {
   const root = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), "meetspace-linux-publication-")));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const artifactRoot = path.join(root, "artifacts"), stage = path.join(root, "private-stage");
@@ -129,9 +138,9 @@ async function publicationFixture(t) {
   await fs.mkdir(stage, { mode: 0o700 });
   const version = "0.1.1-beta", sourceSha256 = "a".repeat(64), formats = ["deb", "rpm", "AppImage"];
   const names = {
-    deb: "MeetSpace-0.1.1-beta-linux-amd64-test.deb",
-    rpm: "MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
-    AppImage: "MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
+    deb: `MeetSpace-0.1.1-beta-linux-${arch === "arm64" ? "arm64" : "amd64"}-test.deb`,
+    rpm: `MeetSpace-0.1.1-beta-linux-${arch === "arm64" ? "aarch64" : "x86_64"}-test.rpm`,
+    AppImage: `MeetSpace-0.1.1-beta-linux-${arch === "arm64" ? "arm64" : "x86_64"}-test.AppImage`,
   };
   const files = new Map();
   for (const format of formats) {
@@ -141,21 +150,21 @@ async function publicationFixture(t) {
     files.set(`${name}.sha512`, Buffer.from(`${createHash("sha512").update(binary).digest("hex")}  ${name}\n`));
   }
   files.set("source-inputs.json", Buffer.from(JSON.stringify({ schemaVersion: 1, sourceTreeSha256: sourceSha256 }, null, 4) + "\n"));
-  files.set("linux-packaging-build.json", Buffer.from(JSON.stringify({ arch: "x64", formats, sourceTreeSha256: sourceSha256 }, null, 2) + "\n"));
+  files.set("linux-packaging-build.json", Buffer.from(JSON.stringify({ arch, formats, sourceTreeSha256: sourceSha256 }, null, 2) + "\n"));
   files.set("linux-artifact-verification.json", Buffer.from(JSON.stringify({ result: "PASS", sourceTreeSha256: sourceSha256,
     artifacts: formats.map((format) => ({ format, file: names[format], sha256: sha256(files.get(names[format])) })),
   }, null, 2) + "\n"));
   for (const [name, bytes] of files) await fs.writeFile(path.join(stage, name), bytes, { mode: 0o600 });
   await fs.writeFile(path.join(stage, "builder-debug.yml"), "not a published distribution\n", { mode: 0o600 });
   const directories = Object.fromEntries([["deb", "DEB"], ["rpm", "RPM"], ["AppImage", "AppImage"]]
-    .map(([format, folder]) => [format, path.join(artifactRoot, "linux", folder, version, sourceSha256, "x64")]));
+    .map(([format, folder]) => [format, path.join(artifactRoot, "linux", folder, version, sourceSha256, arch)]));
   return { root, stage, files, names, formats, directories,
-    request: { artifactRoot, stage, version, sourceSha256, arch: "x64", formats },
+    request: { artifactRoot, stage, version, sourceSha256, arch, formats },
     ...await import(driverUrl) };
 }
 
-test("verified Linux packages are separated by format without changing aggregate verification evidence", publicationTest, async (t) => {
-  const fixture = await publicationFixture(t);
+for (const arch of ["x64", "arm64"]) test(`verified ${arch} Linux packages are separated by format without changing aggregate verification evidence`, publicationTest, async (t) => {
+  const fixture = await publicationFixture(t, arch);
   const { request, publishLinuxArtifacts, files, names, formats, directories } = fixture;
   const outputs = await publishLinuxArtifacts(request);
   assert.deepEqual(outputs, formats.map((format) => ({ format, directory: directories[format] })));
@@ -166,6 +175,7 @@ test("verified Linux packages are separated by format without changing aggregate
     for (const file of expected) assert.deepEqual(await fs.readFile(path.join(directory, file)), files.get(file));
     const receipt = JSON.parse(await fs.readFile(path.join(directory, "linux-publication.json"), "utf8"));
     assert.equal(receipt.schemaVersion, 2);
+    assert.equal(receipt.arch, arch);
     assert.equal(receipt.format, format);
     assert.deepEqual(receipt.formats, [format]);
     assert.deepEqual(receipt.verifiedFormats, formats);

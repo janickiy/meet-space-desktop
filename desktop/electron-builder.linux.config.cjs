@@ -52,7 +52,7 @@ module.exports = () => {
       icon: "resources/icon.png",
       syncDesktopName: true,
       category: "Network;VideoConference",
-      target: arch === "arm64" ? ["deb"] : ["deb", "rpm", "AppImage"],
+      target: ["deb", "rpm", "AppImage"],
       desktop: {
         entry: {
           Name: "MeetSpace Test",

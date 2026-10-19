@@ -10,21 +10,22 @@ export const LINUX_TEST_IDENTITY = Object.freeze({
   installDirectory: "/opt/meetspace-desktop-test",
 });
 export const LINUX_MACHINES = Object.freeze({ x64: 62, arm64: 183 });
+export const LINUX_PACKAGE_FORMATS = Object.freeze(["deb", "rpm", "AppImage"]);
 const fail = (message) => { throw new Error(`Linux package verification: ${message}`); };
 
 export function validateLinuxTarget({ arch, formats, platform = process.platform, hostArch = process.arch }) {
   if (platform !== "linux" || hostArch !== arch || !(arch in LINUX_MACHINES))
     fail("a native Linux process matching the explicit target architecture is required");
   if (!Array.isArray(formats) || !formats.length || new Set(formats).size !== formats.length ||
-      formats.some((format) => !(arch === "arm64" ? ["deb"] : ["deb", "rpm", "AppImage"]).includes(format)))
+      formats.some((format) => !LINUX_PACKAGE_FORMATS.includes(format)))
     fail("unsupported or duplicate package formats");
   return { arch, formats: [...formats] };
 }
 export function artifactFilename({ version, arch, format }) {
   if (!/^\d+\.\d+\.\d+-beta(?:\.\d+)?$/.test(version) || !(arch in LINUX_MACHINES) ||
-      !(arch === "arm64" ? ["deb"] : ["deb", "rpm", "AppImage"]).includes(format))
+      !LINUX_PACKAGE_FORMATS.includes(format))
     fail("invalid test artifact identity");
-  const artifactArch = arch === "x64" ? (format === "deb" ? "amd64" : "x86_64") : "arm64";
+  const artifactArch = arch === "x64" ? (format === "deb" ? "amd64" : "x86_64") : (format === "rpm" ? "aarch64" : "arm64");
   return `MeetSpace-${version}-linux-${artifactArch}-test.${format}`;
 }
 export function electronNoticeReference(packagedName) {
@@ -174,7 +175,8 @@ export function validateDesktopEntry(text, { appImage = false } = {}) {
   return Object.fromEntries(values);
 }
 export function validatePackageMetadata(metadata, { arch, format, version }) {
-  const expectedArch = format === "deb" ? { x64: "amd64", arm64: "arm64" }[arch] : "x86_64";
+  if (!(arch in LINUX_MACHINES) || !["deb", "rpm"].includes(format)) fail("invalid installed package identity");
+  const expectedArch = (format === "deb" ? { x64: "amd64", arm64: "arm64" } : { x64: "x86_64", arm64: "aarch64" })[arch];
   const expectedVersion = version.replaceAll("-", "~");
   if (metadata.name !== LINUX_TEST_IDENTITY.packageName || metadata.arch !== expectedArch || metadata.version !== expectedVersion || metadata.release !== "1")
     fail("package name, version, release or architecture mismatch");
