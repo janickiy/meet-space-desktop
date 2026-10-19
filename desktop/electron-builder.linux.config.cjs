@@ -45,6 +45,9 @@ module.exports = () => {
       description: "MeetSpace desktop — internal Linux test build",
     },
     artifactName: "MeetSpace-${version}-linux-${arch}-test.${ext}",
+    // The legacy ARM runtime links to the development-only libz.so name.
+    // Pin the reviewed static runtime for ARM64; preserve existing x64 bytes.
+    toolsets: { appimage: arch === "arm64" ? "1.0.3" : "0.0.0" },
     publish: null,
     afterPack: "./scripts/normalize-linux-package.cjs",
     linux: {

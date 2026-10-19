@@ -12,7 +12,7 @@ import path from "node:path";
 import os from "node:os";
 import runtimePolicy from "./runtime-policy.cjs";
 import { sourceInputs } from "./ci/source-inputs.mjs";
-import { LINUX_TEST_IDENTITY as identity, artifactFilename, archivePath, inspectElf, validateArchiveEntries,
+import { LINUX_TEST_IDENTITY as identity, artifactFilename, archivePath, inspectElf, inspectAppImageRuntime, validateArchiveEntries,
   validateArtifactDirectory, validateDesktopEntry, validateLinuxTarget, validatePackageMetadata, validateDebControlEntries,
   RPM_FORBIDDEN_SCRIPT_TAGS, validateRpmScriptInventory, electronNoticeReference, writeNewReceipt } from "./linux-package-policy.mjs";
 
@@ -346,7 +346,7 @@ async function verifyOne(filename, { format, arch, version, inputs, temporary })
   } else {
     const bytes = await readFile(filename);
     if (bytes.toString("hex", 8, 11) !== "414902") fail("expected type 2 AppImage");
-    outerElf = inspectElf(bytes, { arch, label: "AppImage runtime" });
+    outerElf = inspectAppImageRuntime(bytes, { arch });
     const offset = await squashOffset(filename);
     await tool("unsquashfs", ["-no-progress", "-no-xattrs", "-dest", expanded, "-offset", String(offset), filename]);
     metadata = { format: "AppImage", squashfsOffset: offset, fuseRuntimeRequirement: "NOT RUN: launch/FUSE/fallback must be tested on target desktop" };

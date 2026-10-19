@@ -212,7 +212,8 @@ async function main() {
       electron: pkg.devDependencies.electron, builder: pkg.devDependencies["electron-builder"],
       version: pkg.version, releaseMode: "test", sourceCommit: inputs.sourceCommit,
       sourceDirty: inputs.sourceDirty, sourceTreeSha256: inputs.sourceTreeSha256,
-      formats, appImageLauncher, automaticUpdates: false, published: false,
+      formats, appImageLauncher, appImageToolset: formats.includes("AppImage") ? (arch === "arm64" ? "1.0.3" : "0.0.0") : null,
+      automaticUpdates: false, published: false,
       maintainerIdentity: "MeetSpace <janickiy@mail.ru>",
     }, null, 2) + "\n");
     run([path.join(desktop, "scripts/verify-linux-artifacts.mjs"), "--directory", stage, "--arch", arch,

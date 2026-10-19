@@ -1,4 +1,5 @@
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { lstat, open, realpath } from "node:fs/promises";
 
 export const LINUX_TEST_IDENTITY = Object.freeze({
@@ -11,6 +12,14 @@ export const LINUX_TEST_IDENTITY = Object.freeze({
 });
 export const LINUX_MACHINES = Object.freeze({ x64: 62, arm64: 183 });
 export const LINUX_PACKAGE_FORMATS = Object.freeze(["deb", "rpm", "AppImage"]);
+// Official appimage@1.0.3, appimage-tools-runtime-20251108.tar.gz. This static
+// type-2 runtime has no ELF interpreter or DT_NEEDED libraries. The builder
+// copies these exact bytes before the SquashFS and appends its blockmap later.
+export const ARM64_APPIMAGE_RUNTIME = Object.freeze({
+  toolset: "1.0.3",
+  size: 936456,
+  sha256: "00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444",
+});
 const fail = (message) => { throw new Error(`Linux package verification: ${message}`); };
 
 export function validateLinuxTarget({ arch, formats, platform = process.platform, hostArch = process.arch }) {
@@ -145,6 +154,16 @@ export function inspectElf(bytes, { arch, label = "ELF", glibcFloor = "2.35" } =
   if (updateSection && bytes.subarray(updateSection.offset, updateSection.offset + updateSection.size).some((byte) => byte !== 0))
     fail(`${label}: embedded AppImage update metadata must be disabled`);
   return { machine, glibcRequirements: glibc, glibcFloor, embeddedUpdateInformation: false };
+}
+
+/** ARM64 must use the reviewed static runtime, never the broken libz.so stub. */
+export function inspectAppImageRuntime(bytes, { arch }) {
+  const result = inspectElf(bytes, { arch, label: "AppImage runtime" });
+  if (arch !== "arm64") return result;
+  const { size, sha256, toolset } = ARM64_APPIMAGE_RUNTIME;
+  if (bytes.length < size || createHash("sha256").update(bytes.subarray(0, size)).digest("hex") !== sha256)
+    fail("ARM64 AppImage must use the exact pinned static runtime");
+  return { ...result, runtimeToolset: toolset, runtimeSize: size, runtimeSha256: sha256, staticRuntime: true };
 }
 
 export function validateDesktopEntry(text, { appImage = false } = {}) {

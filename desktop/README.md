@@ -133,7 +133,7 @@ npm --prefix desktop run pack:linux:arm64
 не перезаписываются. Verifier читает настоящие
 архивы, проверяет ELF/GLIBC, ASAR, desktop entry, значки, лицензии, sandbox
 и SHA-256/SHA-512. Сборка не подтверждает полную совместимость дистрибутивов.
-Linux CI использует Ubuntu 22.04 x64 и native Ubuntu 24.04 ARM64, проверяет DEB
+Linux CI использует Ubuntu 22.04 на нативных x64 и ARM64, проверяет DEB
 и запуск исходного AppImage с песочницей на обеих архитектурах. Отдельная Fedora
 container matrix на нативных x64/ARM64 hosts проверяет только пакетный
 install/reinstall/remove, без запуска Electron в контейнере. Она не подтверждает

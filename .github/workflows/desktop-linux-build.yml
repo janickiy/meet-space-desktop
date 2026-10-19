@@ -27,10 +27,12 @@ jobs:
             alsa: libasound2
             fuse: libfuse2
           - arch: arm64
-            runner: ubuntu-24.04-arm
-            gtk: libgtk-3-0t64
-            alsa: libasound2t64
-            fuse: libfuse2t64
+            # Ubuntu 22.04 permits the original AppImage sandbox without changing
+            # AppArmor userns policy or adding --no-sandbox.
+            runner: ubuntu-22.04-arm
+            gtk: libgtk-3-0
+            alsa: libasound2
+            fuse: libfuse2
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     defaults:
@@ -63,6 +65,7 @@ jobs:
         run: |
           npm ci --prefix frontend
           npm ci --prefix desktop
+          node desktop/node_modules/electron/install.js
           npm --prefix frontend run check
           npm --prefix frontend run check:desktop-foundation
           npm --prefix frontend run check:desktop-media
@@ -125,7 +128,7 @@ jobs:
             rpm-arch: x86_64
             docker-arch: amd64
           - arch: arm64
-            runner: ubuntu-24.04-arm
+            runner: ubuntu-22.04-arm
             rpm-arch: aarch64
             docker-arch: arm64
     runs-on: ${{ matrix.runner }}

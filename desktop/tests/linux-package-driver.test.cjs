@@ -28,18 +28,21 @@ async function fixture() {
   return { launcher, source, ...await import(driverUrl) };
 }
 
-for (const arch of [1, 3]) test(`AppImage ${arch === 3 ? "ARM64" : "x64"} packaging generates the reviewed launcher instead of upstream's sandbox fallback`, async () => {
+for (const { arch, toolset } of [{ arch: 1, toolset: "0.0.0" }, { arch: 3, toolset: "0.0.0" }, { arch: 3, toolset: "1.0.3" }])
+test(`AppImage ${arch === 3 ? "ARM64" : "x64"} toolset ${toolset} packaging generates the reviewed launcher instead of upstream's sandbox fallback`, async () => {
   const { launcher, source, appImageLauncherTransform } = await fixture();
   const transformed = appImageLauncherTransform(source, launcher, "26.17.0");
   const writes = new Map();
   const directoryCopies = [];
+  const runtimeBytes = Buffer.from("inert runtime fixture");
+  const runtimeWrites = [];
   const exports = {};
   const noOp = async () => {};
   const filesystem = {
     writeFile: async (filename, bytes) => writes.set(filename, bytes),
     remove: noOp, copyFile: noOp, chmod: noOp, copyDir: noOp,
-    readFile: async () => Buffer.from("test runtime"),
-    open: async () => ({}), write: noOp, close: noOp,
+    readFile: async (filename) => { assert.equal(filename, "/runtime"); return runtimeBytes; },
+    open: async () => ({}), write: async (handle, bytes) => runtimeWrites.push(bytes), close: noOp,
   };
   const modules = new Map([
     ["builder-util", { Arch: { ia32: 0, x64: 1, arm64: 3 }, exists: async () => true, exec: noOp,
@@ -47,9 +50,9 @@ for (const arch of [1, 3]) test(`AppImage ${arch === 3 ? "ARM64" : "x64"} packag
     ["fs-extra", filesystem],
     ["path", path],
     ["../../toolsets/linux", { getAppImageTools: async (version, targetArch) => {
-      assert.equal(version, "0.0.0");
+      assert.equal(version, toolset);
       assert.equal(targetArch, arch);
-      return { runtime: "/runtime", mksquashfs: "/mksquashfs", runtimeLibraries: "/libraries" };
+      return { runtime: "/runtime", mksquashfs: "/mksquashfs", runtimeLibraries: toolset === "0.0.0" ? "/libraries" : "/libraries/arm64" };
     } }],
     ["./appLauncher", { copyIcons: noOp, copyMimeTypes: async () => null }],
     ["../differentialUpdateInfoBuilder", { appendBlockmap: noOp }],
@@ -59,18 +62,24 @@ for (const arch of [1, 3]) test(`AppImage ${arch === 3 ? "ARM64" : "x64"} packag
     exports, Buffer,
     require(name) { assert.ok(modules.has(name), `unexpected builder dependency: ${name}`); return modules.get(name); },
   });
-  await exports.buildLegacyFuse2AppImage({
+  const options = {
     stageDir: "/stage", output: "/test.AppImage", appDir: "/application", arch,
     options: {
       executableName: "meetspace-test", productName: "MeetSpace Test", productFilename: "meetspace-test",
       desktopBaseName: "com.janickiy.meetspace.desktop.test", desktopEntry: "[Desktop Entry]\nExec=AppRun %U\n",
     },
-  });
+  };
+  if (toolset === "0.0.0") await exports.buildLegacyFuse2AppImage(options);
+  else await exports.buildStaticRuntimeAppImage(toolset, options);
   assert.equal(writes.get("/stage/AppRun"), launcher);
   assert.doesNotMatch(writes.get("/stage/AppRun"), /--no-sandbox|--disable-setuid-sandbox|unshare/);
   assert.match(writes.get("/stage/AppRun"), /exec "\$APPDIR\/meetspace-test" "\$@"/);
-  assert.deepEqual(directoryCopies, arch === 3 ? [["/application", "/stage"]] : [["/libraries", "/stage/usr/lib"], ["/application", "/stage"]],
-    "ARM64 must not copy the FUSE2 toolset's x64-only support libraries");
+  assert.deepEqual(directoryCopies, toolset === "1.0.3"
+    ? [["/libraries/arm64", "/stage/usr/lib"], ["/application", "/stage"]]
+    : (arch === 3 ? [["/application", "/stage"]] : [["/libraries", "/stage/usr/lib"], ["/application", "/stage"]]),
+    "ARM64 copies its own static support libraries and never the FUSE2 toolset's x64 libraries");
+  assert.equal(runtimeWrites.length, 1);
+  assert.deepEqual(runtimeWrites[0], runtimeBytes, "the builder writes the exact runtime prefix without changing its bytes");
   assert.equal(transformed.evidence.upstreamSha256, upstreamSha256);
   assert.equal(transformed.evidence.patchedSha256, sha256(transformed.source));
   assert.equal(transformed.evidence.launcherSha256, sha256(launcher));
@@ -191,7 +200,7 @@ for (const arch of ["x64", "arm64"]) test(`verified ${arch} Linux packages are s
 
 test("an existing later-format destination prevents all publication and preserves its original bytes", publicationTest, async (t) => {
   const { request, publishLinuxArtifacts, directories } = await publicationFixture(t);
-  await fs.mkdir(directories.rpm, { recursive: true });
+  await fs.mkdir(directories.rpm, { recursive: true, mode: 0o755 });
   const previous = path.join(directories.rpm, "linux-publication.json");
   await fs.writeFile(previous, "previous immutable receipt\n");
   await assert.rejects(publishLinuxArtifacts(request), /immutable artifact directory already exists/);
@@ -207,7 +216,7 @@ test("publication never follows an existing symlink destination or format parent
     await fs.mkdir(outside);
     await fs.writeFile(path.join(outside, "keep.txt"), "untouched\n");
     const link = symlinkParent ? path.join(request.artifactRoot, "linux", "RPM") : directories.rpm;
-    await fs.mkdir(path.dirname(link), { recursive: true });
+    await fs.mkdir(path.dirname(link), { recursive: true, mode: 0o755 });
     await fs.symlink(outside, link, "dir");
     await assert.rejects(publishLinuxArtifacts(request), /immutable artifact directory already exists|ordinary, owned/);
     assert.deepEqual(await fs.readdir(outside), ["keep.txt"]);

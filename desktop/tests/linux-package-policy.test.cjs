@@ -79,6 +79,7 @@ for (const arch of ["x64", "arm64"]) test(`actual ${arch} builder AppInfo separa
   const config = context.module.exports();
   assert.deepEqual(Array.from(config.linux.target), ["deb", "rpm", "AppImage"]);
   assert.equal(config.publish, null);
+  assert.equal(config.toolsets.appimage, arch === "arm64" ? "1.0.3" : "0.0.0");
   assert.equal(config.appId, "com.janickiy.meetspace.desktop.test");
   // Check the real builder configuration. An unversioned libasound2 alternative
   // also admits the OSS compatibility shim, which lacks Chromium's ALSA ABI.
@@ -131,6 +132,16 @@ test("ELF malformed offsets, string references and cyclic chains fail closed", a
     const bytes = elf(); mutate(bytes);
     assert.throws(() => inspectElf(bytes, { arch: "x64" }), /Linux package verification/);
   }
+});
+test("ARM64 AppImage rejects a legacy or modified runtime even when its ELF architecture and GLIBC pass", async () => {
+  const { inspectElf, inspectAppImageRuntime, ARM64_APPIMAGE_RUNTIME } = await import("../scripts/linux-package-policy.mjs");
+  const legacy = elf({ machine: 183, requirement: "GLIBC_2.17" });
+  assert.equal(inspectElf(legacy, { arch: "arm64" }).machine, 183);
+  assert.throws(() => inspectAppImageRuntime(legacy, { arch: "arm64" }), /exact pinned static runtime/);
+  const altered = Buffer.concat([legacy, Buffer.alloc(ARM64_APPIMAGE_RUNTIME.size - legacy.length)]);
+  assert.throws(() => inspectAppImageRuntime(altered, { arch: "arm64" }), /exact pinned static runtime/);
+  assert.deepEqual(inspectAppImageRuntime(elf(), { arch: "x64" }), inspectElf(elf(), { arch: "x64" }),
+    "the existing x64 runtime policy is unchanged");
 });
 test("package entries reject traversal, absolute paths, duplicate entries and link ancestor writes", async () => {
   const { archivePath, validateArchiveEntries } = await import("../scripts/linux-package-policy.mjs");
