@@ -1,6 +1,6 @@
 # Дистрибутивы MeetSpace Desktop
 
-Готовые установочные файлы Windows и Linux сгруппированы по ОС, версии и архитектуре. Разные сборки одной версии различаются полным хешем исходников в имени каталога. Всего 46 дистрибутивов, включая проверенные предыдущие сборки; контрольные суммы и метаданные находятся рядом с файлами.
+Готовые установочные файлы Windows и Linux сгруппированы по ОС, версии и архитектуре. Разные сборки одной версии различаются полным хешем исходников в имени каталога. Всего 30 дистрибутивов, включая проверенные предыдущие сборки; контрольные суммы и метаданные находятся рядом с файлами.
 
 ## Последняя опубликованная сборка 0.1.1 beta
 
@@ -17,7 +17,7 @@
 
 ## Все версии
 
-Папки `windows/<версия>/<архитектура>/` содержат основные Windows-пакеты, `windows/<версия>/<хеш>/<архитектура>/` — варианты сборок. Linux-пакеты находятся в `linux/<версия>/<хеш>/<архитектура>/`. Версии 0.2–0.7.2 относятся к прежней нумерации; текущая нумерация beta началась с 0.1.0.
+Папки `windows/<версия>/<архитектура>/` содержат основные Windows-пакеты, `windows/<версия>/<хеш>/<архитектура>/` — варианты сборок. Linux-пакеты находятся в `linux/<версия>/<хеш>/<архитектура>/`. Для Windows доступны только версии `0.1.0-beta` и `0.1.1-beta`.
 
 | ОС / архитектура | Версия | Сборка | Скачать |
 |---|---|---|---|
@@ -51,22 +51,6 @@
 | Windows arm64 | 0.1.1-beta | `e963d672cf94` | [MeetSpace-0.1.1-beta-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe) |
 | Windows x64 | 0.1.1-beta | `e963d672cf94` | [MeetSpace-0.1.1-beta-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe) |
 | Windows x64 | 0.1.1-beta | `441cb9713c16` | [MeetSpace-0.1.1-beta-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.1.1-beta/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe) |
-| Windows arm64 | 0.2.0 | `историческая` | [MeetSpace-0.2.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.2.0/arm64/MeetSpace-0.2.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.2.0 | `историческая` | [MeetSpace-0.2.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.2.0/x64/MeetSpace-0.2.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.3.0 | `историческая` | [MeetSpace-0.3.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.3.0/arm64/MeetSpace-0.3.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.3.0 | `историческая` | [MeetSpace-0.3.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.3.0/x64/MeetSpace-0.3.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.4.0 | `историческая` | [MeetSpace-0.4.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.4.0/arm64/MeetSpace-0.4.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.4.0 | `историческая` | [MeetSpace-0.4.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.4.0/x64/MeetSpace-0.4.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.5.0 | `историческая` | [MeetSpace-0.5.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.5.0/arm64/MeetSpace-0.5.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.5.0 | `историческая` | [MeetSpace-0.5.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.5.0/x64/MeetSpace-0.5.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.6.0 | `f5c25c19070f` | [MeetSpace-0.6.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.6.0/arm64/MeetSpace-0.6.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.6.0 | `f5c25c19070f` | [MeetSpace-0.6.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.6.0/x64/MeetSpace-0.6.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.7.0 | `8657d58a7796` | [MeetSpace-0.7.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.0/arm64/MeetSpace-0.7.0-win-arm64-test-setup.exe) |
-| Windows x64 | 0.7.0 | `8657d58a7796` | [MeetSpace-0.7.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.0/x64/MeetSpace-0.7.0-win-x64-test-setup.exe) |
-| Windows arm64 | 0.7.1 | `b4ef9a3d2947` | [MeetSpace-0.7.1-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.1/arm64/MeetSpace-0.7.1-win-arm64-test-setup.exe) |
-| Windows x64 | 0.7.1 | `b4ef9a3d2947` | [MeetSpace-0.7.1-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.1/x64/MeetSpace-0.7.1-win-x64-test-setup.exe) |
-| Windows arm64 | 0.7.2 | `03c866a860e7` | [MeetSpace-0.7.2-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.2/arm64/MeetSpace-0.7.2-win-arm64-test-setup.exe) |
-| Windows x64 | 0.7.2 | `03c866a860e7` | [MeetSpace-0.7.2-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-win/raw/refs/heads/main/desktop/artifacts/windows/0.7.2/x64/MeetSpace-0.7.2-win-x64-test-setup.exe) |
 
 ## Получение через Git
 
