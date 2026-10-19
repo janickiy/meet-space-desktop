@@ -128,7 +128,7 @@ export async function summarizeRetainedHeap(filename) {
   return {
     file: path.basename(filename), sha256: createHash('sha256').update(bytes).digest('hex'),
     method: 'Immediate dominators of the raw snapshot graph, excluding weak edges; all other edge types retained',
-    limitations: 'Conservative graph accounting, not Chrome DevTools page-ownership/shortcut/ephemeron heuristics. Not OS RSS. Per-group unions must not be summed across groups.',
+    limitations: 'Raw graph accounting with non-weak edges, not Chrome DevTools page-ownership/shortcut/ephemeron heuristics. Not a guaranteed bound or OS RSS. Per-group unions must not be summed across groups.',
     nodeCount: count, reachable, unreachable: count - reachable, strongEdges: strongCount, omittedWeak,
     passes, totalReachableSelfBytes: retained[root], groups: results,
   };

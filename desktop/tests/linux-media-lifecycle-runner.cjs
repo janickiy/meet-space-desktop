@@ -7,7 +7,7 @@ const Module = require('node:module');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '../..');
 const desktopRequire = Module.createRequire(path.join(root, 'desktop/package.json'));
-const {backendSourceInputs} = require('./fixtures/pion-source-inputs.cjs');
+const {backendSourceInputs, verifyPionFixture} = require('./fixtures/pion-source-inputs.cjs');
 const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 (async () => {
   const evidence = process.argv[2];
@@ -23,12 +23,7 @@ const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file))
   if (!path.isAbsolute(electronExecutable) || digest(electronExecutable) !== digest(desktopRequire('electron')))
     throw Error('Electron override differs from pinned installed runtime');
   const backendInputs = await backendSourceInputs(root);
-  if (fixture) {
-    if (!path.isAbsolute(fixture)) throw Error('Fixture path must be absolute');
-    const proof = JSON.parse(fs.readFileSync(fixture + '.source-inputs.json', 'utf8'));
-    if (proof.backendSourceTreeSha256 !== backendInputs.sourceTreeSha256 || proof.platform !== process.platform ||
-        proof.arch !== process.arch || proof.binarySha256 !== digest(fixture)) throw Error('Prebuilt Pion fixture source/architecture/checksum mismatch');
-  }
+  if (fixture) await verifyPionFixture(fixture, backendInputs);
   fs.mkdirSync(path.dirname(evidence), {recursive: true});
   fs.mkdirSync(evidence, {mode: 0o700}); // Reject reuse, preserving earlier baseline/after outputs.
   const original = path.join(root, 'desktop/tests/stage07-media-runner.cjs');
@@ -42,12 +37,6 @@ const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file))
   for (const [before, after] of changes) {
     if (source.split(before).length !== 2) throw Error('Original runner drift: ' + before);
     source = source.replace(before, after);
-  }
-  if (fixture) {
-    const start = source.indexOf('    const executable = path.join(');
-    const end = source.indexOf('    const frontendRequire = createRequire(', start);
-    if (start < 0 || end < 0) throw Error('Original Go build block drift');
-    source = source.slice(0, start) + '    const executable = ' + JSON.stringify(fixture) + ';\n' + source.slice(end);
   }
   // Wait for subprocess exit before deleting temporary data after a deadline.
   const runStart = source.indexOf('async function run(binary, args, options = {}) {');

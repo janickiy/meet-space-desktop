@@ -1,29 +1,29 @@
-# Визуальные материалы Meet
+# Визуальные материалы MeetSpace Desktop
 
-## Главная иллюстрация
+## Фирменные значки
 
-`public/media/meet-laptop.png` — иллюстрация ноутбука для приветственного экрана,
-созданная встроенным инструментом генерации изображений Codex (`imagegen`).
-Она создана по визуальному референсу пользователя, а не скопирована из стороннего сайта.
-Исходный результат сохранён также в каталоге `~/.codex/generated_images/` текущего чата.
-Растровый файл используется только как иллюстрация: изображённые видеозвонки не
-означают наличие реализованной видеосвязи в текущем этапе продукта.
+`public/branding/` содержит набор SVG MeetSpace, предоставленный владельцем проекта 16 октября 2026 года, и совместимые адреса значков. Производные значки приложения, трея и установщиков находятся в `desktop/resources/`. Источник, преобразование и контрольные суммы записаны в `desktop/resources/icon-source.json`. Эти материалы не получают лицензию сторонних библиотек автоматически.
 
-Финальный промпт генерации:
+## Изображения интерфейса
+
+- `public/media/auth-landscape.jpg` — локальный фон, перенесённый из исходного интерфейса MeetSpace; используется в оформлении рабочего пространства и встреч. Отдельное подтверждение происхождения или новой лицензии этим документом не добавляется.
+- `public/media/meetspace-group-chat-v5.webp` — декоративная иллюстрация группового разговора для приветственного экрана. Создана встроенным `image_gen`, новый непрозрачный результат, 1536 × 1024, преобразована в WebP с качеством 87 без визуального редактирования. Исходный результат: `exec-2ec95f05-58bf-4944-aeb4-b98018a6b24b.png`. Иллюстрация не является снимком реального звонка.
+
+Промпт сохранён вместе с используемым изображением:
 
 ```text
-Use case: product-mockup
-Asset type: hero illustration for an implemented video-conferencing website, not a full page mockup.
-Input images: Image 1 is a style and composition reference only; specifically reference the laptop photograph on its first panel, do not reproduce the collage or its text.
-Primary request: Create a premium photorealistic silver laptop, slightly angled and open, showing a dark video-call interface with exactly four friendly adult coworkers in a 2x2 video grid, two men and two women. Natural home-office backgrounds inside each tile, one person waving. Small dark round call-control icons and a red end-call circle at the bottom of the laptop screen. The laptop rests on a very light cool-white desk, with just one softly blurred small green plant behind it as in the reference. A soft natural contact shadow.
-Composition/framing: Wide landscape asset, laptop fills most of the frame, complete laptop silhouette visible, front three-quarter view. This will be positioned on the right half of a landing page. No page headline or navigation.
-Lighting/mood: Soft daylight, clean airy blue-white SaaS website palette, realistic material and skin texture, restrained professional polish.
-Constraints: No brands, no logos, no watermark, no readable text anywhere. Output a standalone illustration with genuinely transparent background, preserving the natural laptop shadow and only the subtle referenced plant/desk contact detail. Do not output a website screenshot.
+Use case: photorealistic-natural.
+Asset type: an edge-to-edge photograph mosaic for the content area of a group video chat illustration on the MeetSpace homepage.
+Primary request: four distinct people having a friendly group video conversation, in a precise equal 2 by 2 grid. The output is ONLY the four webcam portraits, not an app mockup.
+Composition: landscape 3:2. Exactly four equally sized rectangular tiles fill the entire canvas. Thin straight 6px muted dark-plum dividers at the vertical and horizontal centers. Each tile is a separate home office webcam view with a single person centered, head and upper torso fully visible, comfortable headroom; faces the same natural scale.
+Top left: a woman about 30, shoulder-length wavy chestnut hair, sage-green shirt, warm genuine smile, airy home studio with books and a plant.
+Top right: a man about 35 with short dark hair and glasses, navy overshirt, attentive expression, softly lit neutral office background.
+Bottom left: a woman about 40 with dark curly hair and a cream blouse, smiling naturally, warm home interior.
+Bottom right: a man about 45 with short light-brown hair and subtle beard, light-blue shirt, a friendly relaxed smile, tidy home office.
+Style: photorealistic polished editorial photography, believable natural window light, natural skin texture and fabric, consistent calm muted color palette, varied natural expressions rather than identical stock smiles.
+Constraints: four people in four separate rooms, one per tile; no hands in foreground, no floating objects, no laptop, no monitor casing, no outer frame, no perspective tilt, no interface controls, no text, no names, no logos, no watermark. Tile borders must be exactly straight and grid equal. All four faces unobscured. Opaque image.
 ```
 
-## Остальные материалы
+## Лицензии зависимостей
 
-- Иконки: `lucide-react`, локальные SVG-компоненты, лицензия ISC.
-- Шрифт Inter: `@fontsource/inter`, локальные файлы, SIL Open Font License.
-- Знак Meet: простой SVG/компонент с иконкой камеры, без внешней загрузки.
-- В приложении нет внешних шрифтов, трекеров и удалённых фотографий.
+Иконки `lucide-react` распространяются по ISC, локальные файлы шрифта Inter из `@fontsource/inter` — по SIL Open Font License. Полные тексты из установленных зависимостей формируются при сборке в `desktop/resources/THIRD_PARTY_NOTICES.txt`, инвентарь — в `desktop/resources/third-party-licenses.json`. Уведомления Electron и Chromium поставляются отдельно в установочном пакете. Визуальные ресурсы загружаются локально.

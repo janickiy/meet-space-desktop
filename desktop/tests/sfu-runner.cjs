@@ -1,4 +1,4 @@
-// Real Electron/shared client + repository Pion SFU and ephemeral local TURN.
+// Real Electron/shared client + pinned upstream Pion SFU and ephemeral local TURN.
 // Usage: node tests/sfu-runner.cjs [evidence-dir] [--peers=2,3,4,5]
 //        [--routes=direct,relay] [--fixture=/absolute/prebuilt/pion-fixture]
 const fs = require("node:fs/promises");
@@ -7,7 +7,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { createRequire } = require("node:module");
 const { spawn } = require("node:child_process");
-const { backendSourceInputs, sha256 } = require("./fixtures/pion-source-inputs.cjs");
+const { backendSourceInputs, buildPionFixture, verifyPionFixture, sha256 } = require("./fixtures/pion-source-inputs.cjs");
 
 function run(binary, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -46,11 +46,8 @@ function run(binary, args, options = {}) {
     await fs.writeFile(path.join(evidence, "source-inputs.json"), JSON.stringify(commonInputs, null, 2) + "\n");
     await fs.writeFile(path.join(evidence, "backend-source-inputs.json"), JSON.stringify(backendInputs, null, 2) + "\n");
     const executable = fixture || path.join(directory, process.platform === "win32" ? "pion-fixture.exe" : "pion-fixture");
-    if (fixture) {
-      const supplied = JSON.parse(await fs.readFile(fixture + ".source-inputs.json", "utf8"));
-      if (supplied.backendSourceTreeSha256 !== backendInputs.sourceTreeSha256 || supplied.platform !== process.platform || supplied.arch !== process.arch ||
-          supplied.binarySha256 !== sha256(await fs.readFile(fixture))) throw new Error("Prebuilt Pion fixture source/architecture/checksum mismatch");
-    } else await run("go", ["build", "-trimpath", "-o", executable, "./desktop/tests/fixtures/pion-sfu"], { cwd: repository });
+    if (fixture) await verifyPionFixture(fixture, backendInputs);
+    else await buildPionFixture(repository, executable);
     const fixtureEvidence = { platform: process.platform, arch: process.arch, binarySha256: sha256(await fs.readFile(executable)),
       backendSourceTreeSha256: backendInputs.sourceTreeSha256, commonSourceTreeSha256: commonInputs.sourceTreeSha256, prebuilt: !!fixture };
     await fs.writeFile(path.join(evidence, "fixture.json"), JSON.stringify(fixtureEvidence, null, 2) + "\n");

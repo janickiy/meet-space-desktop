@@ -8,20 +8,9 @@ release-artifacts/
 secrets/
 .DS_Store
 
-dockers/postgres/data/
-dockers/api/tmp/
-dockers/redis/data/
-dockers/rabbitmq/data/
-dockers/memcached/data/
-dockers/minio/data/
-
 tmp/
 *.log
 .idea/
-/dockers/storage/data/records/
-
-dockers/https/certs/*
-!dockers/https/certs/.gitkeep
 
 frontend/node_modules/
 frontend/dist/

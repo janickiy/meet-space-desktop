@@ -25,6 +25,22 @@ export async function sourceInputs(root = repository, requireClean = false) {
     git(root, ["status", "--porcelain", "--untracked-files=all"]).length !== 0;
   if (!/^[a-f0-9]{40}$/.test(sourceCommit) || (requireClean && sourceDirty))
     throw new Error("Release requires a clean committed checkout");
+  // A local test build may include deletions which have not been staged yet.
+  // Git's cached list still contains those paths; bind the files in this
+  // working tree while retaining the mandatory lock checks below.
+  const deleted = new Set(
+    git(root, [
+      "ls-files",
+      "--deleted",
+      "-z",
+      "--",
+      "frontend",
+      "desktop",
+      ".github/workflows",
+    ])
+      .split("\0")
+      .filter(Boolean),
+  );
   const names = [
     ...new Set(
       git(root, [
@@ -39,7 +55,7 @@ export async function sourceInputs(root = repository, requireClean = false) {
         ".github/workflows",
       ])
         .split("\0")
-        .filter(Boolean),
+        .filter((name) => name && !deleted.has(name)),
     ),
   ].sort();
   const files = [];

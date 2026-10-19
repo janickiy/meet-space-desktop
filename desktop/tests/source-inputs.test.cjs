@@ -50,6 +50,16 @@ test("source provenance binds exact bytes and frozen locks, not merely a commit 
   assert.notEqual(changed.sourceTreeSha256, clean.sourceTreeSha256);
   assert.equal(changed.sourceDirty, true);
   await assert.rejects(sourceInputs(directory, true), /clean committed/);
+  await fs.unlink(path.join(directory, "desktop", "source.ts"));
+  const deleted = await sourceInputs(directory);
+  assert.equal(deleted.files.length, 2);
+  assert.equal(deleted.sourceDirty, true);
+  assert.notEqual(deleted.sourceTreeSha256, changed.sourceTreeSha256);
+  git(["add", "-u"]);
+  assert.equal(
+    (await sourceInputs(directory)).sourceTreeSha256,
+    deleted.sourceTreeSha256,
+  );
   await fs.unlink(path.join(directory, "frontend", "package-lock.json"));
   await assert.rejects(
     sourceInputs(directory),

@@ -179,7 +179,13 @@ test("verification receipts never overwrite files or follow symlinks", async (t)
   const link = path.join(directory, "link.json");
   await fs.symlink(file, link);
   await assert.rejects(writeNewReceipt(link, "replace\n"), { code: "EEXIST" });
-  await assert.rejects(validateArtifactDirectory(path.join(directory, "..", path.basename(directory))), /without symlinks/);
+  const linkedDirectory = path.join(directory, "linked-directory");
+  await fs.symlink(directory, linkedDirectory, "dir");
+  await assert.rejects(validateArtifactDirectory(linkedDirectory), /without symlinks/);
+  // path.join normalizes ".." before validation and would test the original
+  // valid directory on Linux. Keep the supplied non-canonical spelling intact.
+  const canonical = await fs.realpath(directory);
+  await assert.rejects(validateArtifactDirectory(`${canonical}${path.sep}..${path.sep}${path.basename(canonical)}`), /without symlinks/);
 });
 test("DEB control archive rejects additional root code, links and nonempty conffiles", async () => {
   const { validateDebControlEntries } = await import("../scripts/linux-package-policy.mjs");

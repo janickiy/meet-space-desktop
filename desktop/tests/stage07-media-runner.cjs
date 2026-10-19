@@ -7,6 +7,7 @@ const { createRequire } = require("node:module");
 const { pathToFileURL } = require("node:url");
 const { spawn } = require("node:child_process");
 const { createHash } = require("node:crypto");
+const { backendSourceInputs, buildPionFixture, verifyPionFixture, sha256 } = require("./fixtures/pion-source-inputs.cjs");
 async function run(binary, args, options = {}) {
   await new Promise((resolve, reject) => {
     const child = spawn(binary, args, { stdio: "inherit", ...options });
@@ -40,6 +41,15 @@ async function run(binary, args, options = {}) {
   try {
     await fs.mkdir(evidence, { recursive: true });
     await fs.rm(path.join(evidence, "result.json"), { force: true });
+    const backendInputs = await backendSourceInputs(repository);
+    const backendEvidence = path.join(evidence, "backend-source-inputs.json");
+    try {
+      const existing = JSON.parse(await fs.readFile(backendEvidence, "utf8"));
+      if (existing.sourceTreeSha256 !== backendInputs.sourceTreeSha256) throw Error("Pion source evidence mismatch");
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      await fs.writeFile(backendEvidence, JSON.stringify(backendInputs, null, 2) + "\n", { flag: "wx" });
+    }
     const sourceFiles = [];
     for (const file of [
       "frontend/src/media.ts",
@@ -61,15 +71,17 @@ async function run(binary, args, options = {}) {
       path.join(evidence, "source-files.json"),
       JSON.stringify(sourceFiles, null, 2),
     );
-    const executable = path.join(
+    const suppliedFixture = process.argv.slice(3).find(arg => arg.startsWith("--fixture="))?.slice(10);
+    const executable = suppliedFixture || path.join(
       directory,
       process.platform === "win32" ? "pion-fixture.exe" : "pion-fixture",
     );
-    await run(
-      "go",
-      ["build", "-o", executable, "./desktop/tests/fixtures/pion-sfu"],
-      { cwd: repository },
-    );
+    if (suppliedFixture) await verifyPionFixture(suppliedFixture, backendInputs);
+    else await buildPionFixture(repository, executable);
+    await fs.writeFile(path.join(evidence, "fixture.json"), JSON.stringify({
+      platform: process.platform, arch: process.arch, binarySha256: sha256(await fs.readFile(executable)),
+      backendSourceTreeSha256: backendInputs.sourceTreeSha256, prebuilt: !!suppliedFixture,
+    }, null, 2) + "\n");
     const frontendRequire = createRequire(
       path.join(repository, "frontend/package.json"),
     );
@@ -161,6 +173,10 @@ async function run(binary, args, options = {}) {
       [path.join(__dirname, "stage07-media-electron.cjs"), configPath],
       { env },
     );
+    if ((await backendSourceInputs(repository)).sourceTreeSha256 !== backendInputs.sourceTreeSha256) {
+      await fs.rm(path.join(evidence, "result.json"), { force: true });
+      throw Error("Pion source changed during media lifecycle validation");
+    }
   } finally {
     await fs.rm(directory, { recursive: true, force: true });
   }
