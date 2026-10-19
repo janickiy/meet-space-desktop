@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "sourceTreeSha256": "7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996",
+  "arch": "arm64",
+  "format": "rpm",
+  "formats": [
+    "rpm"
+  ],
+  "verifiedFormats": [
+    "rpm",
+    "AppImage"
+  ],
+  "verifiedStaging": "/home/meetspace/arm64-formats-20261019-b80ca39/source/desktop/artifacts/.linux-staging-7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996-arm64-pHtkNp",
+  "immutableDirectory": "/home/meetspace/arm64-formats-20261019-b80ca39/source/desktop/artifacts/linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64",
+  "overwriteAllowed": false
+}

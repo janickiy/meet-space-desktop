@@ -38,6 +38,7 @@ desktop/artifacts/**
 !desktop/artifacts/linux/**/MeetSpace-*.sha256
 !desktop/artifacts/linux/**/MeetSpace-*.sha512
 !desktop/artifacts/linux/**/linux-artifact-verification.json
+!desktop/artifacts/linux/**/linux-runtime-verification.json
 !desktop/artifacts/linux/**/linux-packaging-build.json
 !desktop/artifacts/linux/**/linux-publication.json
 !desktop/artifacts/linux/**/source-inputs.json

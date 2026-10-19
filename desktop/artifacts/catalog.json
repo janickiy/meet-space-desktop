@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "publishedVersion": "0.1.1-beta",
-  "latestPublishedSourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059",
+  "latestPublishedSourceTreeSha256": "b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150",
   "scope": "Previously built test distributions and their verification/checksum metadata; source builds are identified by original hashes.",
-  "distributionCount": 22,
-  "uniqueBinaryCount": 20,
+  "distributionCount": 24,
+  "uniqueBinaryCount": 22,
   "files": [
     {
       "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
@@ -47,6 +47,55 @@
       "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
       "bytes": 71320,
       "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.AppImage",
+      "bytes": 119063294,
+      "sha256": "3780457ee5fce2b44c2665965e62b75d3acbc668baec4411cd5e617be520a0c9",
+      "kind": "distribution",
+      "sourceTreeSha256": "b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.AppImage.sha256",
+      "bytes": 113,
+      "sha256": "302e4d4c9a669822b6a1a3a9394406e8515ba216e9cfc3d9ded139fdc4ead6ad",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.AppImage.sha512",
+      "bytes": 177,
+      "sha256": "3dd2008816cdb6500be2e1da5e2e31aa5e2709ed1bddf46dc1ee8bda9e9f9ed8",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/linux-artifact-verification.json",
+      "bytes": 10746,
+      "sha256": "4e4d412372934843c16c2acbb5f54e5d50cdd068ad8056fadb03760b63871b90",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/linux-packaging-build.json",
+      "bytes": 988,
+      "sha256": "f6cd3affba660e049a66fffdab525c8efa656d5d0936cc7ecae82bb40e0e0b74",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/linux-publication.json",
+      "bytes": 650,
+      "sha256": "8fb97ff820e049d9f46ab15270e4b321c1580feea6ac9458633169a6fa54de86",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/linux-runtime-verification.json",
+      "bytes": 1746,
+      "sha256": "737054509a390dbc48614e8ed9871440cb22a005ab420340b093413e62ff1604",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/b57b2a30bccc4be09a91778a305cd7df0477650eb12fc8d408c66f0117c19150/arm64/source-inputs.json",
+      "bytes": 70093,
+      "sha256": "d91806a78e778098b5c328d41e280c2ba385d4f7883c97893eecc5e463347f69",
       "kind": "verification-metadata"
     },
     {
@@ -176,6 +225,55 @@
       "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
       "bytes": 71320,
       "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/MeetSpace-0.1.1-beta-linux-aarch64-test.rpm",
+      "bytes": 85799745,
+      "sha256": "f38c3fd3177803fd36cdf7997b1f18017778930a61f3a42bf85204b206844e25",
+      "kind": "distribution",
+      "sourceTreeSha256": "7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/MeetSpace-0.1.1-beta-linux-aarch64-test.rpm.sha256",
+      "bytes": 110,
+      "sha256": "75feed08aeaa8bb9248ff6a2765a0b04b523db12111c66c89cb303600fdb93fc",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/MeetSpace-0.1.1-beta-linux-aarch64-test.rpm.sha512",
+      "bytes": 174,
+      "sha256": "66c18392449c4dc8e8fb2e21807be30c0f98593c2bff6c08e87ab1f225d10998",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/linux-artifact-verification.json",
+      "bytes": 15189,
+      "sha256": "1491c0604ab7f05161b016b73ac60b9d31298fd13dc1324b7c127eb2b313d803",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/linux-packaging-build.json",
+      "bytes": 969,
+      "sha256": "7e89c86b22fd523e60be2357f56dc1ede1cd68e35c8339069cd1f48fc9f044cd",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/linux-publication.json",
+      "bytes": 646,
+      "sha256": "38ad33f9484e61f7825b27212d1368a3306ae4f021680ff854f077a800017336",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/linux-runtime-verification.json",
+      "bytes": 1294,
+      "sha256": "14d8fdc4a26d23f5cc72158c0dc55f2fd23c2c1a0da087d1dcb73bc081df69bc",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/7a239414f69c011064e9f193e226b570b2fdce9d64318d3b81cfd888b4ea3996/arm64/source-inputs.json",
+      "bytes": 70093,
+      "sha256": "5618c432933ae980d6976e55f5b18ead13756045feb957683774993080695c18",
       "kind": "verification-metadata"
     },
     {
