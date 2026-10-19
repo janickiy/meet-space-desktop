@@ -21,8 +21,17 @@ function git(root, args) {
 /** Exact file bytes, not just HEAD: local test builds may intentionally be dirty. */
 export async function sourceInputs(root = repository, requireClean = false) {
   const sourceCommit = git(root, ["rev-parse", "HEAD"]).trim();
+  // Published installers are build outputs, including when checked out as LFS
+  // pointers. Rebuilding them must not change source identity or cleanliness.
   const sourceDirty =
-    git(root, ["status", "--porcelain", "--untracked-files=all"]).length !== 0;
+    git(root, [
+      "status",
+      "--porcelain",
+      "--untracked-files=all",
+      "--",
+      ".",
+      ":(exclude)desktop/artifacts",
+    ]).length !== 0;
   if (!/^[a-f0-9]{40}$/.test(sourceCommit) || (requireClean && sourceDirty))
     throw new Error("Release requires a clean committed checkout");
   // A local test build may include deletions which have not been staged yet.
@@ -55,7 +64,12 @@ export async function sourceInputs(root = repository, requireClean = false) {
         ".github/workflows",
       ])
         .split("\0")
-        .filter((name) => name && !deleted.has(name)),
+        .filter(
+          (name) =>
+            name &&
+            !deleted.has(name) &&
+            !name.startsWith("desktop/artifacts/"),
+        ),
     ),
   ].sort();
   const files = [];

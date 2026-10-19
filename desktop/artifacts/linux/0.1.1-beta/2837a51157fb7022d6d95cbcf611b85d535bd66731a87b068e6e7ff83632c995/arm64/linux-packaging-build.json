@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "glibcBuildRuntime": "2.39",
+  "electron": "44.7.1",
+  "builder": "26.17.0",
+  "version": "0.1.1-beta",
+  "releaseMode": "test",
+  "sourceCommit": "963cc020460f3177823a790eda36ea967c44ddb3",
+  "sourceDirty": true,
+  "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995",
+  "formats": [
+    "deb"
+  ],
+  "appImageLauncher": null,
+  "automaticUpdates": false,
+  "published": false,
+  "maintainerIdentity": "MeetSpace <janickiy@mail.ru>"
+}

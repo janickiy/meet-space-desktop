@@ -25,6 +25,14 @@ test("source provenance binds exact bytes and frozen locks, not merely a commit 
     path.join(directory, "desktop", "source.ts"),
     "const version = 1;\n",
   );
+  await fs.mkdir(path.join(directory, "desktop", "artifacts"));
+  const publishedPackage = path.join(
+    directory,
+    "desktop",
+    "artifacts",
+    "fixture.deb",
+  );
+  await fs.writeFile(publishedPackage, "published package\n");
   git(["add", "."]);
   git([
     "-c",
@@ -40,6 +48,19 @@ test("source provenance binds exact bytes and frozen locks, not merely a commit 
   const clean = await sourceInputs(directory, true);
   assert.equal(clean.sourceDirty, false);
   assert.equal(clean.files.length, 3);
+  assert.deepEqual(await sourceInputs(directory, true), clean);
+  await fs.writeFile(
+    publishedPackage,
+    "LFS pointer or another published package\n",
+  );
+  const artifactOnly = await sourceInputs(directory);
+  assert.equal(artifactOnly.sourceDirty, false);
+  assert.equal(artifactOnly.sourceTreeSha256, clean.sourceTreeSha256);
+  assert.ok(
+    artifactOnly.files.every(
+      (file) => !file.path.startsWith("desktop/artifacts/"),
+    ),
+  );
   assert.deepEqual(await sourceInputs(directory, true), clean);
   await fs.writeFile(
     path.join(directory, "desktop", "source.ts"),

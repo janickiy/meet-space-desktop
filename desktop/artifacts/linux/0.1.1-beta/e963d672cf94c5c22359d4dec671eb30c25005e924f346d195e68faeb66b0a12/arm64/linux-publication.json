@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12",
+  "arch": "arm64",
+  "formats": [
+    "deb"
+  ],
+  "verifiedStaging": "/home/meetspace/meetspace-stage06/desktop/artifacts/linux/0.1.1-beta/.staging-e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12-arm64-9bYItJ",
+  "immutableDirectory": "/home/meetspace/meetspace-stage06/desktop/artifacts/linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64",
+  "overwriteAllowed": false
+}

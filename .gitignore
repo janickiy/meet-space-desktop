@@ -23,5 +23,26 @@ frontend/dist-desktop/
 desktop/node_modules/
 desktop/dist/
 desktop/renderer/
-desktop/artifacts/
+# Keep QA/build intermediates local; publish finished distribution files only.
+desktop/artifacts/**
+!desktop/artifacts/README.md
+!desktop/artifacts/catalog.json
+!desktop/artifacts/SHA256SUMS
+!desktop/artifacts/MeetSpace-*-setup.exe
+!desktop/artifacts/MeetSpace-*-setup.exe.*
+!desktop/artifacts/linux/
+!desktop/artifacts/linux/**/
+!desktop/artifacts/linux/**/MeetSpace-*.deb
+!desktop/artifacts/linux/**/MeetSpace-*.rpm
+!desktop/artifacts/linux/**/MeetSpace-*.AppImage
+!desktop/artifacts/linux/**/MeetSpace-*.sha256
+!desktop/artifacts/linux/**/MeetSpace-*.sha512
+!desktop/artifacts/linux/**/linux-artifact-verification.json
+!desktop/artifacts/linux/**/linux-packaging-build.json
+!desktop/artifacts/linux/**/linux-publication.json
+!desktop/artifacts/linux/**/source-inputs.json
+!desktop/artifacts/windows/
+!desktop/artifacts/windows/**/
+!desktop/artifacts/windows/**/MeetSpace-*-setup.exe
+!desktop/artifacts/windows/**/MeetSpace-*-setup.exe.*
 desktop/*.tsbuildinfo

@@ -1,0 +1,55 @@
+{
+  "artifact": "MeetSpace-0.2.0-win-arm64-test-setup.exe",
+  "arch": "arm64",
+  "sha256": "ceae231fe36876a02e70de38c5e5d62741be339c1823d779df3bee827558fbd4",
+  "bytes": 118484433,
+  "payloadMachine": "0xaa64",
+  "payloadSHA256": "1bc22fa0be1121cbb85fc55a0f64666af8de5e5b5e9c7b8b94448f7b0b34c20e",
+  "appAsarSHA256": "79484ff79ad262e62c503bf37d8340ff902e826f9f03bd9c8d9f9c781d97c4df",
+  "sourceCommit": "66e482c9701b6c13f58bc93aee8d9f5cf932dd34",
+  "sourceDirty": true,
+  "buildVersion": "0.2.0-test",
+  "buildTime": "2026-10-13T19:39:34Z",
+  "buildHostPlatform": "darwin",
+  "buildHostArch": "arm64",
+  "platform": "win32",
+  "requiredOS": [
+    "Windows 11 ARM64 (build 22000+)"
+  ],
+  "payloadDlls": [
+    {
+      "file": "d3dcompiler_47.dll",
+      "machine": "0xaa64",
+      "sha256": "1e59fd5cb9c3df2c38ffef93c3d858288c39a9d7c954d8bf3a9675686a2aff7f"
+    },
+    {
+      "file": "dxcompiler.dll",
+      "machine": "0xaa64",
+      "sha256": "6b836475725bd09d77e8ccf91fc5f7fc2ae4421bd6e1568b9ab87b19603ae647"
+    },
+    {
+      "file": "dxil.dll",
+      "machine": "0xaa64",
+      "sha256": "1f1bae7a41916ce84d6b63defe47bd2815dbd29ee080a5d29f42ae8665e00bb4"
+    },
+    {
+      "file": "ffmpeg.dll",
+      "machine": "0xaa64",
+      "sha256": "9877f7b99c8469b08850514fc90c76037d29b07fa3fdc193cbbba5d9acc80443"
+    },
+    {
+      "file": "vk_swiftshader.dll",
+      "machine": "0xaa64",
+      "sha256": "b4272ea89c68dbd008827d86a0188399de2de657a4fa5695abe156877e1d345d"
+    },
+    {
+      "file": "vulkan-1.dll",
+      "machine": "0xaa64",
+      "sha256": "25c82a182d8b4ebf2d7bea0d282c2e127a6c13d12162adb2b8a6dfc685fcaf32"
+    }
+  ],
+  "embeddedPayloadVerified": true,
+  "electron": "44.7.1",
+  "signed": false,
+  "windowsRuntimeTested": false
+}

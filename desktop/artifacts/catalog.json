@@ -1,0 +1,1251 @@
+{
+  "schemaVersion": 1,
+  "publishedVersion": "0.1.1-beta",
+  "latestPublishedSourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059",
+  "scope": "Previously built test distributions and their verification/checksum metadata; source builds are identified by original hashes.",
+  "distributionCount": 46,
+  "uniqueBinaryCount": 44,
+  "files": [
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
+      "bytes": 98026724,
+      "sha256": "2ac4337ff8662814ece7fb51cba5d3bea44d69ffa0655d9e57ee9dce89afa9ac",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "5e6556a0cbb6aebde0cfeacde02c1a88c3daba15b8bbb04fd844055465ed4a14",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "930f421272cc54a7e01428588207629fc4beaef07bbf19e95fcb7a539416b059",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-artifact-verification.json",
+      "bytes": 8021,
+      "sha256": "5ad40399c1a915cbe0582ebf1c4d5e16ebf1dd5f33dd5b235d76331b60a46984",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-packaging-build.json",
+      "bytes": 560,
+      "sha256": "37331bee282a5b17909d58b47d0cc4585fb87dec3d4cb6fb1a6cfd442779fc75",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-publication.json",
+      "bytes": 540,
+      "sha256": "8bff0b8217001ab3046d62129af1f80e563dc0a04567c6c2bfbd9b5e347805e1",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/source-inputs.json",
+      "bytes": 69337,
+      "sha256": "1dd723ef244dd3435888c9908dd63ceeea939d990189e8efd279f0d78fdecb4c",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
+      "bytes": 102804220,
+      "sha256": "0529964039f2f4b1cc3efd61f5cb85f69269383aace744a07abbfbf7949f1b2a",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "68c699227687e66e51ca3b67a83608e6b64fe51147f221e0471076ffc73c281f",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "2e1337801beef3cf07fdabbf8ac5a76bcad844138a0a9f499c8bc404fbcfdc55",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
+      "bytes": 129253942,
+      "sha256": "f94498eccc77a81a219656b446dce3ef67056f45c803de7621265440cf4d4a8d",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "9126aed60384454ab49694725351bafc3b3e2b9209dc2a47e4727fa426dbdc9c",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "45ca95377e4e9fb94ab14d2e64da0ee2ee9e7d706179a51030a7064d300f2f93",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
+      "bytes": 92434097,
+      "sha256": "f29fdebcd2613a1aabc73d2f9ae7900831fa44e0d73cccc64c83660270339d4b",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
+      "bytes": 109,
+      "sha256": "5b24986fad9e5c4ce24827805a6ad1c6aa2c122022f6c8c4f067718443716da9",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
+      "bytes": 173,
+      "sha256": "5a9ad53d8bdfddf4d8c30528b2942083705db0db75eb4cf5d3b3fac9511a975d",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-artifact-verification.json",
+      "bytes": 29266,
+      "sha256": "9fde2404df4d921e43f539596b2e63d198ccc66d1408ff77a87fc765a05788cf",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-packaging-build.json",
+      "bytes": 977,
+      "sha256": "296a568334576e72eb98bbd5247cbd499153b67c4af137c5e38812e8ddb74c35",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-publication.json",
+      "bytes": 561,
+      "sha256": "676e88f739595b9207a3b467755b7fffd13582b23754f86d5db6e4e5427c9fc5",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/source-inputs.json",
+      "bytes": 69337,
+      "sha256": "1dd723ef244dd3435888c9908dd63ceeea939d990189e8efd279f0d78fdecb4c",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
+      "bytes": 98027384,
+      "sha256": "bd69998620d0d193570145f6f8f72d464c844111d0b39502848efd1bc236d69d",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "fc057e17e1cc1c16bdb0ac46dabfa0be9dfaaebfe68941d281f91ae2d8409b05",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "3b38dcea7d0abac599fceaa77501ea5cc20ac1748e51161500ef89d711d4069c",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-artifact-verification.json",
+      "bytes": 8021,
+      "sha256": "419ea4e08f1da5038618d9171a4bbd6bf00f8099616c866b67e754ac88851c5e",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-packaging-build.json",
+      "bytes": 560,
+      "sha256": "83cd3e764f8a8d2556b7520df6b290d51e4404bf49a48e763cca792d72cef665",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-publication.json",
+      "bytes": 552,
+      "sha256": "ff1c511d64190810383e029e366cd672c0241262203ae32f0490476752938b03",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/source-inputs.json",
+      "bytes": 71320,
+      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
+      "bytes": 102805264,
+      "sha256": "06972c7f34a49ad5d3680db85791ca5590371b355989abbee1fbdba59eb1d979",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "82fe8f4ebdcfdceb0ac6316efc8b24255cdcbffd4488f49b5a9a5f87b8155bb6",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "94e199bc723969d78e71573f6ba62a4890cac1cc4b8d11a2913375a52338278d",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
+      "bytes": 129254044,
+      "sha256": "4ac8242e2f76e1374a23a9671f052e3d3176e9f1a227acaaec224593af1b4530",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "69e029583d2af88cc1a464aa9a46945e73227f6d6929fb0e7d246fb46767393e",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "adb06acc4f2abb35b8d861aa7a406cd0535ac199f2f4a4e4c30e13b81a9d6231",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
+      "bytes": 92452289,
+      "sha256": "e6ad6dbd52cf16b0607157b10562db319106977f0f7d55f7841e26edad01952a",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
+      "bytes": 109,
+      "sha256": "dd35941f7d6798a6a522b66bfda933f6b38a96304705c10463fdb633fded76f5",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
+      "bytes": 173,
+      "sha256": "d17743fbec90223bd33432b3c034e8a3662f667f5a04649f290a16c897b344db",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-artifact-verification.json",
+      "bytes": 29266,
+      "sha256": "9db2f4c9a8f1290388675ced7fc970511fc129ef457e6f1700f6d60fb8ec45a9",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-packaging-build.json",
+      "bytes": 977,
+      "sha256": "7dda2c14fd78458e22e8d5639fc898c0ab2f9f7bf8b3d86d25e4a0409ff63d4a",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-publication.json",
+      "bytes": 587,
+      "sha256": "cf8e68d497e17d7fb1d88a6b415384093829d5d074802590d7cd901f7f6bfc4b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
+      "bytes": 71320,
+      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
+      "bytes": 98026720,
+      "sha256": "c38a3bc42c95eee9a3af831d33555c96ceee9fccbe907fe43a8bacd59bdc549f",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "82d8f843d1ffef6a8b264088fea88b5a2e91c0857c74624701165c4fad828967",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "192f273d903ebc3b35a9455f61936f2611ba223a47f85e84d39c03b60b4f95af",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-artifact-verification.json",
+      "bytes": 7999,
+      "sha256": "9bb15d5d5c7b522db661773e4c49b16a579b0e40238d523b5d59506c2661e9c0",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-packaging-build.json",
+      "bytes": 560,
+      "sha256": "4c1da7589c10d0809d7c91a0da09a89de57ef1d71f193ec2ecb5a89584bb86b3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-publication.json",
+      "bytes": 540,
+      "sha256": "cba6681fe651909221ce697fd79b261248ef856f28ebdb338f2f63fb02f347a5",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/source-inputs.json",
+      "bytes": 69337,
+      "sha256": "10b350287339bafa0039ecb2972381606c121699f3d3b9c4ee6cf02cabdabb22",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
+      "bytes": 102804224,
+      "sha256": "e29965d25aee79c10be00b7dfbf829f1138306d0e92b6ef28da0c262edc549f7",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "a43b5567baffb7266a81b800e83cd4c9f41f99407f2bd1ccb3a60fa5a32a4d5b",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "2692cfd17b4bc9e0aef6ff9c3f9d0b86087a153426c1414b2ed56148fd9fde13",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
+      "bytes": 129253938,
+      "sha256": "dd00241678531d6413b5ca554000bcda4e6a341f9a2c1669ac86d50b3ddba0cd",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "78e68fe2dd850d1f60ec705ea2966d9dbe5f28b27c80df891d452f172d0f959d",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "5cd481118054eb2406e46e68c6b3b79521dd757839fc246c41e5d4de91a7a45e",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
+      "bytes": 92435245,
+      "sha256": "46e28ea74e8959e47e31f3636bb07a99c925279d6214ccdc3eb81b1b5643f6e6",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
+      "bytes": 109,
+      "sha256": "7b7634d4b13ea02cd4049b9b91792c245232b534eeb78220ffecda2c7ee2b268",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
+      "bytes": 173,
+      "sha256": "c08148627424259a30fa093d6dcaa0523d7ceeb3a0278f61761dfd23ae46d0db",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-artifact-verification.json",
+      "bytes": 29244,
+      "sha256": "2b22cff660b1e008e1fe2e41133208e01c3d09b8f7bfd3c3984339485d426ef3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-packaging-build.json",
+      "bytes": 977,
+      "sha256": "eb334fd118ed5c914bc0a27d2c45876fd32f0f3ab633d12959bbfefffab8e6be",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-publication.json",
+      "bytes": 561,
+      "sha256": "59134a5adee8170bc06fad1952a1148042f7dfd23aa8ed1ba63842f456c008e1",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/source-inputs.json",
+      "bytes": 69337,
+      "sha256": "10b350287339bafa0039ecb2972381606c121699f3d3b9c4ee6cf02cabdabb22",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.0-beta/arm64/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe",
+      "bytes": 118653443,
+      "sha256": "e5bd349144c8970b72b229f2f74b147e6da2a81fa647c8615cf1781ea5539499",
+      "kind": "distribution",
+      "sourceTreeSha256": "a129a27dbb017a524231c190d9d1e37fdbd4428f260819f70fec16751d53cca3"
+    },
+    {
+      "path": "windows/0.1.0-beta/arm64/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124503,
+      "sha256": "2fd0092f8a4f460d7158f73446bc89a6d9df1dc238f1540ec65dfc09a39b5cf8",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.0-beta/arm64/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "93f0325e559b23451e33a32449aa0bc0bfb08148568d87be9dc0e697dd692a2b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.0-beta/arm64/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "a3005b536b0a641041565a6267e3cf9052c7400159a5d3776bf509ab6d3398cb",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.0-beta/x64/MeetSpace-0.1.0-beta-win-x64-test-setup.exe",
+      "bytes": 123912682,
+      "sha256": "43ddd3a39d535090d20b7d5235ee196a9a04ddf8738f24bd20307dcd8d07a47d",
+      "kind": "distribution",
+      "sourceTreeSha256": "a129a27dbb017a524231c190d9d1e37fdbd4428f260819f70fec16751d53cca3"
+    },
+    {
+      "path": "windows/0.1.0-beta/x64/MeetSpace-0.1.0-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131261,
+      "sha256": "0f1ff7132b80e17752e416d7687c3f17bcf5d7a45ba6f61018166b93cf9cb04e",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.0-beta/x64/MeetSpace-0.1.0-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "6d31a5c82f351cd6c92a5e7b56427228b2a049832ed3747c306dec8561157af9",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.0-beta/x64/MeetSpace-0.1.0-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "d661ec0af73229140bba34231aa8592e34dae065373374118215ec0a5459a9b7",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118857877,
+      "sha256": "2b3458661e878545b58131992f7acbce6d58b9ec535679712da2606a18ecbf8a",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124741,
+      "sha256": "0b0f6686fc3f2575b95478294d3b084cbde7f09d7be6621cf11bd6f98b12c090",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "71d737571b569921c308c98d151ca23bea5a95f85cb4906852c42be0c2d5d0dc",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "bf8dc8e207c83b57e236dd793fef0f07f7dfa00289d49b78667630fc08e71add",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124116917,
+      "sha256": "6852f4530b5c3459ae4fe6e0ed72ec120942ac8e936a00555426b6f2ef0ed29f",
+      "kind": "distribution",
+      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131376,
+      "sha256": "128e6a31a86c52536f236cc405985906a3c8f13b42d5bd09da22c7f06b6cb7aa",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "fa7feb8f818de2b028c14a4a20531c047faf19739fab842510867201078ef7cd",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "419233df8a803a9440a93dcb1a6714478d687be89f368c66fc3e083357061209",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118843852,
+      "sha256": "66081b0ec233465ef7c1e680a6b9ee081273dc32d69801bbbcbcaa4afb1fec9c",
+      "kind": "distribution",
+      "sourceTreeSha256": "2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124738,
+      "sha256": "6a58352f93c9d4a519f4a21ed846a9142dbae6cdb707a524a4554d495fecba1d",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "5f62bd1dcec0a23b4b2c14c4bec6c88bb11fb4184cd04bebe9cf74b90a3d55f0",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "6985a776e0bb32c4e0554c640574dc7f5f245a99acbe22a5042668e3879238d6",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124103017,
+      "sha256": "21c207461b3e24537a3a74951f8760dff3be36dec6a99cf0bc557ec37ef3af89",
+      "kind": "distribution",
+      "sourceTreeSha256": "2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131373,
+      "sha256": "4be04e9c58afb5d37a19bf9f79c6016092cf1a2a9d012f551161fb3e562a9213",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "b172259cf53beb19b2dcc15110f8fa53147be5d6d7b8b1b55f01737dc768feca",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/2acaaf33c90c7edc3ad72ce068f3fe29746950e5c0c87ebe6a961501e215d583/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "128f07b9b7ce36916a3f1bbe7129f226b49d8aba0a5ec66104b06bd4541e565f",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118856514,
+      "sha256": "899c301de7409fce4751072d4addbf3beddfd9ea7d173032abfcc236247e058b",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124851,
+      "sha256": "db06cb5afac50e39c6823fed126bd7af79a688e9d4991e74634e5b37cf849a2e",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "1c61f94c2b6697ea88f5e759f3c455fba5ac70aa61978947b65a3f447d4027b3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "2f3565367e275cdc54a7cde4160b2b46b526a76570dc0419b2581c31715256e7",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124115655,
+      "sha256": "c9caed1cd7a6dd0dc900ed830d4a9505160d3966a637ba3444ca3b2e832a05fe",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131458,
+      "sha256": "408e1374ee3aa0168a776b4e6922ca0c2e73f833d2ee54aec09433d6e6ac8235",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "9263199845bf02c12bdd1cedfe91f32283938a442af32eebbad6d412009ee00d",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "1556250e9e8e3f4ebee0e8e86f2b89e30fbf27df146f9cb854687ddf879feef0",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118856133,
+      "sha256": "bab6e3f515b448d959896b5f8891b1fc60b236107cd4e1c9f2c3a4c04bcfdff6",
+      "kind": "distribution",
+      "sourceTreeSha256": "5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124810,
+      "sha256": "18b4c10739a81eb3c96945cef603d71376283b800d5822215f97bf523ae456bf",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "cba48559286da4cb27ddf172fbf602578c1a627842b3d59e27ba14472680db4b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "44b117e75db00f9421ab44fc79a0f486eedcef83dc7d8146b9081b788656d0f0",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124115338,
+      "sha256": "33efecd3ce37243a96fb8fcea088cfd2b190207eadaffb20deebaf6780fd4d29",
+      "kind": "distribution",
+      "sourceTreeSha256": "5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131354,
+      "sha256": "d574be425c43b7527e3afc6a271fe7b01aaffbc1753d8fa19edac4f633364e97",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "1bf9d810fe3162502597c7cd07a660427dfad3a90c0728d82d38d775ec19e903",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/5ac958650ac2ca7e975aa1e9b433a1baa7550efbcb52906bf352895fad6a5880/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "528df34ce88135e6eb10e71ae240a4feb952f3807ba514cb6e11ca367210614e",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118856798,
+      "sha256": "1def0912a2ab4cce04cb859473d264b0f2df09ca7a2d5e9b28b099e904e1c3b8",
+      "kind": "distribution",
+      "sourceTreeSha256": "97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124810,
+      "sha256": "4e80201c10b022fefa2e5bcb8ab920640be7896d5971fab69958a82925a72e96",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "cf5436974cb7473675dba1f716ea606faef45f7862581fb774f2ceaf65cd975d",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "11f6f388216c07e98466ab23f97c78611a93ae7be04687c7fb48973dc1b9acec",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124115926,
+      "sha256": "64ee38f9a1f1e394be6df93838dd5c090948ac8e3f90a59dd290643d682adac7",
+      "kind": "distribution",
+      "sourceTreeSha256": "97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131431,
+      "sha256": "777967f361357d097ffb5a989b1e89fd6f6fb5f3aed4907eeac365bebd633ba8",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "a19a427e2f291d53277725d4ee8e07cfeb295f610f0a66b1467ccaeaa8e8a1fa",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/97f478eea481240f12adaa1558f81864679cde9b2e14209b4b4c89499939ba62/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "a4c855ecf7424a4c2e95da495c4f0760321fe290abdf7bfc1dd33bcee885548a",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118856514,
+      "sha256": "899c301de7409fce4751072d4addbf3beddfd9ea7d173032abfcc236247e058b",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "windows/0.1.1-beta/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124851,
+      "sha256": "db06cb5afac50e39c6823fed126bd7af79a688e9d4991e74634e5b37cf849a2e",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "1c61f94c2b6697ea88f5e759f3c455fba5ac70aa61978947b65a3f447d4027b3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "2f3565367e275cdc54a7cde4160b2b46b526a76570dc0419b2581c31715256e7",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118857863,
+      "sha256": "0491c4bc380ac8d47c6c4d5043343bd03da703eb6938416cb35e66ef850d0ba6",
+      "kind": "distribution",
+      "sourceTreeSha256": "db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124893,
+      "sha256": "931a7127ca871b1d7def828d98944edad6b619bce5f6f99235507a6f976589cd",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "893a8bb6e83fbd7499bdc726fb3d30e7fe8fa33d203e0aa695432aad204db30b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "cf293ec7cf0af8610cd52192ac652032c8405af5dea3aa26254f8e38deef96e9",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124116975,
+      "sha256": "758257b129730397363f4c6752d39c1c868d0585a4bdfbd1921425944d4cc400",
+      "kind": "distribution",
+      "sourceTreeSha256": "db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131527,
+      "sha256": "33e4d490557c270350bb29c734d521a00464f71d158dd2ef86642e397c114444",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "2400c618a7af4c76d3ebaf89452c3b59ce7ab8ffe2ac1c5a47566a8960606d79",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/db0f4234207e80bab75a8050ede2cd9ab9aec21f0a116e39c9838b5816d2e902/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "79809523003e2fd13d64203d78cfcaaa2e4728bb4e38751b19cbfb14836600e2",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe",
+      "bytes": 118855700,
+      "sha256": "df2f0b37475ee14bf038062264117a62aff2c14856956be6505d660a5444edae",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124726,
+      "sha256": "3341a9254d1110b16f4006016c5a32df56aa36bb78ff2a612fc1147c6e2c5722",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3225,
+      "sha256": "bf7aab5a848fb22d01b335e3fd5ac27493dc418c9a0e18ae7d3b62a89c03cd36",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "172669ce79a7e412918542fe6aaf61d2d360053a69ea5c1ae1aa463e8e3170c7",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124114966,
+      "sha256": "06f2550d6e9566cca4b2ba63de5299780744997d5057e73e05d62c1ca58c2b77",
+      "kind": "distribution",
+      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131356,
+      "sha256": "5a2c291e005daf6b726edde1562c3adc7b5740e262ea0f4119710d5f102d2366",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "b7f82d61aa9bcd2df7bbdccc7c41c0768e791eadf8b2df8e6ce22368ceffdf9e",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "f90eab04cd84179de9d76ee3b4560b1ac95919779a2797bccbb69860d5284b8f",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.1.1-beta/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124115655,
+      "sha256": "c9caed1cd7a6dd0dc900ed830d4a9505160d3966a637ba3444ca3b2e832a05fe",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "windows/0.1.1-beta/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131458,
+      "sha256": "408e1374ee3aa0168a776b4e6922ca0c2e73f833d2ee54aec09433d6e6ac8235",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.1.1-beta/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "9263199845bf02c12bdd1cedfe91f32283938a442af32eebbad6d412009ee00d",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.1.1-beta/x64/MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "1556250e9e8e3f4ebee0e8e86f2b89e30fbf27df146f9cb854687ddf879feef0",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.2.0/arm64/MeetSpace-0.2.0-win-arm64-test-setup.exe",
+      "bytes": 118484433,
+      "sha256": "ceae231fe36876a02e70de38c5e5d62741be339c1823d779df3bee827558fbd4",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.2.0/arm64/MeetSpace-0.2.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124377,
+      "sha256": "52ed06299245f533d5053ac2e8e3272b8beafdb32703c6f49ef0be323020e5fa",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.2.0/arm64/MeetSpace-0.2.0-win-arm64-test-setup.exe.json",
+      "bytes": 1747,
+      "sha256": "f4590586aa9e8517ac2903604a0e123fa6a1f76b6691875381a641c35f2c21c3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.2.0/arm64/MeetSpace-0.2.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "18a49bc9d9a6f48020d91fd4b351f9fe2496d9495d65c6639654b52afa860b69",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.2.0/x64/MeetSpace-0.2.0-win-x64-test-setup.exe",
+      "bytes": 123743611,
+      "sha256": "deb1868f98d6364652c376b25087cd025ed1d182ec29ddb179937afaa1bbfcd4",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.2.0/x64/MeetSpace-0.2.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131124,
+      "sha256": "24999503a06404009a793e1a8655c3df822927a4ab30430523ba8f0c9c7c34c0",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.2.0/x64/MeetSpace-0.2.0-win-x64-test-setup.exe.json",
+      "bytes": 1782,
+      "sha256": "d1948eebce0f3de888e79d7f91283c7181b6fc98710a75c8ae6f24ff7b88a0d1",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.2.0/x64/MeetSpace-0.2.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "8d46f0ae1b478de185ee39931df939481eab515bc8188d2124649f80efdd99a5",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.3.0/arm64/MeetSpace-0.3.0-win-arm64-test-setup.exe",
+      "bytes": 118536835,
+      "sha256": "f47fc3f49e77d9475dc4c5bbc4ca8fc3531946fb420dd02f28ae7db3494d330b",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.3.0/arm64/MeetSpace-0.3.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124264,
+      "sha256": "bdaaceb144a625e0ec659044849c11345898d865c5a7440f75e3ea7307241264",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.3.0/arm64/MeetSpace-0.3.0-win-arm64-test-setup.exe.json",
+      "bytes": 1747,
+      "sha256": "08d859aaf1e41d278031d3277803bcc24eab7231da26630c3016066ef1a1ab61",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.3.0/arm64/MeetSpace-0.3.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "7894511f9b69bb608677bdb98b2523d4981ac44469b1a1ec9c5856daea32fdd1",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.3.0/x64/MeetSpace-0.3.0-win-x64-test-setup.exe",
+      "bytes": 123795910,
+      "sha256": "ec8357a6ea71ce102ef9cdcd5f3c64bda0f4ef3982d2b413f0ba91777426741c",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.3.0/x64/MeetSpace-0.3.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131177,
+      "sha256": "32e7182c55d5e9b1cbaeec40798f728f57e58c00c985e836b9552c77706480ba",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.3.0/x64/MeetSpace-0.3.0-win-x64-test-setup.exe.json",
+      "bytes": 1782,
+      "sha256": "720108c730cf74ef2c78c3247c19ff976ac77cdf363660a52f1f19d05690e7a7",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.3.0/x64/MeetSpace-0.3.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "e0e6df9f81c1a41684fb34d9b260a26078f7f5bddf450e3bcf9c44ee7caaafba",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.4.0/arm64/MeetSpace-0.4.0-win-arm64-test-setup.exe",
+      "bytes": 118540393,
+      "sha256": "71f13fedd8c51b9e44be0e27cd7781eb4d46df1ee65c7ad02e648ec0c43a9d01",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.4.0/arm64/MeetSpace-0.4.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124370,
+      "sha256": "dd82f6f299a259e05b7607104d37890ed3b6896d3d16248aa0a65c917affbddb",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.4.0/arm64/MeetSpace-0.4.0-win-arm64-test-setup.exe.json",
+      "bytes": 1747,
+      "sha256": "f7a991a0cf459a715af9cb4161320c252ce54ce6800cbe300acb3b017e2b058e",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.4.0/arm64/MeetSpace-0.4.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "cb88a8651711b69bfd5fefcedca5ed04c3b5b81e1b312eaeef7bdb3492dfaaff",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.4.0/x64/MeetSpace-0.4.0-win-x64-test-setup.exe",
+      "bytes": 123799548,
+      "sha256": "57ffa701a8139ffb35e5c33e8bd9284ba7ee8cef6665b42edd57e0e4e7032bdb",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.4.0/x64/MeetSpace-0.4.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131199,
+      "sha256": "d1a18f6fc2ad0df1999bbcb00eb766bcf7709b55763a97869e3c5ff0adfc86d9",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.4.0/x64/MeetSpace-0.4.0-win-x64-test-setup.exe.json",
+      "bytes": 1782,
+      "sha256": "93db3f41e1540dae135673f02e4f5c30529502a3075956f3ca31831eee7c2398",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.4.0/x64/MeetSpace-0.4.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "d52ebdc5ab920b0ebe59201198e84060a26b8a06eaaafdcf1137e77f185da500",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.5.0/arm64/MeetSpace-0.5.0-win-arm64-test-setup.exe",
+      "bytes": 118587355,
+      "sha256": "fcf00c970e88cc405392fd98fefc7d52f1b69072f9b0a96bea6adf22f800f78a",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.5.0/arm64/MeetSpace-0.5.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124493,
+      "sha256": "ffe0e0614bcfbc7c1cdb7ba6442b569bd61ca8d68a2c7a7d0031ee8b6f3d7a7f",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.5.0/arm64/MeetSpace-0.5.0-win-arm64-test-setup.exe.json",
+      "bytes": 1747,
+      "sha256": "d0c20679aa5e8f712bd36a783931c816ff6f6d44407c9eaa40a72bfc5cc6c6de",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.5.0/arm64/MeetSpace-0.5.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "21d60caf8eff6e2b43015b6c2e3047103e9aa8c90267c54f1451c32dfc7d5dd4",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.5.0/x64/MeetSpace-0.5.0-win-x64-test-setup.exe",
+      "bytes": 123846427,
+      "sha256": "6d591663b79f3c4f97a0bbde2453f86391a43f5fc52d57223d4fc94e848e1f23",
+      "kind": "distribution"
+    },
+    {
+      "path": "windows/0.5.0/x64/MeetSpace-0.5.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131244,
+      "sha256": "2cf2afab718a4f7b410ee875ecde7681846223a517c68057f525f61d6f418b66",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.5.0/x64/MeetSpace-0.5.0-win-x64-test-setup.exe.json",
+      "bytes": 1782,
+      "sha256": "1b088298ee6b3e2a077ba77a9b4002a3a96afc4dc75cb66ac3f133f2656c5ab4",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.5.0/x64/MeetSpace-0.5.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "58c07239478251c686e8c0b240121969d20673fb7d69f3eb5743b892b8f92992",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.6.0/arm64/MeetSpace-0.6.0-win-arm64-test-setup.exe",
+      "bytes": 118630227,
+      "sha256": "53412be89a3dba1990d09fbdb314edaa0bb6175eab97bbe6647e6e65db277459",
+      "kind": "distribution",
+      "sourceTreeSha256": "f5c25c19070fa7bcf7404b44be2b9f71b89f233b6d4e0930f3fca55a68a9c5c4"
+    },
+    {
+      "path": "windows/0.6.0/arm64/MeetSpace-0.6.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124521,
+      "sha256": "e0191c0f6b3843e6fc0f8a65753ed637e039e5cbdbc45aa97e5f27dfe42b9a37",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.6.0/arm64/MeetSpace-0.6.0-win-arm64-test-setup.exe.json",
+      "bytes": 3210,
+      "sha256": "08e9dc188d93f35772d2f68d3f3127570fa2bf23eec60ffde5225e6eea95bc2a",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.6.0/arm64/MeetSpace-0.6.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "e9af3cca5cc32b534073e7153c9bd2a25f890f4ef3e959aade18b429a72c76d1",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.6.0/x64/MeetSpace-0.6.0-win-x64-test-setup.exe",
+      "bytes": 123889381,
+      "sha256": "d15e8bcbc65ea84b2eb3c7086c50af871f3ee61fd7ff1c09fc622064f158d967",
+      "kind": "distribution",
+      "sourceTreeSha256": "f5c25c19070fa7bcf7404b44be2b9f71b89f233b6d4e0930f3fca55a68a9c5c4"
+    },
+    {
+      "path": "windows/0.6.0/x64/MeetSpace-0.6.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131330,
+      "sha256": "599c259cebebb130973cfd4e08215ea44455f7674aa401bf9a323a7db65ac650",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.6.0/x64/MeetSpace-0.6.0-win-x64-test-setup.exe.json",
+      "bytes": 3243,
+      "sha256": "7a25fef7eb6e1d45bf706c9f500dd6d2426977d891f376a29f3c1c2bf2e291c3",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.6.0/x64/MeetSpace-0.6.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "f4217d9f83cedc2e61ef302d13b01afb18841aa8934bef5d0c3ca3fcc8e073f7",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.0/arm64/MeetSpace-0.7.0-win-arm64-test-setup.exe",
+      "bytes": 118631356,
+      "sha256": "18ac4e01f6fb4e5e0de99233c7065e5c120462759283330d333087aedf273b22",
+      "kind": "distribution",
+      "sourceTreeSha256": "8657d58a7796a5348bed1c98548a91e57586d29e4f4df7dbeb6d83e5325f6689"
+    },
+    {
+      "path": "windows/0.7.0/arm64/MeetSpace-0.7.0-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124370,
+      "sha256": "306d462020d2c8636231f93c6ddd4d1363ea6c33082e49dd7c7fa8f370cd5296",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.0/arm64/MeetSpace-0.7.0-win-arm64-test-setup.exe.json",
+      "bytes": 3210,
+      "sha256": "829321285e12c608dd19890a00e65884327ac60ffa8ec89ee8b5bba42de46485",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.0/arm64/MeetSpace-0.7.0-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "66eee353efb60b1f4d616232040367b34b378607a5bf863d7854f18a81cf8dea",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.0/x64/MeetSpace-0.7.0-win-x64-test-setup.exe",
+      "bytes": 123890381,
+      "sha256": "f071b33a971286b8d16827a9d3f98f6e896cd47c466149054c3447f76f80934f",
+      "kind": "distribution",
+      "sourceTreeSha256": "8657d58a7796a5348bed1c98548a91e57586d29e4f4df7dbeb6d83e5325f6689"
+    },
+    {
+      "path": "windows/0.7.0/x64/MeetSpace-0.7.0-win-x64-test-setup.exe.blockmap",
+      "bytes": 131254,
+      "sha256": "809f6802f6c45e1504205721d3335f28502187efa5c70acb6f6a206766b6e5e5",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.0/x64/MeetSpace-0.7.0-win-x64-test-setup.exe.json",
+      "bytes": 3243,
+      "sha256": "d1b77a3e3c9b8e68592ae0e0685b56c3da6d7c74f591565298a905fc6a813746",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.0/x64/MeetSpace-0.7.0-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "ec32ab7c45e57bd16456523f76792f26dc6c2ab3c1b2dcde3949bba1b6912fbb",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.1/arm64/MeetSpace-0.7.1-win-arm64-test-setup.exe",
+      "bytes": 118642841,
+      "sha256": "162f209c0fbc750bbdab8556d85a17648537599984dc75e4950ee216f824e444",
+      "kind": "distribution",
+      "sourceTreeSha256": "b4ef9a3d2947032a8b2e207d018bd85196a2d0a5246cab04ee6e4240b04c8748"
+    },
+    {
+      "path": "windows/0.7.1/arm64/MeetSpace-0.7.1-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124592,
+      "sha256": "ef50de561790f457c2682d2991a03785bb7d01ec55b4a12d7d6fd309ad09c50f",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.1/arm64/MeetSpace-0.7.1-win-arm64-test-setup.exe.json",
+      "bytes": 3210,
+      "sha256": "8339be2d9949a20ff94dd7da5c7863dbe7ee680d6b625575d7cc9184efdf4182",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.1/arm64/MeetSpace-0.7.1-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "50ca254b3550f96f49ddf7fd5d29cfcdf1e6ced109ad4fa1454e80529d17d4ec",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.1/x64/MeetSpace-0.7.1-win-x64-test-setup.exe",
+      "bytes": 123901955,
+      "sha256": "6365617c29f34e74d18a92136f024ab6cb141689b6d9e078f732679b8302074b",
+      "kind": "distribution",
+      "sourceTreeSha256": "b4ef9a3d2947032a8b2e207d018bd85196a2d0a5246cab04ee6e4240b04c8748"
+    },
+    {
+      "path": "windows/0.7.1/x64/MeetSpace-0.7.1-win-x64-test-setup.exe.blockmap",
+      "bytes": 131438,
+      "sha256": "990ef5cb261aa95c7373c9b4dc04d5a943749e634eec0f5154d9c5672fe63f73",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.1/x64/MeetSpace-0.7.1-win-x64-test-setup.exe.json",
+      "bytes": 3243,
+      "sha256": "37863f558f8c03e12ee5b6a5cd1d45a26e80ce10e6d9d83038bfd5f3b128c700",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.1/x64/MeetSpace-0.7.1-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "2a41be855e702549e3ac255ef5e169e36f9f29d9b633fa62192dddf7a656052e",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.2/arm64/MeetSpace-0.7.2-win-arm64-test-setup.exe",
+      "bytes": 118653547,
+      "sha256": "e23dbb9965c97e0c0475fb438e3d600d1ea8e7b4d3668189c37a3c10b8f4e70f",
+      "kind": "distribution",
+      "sourceTreeSha256": "03c866a860e723c6b0a3ededb5500c06f1c9ca6446e13d57240ba3db80fcbb46"
+    },
+    {
+      "path": "windows/0.7.2/arm64/MeetSpace-0.7.2-win-arm64-test-setup.exe.blockmap",
+      "bytes": 124515,
+      "sha256": "6c363aa5d3da9c7fd534292e58ba53b4e069f0e0409f4fb86d3f41085844fba1",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.2/arm64/MeetSpace-0.7.2-win-arm64-test-setup.exe.json",
+      "bytes": 3210,
+      "sha256": "deea20491fa26053b2ee9b5fee84d4a50b29623d54abe2a1b60eaef6f9f17fa1",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.2/arm64/MeetSpace-0.7.2-win-arm64-test-setup.exe.sha256",
+      "bytes": 107,
+      "sha256": "95ffc2d272dc9a7282828100dd6d90c31315d99a1050a195f6fbe4d113ad40c9",
+      "kind": "checksum"
+    },
+    {
+      "path": "windows/0.7.2/x64/MeetSpace-0.7.2-win-x64-test-setup.exe",
+      "bytes": 123912910,
+      "sha256": "d8efd87a9c36a0d4acb851830ef930273bc8bd10bc2fe0b5eee9dd46ed435f66",
+      "kind": "distribution",
+      "sourceTreeSha256": "03c866a860e723c6b0a3ededb5500c06f1c9ca6446e13d57240ba3db80fcbb46"
+    },
+    {
+      "path": "windows/0.7.2/x64/MeetSpace-0.7.2-win-x64-test-setup.exe.blockmap",
+      "bytes": 131270,
+      "sha256": "76b61ff5b2754df408f0fbaed0ca77388f64e1a5089a57d3dd9cbbdf01d1b6e5",
+      "kind": "update-blockmap"
+    },
+    {
+      "path": "windows/0.7.2/x64/MeetSpace-0.7.2-win-x64-test-setup.exe.json",
+      "bytes": 3243,
+      "sha256": "690dd524e544b581778bb12cd30923141e9b0b93828bcdba0511dc1d6ee01282",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "windows/0.7.2/x64/MeetSpace-0.7.2-win-x64-test-setup.exe.sha256",
+      "bytes": 105,
+      "sha256": "9e8d2a0ee8d009f43010af95ace27158ee2175a3323b33e2a4df6efe4c84bd59",
+      "kind": "checksum"
+    }
+  ],
+  "compatibilityCopies": [
+    {
+      "path": "MeetSpace-0.1.1-beta-win-x64-test-setup.exe",
+      "bytes": 124115655,
+      "sha256": "c9caed1cd7a6dd0dc900ed830d4a9505160d3966a637ba3444ca3b2e832a05fe",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "MeetSpace-0.1.1-beta-win-x64-test-setup.exe.json",
+      "bytes": 3258,
+      "sha256": "9263199845bf02c12bdd1cedfe91f32283938a442af32eebbad6d412009ee00d",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "MeetSpace-0.1.1-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "1556250e9e8e3f4ebee0e8e86f2b89e30fbf27df146f9cb854687ddf879feef0",
+      "kind": "checksum"
+    },
+    {
+      "path": "MeetSpace-0.1.1-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 131458,
+      "sha256": "408e1374ee3aa0168a776b4e6922ca0c2e73f833d2ee54aec09433d6e6ac8235",
+      "kind": "update-blockmap"
+    }
+  ]
+}

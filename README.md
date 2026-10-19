@@ -25,6 +25,8 @@ npm --prefix desktop start
 
 ## Установочные пакеты
 
+Готовые установщики и дистрибутивы Windows/Linux находятся в [desktop/artifacts](desktop/artifacts/README.md), по папкам ОС, версии и архитектуры. Бинарные файлы опубликованы через Git LFS.
+
 Windows x64 и ARM64:
 
 ```sh
