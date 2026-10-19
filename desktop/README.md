@@ -92,7 +92,7 @@ npm --prefix desktop run verify:artifacts
 - `MeetSpace-0.1.1-beta-win-x64-test-setup.exe`
 - `MeetSpace-0.1.1-beta-win-arm64-test-setup.exe`
 
-Установщики **не подписаны**, явно помечены `MeetSpace Test` и предназначены для тестирования. Готовые Windows/Linux-пакеты опубликованы в [каталоге дистрибутивов](artifacts/README.md), по ОС, версии и архитектуре. Проверяется фактический PE payload и содержимое ASAR, извлечённые из установщика; имя файла само по себе не считается подтверждением ARM64. На macOS/Linux возможна cross-сборка; она не подтверждает install/uninstall и работу приложения на Windows.
+Установщики **не подписаны**, явно помечены `MeetSpace Test` и предназначены для тестирования. Готовые Windows/Linux-пакеты опубликованы в [каталоге дистрибутивов](artifacts/README.md): Windows — по версии и архитектуре, Linux — по формату пакета, версии и архитектуре. Проверяется фактический PE payload и содержимое ASAR, извлечённые из установщика; имя файла само по себе не считается подтверждением ARM64. На macOS/Linux возможна cross-сборка; она не подтверждает install/uninstall и работу приложения на Windows.
 
 `test:smoke` автоматически пересобирает renderer, поэтому упаковка выполняется после него. Dev smoke запускает/завершает собственный Vite и проверяет реальный Electron с nonce. Полный список результатов и платформ находится в отчёте.
 
@@ -123,8 +123,13 @@ npm --prefix desktop run pack:linux:x64
 npm --prefix desktop run pack:linux:arm64
 ```
 
-Вывод: `desktop/artifacts/linux/<version>/<sourceTreeSha256>/<arch>/`.
-Существующий итоговый каталог не перезаписывается. Verifier читает настоящие
+Вывод: `desktop/artifacts/linux/<DEB|RPM|AppImage>/<version>/<sourceTreeSha256>/<arch>/`.
+Например, DEB x64 находится в `desktop/artifacts/linux/DEB/0.1.1-beta/<sourceTreeSha256>/x64/`,
+а AppImage x64 — в `desktop/artifacts/linux/AppImage/0.1.1-beta/<sourceTreeSha256>/x64/`.
+Папка `DEB` содержит сборки x64 и ARM64; `RPM` и `AppImage` — только x64.
+В опубликованном Linux-каталоге сохранена только последняя сборка версии `0.1.1-beta`;
+новые сборки получают отдельный каталог `sourceTreeSha256`. Существующие итоговые каталоги
+не перезаписываются. Verifier читает настоящие
 архивы, проверяет ELF/GLIBC, ASAR, desktop entry, значки, лицензии, sandbox
 и SHA-256/SHA-512. Сборка не подтверждает полную совместимость дистрибутивов.
 Linux CI использует Ubuntu 22.04 x64 и native Ubuntu ARM64; отдельный Fedora

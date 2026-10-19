@@ -79,12 +79,13 @@ jobs:
           import {readFileSync,appendFileSync} from 'node:fs';
           const pkg=JSON.parse(readFileSync('desktop/package.json','utf8'));
           const source=JSON.parse(readFileSync('desktop/dist/source-inputs.json','utf8'));
-          const directory=`${process.cwd()}/desktop/artifacts/linux/${pkg.version}/${source.sourceTreeSha256}/${process.env.TARGET_ARCH}`;
-          appendFileSync(process.env.GITHUB_OUTPUT,`directory=${directory}\n`);
+          const root=`${process.cwd()}/desktop/artifacts/linux`;
+          const suffix=`${pkg.version}/${source.sourceTreeSha256}/${process.env.TARGET_ARCH}`;
+          appendFileSync(process.env.GITHUB_OUTPUT,`deb-directory=${root}/DEB/${suffix}\nappimage-directory=${root}/AppImage/${suffix}\n`);
           NODE
       - name: DEB install, controlled upgrade, reinstall, runtime smoke and remove
         env:
-          ARTIFACT_DIRECTORY: ${{ steps.artifact.outputs.directory }}
+          ARTIFACT_DIRECTORY: ${{ steps.artifact.outputs.deb-directory }}
         run: |
           mapfile -t packages < <(find "$ARTIFACT_DIRECTORY" -maxdepth 1 -name '*.deb' -type f)
           [ "${#packages[@]}" = 1 ]
@@ -92,7 +93,7 @@ jobs:
       - name: Original AppImage sandboxed runtime smoke
         if: matrix.arch == 'x64'
         env:
-          ARTIFACT_DIRECTORY: ${{ steps.artifact.outputs.directory }}
+          ARTIFACT_DIRECTORY: ${{ steps.artifact.outputs.appimage-directory }}
         run: |
           mapfile -t images < <(find "$ARTIFACT_DIRECTORY" -maxdepth 1 -name '*.AppImage' -type f)
           [ "${#images[@]}" = 1 ]
@@ -123,7 +124,8 @@ jobs:
           path: package-input
       - name: Install, reinstall and remove RPM without running Electron in a container
         run: |
-          mapfile -t packages < <(find "$PWD/package-input" -name '*.rpm' -type f)
+          source_sha="$(node -e 'const source=require("./package-input/linux-ci/source-inputs.json"); if(!/^[a-f0-9]{64}$/.test(source.sourceTreeSha256))process.exit(1); console.log(source.sourceTreeSha256)')"
+          mapfile -t packages < <(find "$PWD/package-input/linux/RPM" -path "*/$source_sha/x64/*.rpm" -type f)
           [ "${#packages[@]}" = 1 ]
           mkdir rpm-evidence
           docker pull fedora:44

@@ -2,13 +2,14 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
+import { constants as fsConstants } from "node:fs";
 import {
-  chmod, copyFile, lstat, mkdir, mkdtemp, readFile, readdir, realpath,
+  chmod, copyFile, lstat, mkdir, mkdtemp, readFile, realpath,
   rename, rm, rmdir, writeFile,
 } from "node:fs/promises";
 import path from "node:path";
 import { sourceInputs } from "./ci/source-inputs.mjs";
-import { validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
+import { artifactFilename, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -86,6 +87,75 @@ async function ordinaryOwnedDirectory(directory) {
     throw new Error("Linux artifact directories must be ordinary, owned and non-writable by others");
 }
 
+const formatDirectories = Object.freeze({ deb: "DEB", rpm: "RPM", AppImage: "AppImage" });
+const sharedReceipts = ["source-inputs.json", "linux-packaging-build.json", "linux-artifact-verification.json"];
+
+async function ordinaryOwnedFile(filename) {
+  const info = await lstat(filename);
+  if (!info.isFile() || info.isSymbolicLink() || (info.mode & 0o022) || info.uid !== process.getuid())
+    throw new Error("Linux artifact inputs must be ordinary, owned and non-writable by others");
+}
+
+/** Publish the already-verified set without replacing an existing format build. */
+export async function publishLinuxArtifacts({ artifactRoot, stage, version, sourceSha256, arch, formats }) {
+  if (!/^[a-f0-9]{64}$/.test(sourceSha256) || !Array.isArray(formats) || !formats.length ||
+      new Set(formats).size !== formats.length)
+    throw new Error("Invalid Linux artifact publication identity");
+  const outputs = formats.map((format) => ({
+    format,
+    name: artifactFilename({ version, arch, format }),
+    directory: path.join(artifactRoot, "linux", formatDirectories[format], version, sourceSha256, arch),
+  }));
+  await ordinaryOwnedDirectory(artifactRoot);
+  await ordinaryOwnedDirectory(stage);
+  // Inspect every input before creating any destination. A staged symlink must
+  // never become an apparently verified, published file through copyFile.
+  for (const name of [...sharedReceipts, ...outputs.flatMap(({ name }) => [name, `${name}.sha256`, `${name}.sha512`])])
+    await ordinaryOwnedFile(path.join(stage, name));
+  for (const { directory } of outputs) {
+    // Walk one owned directory at a time, rather than recursively creating
+    // paths through an unchecked symlink or directory writable by others.
+    let parent = artifactRoot;
+    for (const component of path.relative(artifactRoot, path.dirname(directory)).split(path.sep)) {
+      parent = path.join(parent, component);
+      try { await mkdir(parent, { mode: 0o755 }); }
+      catch (error) { if (error.code !== "EEXIST") throw error; }
+      await ordinaryOwnedDirectory(parent);
+    }
+    try {
+      await lstat(directory);
+      throw new Error("An immutable artifact directory already exists for this source, format and architecture");
+    } catch (error) { if (error.code !== "ENOENT") throw error; }
+  }
+  // Reserve every requested format before copying a byte. mkdir is the
+  // exclusive no-replace primitive, including if another producer races us.
+  const reserved = [];
+  try {
+    for (const { directory } of outputs) {
+      await mkdir(directory, { mode: 0o700 });
+      reserved.push(directory);
+    }
+  } catch (error) {
+    for (const directory of reserved.reverse()) await rmdir(directory).catch(() => {});
+    throw error;
+  }
+  for (const { name, directory } of outputs) {
+    for (const file of [name, `${name}.sha256`, `${name}.sha512`, ...sharedReceipts])
+      await copyFile(path.join(stage, file), path.join(directory, file), fsConstants.COPYFILE_EXCL);
+  }
+  // The common verification report describes the full verified staging set.
+  // Preserve its exact bytes and distinguish that scope from this directory's
+  // single package format in a newly-created publication receipt.
+  for (const { format, directory } of outputs)
+    await writeNewReceipt(path.join(directory, "linux-publication.json"), JSON.stringify({
+      schemaVersion: 2, sourceTreeSha256: sourceSha256, arch, format, formats: [format],
+      verifiedFormats: [...formats], verifiedStaging: stage, immutableDirectory: directory,
+      overwriteAllowed: false,
+    }, null, 2) + "\n");
+  for (const { directory } of outputs) await chmod(directory, 0o755);
+  return outputs.map(({ format, directory }) => ({ format, directory }));
+}
+
 async function main() {
   const request = parsePackagingArguments(process.argv.slice(2));
   if (!request) {
@@ -124,21 +194,7 @@ async function main() {
         provenance.buildVersion !== `${pkg.version}-test` ||
         JSON.stringify(inputs) !== JSON.stringify(await sourceInputs(repository)))
       throw new Error("Linux packaging inputs do not match the current native test build");
-    const versionRoot = path.join(artifactRoot, "linux", pkg.version);
-    await mkdir(versionRoot, { recursive: true });
-    await ordinaryOwnedDirectory(path.dirname(versionRoot));
-    await ordinaryOwnedDirectory(versionRoot);
-    const immutableParent = path.join(versionRoot, inputs.sourceTreeSha256);
-    await mkdir(immutableParent, { recursive: true });
-    await ordinaryOwnedDirectory(immutableParent);
-    const destination = path.join(immutableParent, arch);
-    try {
-      await lstat(destination);
-      throw new Error("An immutable artifact directory already exists for this source and architecture");
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
-    stage = await mkdtemp(path.join(versionRoot, `.staging-${inputs.sourceTreeSha256}-${arch}-`));
+    stage = await mkdtemp(path.join(artifactRoot, `.linux-staging-${inputs.sourceTreeSha256}-${arch}-`));
     await chmod(stage, 0o700);
     environment.MEETSPACE_LINUX_OUTPUT = stage;
     environment.SOURCE_DATE_EPOCH = String(provenance.sourceDateEpoch);
@@ -161,19 +217,14 @@ async function main() {
     }, null, 2) + "\n");
     run([path.join(desktop, "scripts/verify-linux-artifacts.mjs"), "--directory", stage, "--arch", arch,
       "--formats", formats.join(","), "--source-sha256", inputs.sourceTreeSha256, "--manifest", frozenManifest]);
-    // mkdir is the no-replace publication primitive. A second producer cannot
-    // replace even an empty earlier output directory. No rename-overwrite occurs.
-    await mkdir(destination, { mode: 0o700 });
-    for (const name of (await readdir(stage)).sort())
-      await rename(path.join(stage, name), path.join(destination, name));
-    await writeNewReceipt(path.join(destination, "linux-publication.json"), JSON.stringify({
-      schemaVersion: 1, sourceTreeSha256: inputs.sourceTreeSha256, arch, formats,
-      verifiedStaging: stage, immutableDirectory: destination, overwriteAllowed: false,
-    }, null, 2) + "\n");
-    await chmod(destination, 0o755);
-    await rmdir(stage);
+    const outputs = await publishLinuxArtifacts({ artifactRoot, stage, version: pkg.version,
+      sourceSha256: inputs.sourceTreeSha256, arch, formats });
+    // Only this invocation's private staging is removed. Builder intermediates
+    // and unpacked trees are not part of the published distribution folders.
+    await rm(stage, { recursive: true });
     stage = undefined;
-    console.log(`Verified Linux test artifacts: ${destination}`);
+    for (const { format, directory } of outputs)
+      console.log(`Verified Linux ${format} test artifacts: ${directory}`);
   } catch (error) {
     if (stage) console.error(`Unpublished staging retained for inspection: ${stage}`);
     throw error;

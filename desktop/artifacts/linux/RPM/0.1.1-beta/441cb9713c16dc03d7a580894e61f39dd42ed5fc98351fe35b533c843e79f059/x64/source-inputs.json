@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "963cc020460f3177823a790eda36ea967c44ddb3",
+  "sourceCommit": "334315c788917f65ae054233c765063eaa1f007b",
   "sourceDirty": true,
-  "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12",
+  "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059",
   "files": [
     {
       "path": ".github/workflows/desktop-acceptance.yml",
@@ -21,8 +21,8 @@
     },
     {
       "path": ".github/workflows/desktop-linux-build.yml",
-      "sha256": "a0922001fca92b8e9450eca3fcd391ea269787238ce14f9cce251f549aa420f4",
-      "bytes": 7420
+      "sha256": "72f5a7ef0272814d0dc81cf9337a894fb81fbe521e909c93db17c96c343c2d8f",
+      "bytes": 7435
     },
     {
       "path": "desktop/README.md",
@@ -36,8 +36,8 @@
     },
     {
       "path": "desktop/electron-builder.linux.config.cjs",
-      "sha256": "169b3beb718023415604a0193634d087eb5a344e90d31bf805e8311d096b895b",
-      "bytes": 4221
+      "sha256": "808c27fb10368ee84f887026b5c0ed4d9ddeaf502e656916513a52c16621095b",
+      "bytes": 4397
     },
     {
       "path": "desktop/electron-builder.release.config.cjs",
@@ -181,8 +181,8 @@
     },
     {
       "path": "desktop/scripts/ci/linux-deb-acceptance.sh",
-      "sha256": "33f12921cb7761766c36860cdf07491fd5025484bf2fa1bd2e132b9b01b419dc",
-      "bytes": 4833
+      "sha256": "1563dbaf80fe059b85fe1cb6f120885d914971fd96cf4cb9f6176b9ee5e49fa2",
+      "bytes": 4927
     },
     {
       "path": "desktop/scripts/ci/source-inputs.mjs",
@@ -286,8 +286,8 @@
     },
     {
       "path": "desktop/src/broker.ts",
-      "sha256": "696761b3ebee51a535b064b2b8b2919423edd73c3c14ed354bed0796a23cebd6",
-      "bytes": 40656
+      "sha256": "ad67bcf823c8cc4cda505720c8cf9cd1ea4b2cf30da3be1e73609f8360f37590",
+      "bytes": 41069
     },
     {
       "path": "desktop/src/downloads.ts",
@@ -476,8 +476,8 @@
     },
     {
       "path": "desktop/tests/broker-policy.test.cjs",
-      "sha256": "10911d512fba245b5a69e663ee5c32b64150ce0456ff42776e30fdfaacbd4c88",
-      "bytes": 15774
+      "sha256": "8a8848cb6f2b243bf0e2ccb0729d0a75e43f130bef64a39088b1cd69b0efb2ab",
+      "bytes": 20645
     },
     {
       "path": "desktop/tests/build-context.test.cjs",
@@ -580,6 +580,16 @@
       "bytes": 1356
     },
     {
+      "path": "desktop/tests/helpers/linux-process-metrics.cjs",
+      "sha256": "a86db3738453a906aea032ee433971ee60c9279d2fa7be382a5b97ea73b22645",
+      "bytes": 2057
+    },
+    {
+      "path": "desktop/tests/helpers/renderer-jank-observer.cjs",
+      "sha256": "3bce7fcfc5424cf5b9f6d88095532c3e1d4897d9c80b65def58982a96e3a33c6",
+      "bytes": 1490
+    },
+    {
       "path": "desktop/tests/integration-electron.cjs",
       "sha256": "4d95e9d0e622321f533a6d7919a8fed37982154ef60032752f3b9f63fc657758",
       "bytes": 6490
@@ -620,14 +630,39 @@
       "bytes": 10373
     },
     {
+      "path": "desktop/tests/linux-lifecycle-electron.cjs",
+      "sha256": "02267182731615af7caa422ec0ebc3091073a61b36203e8eb7c66134d2f9d3a8",
+      "bytes": 13577
+    },
+    {
+      "path": "desktop/tests/linux-lifecycle-runner.cjs",
+      "sha256": "5b9ca952e143e1d87f6de72644042029607107fbc8e99a9cfbcdc3a4747e2171",
+      "bytes": 6546
+    },
+    {
+      "path": "desktop/tests/linux-media-lifecycle-electron.cjs",
+      "sha256": "9eaac0d090098070bc39a2a4e555d83eef669a8c585bd0af048bd50d07385853",
+      "bytes": 3639
+    },
+    {
+      "path": "desktop/tests/linux-media-lifecycle-runner.cjs",
+      "sha256": "888b23675fa344c8de5e844cd32abe2f75b6487dd3dadf0e85b7db5cbed50eab",
+      "bytes": 5676
+    },
+    {
+      "path": "desktop/tests/linux-native-lifecycle-runner.cjs",
+      "sha256": "eb8c8e24bd765b39f1929d0110c7547740fe68f9f36cf0c4af1d24dd51854e28",
+      "bytes": 3810
+    },
+    {
       "path": "desktop/tests/linux-package-driver.test.cjs",
       "sha256": "b47e4b5fdc001fdfd4d1cb15c404f64b08895412b407d08640b9f60611c471a2",
       "bytes": 7372
     },
     {
       "path": "desktop/tests/linux-package-policy.test.cjs",
-      "sha256": "88f2071ca7ea39cb728f512d2b24b50fb037d7779409f13205588cac73b2a312",
-      "bytes": 14425
+      "sha256": "52652921a25f5b315efdd55c746968550e7341b0beacffb74f960b1a348f4bc2",
+      "bytes": 15232
     },
     {
       "path": "desktop/tests/linux-package-readers.test.cjs",
@@ -806,13 +841,23 @@
     },
     {
       "path": "desktop/tests/stage07-profile-electron.cjs",
-      "sha256": "e415ce111dc9346af90de1205f39ee8c2b53460b3cebcbc1c227cbbef7cf1b5d",
-      "bytes": 13883
+      "sha256": "cd92daabaf3a046359f296bfc115b7eb85f994685c1af206ea8f38ba83fbc0e0",
+      "bytes": 15137
     },
     {
       "path": "desktop/tests/stage07-profile-runner.cjs",
-      "sha256": "b1e42b8396ddb5fdc20f2d07ff6e79655a9bf4d6e9b01d5d74373f0ee6382a3f",
-      "bytes": 2306
+      "sha256": "33c471b571b672782b302cf1602dfc60e6c8914ec9a393ff5c3fce3069be8f05",
+      "bytes": 4867
+    },
+    {
+      "path": "desktop/tests/stage07-retained-heap.mjs",
+      "sha256": "ab9376911e18753c411b2e447fbbd62a74c32349fd4a19529d2ff6aa3db693a2",
+      "bytes": 7946
+    },
+    {
+      "path": "desktop/tests/stage07-retained-heap.test.cjs",
+      "sha256": "9660e41a1e59e0f02648658fed661df2b7c5dbde6bf02a9e69cedd867c78e4d9",
+      "bytes": 4479
     },
     {
       "path": "desktop/tests/transport-network.test.cjs",
@@ -1058,6 +1103,16 @@
       "path": "frontend/scripts/check-native-assets.mjs",
       "sha256": "a95d4aec18dd3a48f66d14e8e75ae53263feaf419d7ba1966b14911c6d0e83d7",
       "bytes": 10009
+    },
+    {
+      "path": "frontend/scripts/linux-lifecycle-renderer.tsx",
+      "sha256": "78bc56b7b0bc4c06afd9cec517af3015418d7b450f47363cd2ca41de86f88db9",
+      "bytes": 5462
+    },
+    {
+      "path": "frontend/scripts/linux-media-lifecycle-renderer.tsx",
+      "sha256": "2b14ba7c10dbfc367cc540273af111feaf3e3aae06d66f1c36d6d9cd41159546",
+      "bytes": 4227
     },
     {
       "path": "frontend/scripts/stage07-lifecycle-renderer.tsx",

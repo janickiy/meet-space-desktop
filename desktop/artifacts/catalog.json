@@ -3,379 +3,179 @@
   "publishedVersion": "0.1.1-beta",
   "latestPublishedSourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059",
   "scope": "Previously built test distributions and their verification/checksum metadata; source builds are identified by original hashes.",
-  "distributionCount": 30,
-  "uniqueBinaryCount": 28,
+  "distributionCount": 22,
+  "uniqueBinaryCount": 20,
   "files": [
     {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
-      "bytes": 98026724,
-      "sha256": "2ac4337ff8662814ece7fb51cba5d3bea44d69ffa0655d9e57ee9dce89afa9ac",
-      "kind": "distribution",
-      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "5e6556a0cbb6aebde0cfeacde02c1a88c3daba15b8bbb04fd844055465ed4a14",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "930f421272cc54a7e01428588207629fc4beaef07bbf19e95fcb7a539416b059",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-artifact-verification.json",
-      "bytes": 8021,
-      "sha256": "5ad40399c1a915cbe0582ebf1c4d5e16ebf1dd5f33dd5b235d76331b60a46984",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-packaging-build.json",
-      "bytes": 560,
-      "sha256": "37331bee282a5b17909d58b47d0cc4585fb87dec3d4cb6fb1a6cfd442779fc75",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/linux-publication.json",
-      "bytes": 540,
-      "sha256": "8bff0b8217001ab3046d62129af1f80e563dc0a04567c6c2bfbd9b5e347805e1",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/arm64/source-inputs.json",
-      "bytes": 69337,
-      "sha256": "1dd723ef244dd3435888c9908dd63ceeea939d990189e8efd279f0d78fdecb4c",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
-      "bytes": 102804220,
-      "sha256": "0529964039f2f4b1cc3efd61f5cb85f69269383aace744a07abbfbf7949f1b2a",
-      "kind": "distribution",
-      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "68c699227687e66e51ca3b67a83608e6b64fe51147f221e0471076ffc73c281f",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "2e1337801beef3cf07fdabbf8ac5a76bcad844138a0a9f499c8bc404fbcfdc55",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
-      "bytes": 129253942,
-      "sha256": "f94498eccc77a81a219656b446dce3ef67056f45c803de7621265440cf4d4a8d",
-      "kind": "distribution",
-      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
-      "bytes": 114,
-      "sha256": "9126aed60384454ab49694725351bafc3b3e2b9209dc2a47e4727fa426dbdc9c",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
-      "bytes": 178,
-      "sha256": "45ca95377e4e9fb94ab14d2e64da0ee2ee9e7d706179a51030a7064d300f2f93",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
-      "bytes": 92434097,
-      "sha256": "f29fdebcd2613a1aabc73d2f9ae7900831fa44e0d73cccc64c83660270339d4b",
-      "kind": "distribution",
-      "sourceTreeSha256": "2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
-      "bytes": 109,
-      "sha256": "5b24986fad9e5c4ce24827805a6ad1c6aa2c122022f6c8c4f067718443716da9",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
-      "bytes": 173,
-      "sha256": "5a9ad53d8bdfddf4d8c30528b2942083705db0db75eb4cf5d3b3fac9511a975d",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-artifact-verification.json",
-      "bytes": 29266,
-      "sha256": "9fde2404df4d921e43f539596b2e63d198ccc66d1408ff77a87fc765a05788cf",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-packaging-build.json",
-      "bytes": 977,
-      "sha256": "296a568334576e72eb98bbd5247cbd499153b67c4af137c5e38812e8ddb74c35",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/linux-publication.json",
-      "bytes": 561,
-      "sha256": "676e88f739595b9207a3b467755b7fffd13582b23754f86d5db6e4e5427c9fc5",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/2837a51157fb7022d6d95cbcf611b85d535bd66731a87b068e6e7ff83632c995/x64/source-inputs.json",
-      "bytes": 69337,
-      "sha256": "1dd723ef244dd3435888c9908dd63ceeea939d990189e8efd279f0d78fdecb4c",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
-      "bytes": 98027384,
-      "sha256": "bd69998620d0d193570145f6f8f72d464c844111d0b39502848efd1bc236d69d",
-      "kind": "distribution",
-      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "fc057e17e1cc1c16bdb0ac46dabfa0be9dfaaebfe68941d281f91ae2d8409b05",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "3b38dcea7d0abac599fceaa77501ea5cc20ac1748e51161500ef89d711d4069c",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-artifact-verification.json",
-      "bytes": 8021,
-      "sha256": "419ea4e08f1da5038618d9171a4bbd6bf00f8099616c866b67e754ac88851c5e",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-packaging-build.json",
-      "bytes": 560,
-      "sha256": "83cd3e764f8a8d2556b7520df6b290d51e4404bf49a48e763cca792d72cef665",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-publication.json",
-      "bytes": 552,
-      "sha256": "ff1c511d64190810383e029e366cd672c0241262203ae32f0490476752938b03",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/source-inputs.json",
-      "bytes": 71320,
-      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
-      "bytes": 102805264,
-      "sha256": "06972c7f34a49ad5d3680db85791ca5590371b355989abbee1fbdba59eb1d979",
-      "kind": "distribution",
-      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "82fe8f4ebdcfdceb0ac6316efc8b24255cdcbffd4488f49b5a9a5f87b8155bb6",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "94e199bc723969d78e71573f6ba62a4890cac1cc4b8d11a2913375a52338278d",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
       "bytes": 129254044,
       "sha256": "4ac8242e2f76e1374a23a9671f052e3d3176e9f1a227acaaec224593af1b4530",
       "kind": "distribution",
       "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
       "bytes": 114,
       "sha256": "69e029583d2af88cc1a464aa9a46945e73227f6d6929fb0e7d246fb46767393e",
       "kind": "checksum"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
       "bytes": 178,
       "sha256": "adb06acc4f2abb35b8d861aa7a406cd0535ac199f2f4a4e4c30e13b81a9d6231",
       "kind": "checksum"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-artifact-verification.json",
+      "bytes": 29266,
+      "sha256": "9db2f4c9a8f1290388675ced7fc970511fc129ef457e6f1700f6d60fb8ec45a9",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-packaging-build.json",
+      "bytes": 977,
+      "sha256": "7dda2c14fd78458e22e8d5639fc898c0ab2f9f7bf8b3d86d25e4a0409ff63d4a",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-publication.json",
+      "bytes": 587,
+      "sha256": "cf8e68d497e17d7fb1d88a6b415384093829d5d074802590d7cd901f7f6bfc4b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/AppImage/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
+      "bytes": 71320,
+      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
+      "bytes": 98027384,
+      "sha256": "bd69998620d0d193570145f6f8f72d464c844111d0b39502848efd1bc236d69d",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "fc057e17e1cc1c16bdb0ac46dabfa0be9dfaaebfe68941d281f91ae2d8409b05",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "3b38dcea7d0abac599fceaa77501ea5cc20ac1748e51161500ef89d711d4069c",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-artifact-verification.json",
+      "bytes": 8021,
+      "sha256": "419ea4e08f1da5038618d9171a4bbd6bf00f8099616c866b67e754ac88851c5e",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-packaging-build.json",
+      "bytes": 560,
+      "sha256": "83cd3e764f8a8d2556b7520df6b290d51e4404bf49a48e763cca792d72cef665",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/linux-publication.json",
+      "bytes": 552,
+      "sha256": "ff1c511d64190810383e029e366cd672c0241262203ae32f0490476752938b03",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/arm64/source-inputs.json",
+      "bytes": 71320,
+      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
+      "bytes": 102805264,
+      "sha256": "06972c7f34a49ad5d3680db85791ca5590371b355989abbee1fbdba59eb1d979",
+      "kind": "distribution",
+      "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "82fe8f4ebdcfdceb0ac6316efc8b24255cdcbffd4488f49b5a9a5f87b8155bb6",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "94e199bc723969d78e71573f6ba62a4890cac1cc4b8d11a2913375a52338278d",
+      "kind": "checksum"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-artifact-verification.json",
+      "bytes": 29266,
+      "sha256": "9db2f4c9a8f1290388675ced7fc970511fc129ef457e6f1700f6d60fb8ec45a9",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-packaging-build.json",
+      "bytes": 977,
+      "sha256": "7dda2c14fd78458e22e8d5639fc898c0ab2f9f7bf8b3d86d25e4a0409ff63d4a",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-publication.json",
+      "bytes": 587,
+      "sha256": "cf8e68d497e17d7fb1d88a6b415384093829d5d074802590d7cd901f7f6bfc4b",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/DEB/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
+      "bytes": 71320,
+      "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
+      "kind": "verification-metadata"
+    },
+    {
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
       "bytes": 92452289,
       "sha256": "e6ad6dbd52cf16b0607157b10562db319106977f0f7d55f7841e26edad01952a",
       "kind": "distribution",
       "sourceTreeSha256": "441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
       "bytes": 109,
       "sha256": "dd35941f7d6798a6a522b66bfda933f6b38a96304705c10463fdb633fded76f5",
       "kind": "checksum"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
       "bytes": 173,
       "sha256": "d17743fbec90223bd33432b3c034e8a3662f667f5a04649f290a16c897b344db",
       "kind": "checksum"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-artifact-verification.json",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-artifact-verification.json",
       "bytes": 29266,
       "sha256": "9db2f4c9a8f1290388675ced7fc970511fc129ef457e6f1700f6d60fb8ec45a9",
       "kind": "verification-metadata"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-packaging-build.json",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-packaging-build.json",
       "bytes": 977,
       "sha256": "7dda2c14fd78458e22e8d5639fc898c0ab2f9f7bf8b3d86d25e4a0409ff63d4a",
       "kind": "verification-metadata"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-publication.json",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/linux-publication.json",
       "bytes": 587,
       "sha256": "cf8e68d497e17d7fb1d88a6b415384093829d5d074802590d7cd901f7f6bfc4b",
       "kind": "verification-metadata"
     },
     {
-      "path": "linux/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
+      "path": "linux/RPM/0.1.1-beta/441cb9713c16dc03d7a580894e61f39dd42ed5fc98351fe35b533c843e79f059/x64/source-inputs.json",
       "bytes": 71320,
       "sha256": "a46984f185f09f36760e966c43e0a9c4a5e90f152649ca750d5fd4efc44cc495",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb",
-      "bytes": 98026720,
-      "sha256": "c38a3bc42c95eee9a3af831d33555c96ceee9fccbe907fe43a8bacd59bdc549f",
-      "kind": "distribution",
-      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "82d8f843d1ffef6a8b264088fea88b5a2e91c0857c74624701165c4fad828967",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "192f273d903ebc3b35a9455f61936f2611ba223a47f85e84d39c03b60b4f95af",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-artifact-verification.json",
-      "bytes": 7999,
-      "sha256": "9bb15d5d5c7b522db661773e4c49b16a579b0e40238d523b5d59506c2661e9c0",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-packaging-build.json",
-      "bytes": 560,
-      "sha256": "4c1da7589c10d0809d7c91a0da09a89de57ef1d71f193ec2ecb5a89584bb86b3",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/linux-publication.json",
-      "bytes": 540,
-      "sha256": "cba6681fe651909221ce697fd79b261248ef856f28ebdb338f2f63fb02f347a5",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/arm64/source-inputs.json",
-      "bytes": 69337,
-      "sha256": "10b350287339bafa0039ecb2972381606c121699f3d3b9c4ee6cf02cabdabb22",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb",
-      "bytes": 102804224,
-      "sha256": "e29965d25aee79c10be00b7dfbf829f1138306d0e92b6ef28da0c262edc549f7",
-      "kind": "distribution",
-      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha256",
-      "bytes": 108,
-      "sha256": "a43b5567baffb7266a81b800e83cd4c9f41f99407f2bd1ccb3a60fa5a32a4d5b",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-amd64-test.deb.sha512",
-      "bytes": 172,
-      "sha256": "2692cfd17b4bc9e0aef6ff9c3f9d0b86087a153426c1414b2ed56148fd9fde13",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage",
-      "bytes": 129253938,
-      "sha256": "dd00241678531d6413b5ca554000bcda4e6a341f9a2c1669ac86d50b3ddba0cd",
-      "kind": "distribution",
-      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha256",
-      "bytes": 114,
-      "sha256": "78e68fe2dd850d1f60ec705ea2966d9dbe5f28b27c80df891d452f172d0f959d",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.AppImage.sha512",
-      "bytes": 178,
-      "sha256": "5cd481118054eb2406e46e68c6b3b79521dd757839fc246c41e5d4de91a7a45e",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm",
-      "bytes": 92435245,
-      "sha256": "46e28ea74e8959e47e31f3636bb07a99c925279d6214ccdc3eb81b1b5643f6e6",
-      "kind": "distribution",
-      "sourceTreeSha256": "e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha256",
-      "bytes": 109,
-      "sha256": "7b7634d4b13ea02cd4049b9b91792c245232b534eeb78220ffecda2c7ee2b268",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm.sha512",
-      "bytes": 173,
-      "sha256": "c08148627424259a30fa093d6dcaa0523d7ceeb3a0278f61761dfd23ae46d0db",
-      "kind": "checksum"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-artifact-verification.json",
-      "bytes": 29244,
-      "sha256": "2b22cff660b1e008e1fe2e41133208e01c3d09b8f7bfd3c3984339485d426ef3",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-packaging-build.json",
-      "bytes": 977,
-      "sha256": "eb334fd118ed5c914bc0a27d2c45876fd32f0f3ab633d12959bbfefffab8e6be",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/linux-publication.json",
-      "bytes": 561,
-      "sha256": "59134a5adee8170bc06fad1952a1148042f7dfd23aa8ed1ba63842f456c008e1",
-      "kind": "verification-metadata"
-    },
-    {
-      "path": "linux/0.1.1-beta/e963d672cf94c5c22359d4dec671eb30c25005e924f346d195e68faeb66b0a12/x64/source-inputs.json",
-      "bytes": 69337,
-      "sha256": "10b350287339bafa0039ecb2972381606c121699f3d3b9c4ee6cf02cabdabb22",
       "kind": "verification-metadata"
     },
     {
