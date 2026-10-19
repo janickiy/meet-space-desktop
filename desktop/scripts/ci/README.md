@@ -1,6 +1,6 @@
 # Windows CI и допуск к публикации
 
-Состояние этапа 06: workflows подготовлены локально, но не отправлены и не запущены. Сертификат, publisher, production feed и Windows машины владельцем пока не предоставлены. Допустимый текущий результат — unsigned test installers. Signed candidate, реальная Windows приёмка и публикация имеют статус **NOT RUN / BLOCKED**.
+Workflows опубликованы в `.github/workflows`; результаты запусков проверяются в GitHub Actions. Готовые unsigned test installers Windows/Linux опубликованы через Git LFS в [каталоге дистрибутивов](../../artifacts/README.md). Для подписанного production-выпуска по-прежнему нужны сертификат, publisher, production feed и полная обязательная Windows-приёмка. Подписанный candidate и production-публикация остаются **NOT RUN / BLOCKED**; размещение тестовых пакетов не проходит этот release gate.
 
 ## Три отдельных процесса
 
@@ -26,7 +26,7 @@ Runtime workflow требует отдельных интерактивных di
 
 ## Воспроизводимые входы
 
-`source-inputs.mjs` записывает HEAD, dirty flag и SHA-256 точных байтов всех исходных файлов `frontend/`, `desktop/`, `.github/workflows/`, найденных Git (включая ещё не committed файлы локального test build). Symlinks запрещены; обязательны оба lockfile. CI и signed build требуют чистый committed checkout. Игнорируемые `node_modules`, dist и artifacts не входят в fingerprint. Итоговая sourceTreeSha256 — hash упорядоченного списка path/size/hash. Генерируемые tracked ресурсы должны быть закоммичены в точном виде.
+`source-inputs.mjs` записывает HEAD, dirty flag и SHA-256 точных байтов всех исходных файлов `frontend/`, `desktop/`, `.github/workflows/`, найденных Git (включая ещё не committed файлы локального test build). Symlinks запрещены; обязательны оба lockfile. CI и signed build требуют чистый committed checkout. Игнорируемые `node_modules` и dist, а также весь каталог `desktop/artifacts/` не входят в fingerprint. Готовые пакеты в artifacts отслеживаются через Git LFS; промежуточные результаты сборок и QA остаются игнорируемыми. Итоговая sourceTreeSha256 — hash упорядоченного списка path/size/hash. Генерируемые tracked ресурсы должны быть закоммичены в точном виде.
 
 `collect-build-evidence.mjs` повторно проверяет неизменность исходников, native Windows/architecture, записывает Node/npm, runner image и run id. CycloneDX inventories создаются для npm production dependencies и всех зависимостей обоих workspace. Electron объявлен devDependency, но поставляется как runtime: он отражён в полном desktop inventory; npm SBOM сам по себе не является полным перечнем встроенных Chromium/native компонентов. Их notices входят в продуктовые third-party материалы.
 
