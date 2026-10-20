@@ -33,6 +33,14 @@ test("source provenance binds exact bytes and frozen locks, not merely a commit 
     "fixture.deb",
   );
   await fs.writeFile(publishedPackage, "published package\n");
+  const distributionPackages = [
+    path.join(directory, "source", "linux", "0.1.1-beta", "DEB", "fixture.deb"),
+    path.join(directory, "source", "windows", "0.1.1-beta", "fixture.exe"),
+  ];
+  for (const distribution of distributionPackages) {
+    await fs.mkdir(path.dirname(distribution), { recursive: true });
+    await fs.writeFile(distribution, "published distribution\n");
+  }
   git(["add", "."]);
   git([
     "-c",
@@ -53,14 +61,20 @@ test("source provenance binds exact bytes and frozen locks, not merely a commit 
     publishedPackage,
     "LFS pointer or another published package\n",
   );
+  for (const distribution of distributionPackages) {
+    await fs.writeFile(distribution, "updated distribution\n");
+    await fs.writeFile(distribution + ".sha256", "untracked checksum\n");
+  }
   const artifactOnly = await sourceInputs(directory);
   assert.equal(artifactOnly.sourceDirty, false);
   assert.equal(artifactOnly.sourceTreeSha256, clean.sourceTreeSha256);
   assert.ok(
     artifactOnly.files.every(
-      (file) => !file.path.startsWith("desktop/artifacts/"),
+      (file) => !file.path.startsWith("desktop/artifacts/") && !file.path.startsWith("source/"),
     ),
   );
+  assert.deepEqual(await sourceInputs(directory, true), clean);
+  git(["add", "source"]);
   assert.deepEqual(await sourceInputs(directory, true), clean);
   await fs.writeFile(
     path.join(directory, "desktop", "source.ts"),

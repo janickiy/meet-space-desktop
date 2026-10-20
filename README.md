@@ -25,7 +25,7 @@ npm --prefix desktop start
 
 ## Установочные пакеты
 
-Готовые установщики и дистрибутивы Windows/Linux находятся в [desktop/artifacts](desktop/artifacts/README.md), по папкам ОС, версии и архитектуры. Бинарные файлы опубликованы через Git LFS.
+Готовые установщики и дистрибутивы находятся в [source](source/README.md): Linux — `source/linux/<версия>/<DEB|RPM|AppImage>/<пакет>`, Windows — `source/windows/<версия>/<пакет>`. В именах файлов указана архитектура x64 или ARM64. Бинарные файлы опубликованы через Git LFS; прежние сборки той же версии сохранены с хешем в имени файла.
 
 Windows x64 и ARM64:
 
@@ -40,7 +40,7 @@ npm --prefix desktop run pack:linux:x64
 npm --prefix desktop run pack:linux:arm64
 ```
 
-Linux x64 выпускается в форматах DEB, RPM и AppImage, ARM64 — DEB. Результаты находятся в `desktop/artifacts/`; Linux-пакеты — в `linux/<version>/<sourceTreeSha256>/<arch>/`. Тестовые сборки не подписаны; автоматические обновления отключены. Сборка пакета не заменяет проверку на целевой ОС.
+Linux x64 и ARM64 выпускаются в форматах DEB, RPM и AppImage. Рабочие результаты сборки находятся в `desktop/artifacts/`; проверенные дистрибутивы публикуются в `source/`. Тестовые сборки не подписаны; автоматические обновления отключены. Сборка пакета не заменяет проверку на целевой ОС.
 
 ## Проверки
 

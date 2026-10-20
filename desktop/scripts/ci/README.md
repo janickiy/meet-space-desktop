@@ -1,6 +1,6 @@
 # Windows CI и допуск к публикации
 
-Workflows опубликованы в `.github/workflows`; результаты запусков проверяются в GitHub Actions. Готовые unsigned test installers Windows/Linux опубликованы через Git LFS в [каталоге дистрибутивов](../../artifacts/README.md). Для подписанного production-выпуска по-прежнему нужны сертификат, publisher, production feed и полная обязательная Windows-приёмка. Подписанный candidate и production-публикация остаются **NOT RUN / BLOCKED**; размещение тестовых пакетов не проходит этот release gate.
+Workflows опубликованы в `.github/workflows`; результаты запусков проверяются в GitHub Actions. Готовые unsigned test installers Windows/Linux опубликованы через Git LFS в [каталоге дистрибутивов](../../../source/README.md). Рабочие результаты сборки остаются в `desktop/artifacts/`; в Git проверенные пакеты размещаются в `source/linux/<версия>/<формат>/` и `source/windows/<версия>/`. Для подписанного production-выпуска по-прежнему нужны сертификат, publisher, production feed и полная обязательная Windows-приёмка. Подписанный candidate и production-публикация остаются **NOT RUN / BLOCKED**; размещение тестовых пакетов не проходит этот release gate.
 
 ## Три отдельных процесса
 

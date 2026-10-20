@@ -31,6 +31,7 @@ export async function sourceInputs(root = repository, requireClean = false) {
       "--",
       ".",
       ":(exclude)desktop/artifacts",
+      ":(exclude)source",
     ]).length !== 0;
   if (!/^[a-f0-9]{40}$/.test(sourceCommit) || (requireClean && sourceDirty))
     throw new Error("Release requires a clean committed checkout");
