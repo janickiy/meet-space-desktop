@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "result": "PASS",
+  "format": "AppImage",
+  "platform": "linux",
+  "arch": "arm64",
+  "observedAt": "2026-10-20T14:28:52.937Z",
+  "executable": "/home/meetspace/releases/attachments-4d8d866/source/desktop/artifacts/linux/AppImage/0.1.1-beta/e9c984f570a4aa97bb3a52b79d8354fdd499eaee35a6d2940fc823cca5c411d4/arm64/MeetSpace-0.1.1-beta-linux-arm64-test.AppImage",
+  "checks": {
+    "actualPackagedMainPreloadSandboxedReact": "PASS",
+    "embeddedUpdatesDisabled": "PASS",
+    "realOptInGioSecondInstanceOptOut": "PASS",
+    "actualQuitExitZero": "PASS"
+  },
+  "scope": "Actual installed package or original AppImage and sandboxed shared renderer, with a localhost test-only inspector. No ordinary-launch/visual/actual-login/physical-device acceptance.",
+  "userProfileAndDefaultsChanged": false,
+  "observerAttached": true,
+  "pid": 178893,
+  "packagedRuntime": {
+    "packaged": true,
+    "name": "MeetSpace Test",
+    "version": "0.1.1-beta",
+    "appPath": "/tmp/.mount_MeetSpMEEFpO/resources/app.asar",
+    "userData": "/home/meetspace/.meetspace-package-acceptance-appimage-arm64-kjLnP2/config/MeetSpace Test",
+    "noSandbox": false,
+    "window": {
+      "url": "app://meetspace/",
+      "sandbox": true,
+      "contextIsolation": true,
+      "nodeIntegration": false
+    }
+  },
+  "runtime": {
+    "platform": "linux",
+    "arch": "arm64",
+    "appVersion": "0.1.1-beta",
+    "isPackaged": true,
+    "capabilities": {
+      "serverConnection": true,
+      "windowControls": true
+    },
+    "host": {
+      "session": "x11",
+      "secureStorage": {
+        "available": false,
+        "backend": "basic_text",
+        "reason": "insecure-backend"
+      },
+      "supports": {
+        "startup": true,
+        "absoluteWindowPosition": true,
+        "systemAudio": false
+      }
+    }
+  },
+  "exitSignal": null,
+  "actualExitCode": 0,
+  "ownProcessExited": true,
+  "stderrTail": "Debugger listening on ws://127.0.0.1:37653/1209ae84-e5da-42bc-86b4-8de468edbd7e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\nDebugger attached.\n[178945:1020/172855.303951:ERROR:media/gpu/vaapi/vaapi_wrapper.cc:1801] vaInitialize failed: unknown libva error\nDebugger ending on ws://127.0.0.1:37653/1209ae84-e5da-42bc-86b4-8de468edbd7e\nFor help, see: https://nodejs.org/learn/getting-started/debugging\n",
+  "ownProfileRemoved": false,
+  "profileRetainedForLifecycle": true
+}
