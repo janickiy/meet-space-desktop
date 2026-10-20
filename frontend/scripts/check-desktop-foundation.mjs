@@ -7,6 +7,106 @@ import { build, createServer } from "vite";
 
 const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
+await test("attachments accept archives and office documents with consistent MIME on every OS", async () => {
+  const policy = await compileModule("src/attachmentPolicy.ts", true);
+  for (const [name, mimeType] of [
+    ["Архив.ZIP", "application/zip"],
+    ["backup.tar.gz", "application/gzip"],
+    ["backup.gzip", "application/gzip"],
+    ["backup.tar.bz2", "application/x-bzip2"],
+    ["backup.bzip2", "application/x-bzip2"],
+    ["backup.7z", "application/x-7z-compressed"],
+    ["backup.rar", "application/vnd.rar"],
+    ["backup.tar.xz", "application/x-xz"],
+    ["backup.zst", "application/zstd"],
+    ["backup.lzma", "application/x-lzma"],
+    ["backup.lz4", "application/x-lz4"],
+    ["backup.cpio", "application/x-cpio"],
+    ["backup.lzh", "application/x-lzh-compressed"],
+    [
+      "Документ.DOCX",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
+    ["document.doc", "application/msword"],
+    [
+      "table.xlsx",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ],
+    [
+      "slides.pptx",
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ],
+    ["document.odt", "application/vnd.oasis.opendocument.text"],
+    ["table.ods", "application/vnd.oasis.opendocument.spreadsheet"],
+    ["slides.odp", "application/vnd.oasis.opendocument.presentation"],
+    ["document.rtf", "application/rtf"],
+    ["notes.md", "text/markdown"],
+    ["book.epub", "application/epub+zip"],
+    ["image.jpg", "image/jpeg"],
+    ["table.csv", "text/csv"],
+    ["table.tsv", "text/tab-separated-values"],
+    ["document.pages", "application/vnd.apple.pages"],
+    ["table.numbers", "application/vnd.apple.numbers"],
+    ["slides.key", "application/vnd.apple.keynote"],
+    ["backup.lz", "application/x-lzip"],
+    ["document.docm", "application/vnd.ms-word.document.macroenabled.12"],
+  ]) {
+    for (const type of [
+      "",
+      "application/octet-stream",
+      "application/x-unknown",
+    ]) {
+      const file = new File(["content"], name, { type });
+      assert.equal(policy.validateAttachment(file), null, name);
+      assert.equal(policy.attachmentMimeType(file), mimeType, name);
+    }
+  }
+  const accept = policy.attachmentAccept.split(",");
+  assert.equal(new Set(accept).size, accept.length);
+  for (const extension of [
+    "zip",
+    "gzip",
+    "bzip2",
+    "7z",
+    "rar",
+    "tar",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "odt",
+    "rtf",
+  ])
+    assert.ok(accept.includes(`.${extension}`), extension);
+});
+
+await test("expanded attachments retain size limits and reject unsupported final extensions", async () => {
+  const policy = await compileModule("src/attachmentPolicy.ts", true);
+  for (const size of [1, policy.attachmentLimit])
+    assert.equal(policy.validateAttachment({ name: "backup.zip", size }), null);
+  for (const size of [0, -1, NaN, Infinity, 0.5, policy.attachmentLimit + 1])
+    assert.match(
+      policy.validateAttachment({ name: "backup.zip", size }),
+      /Размер/,
+    );
+  for (const name of [
+    "program.exe",
+    "backup.zip.exe",
+    "document.docx.js",
+    "document.html",
+    "backup.zip.",
+    "zip",
+    "backup.zip ",
+  ])
+    assert.match(
+      policy.validateAttachment({ name, size: 1 }),
+      /Можно прикрепить/,
+      name,
+    );
+});
+
 // Compile the actual production modules with both build flags; no backend fixtures.
 async function compileModule(entry, desktop, extraExports = "") {
   const result = await build({
@@ -1145,6 +1245,24 @@ await test("shared desktop API routes REST/upload through native transport and p
   assert.equal(requests.at(-1).token, "new-marker");
   assert.ok(requests.at(-1).bytes instanceof Uint8Array);
   assert.deepEqual(progress, [100]);
+  for (const [name, type] of [
+    ["backup.zip", "application/zip"],
+    ["backup.tar.gz", "application/gzip"],
+    ["backup.bz2", "application/x-bzip2"],
+    [
+      "document.docx",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ],
+  ]) {
+    await apiModule.uploadAttachment(
+      "https://meeting.janickiy.com/api/v1/conversations/test/attachments/test/content",
+      new File(["attachment"], name, { type: "application/octet-stream" }),
+      () => {},
+      new AbortController().signal,
+    );
+    assert.equal(requests.at(-1).contentType, type);
+    assert.ok(requests.at(-1).bytes instanceof Uint8Array);
+  }
   await assert.rejects(
     apiModule.uploadAttachment(
       "https://other.invalid/api/v1/conversations/test/attachments/test/content",

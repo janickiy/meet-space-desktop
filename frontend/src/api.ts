@@ -1,5 +1,6 @@
 import { isDesktopBuild } from "./platform/build";
 import { serviceOrigin } from "./platform/urls";
+import { attachmentMimeType } from "./attachmentPolicy";
 import {
   desktopRequest,
   desktopNotificationStream,
@@ -1477,7 +1478,7 @@ export function uploadAttachment(
         path: target.pathname,
         method: "PUT",
         file,
-        contentType: file.type || "application/octet-stream",
+        contentType: attachmentMimeType(file),
         responseType: "json",
         token: usedToken,
       },
@@ -1527,10 +1528,7 @@ export function uploadAttachment(
       xhr.timeout = 120000;
       if (usedToken)
         xhr.setRequestHeader("Authorization", `Bearer ${usedToken}`);
-      xhr.setRequestHeader(
-        "Content-Type",
-        file.type || "application/octet-stream",
-      );
+      xhr.setRequestHeader("Content-Type", attachmentMimeType(file));
       xhr.upload.onprogress =
         /**
          * Вложенный обработчик выполняет шаг «Вложенный обработчик» в типизированных HTTP-запросах.

@@ -9,27 +9,15 @@ import {
   type ChatTransport,
 } from "../api";
 import { formatBytes } from "../collaboration";
+import {
+  attachmentAccept,
+  attachmentMimeType,
+  validateAttachment,
+} from "../attachmentPolicy";
 import type { ChatAttachment } from "../types";
 import { Button, ErrorNotice } from "./ui";
 
-export const attachmentLimit = 10 * 1024 * 1024;
-/**
- * validateAttachment проверяет клиентские ограничения имени, типа и размера файла до обращения к серверу.
- *
- * @args
- *   - file (Pick<File, "name" | "size">) — выбранный пользователем файл для проверки или передачи.
- *
- * @returns string | null — текст найденного нарушения либо отсутствие ошибки для допустимого файла.
- */
-export function validateAttachment(
-  file: Pick<File, "name" | "size">,
-): string | null {
-  if (!file.size || file.size > attachmentLimit)
-    return "Размер файла должен быть от 1 байта до 10 МБ.";
-  if (!/\.(jpe?g|png|webp|pdf|txt|csv)$/i.test(file.name))
-    return "Можно прикрепить JPG, PNG, WebP, PDF, TXT или CSV.";
-  return null;
-}
+export { attachmentLimit, validateAttachment } from "../attachmentPolicy";
 /**
  * UploadRow хранит состояние файла, прогресс, результат загрузки и ошибку.
  *
@@ -183,7 +171,7 @@ export function AttachmentUploader({
         clientRequestId: row.key,
         filename: row.file.name,
         size: row.file.size,
-        mimeType: row.file.type || "application/octet-stream",
+        mimeType: attachmentMimeType(row.file),
       });
       if (controller.signal.aborted) return;
       if (result.item.status === "pending")
@@ -248,7 +236,7 @@ export function AttachmentUploader({
         ref={input}
         type="file"
         multiple
-        accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.csv"
+        accept={attachmentAccept}
         aria-label="Выбрать файлы для сообщения"
         hidden
         disabled={disabled || rows.length >= 5}
@@ -322,7 +310,7 @@ export function AttachmentUploader({
         {!compact && "Прикрепить файл"}
       </Button>
       <span className={compact ? "sr-only" : "field-hint"}>
-        До 5 файлов, каждый до 10 МБ.
+        Изображения, документы и архивы. До 5 файлов, каждый до 10 МБ.
       </span>
       <UploadDetails target={detailsTarget}>
         <ErrorNotice>{error || null}</ErrorNotice>
