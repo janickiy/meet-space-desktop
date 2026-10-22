@@ -4,7 +4,15 @@ e7764297eeb4dc562eef7b28144fbff465b2a9173302ed01784aded6a0421b8a  linux/0.1.1-be
 08c7ed2f4253a0246c1bd6575dd848fc2b8c117c85b760623d98143c8f0a808f  linux/0.1.1-beta/DEB/MeetSpace-0.1.1-beta-linux-arm64-test.deb
 74a1ba476d578d9b1441717a35307ebba78bf6d8c40919bc96b2577603ab70ef  linux/0.1.1-beta/RPM/MeetSpace-0.1.1-beta-linux-aarch64-test.rpm
 18fe1cba191d044991efcaa38bd1203d67ce2e68a39b411d8070c4414f51ad4f  linux/0.1.1-beta/RPM/MeetSpace-0.1.1-beta-linux-x86_64-test.rpm
+7e008f306090dc1703fc2a27c37959bd12f15100791dc890479ea1886f6e84cc  linux/0.1.2-beta/AppImage/MeetSpace-0.1.2-beta-linux-arm64-test.AppImage
+c0ac2540941a1066d1aac42ebf0a89b209714420fcecfa4af5180f3bc5ef9657  linux/0.1.2-beta/AppImage/MeetSpace-0.1.2-beta-linux-x86_64-test.AppImage
+f316cfd52a06c088e69db6eb4acb1a100af833d4da2a1ef648edde554923abc1  linux/0.1.2-beta/DEB/MeetSpace-0.1.2-beta-linux-amd64-test.deb
+dcd54dace5d4ffae837308e330db0e0ee30842f59f235b4e745ba7aeeb8091da  linux/0.1.2-beta/DEB/MeetSpace-0.1.2-beta-linux-arm64-test.deb
+8e515daf5104cefe4ef2d8c4931bf14bdd91c1352f3ea19b34faf97b6c5fa4d1  linux/0.1.2-beta/RPM/MeetSpace-0.1.2-beta-linux-aarch64-test.rpm
+258611790b851fa86aa9dead95df9e10a09cdfd1663ec1532ed87dd0a95397e8  linux/0.1.2-beta/RPM/MeetSpace-0.1.2-beta-linux-x86_64-test.rpm
 e5bd349144c8970b72b229f2f74b147e6da2a81fa647c8615cf1781ea5539499  windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe
 43ddd3a39d535090d20b7d5235ee196a9a04ddf8738f24bd20307dcd8d07a47d  windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-x64-test-setup.exe
 70839b7749b2f058e9308b77878e9e03b830fa3d4918d4c57a8a9241c7fc43ac  windows/0.1.1-beta/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe
 6849ea1a00bb670ada6f87a1aed8ce5fab480bd76b615efe50df9bb68f4e2d41  windows/0.1.1-beta/MeetSpace-0.1.1-beta-win-x64-test-setup.exe
+38896ade79686783d7f9b169bafafa279c84062763e4150aee8875f23defdff9  windows/0.1.2-beta/MeetSpace-0.1.2-beta-win-arm64-test-setup.exe
+3b21846b1f73141743a1dd69829f48e3790332b77b3bef47b6c7cd909b83656e  windows/0.1.2-beta/MeetSpace-0.1.2-beta-win-x64-test-setup.exe
