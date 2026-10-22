@@ -27,9 +27,10 @@ const output = path.resolve(__dirname,'../artifacts/ssh-release-20261018');
       if(action==='discover') state={busy:false,phase:'host-key',hasCredentials:false,endpoint:input.endpoint,identity:{fingerprint:'SHA256:'+'F'.repeat(43),algorithm:'ssh-ed25519',changed:false,trusted:false}};
       if(action==='acceptHostKey'){assert.equal(input.fingerprint,state.identity.fingerprint);state.identity.trusted=true;state.phase='trusted';}
       if(action==='preflight') {assert.equal(input.credentials.password,'local-ui-fixture-only'); state.hasCredentials=true;state.phase='preflight';state.preflight={domain:input.domain,checkedAt:new Date().toISOString(),ready:true,checks:[{id:'os',title:'Ubuntu 24.04',level:'pass',detail:'Fixture ready'}]};}
-      if(action==='plan'){state.plan=plan;state.phase='planned';}
+      if(action==='plan'){plan.options=input.options;state.plan=plan;state.phase='planned';assert.equal(input.smtpPassword,undefined);}
       if(action==='apply') {
         assert.equal(input.confirmedPlanHash,plan.hash);assert.equal(input.acceptAcmeTerms,true);assert.equal(input.confirmDockerInstall,true);
+        assert.equal(input.smtpPassword,'smtp-ui-fixture-only');
         state.ticket={jobId:'592ec96c-2562-4509-95ef-fbe145f2e22f',domain:plan.options.domain,...state.endpoint,planHash:plan.hash};
         state.phase='error';state.error={code:'NETWORK',message:'Соединение прервано. Проверьте состояние задания.'};state.hasCredentials=false;
       }
@@ -50,7 +51,11 @@ const output = path.resolve(__dirname,'../artifacts/ssh-release-20261018');
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
     assert.equal(await isDisabled('Доверять этому ключу'),true);assert.equal(calls.some(c=>c.input.credentials),false);
     await click('.desktop-ssh-trust input[type=checkbox]');await clickText('Доверять этому ключу');await visible('Домен будущего MeetSpace');
-    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-public-ip','8.8.8.8');await field('desktop-ssh-password','local-ui-fixture-only');await clickText('Проверить готовность хоста');
+    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-public-ip','8.8.8.8');await field('desktop-ssh-password','local-ui-fixture-only');
+    assert.equal(await execute("document.getElementById('desktop-smtp-enabled').checked"),false);
+    assert.equal(await execute("!!document.getElementById('desktop-smtp-host')"),false);
+    await visible('Без SMTP приглашения и напоминания');await click('#desktop-smtp-enabled');
+    await field('desktop-smtp-host','smtp.example.com');await field('desktop-smtp-from','meetings@example.com');await field('desktop-smtp-username','meetings@example.com');await clickText('Проверить готовность хоста');
     await visible('Подготовить план установки');await clickText('Подготовить план установки');await visible('План установки');
     assert.equal(await isDisabled('Установить MeetSpace'),true);
     assert.equal(await execute("!!document.querySelector('#desktop-ssh-password')"),false);
@@ -63,7 +68,8 @@ const output = path.resolve(__dirname,'../artifacts/ssh-release-20261018');
     }
     await click('#desktop-ssh-plan-consent');assert.equal(await isDisabled('Установить MeetSpace'),true);
     await click('#desktop-ssh-acme-consent');assert.equal(await isDisabled('Установить MeetSpace'),true);
-    await click('#desktop-ssh-docker-consent');await until(async()=> !(await isDisabled('Установить MeetSpace')),'All consents enable installation');
+    await click('#desktop-ssh-docker-consent');assert.equal(await isDisabled('Установить MeetSpace'),true);
+    await field('desktop-smtp-password','smtp-ui-fixture-only');await until(async()=> !(await isDisabled('Установить MeetSpace')),'All consents and SMTP password enable installation');
     await clickText('Установить MeetSpace');await visible('Соединение прервано');
     assert.equal(calls.filter(c=>c.action==='apply').length,1);
     await field('desktop-ssh-password','local-ui-fixture-only');await clickText('Проверить состояние');await visible('Установка ждёт продолжения');
@@ -75,7 +81,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-release-20261018');
     checks.push('Ambiguous apply preserves ticket, accepts reauthentication and checks status without duplicate apply; explicit resume binds saved plan hash');
     await execute("document.querySelector('.desktop-ssh-progress').scrollIntoView({block:'start'});void 0");
     await fs.writeFile(path.join(output,'ssh-completed.png'),(await window.webContents.capturePage()).toPNG());
-    const saved = await execute('JSON.stringify(localStorage)');assert.equal(saved.includes('local-ui-fixture-only'),false);
+    const saved = await execute('JSON.stringify(localStorage)');assert.equal(saved.includes('local-ui-fixture-only'),false);assert.equal(saved.includes('smtp-ui-fixture-only'),false);
     await clickText('К подключению к серверу');await visible('Подключиться к серверу');await until(()=>Promise.resolve(calls.some(c=>c.action==='detach')),'Wizard unmount detaches native credentials');
     checks.push('No SSH credentials in localStorage; terminal status clears reentered password and leaving wizard calls native detach');
     state={...state,status:undefined,phase:'error',error:{code:'STATE_UNAVAILABLE',message:'Состояние задания недоступно.'},hasCredentials:false};

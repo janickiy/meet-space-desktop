@@ -4,7 +4,7 @@ import path from "node:path";
 import { isIP } from "node:net";
 import { atomicWrite } from "../session/vault";
 import { analyzePreflight } from "./preflight";
-import { InstallerBundle, InstallFailure, assertTicketBinding, jsonObject, parseInstallerReply, parseInstallStatus, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
+import { InstallerBundle, InstallFailure, assertTicketBinding, jsonObject, parseInstallerReply, parseInstallStatus, smtpOptions, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
 import { Ssh2Transport, validateHostKey, type SshTransport } from "./transport";
 import { destroyCredentials, normalizeDomain, objectInput, ownCredentials, SshError, validateEndpoint, type OwnedCredentials, type SshAction, type SshEndpoint, type SshHostKey, type SshInstallerState } from "./types";
 
@@ -32,7 +32,12 @@ function installOptions(raw: unknown): InstallOptions {
   if (typeof value.publicIpv4 !== "string" || isIP(value.publicIpv4.trim()) !== 4) throw new SshError("INPUT", "Укажите внешний IPv4-адрес сервера.");
   const acmeEmail = typeof value.acmeEmail === "string" ? value.acmeEmail.trim() : "";
   if (acmeEmail.length > 254 || (acmeEmail && !/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(acmeEmail))) throw new SshError("INPUT", "Проверьте email для сертификата HTTPS.");
-  return { domain, publicIpv4: value.publicIpv4.trim(), acmeEmail };
+  let smtp: InstallOptions["smtp"];
+  if (value.smtp !== undefined) {
+    try { smtp = smtpOptions(value.smtp); }
+    catch { throw new SshError("INPUT", "Проверьте SMTP-сервер, порт, адрес отправителя и режим TLS."); }
+  }
+  return { domain, publicIpv4: value.publicIpv4.trim(), acmeEmail, ...(smtp ? { smtp } : {}) };
 }
 /** The renderer gets public state only; pins and recovery tickets are the only data written to disk. */
 export class SshInstallerController {
@@ -152,12 +157,16 @@ export class SshInstallerController {
           if (this.ticket) throw new SshError("PENDING_JOB", "Задание уже сохранено. Проверьте состояние и используйте продолжение вместо повторного запуска.");
           if (!this.plan || input.confirmedPlanHash !== this.plan.hash || input.acceptAcmeTerms !== true || (this.plan.installDocker && input.confirmDockerInstall !== true)) throw new SshError("CONFIRMATION", "Подтвердите показанный план, условия ACME и необходимые изменения Docker.");
           this.bundle.parsePlan(jsonObject(this.plan.json));
+          const smtpPassword = input.smtpPassword ?? "";
+          if (typeof smtpPassword !== "string" || Buffer.byteLength(smtpPassword) > 4096 || /[\r\n\x00]/.test(smtpPassword) ||
+              (this.plan.options.smtp?.username ? !smtpPassword : Boolean(smtpPassword)))
+            throw new SshError("INPUT", "Введите пароль SMTP для указанного пользователя.");
           if (this.plan.existingJobId) throw new SshError("PENDING_JOB", "На сервере уже есть задание. Проверьте его состояние и используйте продолжение.");
           this.ticket ??= this.createTicket(endpoint, pin);
           assertTicketBinding(this.ticket, endpoint, pin.fingerprint);
           await this.saveTicket(); this.publishTicket();
           if (generation !== this.generation) return this.state(); // Persist before the remote mutation, so disconnects are recoverable.
-          const result = await this.request("apply", { plan: jsonObject(this.plan.json), jobId: this.ticket.jobId, confirmedPlanHash: this.plan.hash, confirmDockerInstall: input.confirmDockerInstall === true, acceptAcmeTerms: true }, endpoint, pin);
+          const result = await this.request("apply", { plan: jsonObject(this.plan.json), jobId: this.ticket.jobId, confirmedPlanHash: this.plan.hash, confirmDockerInstall: input.confirmDockerInstall === true, acceptAcmeTerms: true, ...(this.plan.options.smtp ? { smtpPassword } : {}) }, endpoint, pin);
           if (generation !== this.generation) return this.state();
           this.publishStatus(result);
         } else {

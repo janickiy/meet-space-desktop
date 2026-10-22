@@ -15,28 +15,29 @@ const keyBytes = Buffer.concat([Buffer.from([0,0,0,11]), Buffer.from('ssh-ed2551
 const pin = hostKeyFromBytes(keyBytes);
 const credentials = { kind: 'password', password: 'only-in-memory-fixture-secret' };
 function probe() { return JSON.stringify({ protocol: 'MSPF2', kernel: 'Linux', arch: 'aarch64', cpu: 4, uid: 0, distro: 'ubuntu', distroVersion: '24.04', ramKiB: 8*1048576, diskKiB: 30*1048576, sudo: 'root', docker: 'missing', dockerAccess: false, compose: 'missing', existingContainers: false, existingPaths: false, tcpPorts: [22], udpPorts: [], domainIps: ['8.8.8.8'], hostIps: ['8.8.8.8'], firewall: 'unknown', complete: true }); }
-function planFixture() {
+function planFixture(selectedOptions = options) {
   const now = Math.floor(Date.now()/1000);
   const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:['8.8.8.8'], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
+  p.options = selectedOptions;
   return { ...p, hash:sha256(canonicalJson(p)) };
 }
 async function fixture(t) {
   const storageDir = await fs.mkdtemp(path.join(os.tmpdir(),'meetspace-ssh-controller-'));
-  const calls=[], owned=[], plans=[]; let statusState='running', error;
+  const calls=[], owned=[], plans=[], requests=[]; let statusState='running', error;
   const transport={
     async inspect(){calls.push('inspect');return pin},
     async probe(e,c,p,d,signal){calls.push('probe');owned.push(c);if(error)throw error;return probe()},
     async installer(e,c,p,payload,signal){
       const encoded=/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1];
-      const {action,request}=JSON.parse(Buffer.from(encoded,'base64'));calls.push(action);owned.push(c);if(error)throw error;
-      if(action==='plan'){const result=planFixture();plans.push(result);return JSON.stringify({protocol:'MSI1',ok:true,result})}
+      const {action,request}=JSON.parse(Buffer.from(encoded,'base64'));calls.push(action);requests.push({action,request});owned.push(c);if(error)throw error;
+      if(action==='plan'){const result=planFixture(request.options);plans.push(result);return JSON.stringify({protocol:'MSI1',ok:true,result})}
       const plan=plans.at(-1)??planFixture();
       return JSON.stringify({protocol:'MSI1',ok:true,result:{jobId:request.jobId,planHash:request.planHash??request.confirmedPlanHash,commit:plan.commit,domain:plan.options.domain,releaseVersion:plan.releaseVersion,state:statusState,phase:statusState==='completed'?'readiness':'images',completedPhases:statusState==='completed'?[...installPhases]:['docker','source'],events:[]}})
     },dispose(){calls.push('dispose')},
   };
   const controller=new SshInstallerController({storageDir,bundleRoot,transport});await controller.load();
   t.after(async()=>{controller.dispose();await fs.rm(storageDir,{recursive:true,force:true})});
-  return {controller,transport,calls,owned,storageDir,setError:e=>error=e,setState:s=>statusState=s};
+  return {controller,transport,calls,requests,owned,storageDir,setError:e=>error=e,setState:s=>statusState=s};
 }
 async function planned(f){
   let s=await f.controller.invoke('discover',{endpoint});assert.equal(s.identity.trusted,false);
@@ -51,6 +52,26 @@ test('explicit pin confirmation precedes credentials; native state and disk neve
   s=await f.controller.invoke('preflight',{domain:options.domain,credentials});assert.equal(s.error.code,'UNTRUSTED_HOST');assert.deepEqual(f.calls,['inspect']);
   s=await planned(f);assert.equal(s.hasCredentials,true);assert.equal(s.plan.json,undefined);assert.ok(!JSON.stringify(s).includes(credentials.password));
   for(const name of await fs.readdir(f.storageDir))assert.ok(!(await fs.readFile(path.join(f.storageDir,name),'utf8')).includes(credentials.password));
+});
+
+test('SMTP password is apply-only and never persisted in plans, recovery tickets or public state', async t => {
+  const f = await fixture(t); await planned(f);
+  const smtp = {host:'smtp.example.com',port:587,from:'meetings@example.com',username:'meetings@example.com',tlsMode:'starttls'};
+  const plannedState = await f.controller.invoke('plan', {options:{...options,smtp}});
+  assert.deepEqual(plannedState.plan.options.smtp,smtp);
+  const request = {confirmedPlanHash:plannedState.plan.hash,confirmDockerInstall:true,acceptAcmeTerms:true};
+  for (const smtpPassword of [undefined,'','invalid\nsecret']) {
+    const rejected = await f.controller.invoke('apply', {...request,smtpPassword});
+    assert.equal(rejected.error.code,'INPUT');
+    assert.equal(f.calls.includes('apply'),false);
+  }
+  const secret = 'private-SMTP-test-password';
+  const applied = await f.controller.invoke('apply', {...request,smtpPassword:secret});
+  assert.equal(applied.status.state,'running');
+  assert.equal(f.requests.find(item=>item.action==='apply').request.smtpPassword,secret);
+  for (const entry of f.requests.filter(item=>item.action==='plan')) assert.equal(JSON.stringify(entry).includes(secret),false);
+  assert.equal(JSON.stringify(applied).includes(secret),false);
+  for (const name of await fs.readdir(f.storageDir)) assert.equal((await fs.readFile(path.join(f.storageDir,name),'utf8')).includes(secret),false);
 });
 test('discover invalidates prior unticketed plan and auth; apply requires independent explicit plan consent',async t=>{
   const f=await fixture(t), s=await planned(f);

@@ -6,7 +6,8 @@ import { isIP } from "node:net";
 export type JsonObject = Record<string, unknown>;
 export type InstallerAction = "plan" | "apply" | "status" | "cancel" | "resume";
 export type InstallState = "running" | "cancel_requested" | "cancelled" | "needs_recovery" | "failed" | "completed";
-export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string }
+export interface SmtpOptions { host: string; port: number; from: string; username: string; tlsMode: "starttls" | "tls" }
+export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string; smtp?: SmtpOptions }
 export interface InstallEndpoint { host: string; port: number; user: string }
 export interface InstallPlan {
   json: string; hash: string; version: string; commit: string; options: InstallOptions;
@@ -52,6 +53,19 @@ function sameKeys(value: JsonObject, keys: readonly string[]): boolean {
   return Object.keys(value).sort().join("\0") === [...keys].sort().join("\0");
 }
 export function sha256(value: string | Buffer): string { return createHash("sha256").update(value).digest("hex"); }
+
+/** Validate public SMTP settings; credentials are sent only with apply, never in a plan. */
+export function smtpOptions(raw: unknown): SmtpOptions {
+  const value = object(raw);
+  requireValue(sameKeys(value, ["host", "port", "from", "username", "tlsMode"]));
+  const host = string(value.host), from = string(value.from), username = string(value.username);
+  const port = integer(value.port), tlsMode = string(value.tlsMode);
+  requireValue(host.length <= 253 && (isIP(host) !== 0 || host.split(".").every(label => /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))));
+  requireValue(port > 0 && port <= 65535 && ["starttls", "tls"].includes(tlsMode));
+  requireValue(from.length <= 254 && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(from));
+  requireValue(Buffer.byteLength(username) > 0 && Buffer.byteLength(username) <= 254 && !/[\r\n\x00]/.test(username));
+  return { host, port, from, username, tlsMode: tlsMode as SmtpOptions["tlsMode"] };
+}
 
 // Match runner.py's ensure_ascii=True canonical JSON, including escaped UTF-16 pairs.
 export function canonicalJson(value: unknown): string {
@@ -132,7 +146,7 @@ export class InstallerBundle {
       this.manifest = jsonObject(files["release.json"]);
       requireValue(this.manifest.schema === 1 && this.manifest.installerVersion === "1.0.0" && this.manifest.profile === "source-v1");
       requireValue(this.manifest.runnerSha256 === sha256(files["runner.py"]) && this.manifest.dockerKeySha256 === sha256(files["docker.asc"]));
-      requireValue(this.manifest.sourcePolicy === "github-latest-stable-v1");
+      requireValue(this.manifest.sourcePolicy === undefined || this.manifest.sourcePolicy === "github-latest-stable-v1");
       this.files = Object.fromEntries(installerBundleNames.map(name => [name, Buffer.from(files[name])]));
       deepFreeze(this.manifest);
     } catch { throw new InstallFailure("RELEASE_INVALID"); }
@@ -178,13 +192,16 @@ export class InstallerBundle {
       requireValue(value.commit === release.commit && value.releaseVersion === release.version && value.runnerSha256 === release.runnerSha256);
       requireValue(value.root === "/opt/meetspace" && value.project === "meetspace");
       const optionsObject = object(value.options);
-      requireValue(sameKeys(optionsObject, ["domain", "publicIpv4", "acmeEmail"]) || sameKeys(optionsObject, ["domain", "publicIpv4"]));
+      const optionKeys = ["domain", "publicIpv4", ...(optionsObject.acmeEmail === undefined ? [] : ["acmeEmail"]), ...(optionsObject.smtp === undefined ? [] : ["smtp"])];
+      requireValue(sameKeys(optionsObject, optionKeys));
       const options: InstallOptions = { domain: string(optionsObject.domain), publicIpv4: string(optionsObject.publicIpv4), acmeEmail: optionalString(optionsObject.acmeEmail) ?? "" };
+      if (optionsObject.smtp !== undefined) options.smtp = smtpOptions(optionsObject.smtp);
       requireValue(validDomain(options.domain) && isIP(options.publicIpv4) === 4);
       requireValue((options.acmeEmail?.length ?? 0) <= 254 && !/[\r\n\x00]/.test(options.acmeEmail ?? ""));
       if (validation.expectedOptions) {
         requireValue(options.domain === validation.expectedOptions.domain && options.publicIpv4 === validation.expectedOptions.publicIpv4);
         requireValue(options.acmeEmail === (validation.expectedOptions.acmeEmail ?? ""));
+        requireValue(canonicalJson(options.smtp ?? null) === canonicalJson(validation.expectedOptions.smtp ?? null));
       }
       const issuedAt = integer(value.issuedAt); const expiresAt = integer(value.expiresAt);
       requireValue(issuedAt > 0 && expiresAt === issuedAt + 900);
@@ -223,6 +240,7 @@ export class InstallerBundle {
 
   private effectiveManifest(plan: JsonObject): JsonObject {
     if (plan.sourceLock === undefined) return this.manifest;
+    requireValue(this.manifest.sourcePolicy === "github-latest-stable-v1");
     const lock = object(plan.sourceLock);
     requireValue(plan.recipeSha256 === sha256(canonicalJson(this.manifest)));
     requireValue(sameKeys(lock, ["repository", "channel", "ref", "version", "commit", "builtAt", "sourceUrl", "sourceSha256", "sourceFiles"]));

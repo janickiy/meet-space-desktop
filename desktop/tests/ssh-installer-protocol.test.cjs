@@ -18,7 +18,7 @@ const jobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62';
 const fingerprint = 'SHA256:' + Buffer.alloc(32, 7).toString('base64').replace(/=+$/, '');
 const signHash = value => ({ ...value, hash: sha256(canonicalJson(Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'hash')))) });
 
-function fixture({ sourceLock = true, platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false } = {}) {
+function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-stable-v1', platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false } = {}) {
   const manifest = JSON.parse(JSON.stringify(bundle.manifest));
   const lock = {
     repository: 'janickiy/meet-space', channel: 'release', ref: 'v1.2.3', version: 'v1.2.3',
@@ -59,7 +59,7 @@ const failure = (fn, code) => assert.throws(fn, error => error instanceof Instal
 
 test('production bundle retains upstream bytes/provenance and verifies pinned RSA trust', () => {
   const provenance = JSON.parse(fs.readFileSync(path.join(directory, '../provenance.json')));
-  assert.equal(provenance.commit, 'e3424b0083987bf1f9f0513ec5aa5825ee2d39d2');
+  assert.equal(provenance.commit, '9789b64ecc28fe265d4a059d36912db39ab0c2eb');
   assert.equal(provenance.modified, false);
   assert.deepEqual(fs.readdirSync(directory).sort(), [...installerBundleNames].sort());
   for (const [name, data] of Object.entries(files())) {
@@ -118,21 +118,36 @@ test('MSI1 responses expose only a result object or a bounded fixed code', () =>
   }
 });
 
-test('current source plan freezes upstream selection, architecture, recipe and OS Docker package matrix', () => {
+test('signed source plan freezes upstream selection, architecture, recipe and OS Docker package matrix', () => {
+  const dynamic = bundle.manifest.sourcePolicy === 'github-latest-stable-v1';
   for (const platform of ['22.04', '24.04']) for (const arch of ['amd64', 'arm64']) {
     const parsed = bundle.parsePlan(fixture({ platform, arch }), { now, expectedOptions: options });
-    assert.equal(parsed.version, 'v1.2.3'); assert.equal(parsed.commit, 'a'.repeat(40));
+    assert.equal(parsed.version, dynamic ? 'v1.2.3' : bundle.manifest.version);
+    assert.equal(parsed.commit, dynamic ? 'a'.repeat(40) : bundle.manifest.commit);
     assert.equal(parsed.architecture, arch); assert.equal(parsed.installDocker, true);
-    assert.equal(parsed.sourceSelection, 'release: v1.2.3'); assert.equal(parsed.sourceSha256, 'b'.repeat(64));
+    assert.equal(parsed.sourceSelection, dynamic ? 'release: v1.2.3' : undefined);
+    assert.equal(parsed.sourceSha256, dynamic ? 'b'.repeat(64) : bundle.manifest.sourceSha256);
   }
   const plugins = bundle.parsePlan(fixture({ installed: true, compose: true, buildx: true }), { now });
   assert.equal(plugins.installDockerPluginsOnly, true); assert.deepEqual(plugins.missingDockerPlugins, ['Compose', 'Buildx']);
   assert.equal(bundle.parsePlan(fixture({ installed: true }), { now }).installDocker, false);
   assert.equal(bundle.parsePlan(fixture({ sourceLock: false }), { now }).commit, bundle.manifest.commit);
+  if (!dynamic) failure(() => bundle.parsePlan(fixture({ sourceLock: true }), { now }), 'PLAN_INVALID');
+});
+
+test('public SMTP settings are bound to the confirmed plan and never accept a password', () => {
+  const smtp = {host:'smtp.example.com',port:465,from:'meetings@example.com',username:'meetings@example.com',tlsMode:'tls'};
+  const value = fixture(); value.options.smtp = smtp;
+  const expectedOptions = {...options,smtp};
+  assert.deepEqual(bundle.parsePlan(signHash(value),{now,expectedOptions}).options.smtp,smtp);
+  failure(()=>bundle.parsePlan(signHash(value),{now,expectedOptions:{...options,smtp:{...smtp,host:'other.example.com'}}}),'PLAN_INVALID');
+  for (const invalid of [{...smtp,password:'forbidden'}, {...smtp,tlsMode:'none'}, {...smtp,port:0}, {...smtp,username:''}, {...smtp,from:'x\nBCC: y'}, {...smtp,host:'smtp.example.com;id'}]) {
+    failure(()=>bundle.parsePlan(signHash({...value,options:{...options,smtp:invalid}}),{now}),'PLAN_INVALID');
+  }
 });
 
 test('rehashing cannot hide a changed source lock, recipe, install target, Docker package pin or consent action', () => {
-  const mutations = [
+  const lockMutations = [
     value => { value.sourceLock.repository = 'attacker/project'; },
     value => { value.sourceLock.sourceUrl = 'https://evil.example/payload.tar.gz'; },
     value => { value.sourceLock.commit = 'b'.repeat(40); },
@@ -140,6 +155,12 @@ test('rehashing cannot hide a changed source lock, recipe, install target, Docke
     value => { value.sourceLock.version = 'v9.9.9'; },
     value => { value.sourceLock.channel = 'prerelease'; },
     value => { value.recipeSha256 = 'f'.repeat(64); },
+  ];
+  for (const mutate of lockMutations) {
+    const changed = JSON.parse(JSON.stringify(fixture({ sourceLock: true }))); mutate(changed);
+    failure(() => bundle.parsePlan(signHash(changed), { now }), 'PLAN_INVALID');
+  }
+  const mutations = [
     value => { value.releaseSha256 = 'f'.repeat(64); },
     value => { value.runnerSha256 = 'f'.repeat(64); },
     value => { value.root = '/etc'; },

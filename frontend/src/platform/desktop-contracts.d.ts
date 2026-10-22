@@ -215,7 +215,18 @@ export interface SshInstallerState {
     hash: string;
     version: string;
     commit: string;
-    options: { domain: string; publicIpv4: string; acmeEmail?: string };
+    options: {
+      domain: string;
+      publicIpv4: string;
+      acmeEmail?: string;
+      smtp?: {
+        host: string;
+        port: number;
+        from: string;
+        username: string;
+        tlsMode: "starttls" | "tls";
+      };
+    };
     architecture: "amd64" | "arm64";
     installDocker: boolean;
     expiresAt: number;

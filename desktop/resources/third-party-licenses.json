@@ -3,10 +3,10 @@
   "applicationLicense": "UNLICENSED",
   "inventory": "actual installed production closure plus Vite injected helper; conservative installed peers included",
   "lockfiles": {
-    "frontend": "ee9f1765a377a0e5580a46a07db97646a85e87bc7e0b2c7b321218a906320932",
-    "desktop": "d66392949b85a6f676caeb413ad92837d709fc2b4ddac0c668784e8106d240c7"
+    "frontend": "db689fe131fe448895897cb4e5b0e52fee907644b71140c10d607c71c7ac55ba",
+    "desktop": "b44129e97b3ba17142aab6ece4064e7d1157fac1ebbce6e23902235e68094fac"
   },
-  "noticesSha256": "d6c0637f9c0a27841c7937d168f70eee6f30c247d68c77c2d5a941ff1b2fe51a",
+  "noticesSha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd",
   "separateNotices": [
     "LICENSE.electron.txt",
     "LICENSES.chromium.html"
@@ -252,7 +252,7 @@
     },
     {
       "name": "vite",
-      "version": "8.3.1",
+      "version": "8.3.5",
       "license": "MIT",
       "scopes": [
         "bundled renderer build helper"
@@ -260,7 +260,7 @@
       "licenses": [
         {
           "filename": "LICENSE.md",
-          "sha256": "387dd7baa307083401a27c58c362c30832f5ba1dba84f10cc22c33401523f45c"
+          "sha256": "a22152baa1aef74402443008e767e7c689a524c0909d19b0431d97f5ab066a13"
         }
       ]
     },

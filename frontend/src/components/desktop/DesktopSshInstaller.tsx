@@ -67,6 +67,16 @@ export function DesktopSshInstaller({
   const [user, setUser] = useState("root");
   const [domain, setDomain] = useState("");
   const [publicIpv4, setPublicIpv4] = useState("");
+  const [acmeEmail, setAcmeEmail] = useState("");
+  const [smtpEnabled, setSmtpEnabled] = useState(false);
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("587");
+  const [smtpFrom, setSmtpFrom] = useState("");
+  const [smtpUsername, setSmtpUsername] = useState("");
+  const [smtpTlsMode, setSmtpTlsMode] = useState<"starttls" | "tls">(
+    "starttls",
+  );
+  const [smtpPassword, setSmtpPassword] = useState("");
   const [authKind, setAuthKind] = useState<"password" | "privateKey">(
     "password",
   );
@@ -105,6 +115,7 @@ export function DesktopSshInstaller({
     if (nextDomain) setDomain(nextDomain);
     if (next.plan?.options.publicIpv4)
       setPublicIpv4(next.plan.options.publicIpv4);
+    if (next.ticket || next.status?.terminal) setSmtpPassword("");
     if (next.hasCredentials || next.status?.terminal) clearCredentials();
   };
 
@@ -146,6 +157,8 @@ export function DesktopSshInstaller({
           input.credentials !== undefined
         )
           clearCredentials();
+        if (action === "apply" || action === "detach" || action === "forget")
+          setSmtpPassword("");
         setBusy(false);
       }
     }
@@ -549,6 +562,107 @@ export function DesktopSshInstaller({
                 A-запись домена должна вести прямо на этот IPv4. Для сертификата
                 HTTPS нужны доступные порты 80 и 443.
               </p>
+              <label htmlFor="desktop-ssh-acme-email">
+                Email для сертификата HTTPS
+              </label>
+              <input
+                id="desktop-ssh-acme-email"
+                type="email"
+                maxLength={254}
+                value={acmeEmail}
+                disabled={disabled}
+                autoComplete="email"
+                onChange={(event) => setAcmeEmail(event.target.value)}
+              />
+              <fieldset className="desktop-ssh-auth" disabled={disabled}>
+                <legend>Почтовые уведомления</legend>
+                <label className="desktop-ssh-checkbox">
+                  <input
+                    id="desktop-smtp-enabled"
+                    type="checkbox"
+                    checked={smtpEnabled}
+                    onChange={(event) => {
+                      setSmtpEnabled(event.target.checked);
+                      setSmtpPassword("");
+                    }}
+                  />
+                  <span>Отправлять приглашения и напоминания по email</span>
+                </label>
+                {smtpEnabled ? (
+                  <>
+                    <label htmlFor="desktop-smtp-host">SMTP-сервер</label>
+                    <input
+                      id="desktop-smtp-host"
+                      required
+                      maxLength={253}
+                      value={smtpHost}
+                      placeholder="smtp.example.com"
+                      autoComplete="off"
+                      spellCheck={false}
+                      onChange={(event) => setSmtpHost(event.target.value)}
+                    />
+                    <label htmlFor="desktop-smtp-tls">
+                      Защищённое соединение
+                    </label>
+                    <select
+                      id="desktop-smtp-tls"
+                      value={smtpTlsMode}
+                      onChange={(event) => {
+                        const mode = event.target.value as "starttls" | "tls";
+                        setSmtpTlsMode(mode);
+                        setSmtpPort(mode === "tls" ? "465" : "587");
+                      }}
+                    >
+                      <option value="starttls">
+                        STARTTLS (обычно порт 587)
+                      </option>
+                      <option value="tls">TLS (обычно порт 465)</option>
+                    </select>
+                    <label htmlFor="desktop-smtp-port">Порт SMTP</label>
+                    <input
+                      id="desktop-smtp-port"
+                      required
+                      type="number"
+                      min={1}
+                      max={65535}
+                      value={smtpPort}
+                      onChange={(event) => setSmtpPort(event.target.value)}
+                    />
+                    <label htmlFor="desktop-smtp-from">Email отправителя</label>
+                    <input
+                      id="desktop-smtp-from"
+                      required
+                      type="email"
+                      maxLength={254}
+                      value={smtpFrom}
+                      placeholder="meetings@example.com"
+                      autoComplete="off"
+                      onChange={(event) => setSmtpFrom(event.target.value)}
+                    />
+                    <label htmlFor="desktop-smtp-username">
+                      Пользователь SMTP
+                    </label>
+                    <input
+                      id="desktop-smtp-username"
+                      required
+                      maxLength={254}
+                      value={smtpUsername}
+                      autoComplete="off"
+                      onChange={(event) => setSmtpUsername(event.target.value)}
+                    />
+                    <p className="field-hint">
+                      Пароль SMTP потребуется перед запуском установки.
+                      Используйте данные вашего почтового провайдера.
+                    </p>
+                  </>
+                ) : (
+                  <p className="field-hint">
+                    Настройка необязательна. Без SMTP приглашения и напоминания
+                    по email не отправляются. Почту можно подключить позже через
+                    файл настроек на сервере.
+                  </p>
+                )}
+              </fieldset>
               {credentialsForm}
               {state?.hasCredentials && (
                 <p className="desktop-ssh-memory">
@@ -586,13 +700,30 @@ export function DesktopSshInstaller({
                     !state.preflight.ready ||
                     state.preflight.domain !== domain.trim().toLowerCase() ||
                     !credentialReady ||
-                    !publicIpv4.trim()
+                    !publicIpv4.trim() ||
+                    (smtpEnabled &&
+                      (!smtpHost.trim() ||
+                        !smtpFrom.trim() ||
+                        !smtpUsername.trim() ||
+                        !smtpPort))
                   }
                   onClick={() =>
                     void act("plan", {
                       options: {
                         domain: domain.trim(),
                         publicIpv4: publicIpv4.trim(),
+                        acmeEmail: acmeEmail.trim(),
+                        ...(smtpEnabled
+                          ? {
+                              smtp: {
+                                host: smtpHost.trim(),
+                                port: Number(smtpPort),
+                                from: smtpFrom.trim(),
+                                username: smtpUsername.trim(),
+                                tlsMode: smtpTlsMode,
+                              },
+                            }
+                          : {}),
                       },
                       credentials: credentials(),
                     })
@@ -607,6 +738,14 @@ export function DesktopSshInstaller({
             <div className="desktop-ssh-plan">
               <h2>{ticket ? "Сохранённый план" : "План установки"}</h2>
               <dl>
+                <div>
+                  <dt>Почтовые уведомления</dt>
+                  <dd>
+                    {plan.options.smtp
+                      ? `${plan.options.smtp.from} · ${plan.options.smtp.host}:${plan.options.smtp.port} · ${plan.options.smtp.tlsMode.toUpperCase()}`
+                      : "Не настроены"}
+                  </dd>
+                </div>
                 <div>
                   <dt>Сервер</dt>
                   <dd>https://{plan.options.domain}</dd>
@@ -685,6 +824,28 @@ export function DesktopSshInstaller({
               {!ticket && (
                 <>
                   {credentialsForm}
+                  {plan.options.smtp?.username && (
+                    <div className="desktop-ssh-form">
+                      <label htmlFor="desktop-smtp-password">
+                        Пароль SMTP — {plan.options.smtp.username}
+                      </label>
+                      <input
+                        id="desktop-smtp-password"
+                        type="password"
+                        maxLength={4096}
+                        value={smtpPassword}
+                        disabled={disabled}
+                        autoComplete="new-password"
+                        onChange={(event) =>
+                          setSmtpPassword(event.target.value)
+                        }
+                      />
+                      <p className="field-hint">
+                        Передаётся на сервер по SSH. В карточке задания и
+                        настройках приложения пароль не сохраняется.
+                      </p>
+                    </div>
+                  )}
                   {expired && (
                     <ErrorNotice>
                       Срок плана истёк. Подготовьте новый план и проверьте
@@ -764,6 +925,7 @@ export function DesktopSshInstaller({
                         !credentialReady ||
                         !planConfirmed ||
                         !acmeConsent ||
+                        (!!plan.options.smtp?.username && !smtpPassword) ||
                         (needsDockerConsent && !dockerConsent)
                       }
                       onClick={() =>
@@ -772,6 +934,7 @@ export function DesktopSshInstaller({
                           confirmDockerInstall: dockerConsent,
                           acceptAcmeTerms: acmeConsent,
                           credentials: credentials(),
+                          smtpPassword,
                         })
                       }
                     >
