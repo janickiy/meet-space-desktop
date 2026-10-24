@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceTreeSha256": "dceb5267161cefa220cb83b54d80542d6237283a1db81dc272af29449371cee9",
+  "arch": "x64",
+  "format": "rpm",
+  "formats": [
+    "rpm"
+  ],
+  "verifiedFormats": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "verifiedStaging": "/release/source/desktop/artifacts/.linux-staging-dceb5267161cefa220cb83b54d80542d6237283a1db81dc272af29449371cee9-x64-pFZU4r",
+  "immutableDirectory": "/release/source/desktop/artifacts/linux/RPM/0.1.3-beta/dceb5267161cefa220cb83b54d80542d6237283a1db81dc272af29449371cee9/x64",
+  "overwriteAllowed": false
+}
