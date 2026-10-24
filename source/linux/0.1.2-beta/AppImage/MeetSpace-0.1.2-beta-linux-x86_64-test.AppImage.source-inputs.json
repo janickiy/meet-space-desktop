@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+  "sourceCommit": "b4dfeb7168b3199e013adcc5b2545ab380568f60",
   "sourceDirty": true,
-  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
+  "sourceTreeSha256": "5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc",
   "files": [
     {
       "path": ".github/workflows/desktop-acceptance.yml",
@@ -1316,8 +1316,8 @@
     },
     {
       "path": "frontend/src/components/ConferenceInvitations.tsx",
-      "sha256": "d2790be3266e1ee3ed91493b0b118e392f0318660b76cc4a3424cbcb63180779",
-      "bytes": 18448
+      "sha256": "ff0d0f9c8929f02d1f0c29e9b9373aea369b721fe4175751edccc7724280cfab",
+      "bytes": 18302
     },
     {
       "path": "frontend/src/components/ConferenceModals.tsx",
@@ -1546,8 +1546,8 @@
     },
     {
       "path": "frontend/src/components/conference-invitations.css",
-      "sha256": "cac394c6ce4c898aa324d6b93c1149d3099d021a609e40ffc21e0d06a05e0dc4",
-      "bytes": 8783
+      "sha256": "7d843cd247125a7ed9ebf2f2e6da1a66a196d66e78c5dd95e76b81abeb56a4e4",
+      "bytes": 8455
     },
     {
       "path": "frontend/src/components/conference/ActiveConferenceRoom.tsx",

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
+  "sourceTreeSha256": "5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc",
   "arch": "arm64",
   "format": "deb",
   "formats": [
@@ -11,7 +11,7 @@
     "rpm",
     "AppImage"
   ],
-  "verifiedStaging": "/home/meetspace/releases/installer-fix-20261024/source/desktop/artifacts/.linux-staging-07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef-arm64-928PGu",
-  "immutableDirectory": "/home/meetspace/releases/installer-fix-20261024/source/desktop/artifacts/linux/DEB/0.1.2-beta/07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef/arm64",
+  "verifiedStaging": "/home/meetspace/releases/installer-fix-20261024/source/desktop/artifacts/.linux-staging-5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc-arm64-BgXfrR",
+  "immutableDirectory": "/home/meetspace/releases/installer-fix-20261024/source/desktop/artifacts/linux/DEB/0.1.2-beta/5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc/arm64",
   "overwriteAllowed": false
 }

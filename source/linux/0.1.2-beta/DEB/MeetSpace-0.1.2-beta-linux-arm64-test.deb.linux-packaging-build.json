@@ -8,9 +8,9 @@
   "builder": "26.17.0",
   "version": "0.1.2-beta",
   "releaseMode": "test",
-  "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+  "sourceCommit": "b4dfeb7168b3199e013adcc5b2545ab380568f60",
   "sourceDirty": true,
-  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
+  "sourceTreeSha256": "5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc",
   "formats": [
     "deb",
     "rpm",
