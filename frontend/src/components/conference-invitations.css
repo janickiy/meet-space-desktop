@@ -242,7 +242,7 @@
   max-width: 100%;
   aspect-ratio: 1;
   padding: 18px;
-  margin: 0 auto 13px;
+  margin: 0 auto;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: #fff;
@@ -256,16 +256,6 @@
 .call-share-qr-code > span {
   font-size: calc(11px * var(--text-scale));
   line-height: 1.5;
-}
-.call-share-qr strong {
-  font-size: calc(12px * var(--text-scale));
-  line-height: 1.5;
-}
-.call-share-qr > p {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: calc(11px * var(--text-scale));
-  line-height: 1.55;
 }
 .call-share-footer {
   display: flex;
@@ -369,7 +359,6 @@
   .call-share-qr-code {
     width: 180px;
     padding: 16px;
-    margin-bottom: 9px;
   }
   .call-share-card .copy-link {
     margin-top: 15px;
@@ -401,9 +390,6 @@
   }
   .call-share-card .copy-link input {
     flex-basis: 120px;
-  }
-  .call-share-qr strong {
-    font-size: calc(11px * var(--text-scale));
   }
   .modal.call-share-modal > h2 {
     font-size: calc(20px * var(--text-scale));

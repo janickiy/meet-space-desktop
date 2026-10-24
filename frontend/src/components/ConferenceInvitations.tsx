@@ -76,8 +76,6 @@ export function ConferenceInvitationDialog({
               </div>
               <aside className="call-share-qr">
                 <MeetingQrCode link={link} />
-                <strong>QR-код встречи</strong>
-                <p>Отсканируйте, чтобы открыть ссылку</p>
               </aside>
             </div>
             {(canInvite || onBack) && (
