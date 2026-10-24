@@ -82,6 +82,9 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     const isDisabled=value=>execute(`([...document.querySelectorAll('button')].find(e=>e.textContent.trim()===${JSON.stringify(value)}))?.disabled`);
     await fs.mkdir(output,{recursive:true});
     const capture = async (name, {width=1280,height=800,theme='light',selector='.desktop-ssh-installer',largeText=false}={}) => {
+      // Display geometry notifications can restore the production minimum after
+      // startup; reset it for each deliberate narrow-layout capture.
+      window.setMinimumSize(0,0);
       window.setContentSize(width,height);
       await execute(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.largeText=${JSON.stringify(String(largeText))};document.documentElement.style.setProperty('--text-scale',${JSON.stringify(largeText ? '1.5' : '1')});document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'start'});void 0`);
       await execute('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');
@@ -89,7 +92,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       {
         const layout = await execute(`(() => {
           const root=document.documentElement;
-          const selectors='.desktop-foundation-card,.desktop-ssh-installer,.desktop-ssh-checks,.desktop-ssh-checks li,.desktop-ssh-installer .button,.desktop-ssh-installer input,.desktop-ssh-progress-summary,.desktop-ssh-phases,.desktop-ssh-phases li,.desktop-ssh-source-options,.desktop-ssh-source-option,.desktop-ssh-phase-details';
+          const selectors='.desktop-foundation-card,.desktop-ssh-installer,.desktop-ssh-checks,.desktop-ssh-checks li,.desktop-ssh-installer .button,.desktop-ssh-installer input,.desktop-ssh-progress-summary,.desktop-ssh-phases,.desktop-ssh-phases li,.desktop-ssh-source-options,.desktop-ssh-source-option,.desktop-ssh-phase-details,.desktop-ssh-saved-entry';
           const overflowing=[...document.querySelectorAll(selectors)].filter(element => element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1).map(element => ({selector:element.id || element.className,width:element.clientWidth,scrollWidth:element.scrollWidth}));
           return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing};
         })()`);
@@ -109,6 +112,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       const box=summary?.getBoundingClientRect();
       return {
         text:summary?.textContent,mode:summary?.dataset.mode,
+        hasProgressBar:!!bar,hasSpinner:!!summary?.querySelector('.spin'),
         percent:bar?.getAttribute('aria-valuenow') ?? null,
         minimum:bar?.getAttribute('aria-valuemin'),maximum:bar?.getAttribute('aria-valuemax'),
         valueText:bar?.getAttribute('aria-valuetext'),
@@ -125,8 +129,13 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       await until(async()=> (await progressSnapshot()).mode===mode, 'Missing progress mode '+mode);
       const observed=await progressSnapshot();
       assert.equal(observed.percent,percent===null ? null : String(percent));
-      assert.equal(observed.minimum,'0');assert.equal(observed.maximum,'100');
-      assert.ok(observed.valueText,'Progress exposes a useful screen-reader description');
+      if(mode==='unknown') {
+        assert.equal(observed.hasProgressBar,false,'An unrequested remote status has no fabricated progress indicator');
+        assert.equal(observed.hasSpinner,false,'An unrequested remote status must not animate as an active request');
+      } else {
+        assert.equal(observed.minimum,'0');assert.equal(observed.maximum,'100');
+        assert.ok(observed.valueText,'Progress exposes a useful screen-reader description');
+      }
       assert.ok(observed.planClosed,'Saved plan must start collapsed once a ticket exists');
       assert.ok(observed.summaryBeforePlan,'Installation progress must precede the saved plan');
       return observed;
@@ -147,7 +156,58 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       for(const action of actions) assert.ok(action.top>=0 && action.bottom<=action.height,'Running action must be visible: '+JSON.stringify(action));
       layoutChecks.push({name,kind:'running-action-visibility',timelineClosed:observed.timelineClosed,actions});
     };
-    await visible('Начнём с подключения');await clickText('Продолжить');await visible('Подключиться к серверу');await clickText('Установить сервер по SSH');await visible('SSH-адрес хоста');
+    const assertSavedLanding=async()=>{
+      await visible('Открыть сохранённую установку');
+      const observed=await execute(`(()=>({caption:document.querySelector('.desktop-ssh-step-caption')?.textContent,heading:document.querySelector('.desktop-ssh-installer h1')?.textContent,hasSavedEntry:!!document.querySelector('.desktop-ssh-saved-entry'),hasProgress:!!document.querySelector('.desktop-ssh-progress'),hasSavedPlan:!!document.querySelector('.desktop-ssh-saved-plan')}))()`);
+      assert.match(observed.caption,/01 \/ 05/);
+      assert.match(observed.heading,/Начнём с установки/);
+      assert.ok(observed.hasSavedEntry);
+      assert.equal(observed.hasProgress,false,'Saved jobs never open the progress stage implicitly');
+      assert.equal(observed.hasSavedPlan,false,'The old installation plan is hidden until explicitly opened');
+    };
+    const openSaved=async()=>{await assertSavedLanding();await clickText('Открыть сохранённую установку');};
+    await visible('Начнём с подключения');await clickText('Продолжить');await visible('Подключиться к серверу');
+    state={busy:false,phase:'planned',hasCredentials:false,endpoint:{host:'saved-vps.example.com',port:22,user:'root'},identity:{fingerprint:'SHA256:'+'F'.repeat(43),algorithm:'ssh-ed25519',changed:false,trusted:true},plan:structuredClone(plan),ticket:{jobId:'84a53fb8-fb75-425a-b1a0-50cbe30cc573',domain:plan.options.domain,host:'saved-vps.example.com',port:22,user:'root',planHash:plan.hash}};
+    const savedTicket=structuredClone(state.ticket);
+    await clickText('Установить сервер по SSH');await assertSavedLanding();
+    assert.equal(calls.length,0,'Reading a saved job must not dispatch any SSH action');
+    await capture('ssh-saved-entry-1280-light');
+    await capture('ssh-saved-entry-800-dark',{width:800,height:900,theme:'dark'});
+    await clickText('Новая установка');await visible('Начать с первого шага');
+    assert.equal(await isDisabled('Начать с первого шага'),true);
+    assert.equal(calls.length,0,'Opening the new-install confirmation must preserve the saved ticket');
+    await click('.desktop-ssh-close');await visible('Подключиться к серверу');
+    await until(()=>Promise.resolve(calls.some(c=>c.action==='detach')),'Closing the saved entry detaches credentials');
+    assert.deepEqual(state.ticket,savedTicket);
+    assert.equal(calls.some(c=>c.action==='forget'),false,'Closing unconfirmed new-install choice must not erase recovery');
+    await clickText('Установить сервер по SSH');await openSaved();
+    await assertProgress(null,'unknown');
+    assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/05 \/ 05/);
+    assert.equal(await isDisabled('Проверить состояние'),true);
+    assert.equal(calls.some(c=>['status','resume','apply','cancel','forget'].includes(c.action)),false,'Opening a saved job is a local view transition');
+    await captureProgress('ssh-saved-open-unknown-1280-light');
+    await click('.desktop-ssh-close');await visible('Подключиться к серверу');
+    state={...state,phase:'completed',status:status('completed','readiness')};
+    await clickText('Установить сервер по SSH');await assertSavedLanding();
+    assert.equal((await execute('document.body.innerText')).includes('Ваше пространство готово.'),false,'A remembered completed snapshot must not bypass the initial step');
+    await click('.desktop-ssh-close');await visible('Подключиться к серверу');
+    // A retained running snapshot with credentials would normally be eligible
+    // for polling. The unopened saved entry must explicitly suppress it.
+    state={...state,phase:'running',hasCredentials:true,status:status('running','images:api')};
+    const beforeRunningReopen=calls.length;
+    await clickText('Установить сервер по SSH');await assertSavedLanding();
+    await new Promise(resolve=>setTimeout(resolve,3200));
+    assert.equal(calls.length,beforeRunningReopen,'The saved-job landing does not poll, resume or forget, even with a retained running snapshot and credentials');
+    await clickText('Новая установка');
+    assert.equal(await isDisabled('Начать с первого шага'),true,'New-install consent resets on every wizard entry');
+    await click('#desktop-ssh-new-install-consent');await clickText('Начать с первого шага');
+    await visible('SSH-адрес хоста');
+    assert.equal(state.ticket,undefined);
+    assert.equal(calls.filter(c=>c.action==='forget').length,1);
+    assert.equal(calls.filter(c=>c.action==='forget')[0].input.confirm,true);
+    assert.deepEqual(await execute(`['desktop-ssh-host','desktop-ssh-port','desktop-ssh-user'].map(id=>document.getElementById(id).value)`),['','22','root']);
+    assert.equal(calls.some(c=>['status','resume','apply','cancel','discover'].includes(c.action)),false,'A fresh local form never alters the prior remote installation');
+    checks.push('Saved jobs start at 01/05 without polling or progress; explicit opening reveals unknown 05/05, closing preserves recovery, completed and running snapshots stay hidden without autopolling, and only confirmed new-install selection removes the local card and resets the form');
     await capture('ssh-host-1280-light');
     await capture('ssh-host-1920-dark',{width:1920,height:1080,theme:'dark'});
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
@@ -203,7 +263,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.match(unknown.text,/Состояние установки неизвестно/);
     assert.doesNotMatch(unknown.text,/\d+\s*%/,'Unknown status must not present a numerical completion percentage');
     await captureProgress('ssh-progress-unknown-1280-light');
-    checks.push('Ticket without a remote status has an indeterminate progress bar; no fabricated percentage is shown');
+    checks.push('Ticket without a remote status has a neutral status card without a progress bar, spinner or fabricated percentage');
     await field('desktop-ssh-password','local-ui-fixture-only');await clickText('Проверить состояние');await visible('Установка выполняется');
     const running=await assertProgress(20,'running');
     assert.equal(running.mode,'running');
@@ -326,14 +386,17 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await click('.desktop-ssh-close');await visible('Подключиться к серверу');await until(()=>Promise.resolve(calls.some(c=>c.action==='detach')),'Wizard unmount detaches native credentials');
     checks.push('No SSH credentials in localStorage; terminal status clears reentered password and leaving wizard calls native detach');
     state={...state,status:undefined,phase:'error',error:{code:'STATE_UNAVAILABLE',message:'Состояние задания недоступно.'},hasCredentials:false};
-    await clickText('Установить сервер по SSH');await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
+    await clickText('Установить сервер по SSH');await openSaved();await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
     assert.equal(await isDisabled('Удалить локальную карточку'),true);
+    await assertProgress(null,'unknown');
     await click('.desktop-ssh-close');await visible('Подключиться к серверу');
     state={...state,identity:{...state.identity,trusted:false,changed:true},error:{code:'TICKET_INVALID',message:'Ключ сохранённого задания изменился.'}};
-    await clickText('Установить сервер по SSH');await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
+    await clickText('Установить сервер по SSH');await openSaved();await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
+    assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/02 \/ 05/,'Explicit saved entry still requires host-key trust if the key changed');
+    assert.equal(await execute(`!!document.querySelector('.desktop-ssh-progress')`),false,'An untrusted saved host cannot expose remote progress controls');
     assert.equal(await isDisabled('Удалить локальную карточку'),true);
     await click('#desktop-ssh-forget-consent');await clickText('Удалить локальную карточку');
-    await until(()=>Promise.resolve(calls.some(c=>c.action==='forget')),'Explicit local recovery-card removal reaches native controller');
+    await until(()=>Promise.resolve(calls.filter(c=>c.action==='forget').length===2),'Explicit local recovery-card removal reaches native controller');
     assert.equal(calls.filter(c=>c.action==='apply').length,1);
     checks.push('STATE_UNAVAILABLE and changed/untrusted host both permit only explicit local ticket removal, without duplicate apply or remote deletion');
     // A second, explicit source selection must change the real plan request;

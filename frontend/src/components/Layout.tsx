@@ -513,7 +513,7 @@ export function Layout() {
               <div>
                 <strong>{PRODUCT_NAME}</strong>
                 <p>
-                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.4-beta"}
+                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.5-beta"}
                 </p>
               </div>
             </div>

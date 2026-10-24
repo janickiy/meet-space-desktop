@@ -35,10 +35,7 @@ export function DesktopInstallProgress({
       : progress.steps[progress.currentIndex];
   const active = !stale && status?.state === "running";
   const completed = progress.percent === 100;
-  const summary =
-    progress.percent === null
-      ? "Ожидаем подтверждённое состояние сервера"
-      : `${progress.percent}%. Завершено этапов: ${progress.completedCount} из ${progress.total}. ${progress.phaseTitle}`;
+  const summary = `${progress.percent}%. Завершено этапов: ${progress.completedCount} из ${progress.total}. ${progress.phaseTitle}`;
   const ProgressContainer = completed ? "details" : "div";
   const PhaseContainer = completed ? "div" : "details";
 
@@ -73,73 +70,76 @@ export function DesktopInstallProgress({
               {title}
             </h2>
           </div>
-          <div className="desktop-ssh-progress-percent" aria-hidden="true">
-            <strong>
-              {progress.percent === null ? "—" : `${progress.percent}%`}
-            </strong>
-            <span>
-              {progress.percent === null ? "нет оценки" : "по этапам"}
-            </span>
-          </div>
-        </div>
-        <progress
-          className="desktop-ssh-progress-bar"
-          role="progressbar"
-          max={100}
-          value={progress.percent ?? undefined}
-          aria-label="Прогресс установки по этапам"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progress.percent ?? undefined}
-          aria-valuetext={stale ? `Последние данные: ${summary}` : summary}
-        />
-        <div className="desktop-ssh-progress-meta">
-          <strong>
-            {status
-              ? `Завершено этапов: ${progress.completedCount} из ${progress.total}`
-              : "Ожидаем данные сервера"}
-          </strong>
-          {checkedAt && (
-            <span>
-              Обновлено {new Date(checkedAt).toLocaleTimeString("ru-RU")}
-            </span>
+          {progress.percent !== null && (
+            <div className="desktop-ssh-progress-percent" aria-hidden="true">
+              <strong>{progress.percent}%</strong>
+              <span>по этапам</span>
+            </div>
           )}
         </div>
-        <div
-          className="desktop-ssh-current-phase"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {current ? (
-            <>
-              <span className="desktop-ssh-current-label">
-                {stale ? "Последний известный этап" : "Этап"}{" "}
-                {progress.currentIndex! + 1} из {progress.total}
-              </span>
-              <strong>{progress.phaseTitle}</strong>
-              {!stale && active && <p>{current.description}</p>}
-              {progress.detail && (
-                <p className="desktop-ssh-component-detail">
-                  {progress.detail}
-                </p>
+        {progress.percent !== null && (
+          <>
+            <progress
+              className="desktop-ssh-progress-bar"
+              role="progressbar"
+              max={100}
+              value={progress.percent}
+              aria-label="Прогресс установки по этапам"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress.percent}
+              aria-valuetext={stale ? `Последние данные: ${summary}` : summary}
+            />
+            <div className="desktop-ssh-progress-meta">
+              <strong>
+                Завершено этапов: {progress.completedCount} из {progress.total}
+              </strong>
+              {checkedAt && (
+                <span>
+                  Обновлено {new Date(checkedAt).toLocaleTimeString("ru-RU")}
+                </span>
               )}
-            </>
-          ) : (
-            <strong>
-              {completed
-                ? "Все этапы завершены"
-                : status
-                  ? progress.phaseTitle
-                  : "Проверьте состояние, чтобы увидеть этап и процент установки."}
-            </strong>
-          )}
-        </div>
-        {stale && (
+            </div>
+          </>
+        )}
+        {status ? (
+          <div
+            className="desktop-ssh-current-phase"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {current ? (
+              <>
+                <span className="desktop-ssh-current-label">
+                  {stale ? "Последний известный этап" : "Этап"}{" "}
+                  {progress.currentIndex! + 1} из {progress.total}
+                </span>
+                <strong>{progress.phaseTitle}</strong>
+                {!stale && active && <p>{current.description}</p>}
+                {progress.detail && (
+                  <p className="desktop-ssh-component-detail">
+                    {progress.detail}
+                  </p>
+                )}
+              </>
+            ) : (
+              <strong>
+                {completed ? "Все этапы завершены" : progress.phaseTitle}
+              </strong>
+            )}
+          </div>
+        ) : (
+          <p className="desktop-ssh-progress-unavailable">
+            Проверьте состояние, чтобы увидеть текущий этап и процент установки.
+            Само открытие карточки не запускает и не возобновляет установку.
+          </p>
+        )}
+        {stale && status && (
           <p className="desktop-ssh-progress-freshness" role="status">
             Показаны последние полученные данные. Проверьте состояние установки.
           </p>
         )}
-        {!completed && (
+        {!completed && progress.percent !== null && (
           <p className="desktop-ssh-progress-explanation">
             Процент — по завершённым этапам. Время каждого этапа различается.
           </p>

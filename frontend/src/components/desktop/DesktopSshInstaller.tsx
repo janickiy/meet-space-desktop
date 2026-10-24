@@ -99,6 +99,9 @@ export function DesktopSshInstaller({
   const [planConfirmed, setPlanConfirmed] = useState(false);
   const [resumeConfirmed, setResumeConfirmed] = useState(false);
   const [forgetConfirmed, setForgetConfirmed] = useState(false);
+  const [savedJobOpened, setSavedJobOpened] = useState(false);
+  const [showNewInstall, setShowNewInstall] = useState(false);
+  const [newInstallConfirmed, setNewInstallConfirmed] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [lastStatusAt, setLastStatusAt] = useState<number | null>(null);
   const alive = useRef(true);
@@ -110,6 +113,38 @@ export function DesktopSshInstaller({
     setPassword("");
     setPrivateKey("");
     setPassphrase("");
+  };
+
+  const resetWizardForm = () => {
+    clearCredentials();
+    setHost("");
+    setPort("22");
+    setUser("root");
+    setDomain("");
+    setPublicIpv4("");
+    setImageMode("images");
+    setImageRelease("latest");
+    setAcmeEmail("");
+    setSmtpEnabled(false);
+    setSmtpHost("");
+    setSmtpPort("587");
+    setSmtpFrom("");
+    setSmtpUsername("");
+    setSmtpTlsMode("starttls");
+    setSmtpPassword("");
+    setAuthKind("password");
+    setTrustConfirmed(false);
+    setDockerConsent(false);
+    setAcmeConsent(false);
+    setPlanConfirmed(false);
+    setResumeConfirmed(false);
+    setForgetConfirmed(false);
+    setSavedJobOpened(false);
+    setShowNewInstall(false);
+    setNewInstallConfirmed(false);
+    setLastStatusAt(null);
+    setStorageRetryMessage("");
+    heading.current?.closest(".desktop-foundation-card")?.scrollTo({ top: 0 });
   };
 
   const acceptState = (next: SshInstallerState) => {
@@ -166,6 +201,8 @@ export function DesktopSshInstaller({
       )
         setLastStatusAt(Date.now());
       if (alive.current && action === "forget") setLastStatusAt(null);
+      if (alive.current && next.ticket && action !== "forget")
+        setSavedJobOpened(true);
       acceptState(next);
       return next;
     } catch (cause) {
@@ -191,6 +228,7 @@ export function DesktopSshInstaller({
 
   useEffect(() => {
     if (
+      !savedJobOpened ||
       !state?.hasCredentials ||
       !state.identity?.trusted ||
       !state.ticket ||
@@ -205,7 +243,7 @@ export function DesktopSshInstaller({
       void actionRef.current("status");
     }, 3000);
     return () => window.clearTimeout(timer);
-  }, [state, busy, error]);
+  }, [state, busy, error, savedJobOpened]);
 
   useEffect(() => {
     setDockerConsent(false);
@@ -230,12 +268,16 @@ export function DesktopSshInstaller({
     (authKind === "password" ? password.length > 0 : privateKey.length >= 32);
   const imageReleaseValid =
     imageMode !== "images" ||
-    /^(?:latest|v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?)$/.test(imageRelease.trim());
+    /^(?:latest|v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?)$/.test(
+      imageRelease.trim(),
+    );
   const disabled = busy || !!state?.busy;
-  const identity = state?.identity;
-  const plan = state?.plan;
-  const ticket = state?.ticket;
-  const status = state?.status;
+  const savedTicket = state?.ticket;
+  const showSavedEntry = !!savedTicket && !savedJobOpened;
+  const identity = showSavedEntry ? undefined : state?.identity;
+  const plan = showSavedEntry ? undefined : state?.plan;
+  const ticket = showSavedEntry ? undefined : state?.ticket;
+  const status = showSavedEntry ? undefined : state?.status;
   const PlanContainer = ticket ? "details" : "div";
   const staleStatus =
     !!status &&
@@ -263,46 +305,53 @@ export function DesktopSshInstaller({
     state.endpoint.port === Number(port) &&
     state.endpoint.user === user.trim();
   const completed = status?.state === "completed";
-  const pageHeading = completed
+  const pageHeading = showSavedEntry
     ? {
-        kicker: "ГОТОВО К ОБЩЕНИЮ",
-        title: "Ваше пространство готово.",
+        kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
+        title: "Начнём с установки.",
         description:
-          "Установка завершена. Подключитесь и войдите в аккаунт вашего пространства.",
+          "Начните новую установку сервера или откройте сохранённое задание.",
       }
-    : ticket
+    : completed
       ? {
-          kicker: "СОЗДАЁМ ПРОСТРАНСТВО",
-          title: "Установка MeetSpace",
+          kicker: "ГОТОВО К ОБЩЕНИЮ",
+          title: "Ваше пространство готово.",
           description:
-            "Настраиваем ваш сервер. Здесь видны текущий этап и подтверждённый прогресс установки.",
+            "Установка завершена. Подключитесь и войдите в аккаунт вашего пространства.",
         }
-      : plan
+      : ticket
         ? {
-            kicker: "ПЕРЕД УСТАНОВКОЙ",
-            title: "Всё по плану.",
-            description: "Проверьте параметры пространства и план установки.",
+            kicker: "СОЗДАЁМ ПРОСТРАНСТВО",
+            title: "Установка MeetSpace",
+            description:
+              "Настраиваем ваш сервер. Здесь видны текущий этап и подтверждённый прогресс установки.",
           }
-        : identity?.trusted
+        : plan
           ? {
-              kicker: "ДОСТУП ПО SSH",
-              title: "Доступ к серверу.",
-              description:
-                "Подтвердите доступ для проверки сервера перед установкой.",
+              kicker: "ПЕРЕД УСТАНОВКОЙ",
+              title: "Всё по плану.",
+              description: "Проверьте параметры пространства и план установки.",
             }
-          : identity
+          : identity?.trusted
             ? {
-                kicker: "ИДЕНТИЧНОСТЬ СЕРВЕРА",
-                title: "Проверим ключ сервера.",
+                kicker: "ДОСТУП ПО SSH",
+                title: "Доступ к серверу.",
                 description:
-                  "При первом подключении нужно убедиться, что это именно ваш сервер.",
+                  "Подтвердите доступ для проверки сервера перед установкой.",
               }
-            : {
-                kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
-                title: "Начнём с сервера.",
-                description:
-                  "Укажите Linux-хост, на котором будет работать MeetSpace.",
-              };
+            : identity
+              ? {
+                  kicker: "ИДЕНТИЧНОСТЬ СЕРВЕРА",
+                  title: "Проверим ключ сервера.",
+                  description:
+                    "При первом подключении нужно убедиться, что это именно ваш сервер.",
+                }
+              : {
+                  kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
+                  title: "Начнём с сервера.",
+                  description:
+                    "Укажите Linux-хост, на котором будет работать MeetSpace.",
+                };
   const HostFormContainer =
     identity && observedEndpointMatches ? "details" : "div";
   const RecoveryContainer = ticket ? "details" : "div";
@@ -410,7 +459,7 @@ export function DesktopSshInstaller({
     <section
       className="desktop-ssh-installer"
       aria-labelledby="desktop-ssh-title"
-      data-state={status?.state}
+      data-state={status?.state ?? (ticket ? "unknown" : undefined)}
     >
       <div className="desktop-ssh-topbar">
         {!completed && (
@@ -499,7 +548,93 @@ export function DesktopSshInstaller({
           Повторить
         </Button>
       )}
-      {state && !identity?.trusted && (
+      {showSavedEntry && savedTicket && (
+        <div className="desktop-ssh-saved-entry">
+          <h2>Сохранённая установка</h2>
+          <p>
+            Карточка сохранилась вместе с настройками приложения. Она не
+            означает, что установка сейчас выполняется на сервере.
+          </p>
+          <strong>{savedTicket.domain}</strong>
+          <small>
+            {savedTicket.user}@{savedTicket.host}:{savedTicket.port}
+          </small>
+          <p>
+            Откройте задание и подключитесь по SSH, чтобы узнать его состояние.
+          </p>
+          <div className="desktop-ssh-actions">
+            <Button
+              disabled={disabled}
+              onClick={() => {
+                setResumeConfirmed(false);
+                setForgetConfirmed(false);
+                setShowNewInstall(false);
+                setNewInstallConfirmed(false);
+                setSavedJobOpened(true);
+              }}
+            >
+              Открыть сохранённую установку
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={disabled}
+              onClick={() => {
+                setNewInstallConfirmed(false);
+                setShowNewInstall(true);
+              }}
+            >
+              Новая установка
+            </Button>
+          </div>
+          {showNewInstall && (
+            <div className="desktop-ssh-new-install-confirmation">
+              <h3>Начать новую установку?</h3>
+              <p>
+                Удалится только карточка задания на этом устройстве. Сервер
+                MeetSpace и его данные сохранятся; работа на сервере
+                продолжится.
+              </p>
+              <label className="desktop-ssh-checkbox">
+                <input
+                  id="desktop-ssh-new-install-consent"
+                  type="checkbox"
+                  checked={newInstallConfirmed}
+                  disabled={disabled}
+                  onChange={(event) =>
+                    setNewInstallConfirmed(event.target.checked)
+                  }
+                />
+                <span>Удалить локальную карточку и начать с первого шага.</span>
+              </label>
+              <div className="desktop-ssh-actions">
+                <Button
+                  busy={busy}
+                  disabled={disabled || !newInstallConfirmed}
+                  onClick={() => {
+                    void act("forget", { confirm: true }).then((next) => {
+                      if (next && !next.error && alive.current)
+                        resetWizardForm();
+                    });
+                  }}
+                >
+                  Начать с первого шага
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={disabled}
+                  onClick={() => {
+                    setShowNewInstall(false);
+                    setNewInstallConfirmed(false);
+                  }}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {state && !showSavedEntry && !identity?.trusted && (
         <>
           {ticket && (
             <p className="desktop-ssh-note">
@@ -735,27 +870,32 @@ export function DesktopSshInstaller({
                   onChange={(event) => setAcmeEmail(event.target.value)}
                 />
               </fieldset>
-              <fieldset className="desktop-ssh-install-source" disabled={disabled}>
+              <fieldset
+                className="desktop-ssh-install-source"
+                disabled={disabled}
+              >
                 <legend>Способ установки</legend>
                 <div
                   className="desktop-ssh-source-options"
                   role="radiogroup"
                   aria-label="Способ установки MeetSpace"
                 >
-                  {([
-                    {
-                      mode: "images",
-                      title: "Готовые Docker-образы",
-                      description:
-                        "Загрузить и запустить готовый выпуск. Рекомендуется.",
-                    },
-                    {
-                      mode: "source",
-                      title: "Сборка из исходного кода",
-                      description:
-                        "Собрать компоненты на сервере. Занимает больше времени.",
-                    },
-                  ] as const).map(({ mode, title, description }) => (
+                  {(
+                    [
+                      {
+                        mode: "images",
+                        title: "Готовые Docker-образы",
+                        description:
+                          "Загрузить и запустить готовый выпуск. Рекомендуется.",
+                      },
+                      {
+                        mode: "source",
+                        title: "Сборка из исходного кода",
+                        description:
+                          "Собрать компоненты на сервере. Занимает больше времени.",
+                      },
+                    ] as const
+                  ).map(({ mode, title, description }) => (
                     <label
                       key={mode}
                       className="desktop-ssh-source-option"
@@ -958,7 +1098,9 @@ export function DesktopSshInstaller({
                         publicIpv4: publicIpv4.trim(),
                         acmeEmail: acmeEmail.trim(),
                         imageMode,
-                        ...(imageMode === "images" ? { imageRelease: imageRelease.trim() } : {}),
+                        ...(imageMode === "images"
+                          ? { imageRelease: imageRelease.trim() }
+                          : {}),
                         ...(smtpEnabled
                           ? {
                               smtp: {
@@ -1041,7 +1183,10 @@ export function DesktopSshInstaller({
               {status?.errorCode && (
                 <ErrorNotice>
                   Установщик остановился на этапе «
-                  {installPhaseLabel(status.phase.split(":", 1)[0], plan?.imageMode)}
+                  {installPhaseLabel(
+                    status.phase.split(":", 1)[0],
+                    plan?.imageMode,
+                  )}
                   ». Код: {status.errorCode}. Исправьте причину на хосте, затем
                   проверьте состояние.
                 </ErrorNotice>
@@ -1462,8 +1607,7 @@ export function DesktopSshInstaller({
               setForgetConfirmed(false);
               void act("forget", { confirm: true }).then((next) => {
                 if (next && !next.error && alive.current) {
-                  setDomain("");
-                  setPublicIpv4("");
+                  resetWizardForm();
                 }
               });
             }}
