@@ -32,10 +32,10 @@ function safeError(error: unknown): { code: string; message: string } {
   }
   return { code: "INTERNAL", message: "Не удалось завершить действие SSH-установщика. Подключитесь снова и проверьте состояние задания." };
 }
-function installOptions(raw: unknown): InstallOptions {
+function installOptions(raw: unknown, verifiedIpv4: string): InstallOptions {
   const value = objectInput(raw);
   const domain = normalizeDomain(value.domain);
-  if (typeof value.publicIpv4 !== "string" || isIP(value.publicIpv4.trim()) !== 4) throw new SshError("INPUT", "Укажите внешний IPv4-адрес сервера.");
+  if (value.publicIpv4 !== undefined && (typeof value.publicIpv4 !== "string" || isIP(value.publicIpv4.trim()) !== 4 || value.publicIpv4.trim() !== verifiedIpv4)) throw new SshError("INPUT", "IPv4 не совпадает с проверенным SSH-адресом сервера. Повторите проверку хоста.");
   const acmeEmail = typeof value.acmeEmail === "string" ? value.acmeEmail.trim() : "";
   if (acmeEmail.length > 254 || (acmeEmail && !/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(acmeEmail))) throw new SshError("INPUT", "Проверьте email для сертификата HTTPS.");
   let smtp: InstallOptions["smtp"];
@@ -46,7 +46,7 @@ function installOptions(raw: unknown): InstallOptions {
   const imageMode = value.imageMode === undefined ? "source" : value.imageMode;
   if (imageMode !== "source" && imageMode !== "images") throw new SshError("INPUT", "Выберите способ установки MeetSpace.");
   if (value.imageRelease !== undefined && (imageMode !== "images" || !validImageRelease(value.imageRelease))) throw new SshError("INPUT", "Выберите latest или укажите версию готовых образов, например v0.4.0.");
-  return { domain, publicIpv4: value.publicIpv4.trim(), acmeEmail, ...(smtp ? { smtp } : {}),
+  return { domain, publicIpv4: verifiedIpv4, acmeEmail, ...(smtp ? { smtp } : {}),
     ...(value.imageMode === undefined ? {} : { imageMode }), ...(value.imageRelease === undefined ? {} : { imageRelease: value.imageRelease as string }) };
 }
 /** The renderer gets public state only; pins and recovery tickets are the only data written to disk. */
@@ -155,14 +155,24 @@ export class SshInstallerController {
         if (!this.credentials) throw new SshError("CREDENTIALS", "Введите пароль или SSH-ключ для подключения.");
         if (action === "preflight") {
           const domain = normalizeDomain(input.domain);
+          this.current.preflight = undefined;
+          if (!this.ticket) { this.plan = undefined; this.current.plan = undefined; }
           const result = await this.transport.probe(endpoint, this.credentials, pin, domain, this.operation.signal);
           if (generation !== this.generation) return this.state();
-          this.current.preflight = analyzePreflight(domain, result); this.current.phase = "preflight";
-          if (!this.ticket) { this.plan = undefined; this.current.plan = undefined; }
+          this.current.preflight = analyzePreflight(domain, result, endpoint.host); this.current.phase = "preflight";
         } else if (action === "plan") {
-          const options = installOptions(input.options);
-          if (!this.current.preflight || this.current.preflight.domain !== options.domain || !this.current.preflight.ready) throw new SshError("PREFLIGHT_REQUIRED", "Сначала выполните проверку сервера и устраните блокирующие замечания.");
+          const domain = normalizeDomain(objectInput(input.options).domain);
+          if (!this.current.preflight || this.current.preflight.domain !== domain || !this.current.preflight.ready || !this.current.preflight.publicIpv4) throw new SshError("PREFLIGHT_REQUIRED", "Сначала выполните проверку сервера и устраните блокирующие замечания.");
           if (this.ticket) throw new SshError("PENDING_JOB", "Сохранённое задание доступно через проверку состояния и продолжение. Для нового плана сначала удалите локальную карточку.");
+          // Recheck authenticated host DNS immediately before freezing the plan.
+          // Neither a stale report nor a renderer-provided address can select it.
+          this.current.preflight = undefined; this.plan = undefined; this.current.plan = undefined;
+          const checked = await this.transport.probe(endpoint, this.credentials, pin, domain, this.operation.signal);
+          if (generation !== this.generation) return this.state();
+          const preflight = analyzePreflight(domain, checked, endpoint.host);
+          this.current.preflight = preflight; this.current.phase = "preflight";
+          if (!preflight.ready || !preflight.publicIpv4) throw new SshError("PREFLIGHT_REQUIRED", "Повторная проверка хоста обнаружила блокирующие замечания. Проверьте публичный SSH-адрес и результаты проверки.");
+          const options = installOptions(input.options, preflight.publicIpv4);
           let result: JsonObject, selectedBundle = this.bundle;
           try {
             result = await this.request("plan", { options }, endpoint, pin);

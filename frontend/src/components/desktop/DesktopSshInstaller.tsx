@@ -74,7 +74,6 @@ export function DesktopSshInstaller({
   const [port, setPort] = useState("22");
   const [user, setUser] = useState("root");
   const [domain, setDomain] = useState("");
-  const [publicIpv4, setPublicIpv4] = useState("");
   const [imageMode, setImageMode] = useState<SshInstallerImageMode>("images");
   const [imageRelease, setImageRelease] = useState("latest");
   const [acmeEmail, setAcmeEmail] = useState("");
@@ -121,7 +120,6 @@ export function DesktopSshInstaller({
     setPort("22");
     setUser("root");
     setDomain("");
-    setPublicIpv4("");
     setImageMode("images");
     setImageRelease("latest");
     setAcmeEmail("");
@@ -160,8 +158,6 @@ export function DesktopSshInstaller({
       next.ticket?.domain ??
       next.preflight?.domain;
     if (nextDomain) setDomain(nextDomain);
-    if (next.plan?.options.publicIpv4)
-      setPublicIpv4(next.plan.options.publicIpv4);
     if (next.plan) setImageMode(next.plan.imageMode ?? "source");
     if (next.plan?.options.imageRelease)
       setImageRelease(next.plan.options.imageRelease);
@@ -807,7 +803,7 @@ export function DesktopSshInstaller({
           </div>
           {!ticket && !plan && (
             <form
-              className="desktop-ssh-form"
+              className="desktop-ssh-form desktop-ssh-setup-form"
               onSubmit={(event) => {
                 event.preventDefault();
                 void act("preflight", {
@@ -817,11 +813,11 @@ export function DesktopSshInstaller({
               }}
             >
               <fieldset
-                className="desktop-ssh-auth desktop-ssh-network"
+                className="desktop-ssh-auth desktop-ssh-network desktop-ssh-setup-group"
                 disabled={disabled}
               >
                 <legend>Адрес сервера</legend>
-                <div className="desktop-ssh-fields">
+                <div className="desktop-ssh-setup-fields">
                   <div>
                     <label htmlFor="desktop-ssh-domain">Домен MeetSpace</label>
                     <input
@@ -832,46 +828,30 @@ export function DesktopSshInstaller({
                       placeholder="meet.example.com"
                       autoComplete="off"
                       spellCheck={false}
-                      aria-describedby="desktop-ssh-network-hint"
                       onChange={(event) => setDomain(event.target.value)}
                     />
                   </div>
                   <div>
-                    <label htmlFor="desktop-ssh-public-ip">
-                      Публичный IPv4 хоста
+                    <label htmlFor="desktop-ssh-acme-email">
+                      Email для сертификата HTTPS{" "}
+                      <span className="muted">(необязательно)</span>
                     </label>
                     <input
-                      id="desktop-ssh-public-ip"
-                      required
-                      maxLength={15}
-                      value={publicIpv4}
-                      placeholder="203.0.113.10"
-                      autoComplete="off"
-                      inputMode="decimal"
-                      aria-describedby="desktop-ssh-network-hint"
-                      onChange={(event) => setPublicIpv4(event.target.value)}
+                      id="desktop-ssh-acme-email"
+                      type="email"
+                      maxLength={254}
+                      value={acmeEmail}
+                      autoComplete="email"
+                      onChange={(event) => setAcmeEmail(event.target.value)}
                     />
                   </div>
                 </div>
-                <p className="field-hint" id="desktop-ssh-network-hint">
-                  A-запись домена должна вести прямо на этот IPv4. Для
-                  сертификата HTTPS нужны доступные порты 80 и 443.
+                <p className="field-hint">
+                  Для сертификата HTTPS нужны доступные порты 80 и 443.
                 </p>
-                <label htmlFor="desktop-ssh-acme-email">
-                  Email для сертификата HTTPS{" "}
-                  <span className="muted">(необязательно)</span>
-                </label>
-                <input
-                  id="desktop-ssh-acme-email"
-                  type="email"
-                  maxLength={254}
-                  value={acmeEmail}
-                  autoComplete="email"
-                  onChange={(event) => setAcmeEmail(event.target.value)}
-                />
               </fieldset>
               <fieldset
-                className="desktop-ssh-install-source"
+                className="desktop-ssh-install-source desktop-ssh-setup-group"
                 disabled={disabled}
               >
                 <legend>Способ установки</legend>
@@ -916,7 +896,7 @@ export function DesktopSshInstaller({
                   ))}
                 </div>
                 {imageMode === "images" && (
-                  <>
+                  <div className="desktop-ssh-release-field">
                     <label htmlFor="desktop-ssh-image-release">
                       Версия Docker-образов
                     </label>
@@ -932,7 +912,7 @@ export function DesktopSshInstaller({
                       aria-describedby="desktop-ssh-image-hint"
                       onChange={(event) => setImageRelease(event.target.value)}
                     />
-                  </>
+                  </div>
                 )}
                 <p className="field-hint" id="desktop-ssh-image-hint">
                   {imageMode === "images"
@@ -940,7 +920,10 @@ export function DesktopSshInstaller({
                     : "Установщик загрузит исходный код выбранного выпуска и соберёт Docker-образы на вашем сервере."}
                 </p>
               </fieldset>
-              <fieldset className="desktop-ssh-auth" disabled={disabled}>
+              <fieldset
+                className="desktop-ssh-auth desktop-ssh-setup-group"
+                disabled={disabled}
+              >
                 <legend>Почтовые уведомления</legend>
                 <label className="desktop-ssh-checkbox">
                   <input
@@ -956,66 +939,83 @@ export function DesktopSshInstaller({
                 </label>
                 {smtpEnabled ? (
                   <>
-                    <label htmlFor="desktop-smtp-host">SMTP-сервер</label>
-                    <input
-                      id="desktop-smtp-host"
-                      required
-                      maxLength={253}
-                      value={smtpHost}
-                      placeholder="smtp.example.com"
-                      autoComplete="off"
-                      spellCheck={false}
-                      onChange={(event) => setSmtpHost(event.target.value)}
-                    />
-                    <label htmlFor="desktop-smtp-tls">
-                      Защищённое соединение
-                    </label>
-                    <select
-                      id="desktop-smtp-tls"
-                      value={smtpTlsMode}
-                      onChange={(event) => {
-                        const mode = event.target.value as "starttls" | "tls";
-                        setSmtpTlsMode(mode);
-                        setSmtpPort(mode === "tls" ? "465" : "587");
-                      }}
-                    >
-                      <option value="starttls">
-                        STARTTLS (обычно порт 587)
-                      </option>
-                      <option value="tls">TLS (обычно порт 465)</option>
-                    </select>
-                    <label htmlFor="desktop-smtp-port">Порт SMTP</label>
-                    <input
-                      id="desktop-smtp-port"
-                      required
-                      type="number"
-                      min={1}
-                      max={65535}
-                      value={smtpPort}
-                      onChange={(event) => setSmtpPort(event.target.value)}
-                    />
-                    <label htmlFor="desktop-smtp-from">Email отправителя</label>
-                    <input
-                      id="desktop-smtp-from"
-                      required
-                      type="email"
-                      maxLength={254}
-                      value={smtpFrom}
-                      placeholder="meetings@example.com"
-                      autoComplete="off"
-                      onChange={(event) => setSmtpFrom(event.target.value)}
-                    />
-                    <label htmlFor="desktop-smtp-username">
-                      Пользователь SMTP
-                    </label>
-                    <input
-                      id="desktop-smtp-username"
-                      required
-                      maxLength={254}
-                      value={smtpUsername}
-                      autoComplete="off"
-                      onChange={(event) => setSmtpUsername(event.target.value)}
-                    />
+                    <div className="desktop-ssh-setup-fields desktop-ssh-smtp-fields">
+                      <div>
+                        <label htmlFor="desktop-smtp-host">SMTP-сервер</label>
+                        <input
+                          id="desktop-smtp-host"
+                          required
+                          maxLength={253}
+                          value={smtpHost}
+                          placeholder="smtp.example.com"
+                          autoComplete="off"
+                          spellCheck={false}
+                          onChange={(event) => setSmtpHost(event.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="desktop-smtp-port">Порт SMTP</label>
+                        <input
+                          id="desktop-smtp-port"
+                          required
+                          type="number"
+                          min={1}
+                          max={65535}
+                          value={smtpPort}
+                          onChange={(event) => setSmtpPort(event.target.value)}
+                        />
+                      </div>
+                      <div className="desktop-ssh-field-wide">
+                        <label htmlFor="desktop-smtp-tls">
+                          Защищённое соединение
+                        </label>
+                        <select
+                          id="desktop-smtp-tls"
+                          value={smtpTlsMode}
+                          onChange={(event) => {
+                            const mode = event.target.value as
+                              "starttls" | "tls";
+                            setSmtpTlsMode(mode);
+                            setSmtpPort(mode === "tls" ? "465" : "587");
+                          }}
+                        >
+                          <option value="starttls">
+                            STARTTLS (обычно порт 587)
+                          </option>
+                          <option value="tls">TLS (обычно порт 465)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor="desktop-smtp-from">
+                          Email отправителя
+                        </label>
+                        <input
+                          id="desktop-smtp-from"
+                          required
+                          type="email"
+                          maxLength={254}
+                          value={smtpFrom}
+                          placeholder="meetings@example.com"
+                          autoComplete="off"
+                          onChange={(event) => setSmtpFrom(event.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="desktop-smtp-username">
+                          Пользователь SMTP
+                        </label>
+                        <input
+                          id="desktop-smtp-username"
+                          required
+                          maxLength={254}
+                          value={smtpUsername}
+                          autoComplete="off"
+                          onChange={(event) =>
+                            setSmtpUsername(event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
                     <p className="field-hint">
                       Пароль SMTP потребуется перед запуском установки.
                       Используйте данные вашего почтового провайдера.
@@ -1084,7 +1084,6 @@ export function DesktopSshInstaller({
                     state.preflight.domain !== domain.trim().toLowerCase() ||
                     !credentialReady ||
                     !imageReleaseValid ||
-                    !publicIpv4.trim() ||
                     (smtpEnabled &&
                       (!smtpHost.trim() ||
                         !smtpFrom.trim() ||
@@ -1095,7 +1094,6 @@ export function DesktopSshInstaller({
                     void act("plan", {
                       options: {
                         domain: domain.trim(),
-                        publicIpv4: publicIpv4.trim(),
                         acmeEmail: acmeEmail.trim(),
                         imageMode,
                         ...(imageMode === "images"

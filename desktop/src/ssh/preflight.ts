@@ -12,7 +12,7 @@ def run(args):
     except Exception: return (125,"")
 def ips(host):
     code,out=run(["getent","ahosts",host])
-    return sorted(set(line.split()[0] for line in out.splitlines() if line.split()))[:8] if code==0 else []
+    return sorted(set(line.split()[0] for line in out.splitlines() if line.split()))[:9] if code==0 else []
 d={"protocol":"MSPF2","kernel":platform.system(),"arch":platform.machine(),"cpu":os.cpu_count(),"uid":os.getuid()}
 release={}
 try:
@@ -50,7 +50,21 @@ print(json.dumps(d,separators=(",",":")))
 `;
 export const PREFLIGHT_COMMAND = "LC_ALL=C /usr/bin/python3 -c '" + probe.replace(/'/g, "'\\''") + "'";
 const expectedFields = ["protocol", "kernel", "arch", "cpu", "uid", "distro", "distroVersion", "ramKiB", "diskKiB", "sudo", "docker", "dockerAccess", "compose", "existingContainers", "existingPaths", "tcpPorts", "udpPorts", "domainIps", "hostIps", "firewall", "complete"];
-export function analyzePreflight(domainInput: string, stdout: string): PreflightReport {
+// IANA special-purpose ranges are not usable as a public server address. The
+// two globally reachable exceptions in 192.0.0.0/24 are retained; multicast is
+// excluded separately. No external IP-discovery service or domain-IP guess.
+function publicIpv4(ip: string): boolean {
+  if (isIP(ip) !== 4) return false;
+  const [a, b, c, d] = ip.split(".").map(Number);
+  return !(a === 0 || a === 10 || a === 127 || a >= 224 ||
+    (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && ((b === 0 && c === 0 && d !== 9 && d !== 10) ||
+      (b === 0 && c === 2) || (b === 88 && c === 99) || b === 168)) ||
+    (a === 198 && (b === 18 || b === 19 || (b === 51 && c === 100))) ||
+    (a === 203 && b === 0 && c === 113));
+}
+export function analyzePreflight(domainInput: string, stdout: string, sshHost: string): PreflightReport {
   const domain = normalizeDomain(domainInput);
   const invalid = () => { throw new SshError("INVALID_RESPONSE", "Сервер вернул неполный или некорректный результат проверки."); };
   if (Buffer.byteLength(stdout) > 64 * 1024) return invalid();
@@ -92,7 +106,16 @@ export function analyzePreflight(domainInput: string, stdout: string): Preflight
   const udp = data.udpPorts as number[] | null;
   add("relay", "TURN 49160–49259/UDP", udp === null ? "unknown" : udp.some((p) => p >= 49160 && p <= 49259) ? (existing ? "warn" : "blocked") : "pass", "Диапазон TURN relay должен быть свободен и открыт во внешнем firewall.");
   const domainIps = data.domainIps as string[], hostIps = data.hostIps as string[];
+  const candidates = [...new Set(hostIps.filter(publicIpv4))];
+  const endpointFamily = isIP(sshHost);
+  const detectedIpv4 = candidates.length === 1 && endpointFamily !== 6 &&
+    (endpointFamily !== 4 || candidates[0] === sshHost) ? candidates[0] : undefined;
+  add("public-ipv4", "Публичный адрес сервера", detectedIpv4 ? "pass" : "blocked", detectedIpv4
+    ? `Определён по SSH-адресу: ${detectedIpv4}.`
+    : candidates.length > 1
+      ? "SSH-адрес соответствует нескольким публичным IPv4. Укажите конкретный публичный IPv4 в адресе SSH-хоста и повторите проверку."
+      : "Не удалось однозначно определить публичный IPv4 по SSH-адресу. Укажите публичный IPv4 в адресе SSH-хоста и повторите проверку. Локальный адрес или только IPv6 не подходит для этой установки.");
   add("dns", "DNS домена", domainIps.some((ip) => hostIps.includes(ip)) ? "pass" : "warn", domainIps.length ? `Домен: ${domainIps.join(", ")}. Проверьте совпадение со внешним адресом сервера и все A/AAAA.` : "Домен не разрешается. До запуска HTTPS настройте DNS на адрес сервера.");
   add("firewall", "Firewall и внешняя сеть", "unknown", data.firewall === "ufw-active" ? "UFW активен. Также проверьте cloud firewall и NAT для HTTP(S), TURN и медиапортов." : "Внешние TCP/UDP и cloud firewall требуют отдельной проверки.");
-  return { domain, ready: !checks.some((check) => check.level === "blocked"), checks, checkedAt: new Date().toISOString() };
+  return { domain, ...(detectedIpv4 ? { publicIpv4: detectedIpv4 } : {}), ready: !checks.some((check) => check.level === "blocked"), checks, checkedAt: new Date().toISOString() };
 }

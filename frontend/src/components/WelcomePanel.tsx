@@ -25,11 +25,7 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
         <span>{PRODUCT_NAME}</span>
       </div>
       <div className="reference-welcome-copy">
-        <span>
-          {installer
-            ? "ВАШ СЕРВЕР. ВАШИ ПРАВИЛА."
-            : "МЕСТО, ГДЕ КОМАНДА ВМЕСТЕ"}
-        </span>
+        {!installer && <span>МЕСТО, ГДЕ КОМАНДА ВМЕСТЕ</span>}
         <h2>
           {installer ? (
             <>

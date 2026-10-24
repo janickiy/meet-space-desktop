@@ -880,7 +880,7 @@
   font-size: calc(clamp(31px, 3.3vw, 48px) * var(--text-scale));
   line-height: 1.12;
   letter-spacing: -2px;
-  margin: 19px 0 23px;
+  margin: 0 0 23px;
   max-width: 460px;
 }
 .reference-welcome-installer .reference-welcome-copy p {
@@ -924,7 +924,7 @@
   min-height: 38px;
   margin-bottom: 20px;
 }
-:root .desktop-ssh-installer .desktop-ssh-back {
+:root .desktop-ssh-installer .desktop-ssh-topbar .desktop-ssh-back {
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -1138,6 +1138,92 @@
   color: var(--text);
   font-size: calc(12px * var(--text-scale));
   font-weight: 500;
+}
+/* Keep setup fields together without the spacing of recovery credentials. */
+.desktop-ssh-installer .desktop-ssh-setup-form {
+  gap: 24px;
+  margin-top: 22px;
+}
+.desktop-ssh-setup-form > .desktop-ssh-setup-group {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+.desktop-ssh-setup-form > .desktop-ssh-setup-group > legend {
+  padding: 0;
+  margin-bottom: 12px;
+  color: var(--text);
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.5;
+}
+.desktop-ssh-setup-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.desktop-ssh-setup-fields > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px;
+}
+.desktop-ssh-setup-fields > div > label {
+  flex: 1;
+}
+.desktop-ssh-setup-fields > .desktop-ssh-field-wide {
+  grid-column: 1 / -1;
+}
+.desktop-ssh-setup-form .desktop-ssh-setup-group > .field-hint {
+  margin: 10px 0 0;
+}
+.desktop-ssh-setup-form .desktop-ssh-release-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px);
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 14px;
+}
+.desktop-ssh-setup-form .desktop-ssh-checkbox {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.desktop-ssh-setup-form .desktop-ssh-checkbox input {
+  margin-top: 3px;
+}
+.desktop-ssh-setup-form .desktop-ssh-smtp-fields {
+  margin-top: 16px;
+}
+.desktop-ssh-installer
+  .desktop-ssh-setup-form
+  > .desktop-ssh-auth:not(.desktop-ssh-setup-group) {
+  margin: 0;
+}
+.desktop-ssh-installer .desktop-ssh-setup-form > .desktop-ssh-memory {
+  margin: -8px 0;
+}
+.desktop-ssh-installer .desktop-ssh-setup-form > .button {
+  margin-top: 0;
+}
+@container (max-width: 520px) {
+  .desktop-ssh-setup-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .desktop-ssh-setup-form .desktop-ssh-release-field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+}
+:root[data-large-text="true"] .desktop-ssh-setup-fields,
+:root[data-large-text="true"]
+  .desktop-ssh-setup-form
+  .desktop-ssh-release-field {
+  grid-template-columns: minmax(0, 1fr);
 }
 .desktop-ssh-source-options {
   display: grid;

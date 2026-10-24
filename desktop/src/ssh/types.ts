@@ -8,7 +8,7 @@ export type SshCredentials = { kind: "password"; password: string } | { kind: "p
 export type OwnedCredentials = { kind: "password"; password: Buffer } | { kind: "privateKey"; privateKey: Buffer; passphrase: Buffer };
 export type SshAction = "discover" | "acceptHostKey" | "preflight" | "plan" | "apply" | "status" | "cancel" | "resume" | "detach" | "forget";
 export interface PreflightCheck { id: string; title: string; level: "pass" | "warn" | "blocked" | "unknown"; detail: string }
-export interface PreflightReport { domain: string; ready: boolean; checks: PreflightCheck[]; checkedAt: string }
+export interface PreflightReport { domain: string; publicIpv4?: string; ready: boolean; checks: PreflightCheck[]; checkedAt: string }
 export type PublicInstallPlan = Omit<InstallPlan, "json">;
 export interface SshInstallerState {
   busy: boolean;

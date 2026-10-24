@@ -203,6 +203,7 @@ export interface SshInstallerState {
   };
   preflight?: {
     domain: string;
+    publicIpv4?: string;
     ready: boolean;
     checkedAt: string;
     checks: Array<{

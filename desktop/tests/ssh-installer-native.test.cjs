@@ -14,13 +14,13 @@ const options = { domain: 'meet.example.com', publicIpv4: '8.8.8.8', acmeEmail: 
 const keyBytes = Buffer.concat([Buffer.from([0,0,0,11]), Buffer.from('ssh-ed25519'), Buffer.from([0,0,0,32]), Buffer.alloc(32, 1)]);
 const pin = hostKeyFromBytes(keyBytes);
 const credentials = { kind: 'password', password: 'only-in-memory-fixture-secret' };
-function probe() { return JSON.stringify({ protocol: 'MSPF2', kernel: 'Linux', arch: 'aarch64', cpu: 4, uid: 0, distro: 'ubuntu', distroVersion: '24.04', ramKiB: 8*1048576, diskKiB: 30*1048576, sudo: 'root', docker: 'missing', dockerAccess: false, compose: 'missing', existingContainers: false, existingPaths: false, tcpPorts: [22], udpPorts: [], domainIps: ['8.8.8.8'], hostIps: ['8.8.8.8'], firewall: 'unknown', complete: true }); }
+function probe(changes = {}) { return JSON.stringify({ protocol: 'MSPF2', kernel: 'Linux', arch: 'aarch64', cpu: 4, uid: 0, distro: 'ubuntu', distroVersion: '24.04', ramKiB: 8*1048576, diskKiB: 30*1048576, sudo: 'root', docker: 'missing', dockerAccess: false, compose: 'missing', existingContainers: false, existingPaths: false, tcpPorts: [22], udpPorts: [], domainIps: ['8.8.8.8'], hostIps: ['8.8.8.8'], firewall: 'unknown', complete: true, ...changes }); }
 function planFixture(selectedOptions = options, recipe = InstallerBundle.fromDirectory(bundleRoot).manifest) {
   const prebuilt = selectedOptions.imageMode === 'images';
   const sourceLock = { repository: 'janickiy/meet-space', channel: 'prebuilt', ref: 'v1.2.3', version: 'v1.2.3', commit: 'a'.repeat(40), builtAt: '2026-10-24T00:00:00Z', sourceUrl: 'https://codeload.github.com/janickiy/meet-space/tar.gz/' + 'a'.repeat(40), sourceSha256: 'b'.repeat(64), sourceFiles: recipe.sourceFiles };
   const manifest = prebuilt ? { ...recipe, backendTag: sourceLock.ref, ...Object.fromEntries(['version','commit','builtAt','sourceUrl','sourceSha256','sourceFiles'].map(key => [key,sourceLock[key]])) } : recipe;
   const now = Math.floor(Date.now()/1000);
-  const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:['8.8.8.8'], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
+  const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:[selectedOptions.publicIpv4], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
   p.options = selectedOptions;
   if (prebuilt) {
     p.sourceLock = sourceLock; p.recipeSha256 = sha256(canonicalJson(recipe));
@@ -62,6 +62,55 @@ async function trusted(f) {
 const decodePayload = payload => JSON.parse(Buffer.from(/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1], 'base64'));
 const reply = result => JSON.stringify({ protocol: 'MSI1', ok: true, result });
 const remoteFailure = errorCode => JSON.stringify({ protocol: 'MSI1', ok: false, errorCode });
+
+test('planning without an IPv4 input derives it from a fresh authenticated preflight', async t => {
+  const f = await fixture(t); await trusted(f);
+  const { publicIpv4, ...automatic } = options;
+  const state = await f.controller.invoke('plan', { options: automatic });
+  assert.equal(state.error, undefined);
+  assert.equal(state.preflight.publicIpv4, publicIpv4);
+  assert.deepEqual(f.requests.find(item => item.action === 'plan').request.options, options);
+  assert.equal(f.calls.filter(call => call === 'probe').length, 2);
+  assert.equal(state.plan.options.publicIpv4, publicIpv4);
+  f.transport.probe = async () => probe({ hostIps: ['1.1.1.1'], domainIps: ['1.1.1.1'] });
+  const changed = await f.controller.invoke('plan', { options: automatic });
+  assert.equal(changed.error, undefined);
+  assert.equal(changed.plan.options.publicIpv4, '1.1.1.1');
+  assert.equal(f.requests.at(-1).request.options.publicIpv4, '1.1.1.1');
+});
+
+test('renderer IPv4 overrides and changed or ambiguous host resolution cannot reach the installer', async t => {
+  for (const publicIpv4 of ['1.1.1.1', '10.0.0.1', 'bad', '', null, 8]) {
+    const f = await fixture(t); await trusted(f);
+    const state = await f.controller.invoke('plan', { options: { ...options, publicIpv4 } });
+    assert.equal(state.error.code, 'INPUT'); assert.equal(f.calls.includes('plan'), false);
+  }
+  for (const hostIps of [[], ['10.0.0.1'], ['8.8.8.8', '1.1.1.1']]) {
+    const f = await fixture(t); await trusted(f);
+    f.transport.probe = async () => probe({ hostIps });
+    const state = await f.controller.invoke('plan', { options });
+    assert.equal(state.error.code, 'PREFLIGHT_REQUIRED'); assert.equal(state.preflight.ready, false);
+    assert.equal(state.preflight.publicIpv4, undefined); assert.equal(state.plan, undefined);
+    assert.equal(f.calls.includes('plan'), false);
+  }
+  const f = await fixture(t); await trusted(f);
+  f.transport.probe = async () => probe({ hostIps: ['1.1.1.1'] });
+  const state = await f.controller.invoke('plan', { options });
+  assert.equal(state.error.code, 'INPUT'); assert.equal(f.calls.includes('plan'), false);
+});
+
+test('failed rechecks invalidate unticketed plans and cannot reuse an earlier detected address', async t => {
+  for (const action of ['preflight', 'plan']) {
+    const f = await fixture(t); await planned(f);
+    f.transport.probe = async () => { throw new SshError('NETWORK', 'fixture'); };
+    const state = await f.controller.invoke(action, action === 'preflight' ? { domain: options.domain } : { options });
+    assert.equal(state.error.code, 'NETWORK'); assert.equal(state.preflight, undefined); assert.equal(state.plan, undefined);
+    const calls = f.requests.length;
+    const retry = await f.controller.invoke('plan', { options, credentials });
+    assert.equal(retry.error.code, 'PREFLIGHT_REQUIRED'); assert.equal(f.requests.length, calls);
+  }
+});
+
 function legacyExistingPlan(recipeHash = PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256) {
   const old = InstallerBundle.legacyRecovery(bundleRoot, recipeHash);
   const plan = planFixture(options, old.manifest);

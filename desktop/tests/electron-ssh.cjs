@@ -11,6 +11,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
   const calls=[], checks=[], screenshots=[], layoutChecks=[];
   let window, state={busy:false,phase:'idle',hasCredentials:false};
   let sequence=0, statusReply='running';
+  const resolvedPublicIpv4='78.17.198.175'; // Deterministic remote preflight result; no network request.
   const plan = {hash:'a'.repeat(64),version:'v1.2.3',commit:'b'.repeat(40),options:{domain:'meet.example.com',publicIpv4:'8.8.8.8'},architecture:'arm64',installDocker:true,expiresAt:Math.floor(Date.now()/1000)+900,sourceSelection:'release: v1.2.3',sourceSha256:'c'.repeat(64),resourceProfile:'compact-test',installDockerPluginsOnly:false,missingDockerPlugins:[],actions:['install-docker']};
   const phases=['docker','source','images','configuration','dependencies','backup','migrations','https','services','readiness'];
   const preflightChecks = [
@@ -41,11 +42,13 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       calls.push({action,input}); state.error=undefined;
       if(action==='discover') state={busy:false,phase:'host-key',hasCredentials:false,endpoint:input.endpoint,identity:{fingerprint:'SHA256:'+'F'.repeat(43),algorithm:'ssh-ed25519',changed:false,trusted:false}};
       if(action==='acceptHostKey'){assert.equal(input.fingerprint,state.identity.fingerprint);state.identity.trusted=true;state.phase='trusted';}
-      if(action==='preflight') {assert.equal(input.credentials.password,'local-ui-fixture-only'); state.hasCredentials=true;state.phase='preflight';state.preflight={domain:input.domain,checkedAt:new Date().toISOString(),ready:true,checks:preflightChecks};}
+      if(action==='preflight') {assert.equal(input.credentials.password,'local-ui-fixture-only');assert.equal(Object.hasOwn(input,'publicIpv4'),false); state.hasCredentials=true;state.phase='preflight';state.preflight={domain:input.domain,publicIpv4:resolvedPublicIpv4,checkedAt:new Date().toISOString(),ready:true,checks:preflightChecks};}
       if(action==='plan'){
         assert.ok(['images','source'].includes(input.options.imageMode));
         assert.equal(input.options.imageRelease,input.options.imageMode==='images'?'latest':undefined);
-        plan.options=input.options;plan.imageMode=input.options.imageMode;
+        assert.equal(Object.hasOwn(input.options,'publicIpv4'),false,'The renderer does not submit a manual or stale public IP');
+        assert.equal(state.preflight.domain,input.options.domain);
+        plan.options={...input.options,publicIpv4:state.preflight.publicIpv4};plan.imageMode=input.options.imageMode;
         plan.imageArchiveSha256=plan.imageMode==='images'?'d'.repeat(64):undefined;
         plan.imageArchiveBytes=plan.imageMode==='images'?200*1024*1024:undefined;
         state.plan=structuredClone(plan);state.phase='planned';assert.equal(input.smtpPassword,undefined);
@@ -92,15 +95,38 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       {
         const layout = await execute(`(() => {
           const root=document.documentElement;
-          const selectors='.desktop-foundation-card,.desktop-ssh-installer,.desktop-ssh-checks,.desktop-ssh-checks li,.desktop-ssh-installer .button,.desktop-ssh-installer input,.desktop-ssh-progress-summary,.desktop-ssh-phases,.desktop-ssh-phases li,.desktop-ssh-source-options,.desktop-ssh-source-option,.desktop-ssh-phase-details,.desktop-ssh-saved-entry';
+          const selectors='.desktop-foundation-card,.desktop-ssh-installer,.desktop-ssh-checks,.desktop-ssh-checks li,.desktop-ssh-installer .button,.desktop-ssh-installer input,.desktop-ssh-progress-summary,.desktop-ssh-phases,.desktop-ssh-phases li,.desktop-ssh-source-options,.desktop-ssh-source-option,.desktop-ssh-phase-details,.desktop-ssh-saved-entry,.desktop-ssh-setup-form,.desktop-ssh-setup-fields,.desktop-ssh-setup-fields label,.desktop-ssh-release-field';
           const overflowing=[...document.querySelectorAll(selectors)].filter(element => element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1).map(element => ({selector:element.id || element.className,width:element.clientWidth,scrollWidth:element.scrollWidth}));
-          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing};
+          const bounds=selector=>{const e=document.querySelector(selector);if(!e||!e.clientWidth)return null;const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width};};
+          const back=bounds('.desktop-ssh-back'),backIcon=bounds('.desktop-ssh-back svg'),stepper=bounds('.desktop-ssh-steps'),heading=bounds('.desktop-ssh-heading'),close=bounds('.desktop-ssh-close');
+          const setup=document.querySelector('.desktop-ssh-setup-form');
+          const setupLayout=setup?{width:document.querySelector('.desktop-ssh-installer').clientWidth,domain:bounds('#desktop-ssh-domain'),email:bounds('#desktop-ssh-acme-email'),hasPublicIp:!!document.querySelector('#desktop-ssh-public-ip'),hasPublicIpLabel:[...setup.querySelectorAll('label')].some(e=>/IPv4/.test(e.textContent)),emailRequired:document.querySelector('#desktop-ssh-acme-email').required}:null;
+          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing,back,backIcon,stepper,heading,close,setupLayout,hasInstallerSlogan:!!document.querySelector('.reference-welcome-installer .reference-welcome-copy > span')};
         })()`);
         layoutChecks.push({name,...layout});
         assert.deepEqual(layout.viewport,{width,height},'Capture uses the requested viewport, without OS minimum-size clamping');
         assert.equal(layout.scale,largeText?'1.5':'1');
         assert.ok(layout.documentScrollWidth <= layout.documentWidth + 1, 'Installer must not overflow the document horizontally');
         assert.deepEqual(layout.overflowing,[], 'Installer cards, choices, checks, buttons and inputs must fit horizontally');
+        assert.equal(layout.hasInstallerSlogan,false,'The installer sidebar has no small slogan above its heading');
+        if(layout.back) {
+          assert.ok(Math.abs(layout.back.left-layout.stepper.left)<=1,'Back button aligns with the stepper content edge');
+          assert.ok(Math.abs(layout.backIcon.left-layout.stepper.left)<=1,'Back arrow has no extra button padding at the content edge');
+          assert.ok(layout.back.right<=layout.close.left,'Back and close controls do not overlap');
+          if(layout.heading) assert.ok(Math.abs(layout.back.left-layout.heading.left)<=1,'Back aligns with the form heading');
+        }
+        if(layout.setupLayout) {
+          const setup=layout.setupLayout;
+          assert.equal(setup.hasPublicIp,false);assert.equal(setup.hasPublicIpLabel,false);
+          assert.equal(setup.emailRequired,false,'Certificate email remains optional');
+          if(largeText||setup.width<=520) {
+            assert.ok(setup.email.top>=setup.domain.bottom,'Narrow or enlarged-text setup fields stack without overlap');
+            assert.ok(Math.abs(setup.email.left-setup.domain.left)<=1);
+          } else {
+            assert.ok(setup.email.left>=setup.domain.right,'Wide setup fields occupy separate columns');
+            assert.ok(Math.abs(setup.email.bottom-setup.domain.bottom)<=1,'Domain and optional email inputs share a baseline');
+          }
+        }
       }
       await fs.writeFile(path.join(output,`${name}.png`),(await window.webContents.capturePage()).toPNG());
       screenshots.push({name,width,height,theme,textScale:largeText ? 1.5 : 1});
@@ -182,6 +208,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(calls.some(c=>c.action==='forget'),false,'Closing unconfirmed new-install choice must not erase recovery');
     await clickText('Установить сервер по SSH');await openSaved();
     await assertProgress(null,'unknown');
+    assert.match(await execute(`document.querySelector('.desktop-ssh-saved-plan').textContent`),/8\.8\.8\.8/,'A saved legacy plan keeps its confirmed IP without reopening an IP input');
     assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/05 \/ 05/);
     assert.equal(await isDisabled('Проверить состояние'),true);
     assert.equal(calls.some(c=>['status','resume','apply','cancel','forget'].includes(c.action)),false,'Opening a saved job is a local view transition');
@@ -213,6 +240,8 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
     assert.equal(await isDisabled('Доверять этому ключу'),true);assert.equal(calls.some(c=>c.input.credentials),false);
     await click('.desktop-ssh-trust input[type=checkbox]');await clickText('Доверять этому ключу');await visible('Домен MeetSpace');
+    assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/03 \/ 05/);
+    assert.equal(await execute(`!!document.getElementById('desktop-ssh-public-ip')`),false,'Step 03 asks for the domain, not a manually supplied IPv4');
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images','Ready Docker images are the default');
     assert.equal(await execute(`document.getElementById('desktop-ssh-image-release').value`),'latest','Ready-image release defaults to latest');
     assert.doesNotMatch(await execute(`document.querySelector('.reference-welcome-brand').textContent`),/WINDOWS|LINUX/i,'The logo has no platform caption');
@@ -225,8 +254,15 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images');
     checks.push('Ready Docker images are selected by default; both native radio choices change the selected mode; logo platform caption is removed');
     await capture('ssh-trusted-1280-light');
+    await capture('ssh-trusted-1366-light',{width:1366,height:768});
     await capture('ssh-trusted-1920-dark',{width:1920,height:1080,theme:'dark'});
-    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-public-ip','8.8.8.8');await field('desktop-ssh-password','local-ui-fixture-only');
+    await capture('ssh-trusted-1920-light',{width:1920,height:1080});
+    await capture('ssh-trusted-800-light',{width:800,height:900});
+    await capture('ssh-trusted-480-light',{width:480,height:900});
+    await capture('ssh-trusted-800-dark-large-text',{width:800,height:900,theme:'dark',largeText:true});
+    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-password','local-ui-fixture-only');
+    assert.equal(await execute(`document.querySelector('.desktop-ssh-setup-form').checkValidity()`),true,'Domain and SSH credentials make the form valid without IPv4 or certificate email');
+    assert.equal(await isDisabled('Проверить готовность хоста'),false);
     assert.equal(await execute("document.getElementById('desktop-smtp-enabled').checked"),false);
     assert.equal(await execute("!!document.getElementById('desktop-smtp-host')"),false);
     await visible('Без SMTP приглашения и напоминания');await click('#desktop-smtp-enabled');
@@ -243,9 +279,13 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(calls.filter(c=>c.action==='plan').length,1);
     assert.equal(calls.find(c=>c.action==='plan').input.options.imageMode,'images');
     assert.equal(calls.find(c=>c.action==='plan').input.options.imageRelease,'latest');
+    assert.equal(Object.hasOwn(calls.find(c=>c.action==='plan').input.options,'publicIpv4'),false);
     const imagePlan=await execute(`document.querySelector('.desktop-ssh-plan').textContent`);
     assert.match(imagePlan,/Готовые Docker-образы/);assert.match(imagePlan,/SHA-256 архива образов/);assert.match(imagePlan,/200 МБ/);
     assert.ok(imagePlan.includes('d'.repeat(64)));
+    assert.ok(imagePlan.includes(resolvedPublicIpv4),'The resulting immutable plan displays the IP obtained by native preflight');
+    checks.push('Step 03 accepts only a domain and SSH credentials with optional certificate email; neither preflight nor plan sends publicIpv4 from the renderer, while the confirmed plan displays the native result and saved legacy plans retain their IP');
+    checks.push('Installer slogan is absent and Back arrow aligns with stepper/form content; setup fields form aligned columns or stack without overlap at narrow widths and 150% text');
     checks.push('The actual plan IPC request sends imageMode=images and imageRelease=latest, and the resulting immutable plan shows archive checksum and size');
     assert.equal(await isDisabled('Установить MeetSpace'),true);
     assert.equal(await execute("!!document.querySelector('#desktop-ssh-password')"),false);
@@ -406,7 +446,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
     await click('.desktop-ssh-trust input[type=checkbox]');await clickText('Доверять этому ключу');await visible('Домен MeetSpace');
     await click('input[name="desktop-ssh-image-mode"][value="source"]');
-    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-public-ip','8.8.8.8');await field('desktop-ssh-password','local-ui-fixture-only');
+    await field('desktop-ssh-domain','meet.example.com');await field('desktop-ssh-password','local-ui-fixture-only');
     if(await execute(`document.getElementById('desktop-smtp-enabled').checked`)) await click('#desktop-smtp-enabled');
     await clickText('Проверить готовность хоста');await visible('Подготовить план установки');await clickText('Подготовить план установки');await visible('План установки');
     const sourceRequest=calls.filter(c=>c.action==='plan').at(-1);
