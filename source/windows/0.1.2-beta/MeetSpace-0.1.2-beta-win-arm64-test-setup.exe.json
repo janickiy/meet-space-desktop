@@ -2,22 +2,22 @@
   "artifact": "MeetSpace-0.1.2-beta-win-arm64-test-setup.exe",
   "file": "MeetSpace-0.1.2-beta-win-arm64-test-setup.exe",
   "arch": "arm64",
-  "sha256": "38896ade79686783d7f9b169bafafa279c84062763e4150aee8875f23defdff9",
-  "sha512": "OGdxxJH36OA+QVcUIlPEd9+XaI3QzLOX0CHinNDF6Pc64wSYOVnRaB7SsfsadAcU/zwO3t1V/5iudoeIps3/IA==",
-  "bytes": 116494316,
-  "size": 116494316,
+  "sha256": "4702dc821bd8364bbdb828098f4c3aeaccc167a6b1854836db7cb049c9cc65c5",
+  "sha512": "mnJTblSB5kG9zyYFcXYLFOCGcCC9sOMswj7DLxZf731s3fFbae2LakNsqUB6BYJUThyoPA1OtDHJbChDTuxFfg==",
+  "bytes": 116516452,
+  "size": 116516452,
   "payloadMachine": "0xaa64",
-  "payloadSHA256": "e8a2582259754e67ef760d17d87735c27c198f5221fa8ee353d4a8291a69aa88",
-  "appAsarSHA256": "112c7afd5540e3291afbf7a6e966eac178d9410a616449efb1b536d7a4833274",
+  "payloadSHA256": "2185f93d8f26ec2cfe83c4ffe7ac7767acb53872c6cabd515587a6085a47f355",
+  "appAsarSHA256": "311a7a90f8cd8539cf661ff19d80556903f7b70f302d6c8b2bd9dc46d8b65973",
   "schemaVersion": 2,
   "releaseMode": "test",
   "appId": "com.janickiy.meetspace.desktop.test",
-  "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-  "sourceDirty": false,
-  "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+  "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+  "sourceDirty": true,
+  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
   "buildVersion": "0.1.2-beta-test",
-  "buildTime": "2026-10-22T18:02:40Z",
-  "sourceDateEpoch": 1792692160,
+  "buildTime": "2026-10-22T18:09:28Z",
+  "sourceDateEpoch": 1792692568,
   "buildHostPlatform": "darwin",
   "buildHostArch": "arm64",
   "builderPatch": {
@@ -75,13 +75,13 @@
     },
     {
       "file": "resources/THIRD_PARTY_NOTICES.txt",
-      "bytes": 129968,
-      "sha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd"
+      "bytes": 131395,
+      "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
     },
     {
       "file": "resources/third-party-licenses.json",
-      "bytes": 7537,
-      "sha256": "b94e1d80d1d62e3817160ce87c2eee852219a782843bcbb02f8fe8cc4fd97196"
+      "bytes": 7971,
+      "sha256": "390ae943d9814351d61761db08f2341323a055e1bd8bd4715a6fce80ddacf8ab"
     },
     {
       "file": "resources/TEST-LICENSE.txt",

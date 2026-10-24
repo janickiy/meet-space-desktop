@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
   "arch": "x64",
   "format": "deb",
   "formats": [
@@ -11,7 +11,7 @@
     "rpm",
     "AppImage"
   ],
-  "verifiedStaging": "/home/meetspace/source/desktop/artifacts/.linux-staging-f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa-x64-KMYGei",
-  "immutableDirectory": "/home/meetspace/source/desktop/artifacts/linux/DEB/0.1.2-beta/f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa/x64",
+  "verifiedStaging": "/release/source/desktop/artifacts/.linux-staging-07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef-x64-lFlLo3",
+  "immutableDirectory": "/release/source/desktop/artifacts/linux/DEB/0.1.2-beta/07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef/x64",
   "overwriteAllowed": false
 }

@@ -5,15 +5,15 @@
   "releaseMode": "test",
   "version": "0.1.2-beta",
   "appId": "com.janickiy.meetspace.desktop.test",
-  "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-  "sourceDirty": false,
-  "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
-  "verifiedAt": "2026-10-22T18:08:15.718Z",
+  "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+  "sourceDirty": true,
+  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
+  "verifiedAt": "2026-10-24T08:14:31.047Z",
   "verifierHost": {
     "platform": "linux",
     "arch": "arm64",
     "node": "v24.19.0",
-    "osRelease": "6.12.76-linuxkit"
+    "osRelease": "6.8.0-147-generic"
   },
   "limitations": [
     "unsigned internal test packages",
@@ -27,10 +27,10 @@
       "format": "deb",
       "arch": "arm64",
       "version": "0.1.2-beta",
-      "size": 95662188,
-      "sha256": "dcd54dace5d4ffae837308e330db0e0ee30842f59f235b4e745ba7aeeb8091da",
-      "sha512": "jFgGepE4pKjwgJINtNv4q8oHlpMMIEcpTvIb+xjx+ukIM+XEgt5Zrd6guJZaflqianSCVeV4byyhXlj/CnB0NA==",
-      "sha512Hex": "8c58067a9138a4a8f080920db4dbf8abca0796930c2047294ef21bfb18f1fae90833e5c482de59addea0b8965a7e5aa26a748255e5786f2ca15e58ff0a707434",
+      "size": 95688656,
+      "sha256": "ad8a312bf7fe9d2dcfceb9fea2fae2cf778fba6b9f9d6e0b36aefcb24340b3d2",
+      "sha512": "I6IModW6zS+0J5LRfsJyUSo842BAnoYANac7rbMjuUtznplkNFr0rAG85QOyazm+3XSJEpbi711wcFMEPhlf4w==",
+      "sha512Hex": "23a20ca1d5bacd2fb42792d17ec272512a3ce360409e860035a73badb323b94b739e9964345af4ac01bce503b26b39bedd74891296e2ef5d707053043e195fe3",
       "metadata": {
         "name": "meetspace-desktop-test",
         "version": "0.1.2~beta",
@@ -70,7 +70,7 @@
         "ownershipVerified": "root:root",
         "sandboxMode": "4755"
       },
-      "appAsarSha256": "c11c98d22d7bda437706f6edd8324880a776b489b9824e0895b0b61f0821eb3d",
+      "appAsarSha256": "c73854d3855f34edc60150734b648576a46487b1166fcdad603e78c688dafdb3",
       "native": [
         {
           "file": "chrome-sandbox",
@@ -147,12 +147,12 @@
         "schemaVersion": 2,
         "releaseMode": "test",
         "appId": "com.janickiy.meetspace.desktop.test",
-        "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-        "sourceDirty": false,
-        "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+        "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+        "sourceDirty": true,
+        "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
         "buildVersion": "0.1.2-beta-test",
-        "buildTime": "2026-10-22T18:02:40Z",
-        "sourceDateEpoch": 1792692160,
+        "buildTime": "2026-10-22T18:09:28Z",
+        "sourceDateEpoch": 1792692568,
         "buildHostPlatform": "linux",
         "buildHostArch": "arm64",
         "builderPatch": {
@@ -188,13 +188,13 @@
       "licenses": [
         {
           "file": "THIRD_PARTY_NOTICES.txt",
-          "bytes": 129968,
-          "sha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd"
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
         },
         {
           "file": "third-party-licenses.json",
-          "bytes": 7537,
-          "sha256": "b94e1d80d1d62e3817160ce87c2eee852219a782843bcbb02f8fe8cc4fd97196"
+          "bytes": 7971,
+          "sha256": "390ae943d9814351d61761db08f2341323a055e1bd8bd4715a6fce80ddacf8ab"
         },
         {
           "file": "APP-LICENSE.txt",
@@ -235,10 +235,10 @@
       "format": "rpm",
       "arch": "arm64",
       "version": "0.1.2-beta",
-      "size": 85800593,
-      "sha256": "8e515daf5104cefe4ef2d8c4931bf14bdd91c1352f3ea19b34faf97b6c5fa4d1",
-      "sha512": "N9UhmOm/Ewf7lmmDhHuto4/ulx3FdaTlHYupjW8m8Rvme+QEbhQl6NMGiaWbGt4IaOvazxAGY8N3gG54IRDWBg==",
-      "sha512Hex": "37d52198e9bf1307fb966983847bada38fee971dc575a4e51d8ba98d6f26f11be67be4046e1425e8d30689a59b1ade0868ebdacf100663c377806e782110d606",
+      "size": 85834613,
+      "sha256": "e280db4bc6676f4a9320d7a7d85f8b08fcd34169ee957be6500ca5064e5a74e5",
+      "sha512": "ANheqLrXijwInbb53QofRZ1bexrvDTeKEJJVv1Wk0UNvj7wdp6SNlHRzIUkv2PjFsL2VvnbhGv5U904mvYoVGQ==",
+      "sha512Hex": "00d85ea8bad78a3c089db6f9dd0a1f459d5b7b1aef0d378a109255bf55a4d1436f8fbc1da7a48d94747321492fd8f8c5b0bd95be76e11afe54f74e26bd8a1519",
       "metadata": {
         "name": "meetspace-desktop-test",
         "version": "0.1.2~beta",
@@ -284,7 +284,7 @@
         "ownershipVerified": "root:root",
         "sandboxMode": "4755"
       },
-      "appAsarSha256": "c11c98d22d7bda437706f6edd8324880a776b489b9824e0895b0b61f0821eb3d",
+      "appAsarSha256": "c73854d3855f34edc60150734b648576a46487b1166fcdad603e78c688dafdb3",
       "native": [
         {
           "file": "chrome-sandbox",
@@ -361,12 +361,12 @@
         "schemaVersion": 2,
         "releaseMode": "test",
         "appId": "com.janickiy.meetspace.desktop.test",
-        "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-        "sourceDirty": false,
-        "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+        "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+        "sourceDirty": true,
+        "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
         "buildVersion": "0.1.2-beta-test",
-        "buildTime": "2026-10-22T18:02:40Z",
-        "sourceDateEpoch": 1792692160,
+        "buildTime": "2026-10-22T18:09:28Z",
+        "sourceDateEpoch": 1792692568,
         "buildHostPlatform": "linux",
         "buildHostArch": "arm64",
         "builderPatch": {
@@ -402,13 +402,13 @@
       "licenses": [
         {
           "file": "THIRD_PARTY_NOTICES.txt",
-          "bytes": 129968,
-          "sha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd"
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
         },
         {
           "file": "third-party-licenses.json",
-          "bytes": 7537,
-          "sha256": "b94e1d80d1d62e3817160ce87c2eee852219a782843bcbb02f8fe8cc4fd97196"
+          "bytes": 7971,
+          "sha256": "390ae943d9814351d61761db08f2341323a055e1bd8bd4715a6fce80ddacf8ab"
         },
         {
           "file": "APP-LICENSE.txt",
@@ -449,10 +449,10 @@
       "format": "AppImage",
       "arch": "arm64",
       "version": "0.1.2-beta",
-      "size": 119067319,
-      "sha256": "7e008f306090dc1703fc2a27c37959bd12f15100791dc890479ea1886f6e84cc",
-      "sha512": "hnnfJjftcDye1fyM33qvT3gmbJttlHH/67GAKf8SuONfHwCUDC75/62pfTID4sXuTmGNrAT3O3rSaqIp1C8Rog==",
-      "sha512Hex": "8679df2637ed703c9ed5fc8cdf7aaf4f78266c9b6d9471ffebb18029ff12b8e35f1f00940c2ef9ffada97d3203e2c5ee4e618dac04f73b7ad26aa229d42f11a2",
+      "size": 119182389,
+      "sha256": "41b5a19634906d0d6e0187581399ad6b7cd99b96e24c59f9cfff6f726a819d35",
+      "sha512": "+0+FUk56owrVFVMok7Jj+tJ7mDsXvgikacbIesc3xcRhAmCDNRjOIOKYWEXVcaN1fGVAz6RX5B7g18+LFldP/A==",
+      "sha512Hex": "fb4f85524e7aa30ad515532893b263fad27b983b17be08a469c6c87ac737c5c4610260833518ce20e2985845d571a3757c6540cfa457e41ee0d7cf8b16574ffc",
       "metadata": {
         "format": "AppImage",
         "squashfsOffset": 936456,
@@ -468,7 +468,7 @@
         "runtimeSha256": "00cbdfcf917cc6c0ff6d3347d59e0ca1f7f45a6df1a428a0d6d8a78664d87444",
         "staticRuntime": true
       },
-      "appAsarSha256": "c11c98d22d7bda437706f6edd8324880a776b489b9824e0895b0b61f0821eb3d",
+      "appAsarSha256": "c73854d3855f34edc60150734b648576a46487b1166fcdad603e78c688dafdb3",
       "native": [
         {
           "file": "chrome-sandbox",
@@ -611,12 +611,12 @@
         "schemaVersion": 2,
         "releaseMode": "test",
         "appId": "com.janickiy.meetspace.desktop.test",
-        "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-        "sourceDirty": false,
-        "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+        "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+        "sourceDirty": true,
+        "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
         "buildVersion": "0.1.2-beta-test",
-        "buildTime": "2026-10-22T18:02:40Z",
-        "sourceDateEpoch": 1792692160,
+        "buildTime": "2026-10-22T18:09:28Z",
+        "sourceDateEpoch": 1792692568,
         "buildHostPlatform": "linux",
         "buildHostArch": "arm64",
         "builderPatch": {
@@ -666,13 +666,13 @@
       "licenses": [
         {
           "file": "THIRD_PARTY_NOTICES.txt",
-          "bytes": 129968,
-          "sha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd"
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
         },
         {
           "file": "third-party-licenses.json",
-          "bytes": 7537,
-          "sha256": "b94e1d80d1d62e3817160ce87c2eee852219a782843bcbb02f8fe8cc4fd97196"
+          "bytes": 7971,
+          "sha256": "390ae943d9814351d61761db08f2341323a055e1bd8bd4715a6fce80ddacf8ab"
         },
         {
           "file": "APP-LICENSE.txt",

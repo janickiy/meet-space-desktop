@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "a6a5f9f1e80b367d5d01fd1abeafb0f910b6794c",
-  "sourceDirty": false,
-  "sourceTreeSha256": "f4a494ba87b1189db74bb04e72b156b18608df25ca4b533a2bc74310d643affa",
+  "sourceCommit": "7c5840267ad2c08cfbf1a97b99b1a30a64c98d82",
+  "sourceDirty": true,
+  "sourceTreeSha256": "07579126f9e501b8d8bffe0df1d99c6255abf6d03a98e5c5e6ff5023ab5d40ef",
   "files": [
     {
       "path": ".github/workflows/desktop-acceptance.yml",
@@ -71,8 +71,8 @@
     },
     {
       "path": "desktop/resources/THIRD_PARTY_NOTICES.txt",
-      "sha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd",
-      "bytes": 129968
+      "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241",
+      "bytes": 131395
     },
     {
       "path": "desktop/resources/icon-source.json",
@@ -115,9 +115,34 @@
       "bytes": 175
     },
     {
+      "path": "desktop/resources/server-installer/legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a/docker.asc",
+      "sha256": "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570",
+      "bytes": 3817
+    },
+    {
+      "path": "desktop/resources/server-installer/legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a/release.json",
+      "sha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
+      "bytes": 5882
+    },
+    {
+      "path": "desktop/resources/server-installer/legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a/release.sig",
+      "sha256": "98aea5d79d368fc325dafc34d2fb32270d16ac4e36cab7d814ad98f1499dfbc6",
+      "bytes": 384
+    },
+    {
+      "path": "desktop/resources/server-installer/legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a/runner.py",
+      "sha256": "e06667b078b724a35f52cb78cb0bd5fb5ef88a29adb21f83625756d67d6bac5a",
+      "bytes": 92850
+    },
+    {
+      "path": "desktop/resources/server-installer/legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a/trust-root.pem",
+      "sha256": "9f16201125cd17dc9fb90a7579e78589c76ecbfdb1ee80df3428ee34d6b90dfc",
+      "bytes": 625
+    },
+    {
       "path": "desktop/resources/server-installer/provenance.json",
-      "sha256": "04db71dcca52fbdb675a6073e79f029ebe8dacf1dd0b2d69db9469d1eb54f9b2",
-      "bytes": 919
+      "sha256": "df63ce55d5b0bdde58884cc3ba8d9779ff98a3ca64ac47ac45d4d856103606ee",
+      "bytes": 1382
     },
     {
       "path": "desktop/resources/server-installer/v1/docker.asc",
@@ -126,12 +151,12 @@
     },
     {
       "path": "desktop/resources/server-installer/v1/release.json",
-      "sha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
-      "bytes": 5882
+      "sha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "bytes": 5877
     },
     {
       "path": "desktop/resources/server-installer/v1/release.sig",
-      "sha256": "98aea5d79d368fc325dafc34d2fb32270d16ac4e36cab7d814ad98f1499dfbc6",
+      "sha256": "fe8db88b1b252e1f2669522239fc7f4927c881e2955a84dbd40b8583c77f6c8a",
       "bytes": 384
     },
     {
@@ -146,8 +171,8 @@
     },
     {
       "path": "desktop/resources/third-party-licenses.json",
-      "sha256": "b94e1d80d1d62e3817160ce87c2eee852219a782843bcbb02f8fe8cc4fd97196",
-      "bytes": 7537
+      "sha256": "390ae943d9814351d61761db08f2341323a055e1bd8bd4715a6fce80ddacf8ab",
+      "bytes": 7971
     },
     {
       "path": "desktop/scripts/build-context.mjs",
@@ -201,8 +226,8 @@
     },
     {
       "path": "desktop/scripts/generate-third-party-notices.mjs",
-      "sha256": "594c71a0b627313527f60c0c6127c9a26af3fc4a8af21d075cdc90624ae07f41",
-      "bytes": 6127
+      "sha256": "87752b045ce109a158e52fecd734130c5c9e3daa25cea4638136bcb4d58c3c65",
+      "bytes": 6810
     },
     {
       "path": "desktop/scripts/linux-package-policy.mjs",
@@ -256,13 +281,13 @@
     },
     {
       "path": "desktop/scripts/verify-artifacts.mjs",
-      "sha256": "325a97a8ae16b869da891ca48586479488cce17c41cda5846f29b10a5a709270",
-      "bytes": 19644
+      "sha256": "2cdb5a43bbfb8f074982cfe55e0bc4e3ee99dc956cd38d71282ef7a007b665b7",
+      "bytes": 19984
     },
     {
       "path": "desktop/scripts/verify-linux-artifacts.mjs",
-      "sha256": "083fd2ec16521144b6ecc2e4f2ab9f0e2cb257901321ba2521878c3fe1bd0497",
-      "bytes": 31124
+      "sha256": "39edeae41044741df149c402a38ed7818ddd0641ac48672b1c7cadedfda25b22",
+      "bytes": 31762
     },
     {
       "path": "desktop/scripts/verify-ssh-runtime.cjs",
@@ -286,8 +311,8 @@
     },
     {
       "path": "desktop/src/broker.ts",
-      "sha256": "ad67bcf823c8cc4cda505720c8cf9cd1ea4b2cf30da3be1e73609f8360f37590",
-      "bytes": 41069
+      "sha256": "9c2be95c242f49fbe77c7fbb9ab42f5afa770839e38231b7cdd400e6d7b72beb",
+      "bytes": 41235
     },
     {
       "path": "desktop/src/downloads.ts",
@@ -306,8 +331,8 @@
     },
     {
       "path": "desktop/src/media-permissions.ts",
-      "sha256": "3db09ad0ec37eda5628806ff7906070b7ee32b794315df87ffee2f503fee1a1c",
-      "bytes": 8963
+      "sha256": "9f28adf5aa5bc3772c6d9ac96e9b8a9fa6e3c00f6144347f0c6fa02c283962b3",
+      "bytes": 9178
     },
     {
       "path": "desktop/src/native-notifications.ts",
@@ -366,8 +391,8 @@
     },
     {
       "path": "desktop/src/preload.ts",
-      "sha256": "f6d50efb9bdee567f46137a4691a75e2afd290e85ebf9a0d7b1b4dc98be0a23c",
-      "bytes": 4328
+      "sha256": "57234d7153fb4b8d2c5865eda7cae450aa3629277c45be7ea5bc820dcfaf4722",
+      "bytes": 4432
     },
     {
       "path": "desktop/src/protocol.ts",
@@ -396,8 +421,8 @@
     },
     {
       "path": "desktop/src/ssh/controller.ts",
-      "sha256": "b69b912a1256f2ff7c5cd97141ca3021b324dfce0b65b68ffe0b4989556576f9",
-      "bytes": 19570
+      "sha256": "7fdec3f1cd5524c02249ee34e83f6f8049a9b130204ef80c64aa4e99d79ed405",
+      "bytes": 21192
     },
     {
       "path": "desktop/src/ssh/preflight.ts",
@@ -406,8 +431,8 @@
     },
     {
       "path": "desktop/src/ssh/protocol.ts",
-      "sha256": "fbe66d055246d9a896c737404156647251c8bada06beee791b176cfed65a0eea",
-      "bytes": 22372
+      "sha256": "7adf5fba5d164bf5e6d5ffdb805af121832a7c7c57ad3d6cd162c71b217f7584",
+      "bytes": 23709
     },
     {
       "path": "desktop/src/ssh/transport.ts",
@@ -471,8 +496,8 @@
     },
     {
       "path": "desktop/tests/broker-network.test.cjs",
-      "sha256": "dcf33fa4549b0e83419c135d34bc4fe267d4cac97069af6ee3a1fe747caae554",
-      "bytes": 15077
+      "sha256": "1e9c33868f9f748dbe4cf583770e66472381ab7628b055d69f325b4a678cea22",
+      "bytes": 18302
     },
     {
       "path": "desktop/tests/broker-policy.test.cjs",
@@ -490,9 +515,19 @@
       "bytes": 1392
     },
     {
+      "path": "desktop/tests/conversation-files-electron.cjs",
+      "sha256": "4f8703239b80de15dcdb589899eb79b0a118d9770959f88eb0b4b0be101724c2",
+      "bytes": 13029
+    },
+    {
+      "path": "desktop/tests/conversation-files-runner.cjs",
+      "sha256": "44638d31bef9ccdce3f5dd53e9fd8e4ca61b7957e343d255891008e9b099b436",
+      "bytes": 1147
+    },
+    {
       "path": "desktop/tests/design-v2-electron.cjs",
-      "sha256": "0983c389308ce3d89d51c39e381c5e1136bd88d78bbffc5d48a478409385053d",
-      "bytes": 8887
+      "sha256": "4e0f53490d4b11c5973b9670e521c93dc3e726d0aea3a1b2335e9b7820d5be63",
+      "bytes": 14664
     },
     {
       "path": "desktop/tests/design-v2-runner.cjs",
@@ -516,8 +551,8 @@
     },
     {
       "path": "desktop/tests/electron-product.cjs",
-      "sha256": "dd4f2e8059af10fd0b6745fed1587541968cfe661e325f2c5470c9cdf9f23e47",
-      "bytes": 16955
+      "sha256": "e69521cbf37271f528c8de6f9a11ef11f75c6436ddd538dceefdd3365d058e9a",
+      "bytes": 18996
     },
     {
       "path": "desktop/tests/electron-smoke.cjs",
@@ -531,8 +566,8 @@
     },
     {
       "path": "desktop/tests/electron-ssh.cjs",
-      "sha256": "1b8ddac347db72020a7d142e28cf564ccd581b7b8d0859e8d4bc0892dd806253",
-      "bytes": 11999
+      "sha256": "3a2e6f39ad6ab8c030814bf11f4bea65f930af0ed363de682fe48f86dd5a34d3",
+      "bytes": 26149
     },
     {
       "path": "desktop/tests/electron-ui-runner.cjs",
@@ -541,8 +576,8 @@
     },
     {
       "path": "desktop/tests/electron-ui.cjs",
-      "sha256": "6cd09e7830c5e8649dab987df155f02574811d363f8d739457d1b5f2fb7d17d9",
-      "bytes": 19262
+      "sha256": "54c80a61ab386e9188e50200928c73c4a8891bee2ccaa483b77e70149b48c84f",
+      "bytes": 19324
     },
     {
       "path": "desktop/tests/entrypoint.test.cjs",
@@ -598,6 +633,11 @@
       "path": "desktop/tests/helpers/renderer-jank-observer.cjs",
       "sha256": "3bce7fcfc5424cf5b9f6d88095532c3e1d4897d9c80b65def58982a96e3a33c6",
       "bytes": 1490
+    },
+    {
+      "path": "desktop/tests/installed-server-connection-message.test.cjs",
+      "sha256": "6cfcb5e435bc971455f5dea57053e123b6fa8763415147475ae449e50fd7a868",
+      "bytes": 2708
     },
     {
       "path": "desktop/tests/integration-electron.cjs",
@@ -711,8 +751,8 @@
     },
     {
       "path": "desktop/tests/media-permissions.test.cjs",
-      "sha256": "ee83585c18089d661a4c0e44abf0fbe3c7f42301b49348b57e43f9d4f15d8035",
-      "bytes": 16607
+      "sha256": "125ce68c9a8070260e55ac58ff5802c9270629e41e3bbdef68f49a6431acb8d4",
+      "bytes": 18269
     },
     {
       "path": "desktop/tests/media-runner.cjs",
@@ -790,6 +830,16 @@
       "bytes": 5741
     },
     {
+      "path": "desktop/tests/reference-call-electron.cjs",
+      "sha256": "bac7688b9966d85aab10024ddb4f5c43940967cf52d76b16816d7ab612c8e5a5",
+      "bytes": 48438
+    },
+    {
+      "path": "desktop/tests/reference-call-runner.cjs",
+      "sha256": "f60820307c1fa40e02ec6b0b9aafbabd8e872d1416532f996304a9b38e2c2837",
+      "bytes": 1164
+    },
+    {
       "path": "desktop/tests/release-policy.test.cjs",
       "sha256": "2b0c3197e63585ea2451f2d7576ff2e0ecffacca6fded3350ef3309e7f7f0d0c",
       "bytes": 9691
@@ -820,9 +870,14 @@
       "bytes": 3781
     },
     {
+      "path": "desktop/tests/ssh-install-progress.test.cjs",
+      "sha256": "aae50f365b46635e192ca10bde4a8d203d49f7c15565acff9c00dd048c9a7d5c",
+      "bytes": 6336
+    },
+    {
       "path": "desktop/tests/ssh-installer-native.test.cjs",
-      "sha256": "2a3941cacf3358ee3afb8529fedf9d049f7d71c588f84e5266b64f160a0ce6ab",
-      "bytes": 11124
+      "sha256": "92c3a6bbd0b0ee19f6df783f627c50670fe308bcfedf1c3e20ba2a74aa8cbc7d",
+      "bytes": 21143
     },
     {
       "path": "desktop/tests/ssh-installer-preflight.test.cjs",
@@ -831,8 +886,13 @@
     },
     {
       "path": "desktop/tests/ssh-installer-protocol.test.cjs",
-      "sha256": "c0e8299646199a9ba30f172ba8c15d8447396d85ba6641e5354fe9889edaa22e",
-      "bytes": 15354
+      "sha256": "98eaa03d165556f265656ffdbfb147cad789a798f9027840ff7d37c17547d41d",
+      "bytes": 18397
+    },
+    {
+      "path": "desktop/tests/ssh-installer-runner-seam.test.cjs",
+      "sha256": "8943541668f4e680dde5ab92da0baa5f09172e32804b885caad853326cc2df1f",
+      "bytes": 3630
     },
     {
       "path": "desktop/tests/ssh-installer-transport.test.cjs",
@@ -856,8 +916,8 @@
     },
     {
       "path": "desktop/tests/stage07-profile-electron.cjs",
-      "sha256": "cd92daabaf3a046359f296bfc115b7eb85f994685c1af206ea8f38ba83fbc0e0",
-      "bytes": 15137
+      "sha256": "45e792f51893e32b15a9568b49e132da4ddb2a08639c3df3d27354e1b604721e",
+      "bytes": 15075
     },
     {
       "path": "desktop/tests/stage07-profile-runner.cjs",
@@ -1045,6 +1105,26 @@
       "bytes": 7520
     },
     {
+      "path": "frontend/public/fonts/reference/inter-cyrillic-400-normal.woff2",
+      "sha256": "f0bb586459ce8f09b238285040f17e3e9e9538b2c5a7aae0775194e33c36c3c3",
+      "bytes": 7712
+    },
+    {
+      "path": "frontend/public/fonts/reference/inter-cyrillic-600-normal.woff2",
+      "sha256": "6c2a37f82a676bcd441b735e4e2cda4edb8873a059ab9c362a84f0711f257041",
+      "bytes": 7972
+    },
+    {
+      "path": "frontend/public/fonts/reference/inter-latin-400-normal.woff2",
+      "sha256": "8909904ab6c872eb994093482a88a28eca2cd95912d7b6fecd72103b0dc07edc",
+      "bytes": 23664
+    },
+    {
+      "path": "frontend/public/fonts/reference/inter-latin-600-normal.woff2",
+      "sha256": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
+      "bytes": 24452
+    },
+    {
       "path": "frontend/public/media/auth-landscape.jpg",
       "sha256": "f917ff5115ae08626e13d31f60ec0b2bb5b9b8cd20116624377967bcd689d4fd",
       "bytes": 524596
@@ -1091,13 +1171,13 @@
     },
     {
       "path": "frontend/src/App.tsx",
-      "sha256": "500c9e61afdacb17614740463d4ac3410ee2737653220c6e58a7c7d4c147a5ba",
-      "bytes": 9445
+      "sha256": "4c6c310b06c8f5dc67a6aa79b3c59403cd9c91b1475791eb22e9236b7e266f98",
+      "bytes": 9414
     },
     {
       "path": "frontend/src/accessibility.css",
-      "sha256": "f56fc9e15cdd8ab9f67a948aa1e06da46cf767c497d5d94bd127137aef7c678a",
-      "bytes": 2122
+      "sha256": "4d5fd2f2745b8c446f62b0648b0b070e878bf275bd3893f9b62993e3b5742ac8",
+      "bytes": 2197
     },
     {
       "path": "frontend/src/api.ts",
@@ -1106,8 +1186,8 @@
     },
     {
       "path": "frontend/src/appearance.css",
-      "sha256": "08f949d21f082bc181cbaedf8ece66d0578d9abcc0cc45fe776e8753476b3af8",
-      "bytes": 5366
+      "sha256": "a9a787c0ba1b0977629e49445ee70b256b2b5c8ff2b4b31f293b5207fc531b9e",
+      "bytes": 5325
     },
     {
       "path": "frontend/src/appearance.tsx",
@@ -1221,8 +1301,8 @@
     },
     {
       "path": "frontend/src/components/ChatPanel.tsx",
-      "sha256": "7bbf6d875f423584a0690103547805b131a92c154c0a077aa33ff97240953257",
-      "bytes": 45398
+      "sha256": "f68cda2f2a5bd2bb6f065a3fe552cd1103700c83912010a76a07ee06717232fd",
+      "bytes": 46717
     },
     {
       "path": "frontend/src/components/ConferenceChatActions.tsx",
@@ -1231,23 +1311,23 @@
     },
     {
       "path": "frontend/src/components/ConferenceChatInfo.tsx",
-      "sha256": "d6c376c8bb528b3770ae63e7bd4b536476b9f6d27d0b04f607f004b34e2c09e2",
-      "bytes": 37376
+      "sha256": "2ca9407251e23152c9f3d3b7d184baac6682f62a9d9215a8537c827cea26bdf5",
+      "bytes": 37055
     },
     {
       "path": "frontend/src/components/ConferenceInvitations.tsx",
-      "sha256": "2872aff8dc9028255cca81818752f7dff1ca84be1d0fd86d0d34f3a4c08b488c",
-      "bytes": 10481
+      "sha256": "d2790be3266e1ee3ed91493b0b118e392f0318660b76cc4a3424cbcb63180779",
+      "bytes": 18448
     },
     {
       "path": "frontend/src/components/ConferenceModals.tsx",
-      "sha256": "b0bb643f35b8582f9d44923ca8490fc3866fca6dfcca3d9ea6db3857a6485c99",
-      "bytes": 20568
+      "sha256": "ff7b7a3dee3cfec52e4125453cb637af39fc21bcaade85c131090a2ee0fd173d",
+      "bytes": 23238
     },
     {
-      "path": "frontend/src/components/Copyright.tsx",
-      "sha256": "9566684c6331b4a83e36279d72dc4c1bb40a78c4cbd5f81bfc46f2ee85291011",
-      "bytes": 418
+      "path": "frontend/src/components/ConversationFiles.tsx",
+      "sha256": "8855937345b5340efe7a7c22b35665ca9af0158dd2f3914d978a8ee5e8fb89e6",
+      "bytes": 7760
     },
     {
       "path": "frontend/src/components/DeviceSettings.tsx",
@@ -1256,8 +1336,8 @@
     },
     {
       "path": "frontend/src/components/DirectCallButton.tsx",
-      "sha256": "7543f20480837497c3394fae0b6d9218c88c53dbd45fb271cd5f3e81c74bc468",
-      "bytes": 1001
+      "sha256": "01f8baab0ac73faf307ac38bd5f81b85791f11f98ba2d60b705dbb2b7d969536",
+      "bytes": 1077
     },
     {
       "path": "frontend/src/components/DirectCallMedia.tsx",
@@ -1266,13 +1346,13 @@
     },
     {
       "path": "frontend/src/components/DirectCalls.tsx",
-      "sha256": "552b67d4dd76271edd146541fc740df14601c07d38ecbef0d12aba3e2a3b88dd",
-      "bytes": 21489
+      "sha256": "5f0577c57211ca18caf67633c83f633e4286008642f9321dce51c34c94568806",
+      "bytes": 21755
     },
     {
       "path": "frontend/src/components/DirectConversationActions.tsx",
-      "sha256": "93be6f6818f3cbe9699c231cfe7e4ffabd1f6b7735d48e248e3f2fb273d1a7b2",
-      "bytes": 13880
+      "sha256": "01af3bee767f87e9fd86f7665920170f948475192f79196eb7859a2a1564895b",
+      "bytes": 13919
     },
     {
       "path": "frontend/src/components/EmojiPicker.tsx",
@@ -1301,8 +1381,8 @@
     },
     {
       "path": "frontend/src/components/GroupChats.tsx",
-      "sha256": "26b2c0e60a0cdb030abf6453515a1412e865b7432fbe220ebea564d30ba803a3",
-      "bytes": 38117
+      "sha256": "a0fe7d95bfe1b1177bf2465c3f1539c3a1263a93c2236d59a002b899bd2aca22",
+      "bytes": 39598
     },
     {
       "path": "frontend/src/components/IntegrationsSettings.tsx",
@@ -1316,18 +1396,18 @@
     },
     {
       "path": "frontend/src/components/Layout.tsx",
-      "sha256": "35386729f4dea3ff388025edac62bae69b4ac0dbc38814500e04c0d66489d286",
-      "bytes": 19565
+      "sha256": "c6cca2c96eb150c398b84fc8c1ee3d14c272cd51213aaa849badd52477cb21d6",
+      "bytes": 19510
+    },
+    {
+      "path": "frontend/src/components/MeetingDetailsModal.tsx",
+      "sha256": "b26b749a80f8241475f945328822894356e2bd70c807d7c93fbc7c11559abd4c",
+      "bytes": 5960
     },
     {
       "path": "frontend/src/components/MeetingSkeleton.tsx",
       "sha256": "17671fb99da1d85856cc263324221c43e4d654fb49682fcdd7a711925304ddaa",
       "bytes": 1048
-    },
-    {
-      "path": "frontend/src/components/MeetingsOverview.tsx",
-      "sha256": "6ec332cddf2d22b467a8605211991719ac3654acb4e198a3e4fac0030ccf3481",
-      "bytes": 5254
     },
     {
       "path": "frontend/src/components/MessagingSkeleton.tsx",
@@ -1366,8 +1446,8 @@
     },
     {
       "path": "frontend/src/components/RealtimePanel.tsx",
-      "sha256": "fcdfd75a6b67407fea50e089e6500e4a89cc85c13fe846faef91cdabe6046e70",
-      "bytes": 36962
+      "sha256": "bba8f7eee24557815c320e12dcd069c53ce61b36056be14406627bba4b146b4f",
+      "bytes": 42557
     },
     {
       "path": "frontend/src/components/RecordingActions.tsx",
@@ -1381,8 +1461,8 @@
     },
     {
       "path": "frontend/src/components/RecordingNotice.css",
-      "sha256": "37d0bab18b650e18026af56a752c9b8eeb67c6d1183e52e7a4810d8e6fdd43dc",
-      "bytes": 1337
+      "sha256": "f9da9a54e8d44690207d9ccfcb28998c3c9cb0bf4e4f0f54d58277a789b37811",
+      "bytes": 1326
     },
     {
       "path": "frontend/src/components/RecordingNotice.tsx",
@@ -1396,8 +1476,8 @@
     },
     {
       "path": "frontend/src/components/ScheduleFields.tsx",
-      "sha256": "ba882e0929513e580103ebf409e2b96aaa95d2ab58e5e1064143cfd353c13194",
-      "bytes": 4201
+      "sha256": "66402b5958a7f7c63f3d085702e2fd64c6e3dcd634f42b22f01455a98f2482fd",
+      "bytes": 6097
     },
     {
       "path": "frontend/src/components/UnreadMessageCount.tsx",
@@ -1406,13 +1486,18 @@
     },
     {
       "path": "frontend/src/components/UserInfoModal.tsx",
-      "sha256": "e0746dd90e83ade21c7539e91339fef3e260dbada4852733f1849015453ee624",
-      "bytes": 3435
+      "sha256": "2feea0c202ef784a94337405a979997f5876b09c0955caf8f357813ced10e93f",
+      "bytes": 4530
     },
     {
       "path": "frontend/src/components/WaitingRoomPanel.tsx",
       "sha256": "4cb5af66d6b476c342f79896494bbaa140994958110100317e5dcb96bf80d4a6",
       "bytes": 9264
+    },
+    {
+      "path": "frontend/src/components/WelcomePanel.tsx",
+      "sha256": "99a3f25b9f505010d9c29b936ba0c8a94ea21f09090eefac0e8d47bd57cafc27",
+      "bytes": 3300
     },
     {
       "path": "frontend/src/components/WorkspaceSearch.tsx",
@@ -1426,8 +1511,8 @@
     },
     {
       "path": "frontend/src/components/account-settings-modal.css",
-      "sha256": "d46044c6104dc8d16fb39c2a1dc0ae256692678b8c097f8fbd04bab0b113090b",
-      "bytes": 15954
+      "sha256": "b483ec970440439e98a7774a076e4fb6b880941767914acce2e7107b5ed3d6fc",
+      "bytes": 15952
     },
     {
       "path": "frontend/src/components/auth-team-visual.css",
@@ -1446,28 +1531,33 @@
     },
     {
       "path": "frontend/src/components/chat-profiles.css",
-      "sha256": "10ec01ef0a1552f53907f3910426f2cfc3461bc10368ba00540cefd6c4fbc8b8",
-      "bytes": 5779
+      "sha256": "77790ce2f21a62992c2a6507f4f8725f4451328b16ea66a3744aa666cabb6b20",
+      "bytes": 12343
     },
     {
       "path": "frontend/src/components/chat-redesign.css",
-      "sha256": "0910c0b63448b0bc72cd4c130a696c18bc6311fe70b7404305a40a281ca6b478",
-      "bytes": 5280
+      "sha256": "8b4468d05ce9885e6c22866feabce7ebc96083a73a362cbb68e2a36ad0cb7804",
+      "bytes": 6953
     },
     {
       "path": "frontend/src/components/conference-chat-info.css",
-      "sha256": "4056df2d78419ce5ba547b9d795e534c35deb876fbbe731350a8ebef3cbabfdc",
-      "bytes": 7912
+      "sha256": "9322a59ec467a0d604be75c474ce8579b58bbd6ca874dc82a7cf8db2d358a673",
+      "bytes": 7910
     },
     {
       "path": "frontend/src/components/conference-invitations.css",
-      "sha256": "dca44582d919b2d04b4435a8875469264fbfd46c754a4b74e057a15f04184be5",
-      "bytes": 3066
+      "sha256": "cac394c6ce4c898aa324d6b93c1149d3099d021a609e40ffc21e0d06a05e0dc4",
+      "bytes": 8783
     },
     {
       "path": "frontend/src/components/conference/ActiveConferenceRoom.tsx",
-      "sha256": "bdee69f31ca48391e49598824532e001a64c1e5478659a2578b8516273aefce8",
-      "bytes": 12908
+      "sha256": "b17e8dbfb832c5f560a0c741587e0165a12ce44b39a0a4a3cc64616f276872fe",
+      "bytes": 12568
+    },
+    {
+      "path": "frontend/src/components/conference/ConferenceControlButton.tsx",
+      "sha256": "7c9d30173062ce03ba166cb722f071460760c07b781eb3c7c3b8f1481723e3a3",
+      "bytes": 844
     },
     {
       "path": "frontend/src/components/conference/ConferenceDetails.tsx",
@@ -1486,8 +1576,8 @@
     },
     {
       "path": "frontend/src/components/conference/ConferenceOverview.tsx",
-      "sha256": "ddc4e0e743ce841f8557914b9d29ae1e5ba1fdce751d8b7e87448824cfe09505",
-      "bytes": 10246
+      "sha256": "94a9588b1051f8c208e2761a6624220e2914fb917ad854d9d9b6fdbea51f3fce",
+      "bytes": 10072
     },
     {
       "path": "frontend/src/components/conference/ConferenceParticipants.tsx",
@@ -1515,6 +1605,11 @@
       "bytes": 1219
     },
     {
+      "path": "frontend/src/components/desktop/DesktopInstallProgress.tsx",
+      "sha256": "65af2b822804663f0df43a160883d1dc5d2a536497f105c510bc5c78a3a6dd62",
+      "bytes": 7043
+    },
+    {
       "path": "frontend/src/components/desktop/DesktopNativeSettings.tsx",
       "sha256": "103441d8359b735791b2c94c70bdfc52de9b7d6f0e5a58c0e5803899e4a6c530",
       "bytes": 6553
@@ -1526,13 +1621,13 @@
     },
     {
       "path": "frontend/src/components/desktop/DesktopSessionGate.tsx",
-      "sha256": "5e4f9052ec68860f4c4f759931b5dc99d85e011ae67451ab9ea6324d1ceb0771",
-      "bytes": 16057
+      "sha256": "f4e2a7fe737f367024e3fa8ee4f662e38ea00e13a9e3170fd651dad74689faaf",
+      "bytes": 18561
     },
     {
       "path": "frontend/src/components/desktop/DesktopSshInstaller.tsx",
-      "sha256": "e92dced600aafb206187d948f7d7d5af76a597f5a25c0c50e035f15bd9edc066",
-      "bytes": 47549
+      "sha256": "313d67d08511de66afcdc7d3f33642636f551d269cd2321724e207dd44a33220",
+      "bytes": 48804
     },
     {
       "path": "frontend/src/components/desktop/DesktopUpdateSettings.tsx",
@@ -1546,8 +1641,8 @@
     },
     {
       "path": "frontend/src/components/desktop/desktop-foundation.css",
-      "sha256": "ecafa87e4ce1d1df5d1e8319c171dfdd853e837ac9fbf5cb702a66a5afe569d7",
-      "bytes": 5231
+      "sha256": "b9d797dd4ba59669ab0044ec90dd04e58da102514bfcd166da8947cc921d62ed",
+      "bytes": 5503
     },
     {
       "path": "frontend/src/components/desktop/desktop-native-settings.css",
@@ -1561,23 +1656,33 @@
     },
     {
       "path": "frontend/src/components/desktop/desktop-ssh-installer.css",
-      "sha256": "3859abd428984d5d45653f3b67703c248891911e5528a6615c6a0dcbb28e18ba",
-      "bytes": 9129
+      "sha256": "54b72cafc999d32e9857f05a1f7b0eafdebbc28b8b2df2474772e992c84a5919",
+      "bytes": 19490
+    },
+    {
+      "path": "frontend/src/components/desktop/installed-server-connection-message.ts",
+      "sha256": "d76ef15490be66309e02deb3c229f63a85544b6ce2c982d5bd3cb15d8f345c3a",
+      "bytes": 2646
+    },
+    {
+      "path": "frontend/src/components/desktop/ssh-install-progress.ts",
+      "sha256": "dd460d027c36605e8c37d0e8c1e7fab51094c3d47d450849d95a958446e827f2",
+      "bytes": 7105
     },
     {
       "path": "frontend/src/components/device-settings.css",
-      "sha256": "1fc5491db5b15bb1609fce0b7529ddae8f4c9a3f819cee8d94d31a556cb6465d",
-      "bytes": 6174
+      "sha256": "83173ba90ae7073a25f97126a6d22a0cc0659d4c6b78e1ef8d3c88459e9fc0e3",
+      "bytes": 6170
     },
     {
       "path": "frontend/src/components/direct-calls.css",
-      "sha256": "7eaa43ed847c6386e2adf9020d0648588661b5470fc5e7237627bfaad93820e4",
-      "bytes": 15089
+      "sha256": "94f5f995ca13174d96e6dd876f887485e90746fe854f67dd82537c7773c74aa4",
+      "bytes": 21227
     },
     {
       "path": "frontend/src/components/emoji-picker.css",
-      "sha256": "d9e5d1ecea3da1522b745f9e2bf80eff102d7c86519cb70aef4903eee3a0671f",
-      "bytes": 2374
+      "sha256": "379046a511e80dafffdecf9aad331b4f862fcfe4679bc8977818e8021aafa63a",
+      "bytes": 2372
     },
     {
       "path": "frontend/src/components/folders.css",
@@ -1591,8 +1696,8 @@
     },
     {
       "path": "frontend/src/components/meeting-modals.css",
-      "sha256": "2543d03947da33e2b62b7ea8529320cc3c1e3148e372026a5f306685f1e6c3e5",
-      "bytes": 5502
+      "sha256": "488382ecf4fc299dbe5caf3e1d5bbd0c40e5176ac3fb9d11341f1fb25261ab50",
+      "bytes": 17736
     },
     {
       "path": "frontend/src/components/meeting-skeleton.css",
@@ -1611,13 +1716,18 @@
     },
     {
       "path": "frontend/src/components/personal-chat-search.css",
-      "sha256": "7768657ae7f87717dfcbba2e53bc0f166cf8a0a28fe13c7fc116f9e62fcb2138",
-      "bytes": 2214
+      "sha256": "8d83eb41bf61902bddabdaace6b3f49a246a58a99c677f7fb1ec25b41348bc6a",
+      "bytes": 3084
     },
     {
       "path": "frontend/src/components/ui.tsx",
       "sha256": "7291ea2690e6b5f5687521f29d39c3d0feaa094394b3eaab09b63ef5d9defead",
       "bytes": 19270
+    },
+    {
+      "path": "frontend/src/components/welcome-panel.css",
+      "sha256": "b682b9d45bea3e0f27029b938c7776d6efc9f86e03fc0db6b9b87f30906fb794",
+      "bytes": 5344
     },
     {
       "path": "frontend/src/conferenceShortcuts.ts",
@@ -1626,8 +1736,8 @@
     },
     {
       "path": "frontend/src/desktop-design.css",
-      "sha256": "42614f68eb1e887d74aecc12ad115c452ee0d61438479705e8eb8f6fd6eca953",
-      "bytes": 12340
+      "sha256": "958bb45a7b06cdc9246bf30f841f8873bdaa84717c011c59f111bb7918880e78",
+      "bytes": 12416
     },
     {
       "path": "frontend/src/deviceSound.ts",
@@ -1666,8 +1776,8 @@
     },
     {
       "path": "frontend/src/hooks/conference/useConferenceRoomControls.ts",
-      "sha256": "47b4a618c5f959ceef2628cd26555455b97dfce219390f7b4f9ef79409f2e64d",
-      "bytes": 3977
+      "sha256": "f0c8db30f726d82ff6b993f95578253b295ecb37232960638214c4926f22da20",
+      "bytes": 3908
     },
     {
       "path": "frontend/src/intelligence.ts",
@@ -1676,8 +1786,8 @@
     },
     {
       "path": "frontend/src/main.tsx",
-      "sha256": "a62b3eda046b167fe3fd79bc72c76b7bbf5a088c699eea4f84686c4dd96f7100",
-      "bytes": 3483
+      "sha256": "382c16045c3043b94a855bb7798c608d2def21b3c873ebfedac62cdf25175bdd",
+      "bytes": 3516
     },
     {
       "path": "frontend/src/media.ts",
@@ -1706,8 +1816,8 @@
     },
     {
       "path": "frontend/src/pages/AccountPages.tsx",
-      "sha256": "ab1d79dd33193605344094b03116d96004d06ceea77a8a3190af11cf6bd2b2e2",
-      "bytes": 20353
+      "sha256": "85ff82d5fc33bf5d3abacc740f351afd9647e699c3acb7b9fac0ab60e4132245",
+      "bytes": 22216
     },
     {
       "path": "frontend/src/pages/AdminPage.tsx",
@@ -1721,13 +1831,13 @@
     },
     {
       "path": "frontend/src/pages/AuthPages.tsx",
-      "sha256": "d09a18f853ea34685968ff4063b19bc7c8eb8886035744afe3e1a92e91fd48d4",
-      "bytes": 14236
+      "sha256": "15a8c0ba0c9060a20b03e12ff11b6956d7ca1dd1f7e23bffde2f1d790e55639e",
+      "bytes": 13245
     },
     {
       "path": "frontend/src/pages/CalendarPage.tsx",
-      "sha256": "84e666e8abd8c3d6c2f382fd66c18f48c83b88bd8293200d1bcf962effd99db3",
-      "bytes": 24206
+      "sha256": "2b399a1d79589c4daeb66fc5136699410972e96d851f52862a43385b0d3d003d",
+      "bytes": 25196
     },
     {
       "path": "frontend/src/pages/CollectionViewToggle.tsx",
@@ -1736,18 +1846,18 @@
     },
     {
       "path": "frontend/src/pages/ConferencePage.tsx",
-      "sha256": "765b469cec8e7fd326b1cfcf569227923e9560671d49b8138466e51e0a6a2ad4",
-      "bytes": 2427
+      "sha256": "1d6fd24cfa6ea3a5f15983207337a97ceb75a7586a22fd4b55ecae1f0593c7df",
+      "bytes": 2458
     },
     {
       "path": "frontend/src/pages/Dashboard.tsx",
-      "sha256": "21a0d72b2624546ee9f120976b6cad8caaf6996947ee3a2228dc29f2223f44f8",
-      "bytes": 21420
+      "sha256": "693a1ee5b3663e594f343c4e0940c10dceb5b6e662531ca78c0fd76cfc3d578d",
+      "bytes": 21294
     },
     {
       "path": "frontend/src/pages/FoldersPage.tsx",
-      "sha256": "6f29634f346e1db8f5d9cb22a5c51cc6cb0955c5831e7b7c45a1d1a468a19043",
-      "bytes": 18098
+      "sha256": "2e1845ebde873f36b2e79bc02c1ade27afc9843cde0b3f075db63714d79fd084",
+      "bytes": 18509
     },
     {
       "path": "frontend/src/pages/HistoryDetailPage.tsx",
@@ -1761,8 +1871,8 @@
     },
     {
       "path": "frontend/src/pages/Landing.tsx",
-      "sha256": "bfc5a5ff7015fad139e13bc200daf678a519b1a000be981996797ccaacb0b58f",
-      "bytes": 4541
+      "sha256": "ca433cd9d786e6555fd177dcd1eaa72d41868d2b2f8f7e1a86d41aa12eb8afaa",
+      "bytes": 4466
     },
     {
       "path": "frontend/src/pages/LandingScene.tsx",
@@ -1776,23 +1886,23 @@
     },
     {
       "path": "frontend/src/pages/PersonalPage.tsx",
-      "sha256": "a933dd07f418e3bd57613cad98b29f7aed0f0838493df932524d4f2e048b7d63",
-      "bytes": 20299
+      "sha256": "1a7e33d9525c739cd1051b68a5715e63bb412e5385d4d744c6582353d14bc818",
+      "bytes": 20085
     },
     {
       "path": "frontend/src/pages/PreJoinPage.tsx",
-      "sha256": "50b64d2da17f6b3e214c876254de00a665bb5746875d34d91ad246edcbd33d55",
-      "bytes": 35403
+      "sha256": "8e72ee703f295055e4cdde3b7d593787f47bd32d8b2b0bb3839232111f476356",
+      "bytes": 35898
     },
     {
       "path": "frontend/src/pages/RecordingDetailPage.tsx",
-      "sha256": "4b05b4f66ec67562ac9a9bd41ac7c03946e332d7b8323dd4cf923aaf5a067ea1",
-      "bytes": 18384
+      "sha256": "6279ec6229b1c45e823f60ef515aa652bb1f06b535a700201fd06f2d70d402a3",
+      "bytes": 20487
     },
     {
       "path": "frontend/src/pages/RecordingsPage.tsx",
-      "sha256": "c9c7b82ba95e77f9286277e24d41509498bf5ab597c8c75b7566f42b335ac17c",
-      "bytes": 20860
+      "sha256": "81f24f94ce8a7fb4d97b7817c91668a99e178de1bad48933f360a5182dd2a55b",
+      "bytes": 20954
     },
     {
       "path": "frontend/src/pages/admin-page.css",
@@ -1806,48 +1916,58 @@
     },
     {
       "path": "frontend/src/pages/auth-pages.css",
-      "sha256": "651152844c40438c1a217309f31713270d2b37c79b1dfc3fbb5c6d7b097cb042",
-      "bytes": 11714
+      "sha256": "4adefe707a1fb7b99fed755c45e803e663f6f26a0e8a22a81a4d82f0d3aee36d",
+      "bytes": 11523
     },
     {
       "path": "frontend/src/pages/calendar.css",
-      "sha256": "6f9e681cdd89f1e5438f7315d0682ebd303087b545e276e5efa527a2cfa9b4f9",
-      "bytes": 12005
+      "sha256": "7d24d28893cb94625609b45323f72f0c986b43cfd7272e32a230a02604db04af",
+      "bytes": 16677
+    },
+    {
+      "path": "frontend/src/pages/call-reference.css",
+      "sha256": "5634e6745f63e5bcab0d1875b78ac9f5aaa9ed2988c832b933c463895ea387b4",
+      "bytes": 22601
     },
     {
       "path": "frontend/src/pages/collections-redesign.css",
-      "sha256": "7ca9bc9c7e93fdbe421eb113ae755d231a4e959299f81a3cc289b08730d1ba77",
-      "bytes": 19963
+      "sha256": "a68cfaea019f80bf20f8d382af17c1f0955825552907a08d8c8bb34ce20c5e60",
+      "bytes": 33619
     },
     {
       "path": "frontend/src/pages/conference.css",
-      "sha256": "2674b1e486eae63e7011b1e760c25215e189498e0bd8f49ff38f94d9cf38fabd",
-      "bytes": 37916
+      "sha256": "6c8f6b594f1354b4ced184ad97abad1901d665d546a76552291a2238f0a1b690",
+      "bytes": 37919
     },
     {
       "path": "frontend/src/pages/dashboard-home.css",
-      "sha256": "bf960120d6daa3a8c5bfd57a80d274459a4ea7cea1b6ed900e9885970793ab81",
-      "bytes": 3711
+      "sha256": "edc274778941be898a3e484fbc0d311639de35765b4a05bb6442af94c8e8ac3e",
+      "bytes": 3717
+    },
+    {
+      "path": "frontend/src/pages/dashboard-reference.css",
+      "sha256": "d4473c9099659ef69c357f007d57dcd5c2de5699eb6a1b4ffdd0b9027c8f2a31",
+      "bytes": 9222
     },
     {
       "path": "frontend/src/pages/dashboard.css",
-      "sha256": "2f85f196cf2b2d8a7565008ae7111ad644d96a3973460ae0915d9c778a78dc35",
-      "bytes": 25887
+      "sha256": "b9785a553de00aea76482864405f71f3fb1a1d41464622cd404f79254adde1b4",
+      "bytes": 25901
     },
     {
       "path": "frontend/src/pages/folders-page.css",
-      "sha256": "17a11423e410a6171e0b36438b592704dd81f7da62fa756b43f9e5a13d684fa1",
-      "bytes": 5899
+      "sha256": "6d7a7d9819812955706738dadf21a2646d90858700a0948786ba3c22a02d6ea2",
+      "bytes": 5897
     },
     {
       "path": "frontend/src/pages/history-notifications.css",
-      "sha256": "c662cf750b84ef77f9492676243316ef7883e12c6b6fd6c4a40304d4fab805be",
-      "bytes": 17142
+      "sha256": "11d188705be9693e250bcba73eab234cf1a89db469d3f74a03014676b3cbe81f",
+      "bytes": 17118
     },
     {
       "path": "frontend/src/pages/landing.css",
-      "sha256": "cc39b0592d0b29576d86ac21374508aa53f90edeb72bffc3265447db51e8fe26",
-      "bytes": 14736
+      "sha256": "e4d815bcfd1f3358748d19a9f6cacde5ce4a9b26d33f1244cb9c4896ddd15144",
+      "bytes": 14444
     },
     {
       "path": "frontend/src/pages/meetings-design.css",
@@ -1856,8 +1976,8 @@
     },
     {
       "path": "frontend/src/pages/personal.css",
-      "sha256": "994803ece1cbfbacb64bd614f3292e6827bbca491d36622d71ab497dd10b6e2e",
-      "bytes": 20497
+      "sha256": "bcff1471eeeed56bdf58ba304e4a1af9cbb8d7a8b4c644ce6e994705d69d790e",
+      "bytes": 21922
     },
     {
       "path": "frontend/src/pages/prejoin.css",
@@ -1866,8 +1986,8 @@
     },
     {
       "path": "frontend/src/pages/recordings.css",
-      "sha256": "1d506cd2e202cd080148409e76ce6239f0903da46ac21d15209c3bc5e1460a92",
-      "bytes": 20817
+      "sha256": "48b8018254805181e348c8d0f04b8f0c76af0b1ef68c1153f003d3d448383755",
+      "bytes": 20795
     },
     {
       "path": "frontend/src/personalRealtime.ts",
@@ -1965,19 +2085,24 @@
       "bytes": 7073
     },
     {
+      "path": "frontend/src/reference-design.css",
+      "sha256": "a1dfd807e6dd09d2822542e70f4773f64d77e8b5ce005e633cd123936f79b93e",
+      "bytes": 25091
+    },
+    {
       "path": "frontend/src/remotePlayback.ts",
       "sha256": "34259c28b8b6636b273de9681d8aa78d941975f5e50d96623bc81f45183a96f7",
       "bytes": 2388
     },
     {
       "path": "frontend/src/styles.css",
-      "sha256": "1a542514048d9d039341b8903e8cfad2b96ca52af49fbef706120ec58aa04739",
-      "bytes": 55515
+      "sha256": "c578ff92ad310685b68aab6ab1e571c066b7ef5d63c50a670640de057835b7dc",
+      "bytes": 54947
     },
     {
       "path": "frontend/src/tokens.css",
-      "sha256": "b5ae3a3e496b3878cb6d94683bf28515372a9b23432e31232c7581b196c15648",
-      "bytes": 3143
+      "sha256": "e06f1e00175fe393d7fbe4312110c70ac46dddf863b3b5ee6b6f39da1baaa055",
+      "bytes": 3172
     },
     {
       "path": "frontend/src/types.ts",
@@ -2015,9 +2140,24 @@
       "bytes": 10290
     },
     {
+      "path": "frontend/src/vendor/LICENSE",
+      "sha256": "013bb580e895ea9ac7c2e56665b3fda772d45cadc36ede41daa369b13b0aa533",
+      "bytes": 1177
+    },
+    {
+      "path": "frontend/src/vendor/qr-code.d.ts",
+      "sha256": "086bda35d3271dcad57de89a8cb59e6a6598907b5b7351c08518b119225981d4",
+      "bytes": 277
+    },
+    {
+      "path": "frontend/src/vendor/qr-code.js",
+      "sha256": "6936e2b24004af0a6d180053aaa90f3b9a5a1e5204111d5ba48fe253d4f21a2b",
+      "bytes": 42173
+    },
+    {
       "path": "frontend/src/workspace.css",
-      "sha256": "33a6c0173fcfbd4caacf27238b78d512022c84fe919e9b35103049be3b533c94",
-      "bytes": 23061
+      "sha256": "d53f64b78716d9cd2e471dfcca3c75284a698942d70ce0db4e7423c531c44812",
+      "bytes": 21876
     },
     {
       "path": "frontend/tsconfig.json",
