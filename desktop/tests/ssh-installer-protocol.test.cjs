@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const {
   InstallerBundle, InstallFailure, sha256, canonicalJson, jsonObject,
   parseInstallerReply, parseInstallStatus, assertTicketBinding,
-  installerBundleNames, installPhases, INSTALLER_COMMAND, LEGACY_INSTALLER_RELEASE_SHA256,
+  installerBundleNames, installPhases, INSTALLER_COMMAND, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, RECOVERY_INSTALLER_RELEASE_SHA256S,
 } = require('../dist/ssh/protocol.js');
 
 const directory = path.join(__dirname, '../resources/server-installer/v1');
@@ -18,10 +18,11 @@ const jobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62';
 const fingerprint = 'SHA256:' + Buffer.alloc(32, 7).toString('base64').replace(/=+$/, '');
 const signHash = value => ({ ...value, hash: sha256(canonicalJson(Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'hash')))) });
 
-function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-stable-v1', platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false, selectedBundle = bundle } = {}) {
+function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-stable-v1', platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false, selectedBundle = bundle, imageMode, imageRelease } = {}) {
+  if (imageMode === 'images') sourceLock = true;
   const manifest = JSON.parse(JSON.stringify(selectedBundle.manifest));
   const lock = {
-    repository: 'janickiy/meet-space', channel: 'release', ref: 'v1.2.3', version: 'v1.2.3',
+    repository: 'janickiy/meet-space', channel: imageMode === 'images' ? 'prebuilt' : 'release', ref: 'v1.2.3', version: 'v1.2.3',
     commit: 'a'.repeat(40), builtAt: '2026-10-18T00:00:00Z',
     sourceUrl: 'https://codeload.github.com/janickiy/meet-space/tar.gz/' + 'a'.repeat(40),
     sourceSha256: 'b'.repeat(64), sourceFiles: Object.fromEntries(Object.keys(manifest.sourceFiles).map(name => [name, 'c'.repeat(64)])),
@@ -37,14 +38,15 @@ function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-
   return signHash({
     schema: 1, installerVersion: '1.0.0', releaseVersion: release.version, commit: release.commit,
     backendTag: release.backendTag, releaseSha256: sha256(canonicalJson(release)), runnerSha256: manifest.runnerSha256,
-    options: { ...options }, platform: { os: 'ubuntu', osVersion: platform, arch, cpus: 4, memoryKiB: 8388608 },
+    options: { ...options, ...(imageMode === undefined ? {} : { imageMode }), ...(imageRelease === undefined ? {} : { imageRelease }) }, platform: { os: 'ubuntu', osVersion: platform, arch, cpus: 4, memoryKiB: 8388608 },
     root: '/opt/meetspace', project: 'meetspace', docker: { installed, installCompose: compose, installBuildx: buildx },
     dockerPackages: manifest.dockerPackagesByUbuntu[platform][arch], dnsAddresses: [options.publicIpv4],
     existingJobId: null, existingPlanHash: null, issuedAt: now, expiresAt: now + 900,
-    actions: [...dockerActions, 'fetch-verified-source', 'build-and-pin-images', 'generate-secrets', 'private-volumes', 'backup-and-migrate', 'acme-https-wss', 'authenticated-turn', 'readiness'],
+    actions: [...dockerActions, 'fetch-verified-source', imageMode === 'images' ? 'download-verify-load-images' : 'build-and-pin-images', 'generate-secrets', 'private-volumes', 'backup-and-migrate', 'acme-https-wss', 'authenticated-turn', 'readiness'],
     ports: { tcp: [80, 443, 3478, 5349, 50010], udp: ['3478', '50010', '49160-49259'] },
     warnings: ['source-build-not-hermetic', 'docker-firewall-bypass'], resourceProfile: 'standard',
     ...(sourceLock ? { sourceLock: lock, recipeSha256: sha256(canonicalJson(manifest)) } : {}),
+    ...(imageMode === 'images' ? { imageLock: { repository: 'janickiy/meet-space', version: lock.version, commit: lock.commit, platform: 'linux/' + arch, url: 'https://github.com/janickiy/meet-space/releases/download/' + lock.version + '/meetspace-' + lock.version + '-linux-' + arch + '.tar.gz', sha256: 'd'.repeat(64), sizeBytes: 1048576, indexSha256: 'e'.repeat(64) } } : {}),
   });
 }
 function ticket(plan = bundle.parsePlan(fixture(), { now })) {
@@ -57,10 +59,9 @@ function status(t = ticket()) {
 }
 const failure = (fn, code) => assert.throws(fn, error => error instanceof InstallFailure && error.code === code);
 
-test('production bundle verifies pinned RSA trust and records the signed UTC metadata correction', () => {
+test('production bundle keeps pinned RSA trust, audited Android provenance and both signed source recovery recipes', () => {
   const provenance = JSON.parse(fs.readFileSync(path.join(directory, '../provenance.json')));
-  assert.equal(provenance.commit, '9789b64ecc28fe265d4a059d36912db39ab0c2eb');
-  assert.equal(provenance.modified, true);
+  assert.equal(provenance.commit, 'bb806e0b75ec720a695347b27d5d22d98a15b9a8');
   assert.deepEqual(fs.readdirSync(directory).sort(), [...installerBundleNames].sort());
   for (const [name, data] of Object.entries(files())) {
     assert.equal(sha256(data), provenance.files[name].sha256);
@@ -68,13 +69,14 @@ test('production bundle verifies pinned RSA trust and records the signed UTC met
     assert.equal(data.includes(Buffer.from('PRIVATE KEY')), false);
   }
   assert.equal(InstallerBundle.fromDirectory(directory).manifest.profile, 'source-v1');
+  assert.equal(bundle.manifest.prebuiltPolicy, 'github-prebuilt-v1');
   assert.equal(Object.isFrozen(bundle.manifest), true);
   assert.equal(Object.isFrozen(bundle.manifest.sourceFiles), true);
-  const legacy = InstallerBundle.fromDirectory(path.join(directory, '..', 'legacy', LEGACY_INSTALLER_RELEASE_SHA256));
-  assert.match(bundle.manifest.builtAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
-  assert.equal(Date.parse(bundle.manifest.builtAt), Date.parse(legacy.manifest.builtAt));
-  assert.equal(canonicalJson(bundle.manifest), canonicalJson({ ...legacy.manifest, builtAt: bundle.manifest.builtAt }));
-  assert.equal(provenance.modifications.at(-1).originalReleaseSha256, sha256(canonicalJson(legacy.manifest)));
+  for (const hash of RECOVERY_INSTALLER_RELEASE_SHA256S) {
+    const recovered = InstallerBundle.legacyRecovery(directory, hash);
+    assert.equal(sha256(canonicalJson(recovered.manifest)), hash);
+    assert.equal(recovered.manifest.prebuiltPolicy, undefined);
+  }
 });
 
 test('saved recovery selects the exact signed legacy recipe without rewriting the plan', () => {
@@ -172,6 +174,77 @@ test('signed source plan freezes upstream selection, architecture, recipe and OS
   assert.equal(bundle.parsePlan(fixture({ installed: true }), { now }).installDocker, false);
   assert.equal(bundle.parsePlan(fixture({ sourceLock: false }), { now }).commit, bundle.manifest.commit);
   if (!dynamic) failure(() => bundle.parsePlan(fixture({ sourceLock: true }), { now }), 'PLAN_INVALID');
+});
+
+test('prebuilt plans bind release archive, source commit, architecture and consent action for both host architectures', () => {
+  for (const arch of ['amd64', 'arm64']) for (const imageRelease of [undefined, 'latest', 'v1.2.3']) {
+    const plan = fixture({ arch, imageMode: 'images', imageRelease, installed: true });
+    const parsed = bundle.parsePlan(plan, { now, expectedOptions: { ...options, imageMode: 'images', ...(imageRelease ? { imageRelease } : {}) } });
+    assert.equal(parsed.imageMode, 'images');
+    assert.equal(parsed.sourceSelection, 'prebuilt: v1.2.3');
+    assert.equal(parsed.commit, plan.imageLock.commit);
+    assert.equal(parsed.imageArchiveSha256, plan.imageLock.sha256);
+    assert.equal(parsed.imageArchiveBytes, plan.imageLock.sizeBytes);
+    assert.ok(parsed.actions.includes('download-verify-load-images'));
+    assert.ok(!parsed.actions.includes('build-and-pin-images'));
+    assert.equal(parsed.installDocker, false);
+    assert.equal(parsed.json, canonicalJson(plan));
+    assert.equal(InstallerBundle.forSavedPlan(directory, plan).parsePlan(plan, { allowExpired: true }).hash, plan.hash);
+  }
+});
+
+test('rehashing cannot switch prebuilt mode, release, digest bindings, architecture or allow unbounded archive metadata', () => {
+  const mutations = [
+    p => { p.options.imageMode = 'source'; },
+    p => { p.options.imageMode = 'prebuilt'; },
+    p => { delete p.options.imageMode; },
+    p => { p.options.imageRelease = 'v9.0.0'; },
+    p => { p.options.imageRelease = '../latest'; },
+    p => { p.options.imageRelease = null; },
+    p => { delete p.imageLock; },
+    p => { p.imageLock.extra = 'untrusted'; },
+    p => { p.imageLock.repository = 'attacker/project'; },
+    p => { p.imageLock.version = 'latest'; },
+    p => { p.imageLock.commit = 'f'.repeat(40); },
+    p => { p.imageLock.platform = 'linux/amd64'; },
+    p => { p.imageLock.url = p.imageLock.url.replace('github.com', 'attacker.invalid'); },
+    p => { p.imageLock.sha256 = 'not-a-digest'; },
+    p => { p.imageLock.indexSha256 = 'not-a-digest'; },
+    p => { p.imageLock.sizeBytes = 0; },
+    p => { p.imageLock.sizeBytes = 2 * 1024 ** 3 + 1; },
+    p => { p.imageLock.sizeBytes = '1048576'; },
+    p => { p.sourceLock.channel = 'release'; },
+    p => { delete p.sourceLock; },
+    p => { p.recipeSha256 = 'f'.repeat(64); },
+    p => { p.actions[p.actions.indexOf('download-verify-load-images')] = 'build-and-pin-images'; },
+    p => { p.docker.installBuildx = true; },
+  ];
+  for (const mutate of mutations) {
+    const changed = fixture({ imageMode: 'images' }); mutate(changed);
+    failure(() => bundle.parsePlan(signHash(changed), { now }), 'PLAN_INVALID');
+  }
+  failure(() => bundle.parsePlan(fixture({ imageMode: 'images' }), { now, expectedOptions: options }), 'PLAN_INVALID');
+  failure(() => bundle.parsePlan(fixture(), { now, expectedOptions: { ...options, imageMode: 'images' } }), 'PLAN_INVALID');
+});
+
+test('source defaults and both shipped source recipes stay recoverable without adding fields or changing their hash', () => {
+  for (const selectedBundle of [bundle, ...RECOVERY_INSTALLER_RELEASE_SHA256S.map(hash => InstallerBundle.legacyRecovery(directory, hash))]) {
+    const value = fixture({ selectedBundle, sourceLock: false });
+    const before = canonicalJson(value);
+    const recovered = InstallerBundle.forSavedPlan(directory, value).parsePlan(value, { now, expectedOptions: { ...options, imageMode: 'source' } });
+    assert.equal(recovered.imageMode, 'source');
+    assert.equal(recovered.options.imageMode, undefined);
+    assert.equal(recovered.imageArchiveSha256, undefined);
+    assert.equal(recovered.json, before);
+    assert.equal(recovered.hash, value.hash);
+    assert.equal(canonicalJson(value), before);
+  }
+  const sourceWithArchive = fixture(); sourceWithArchive.imageLock = fixture({ imageMode: 'images' }).imageLock;
+  failure(() => bundle.parsePlan(signHash(sourceWithArchive), { now }), 'PLAN_INVALID');
+  failure(() => bundle.parsePlan(fixture({ imageMode: 'source', imageRelease: 'latest' }), { now }), 'PLAN_INVALID');
+  const legacy = InstallerBundle.legacyRecovery(directory, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256);
+  failure(() => legacy.parsePlan(fixture({ selectedBundle: legacy, imageMode: 'images' }), { now }), 'PLAN_INVALID');
+  failure(() => InstallerBundle.legacyRecovery(directory, '../v1'), 'RELEASE_INVALID');
 });
 
 test('public SMTP settings are bound to the confirmed plan and never accept a password', () => {

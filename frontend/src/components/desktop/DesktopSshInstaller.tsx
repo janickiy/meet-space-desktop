@@ -15,6 +15,7 @@ import { desktopBridge } from "../../platform/desktop";
 import type {
   SshInstallerAction,
   SshInstallerCredentials,
+  SshInstallerImageMode,
   SshInstallerState,
 } from "../../platform/desktop-contracts";
 import { Button, ErrorNotice, Loading } from "../ui";
@@ -74,6 +75,8 @@ export function DesktopSshInstaller({
   const [user, setUser] = useState("root");
   const [domain, setDomain] = useState("");
   const [publicIpv4, setPublicIpv4] = useState("");
+  const [imageMode, setImageMode] = useState<SshInstallerImageMode>("images");
+  const [imageRelease, setImageRelease] = useState("latest");
   const [acmeEmail, setAcmeEmail] = useState("");
   const [smtpEnabled, setSmtpEnabled] = useState(false);
   const [smtpHost, setSmtpHost] = useState("");
@@ -124,6 +127,9 @@ export function DesktopSshInstaller({
     if (nextDomain) setDomain(nextDomain);
     if (next.plan?.options.publicIpv4)
       setPublicIpv4(next.plan.options.publicIpv4);
+    if (next.plan) setImageMode(next.plan.imageMode ?? "source");
+    if (next.plan?.options.imageRelease)
+      setImageRelease(next.plan.options.imageRelease);
     if (next.ticket || next.status?.terminal) setSmtpPassword("");
     if (next.hasCredentials || next.status?.terminal) clearCredentials();
   };
@@ -222,6 +228,9 @@ export function DesktopSshInstaller({
   const credentialReady =
     state?.hasCredentials ||
     (authKind === "password" ? password.length > 0 : privateKey.length >= 32);
+  const imageReleaseValid =
+    imageMode !== "images" ||
+    /^(?:latest|v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?)$/.test(imageRelease.trim());
   const disabled = busy || !!state?.busy;
   const identity = state?.identity;
   const plan = state?.plan;
@@ -726,6 +735,71 @@ export function DesktopSshInstaller({
                   onChange={(event) => setAcmeEmail(event.target.value)}
                 />
               </fieldset>
+              <fieldset className="desktop-ssh-install-source" disabled={disabled}>
+                <legend>Способ установки</legend>
+                <div
+                  className="desktop-ssh-source-options"
+                  role="radiogroup"
+                  aria-label="Способ установки MeetSpace"
+                >
+                  {([
+                    {
+                      mode: "images",
+                      title: "Готовые Docker-образы",
+                      description:
+                        "Загрузить и запустить готовый выпуск. Рекомендуется.",
+                    },
+                    {
+                      mode: "source",
+                      title: "Сборка из исходного кода",
+                      description:
+                        "Собрать компоненты на сервере. Занимает больше времени.",
+                    },
+                  ] as const).map(({ mode, title, description }) => (
+                    <label
+                      key={mode}
+                      className="desktop-ssh-source-option"
+                      data-selected={imageMode === mode}
+                    >
+                      <input
+                        type="radio"
+                        name="desktop-ssh-image-mode"
+                        value={mode}
+                        checked={imageMode === mode}
+                        onChange={() => setImageMode(mode)}
+                      />
+                      <span>
+                        <strong>{title}</strong>
+                        <small>{description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {imageMode === "images" && (
+                  <>
+                    <label htmlFor="desktop-ssh-image-release">
+                      Версия Docker-образов
+                    </label>
+                    <input
+                      id="desktop-ssh-image-release"
+                      required
+                      maxLength={64}
+                      pattern="latest|v[0-9]+[.][0-9]+[.][0-9]+(?:-(?:[A-Za-z0-9.]|-)+)?"
+                      value={imageRelease}
+                      placeholder="latest"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-describedby="desktop-ssh-image-hint"
+                      onChange={(event) => setImageRelease(event.target.value)}
+                    />
+                  </>
+                )}
+                <p className="field-hint" id="desktop-ssh-image-hint">
+                  {imageMode === "images"
+                    ? "latest — последний готовый выпуск для архитектуры сервера, включая beta. Можно указать точную версию. Выпуск, размер и контрольные суммы покажем перед установкой."
+                    : "Установщик загрузит исходный код выбранного выпуска и соберёт Docker-образы на вашем сервере."}
+                </p>
+              </fieldset>
               <fieldset className="desktop-ssh-auth" disabled={disabled}>
                 <legend>Почтовые уведомления</legend>
                 <label className="desktop-ssh-checkbox">
@@ -825,7 +899,7 @@ export function DesktopSshInstaller({
               <Button
                 type="submit"
                 busy={busy}
-                disabled={disabled || !credentialReady}
+                disabled={disabled || !credentialReady || !imageReleaseValid}
               >
                 Проверить готовность хоста
               </Button>
@@ -869,6 +943,7 @@ export function DesktopSshInstaller({
                     !state.preflight.ready ||
                     state.preflight.domain !== domain.trim().toLowerCase() ||
                     !credentialReady ||
+                    !imageReleaseValid ||
                     !publicIpv4.trim() ||
                     (smtpEnabled &&
                       (!smtpHost.trim() ||
@@ -882,6 +957,8 @@ export function DesktopSshInstaller({
                         domain: domain.trim(),
                         publicIpv4: publicIpv4.trim(),
                         acmeEmail: acmeEmail.trim(),
+                        imageMode,
+                        ...(imageMode === "images" ? { imageRelease: imageRelease.trim() } : {}),
                         ...(smtpEnabled
                           ? {
                               smtp: {
@@ -909,6 +986,7 @@ export function DesktopSshInstaller({
                 status={status}
                 stale={staleStatus}
                 checkedAt={lastStatusAt}
+                imageMode={plan?.imageMode ?? "source"}
               />
               {status?.state !== "completed" && (
                 <p className="field-hint desktop-ssh-background-note">
@@ -963,7 +1041,7 @@ export function DesktopSshInstaller({
               {status?.errorCode && (
                 <ErrorNotice>
                   Установщик остановился на этапе «
-                  {installPhaseLabel(status.phase.split(":", 1)[0])}
+                  {installPhaseLabel(status.phase.split(":", 1)[0], plan?.imageMode)}
                   ». Код: {status.errorCode}. Исправьте причину на хосте, затем
                   проверьте состояние.
                 </ErrorNotice>
@@ -1087,7 +1165,7 @@ export function DesktopSshInstaller({
                   <ol>
                     {status.events.slice(-20).map((event) => (
                       <li key={event.sequence}>
-                        {installPhaseLabel(event.phase)}:{" "}
+                        {installPhaseLabel(event.phase, plan?.imageMode)}:{" "}
                         {statusLabels[event.state] ?? "Обновление состояния"}
                         {event.errorCode ? ` · ${event.errorCode}` : ""}
                       </li>
@@ -1135,15 +1213,37 @@ export function DesktopSshInstaller({
                   </dd>
                 </div>
                 <div>
+                  <dt>Способ установки</dt>
+                  <dd>
+                    {plan.imageMode === "images"
+                      ? "Готовые Docker-образы"
+                      : "Сборка из исходного кода"}
+                  </dd>
+                </div>
+                {plan.imageMode === "images" && (
+                  <div>
+                    <dt>Размер образов</dt>
+                    <dd>
+                      {plan.imageArchiveBytes === undefined
+                        ? "Уточняется"
+                        : `${(plan.imageArchiveBytes / 1024 / 1024).toLocaleString("ru-RU", { maximumFractionDigits: 1 })} МБ`}
+                    </dd>
+                  </div>
+                )}
+                <div>
                   <dt>Commit</dt>
                   <dd>
                     <code>{plan.commit}</code>
                   </dd>
                 </div>
                 <div>
-                  <dt>SHA-256 исходного кода</dt>
+                  <dt>
+                    {plan.imageMode === "images"
+                      ? "SHA-256 архива образов"
+                      : "SHA-256 исходного кода"}
+                  </dt>
                   <dd>
-                    <code>{plan.sourceSha256}</code>
+                    <code>{plan.imageArchiveSha256 ?? plan.sourceSha256}</code>
                   </dd>
                 </div>
                 <div>

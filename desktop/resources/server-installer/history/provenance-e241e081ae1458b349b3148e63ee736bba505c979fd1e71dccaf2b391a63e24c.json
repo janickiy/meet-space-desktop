@@ -1,0 +1,38 @@
+{
+  "repository": "https://github.com/janickiy/meet-space-android",
+  "commit": "9789b64ecc28fe265d4a059d36912db39ab0c2eb",
+  "sourceDirectory": "installer/v1",
+  "copiedAt": "2026-10-22",
+  "files": {
+    "runner.py": {
+      "sha256": "e06667b078b724a35f52cb78cb0bd5fb5ef88a29adb21f83625756d67d6bac5a",
+      "bytes": 92850
+    },
+    "trust-root.pem": {
+      "sha256": "9f16201125cd17dc9fb90a7579e78589c76ecbfdb1ee80df3428ee34d6b90dfc",
+      "bytes": 625
+    },
+    "release.json": {
+      "sha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "bytes": 5877
+    },
+    "release.sig": {
+      "sha256": "fe8db88b1b252e1f2669522239fc7f4927c881e2955a84dbd40b8583c77f6c8a",
+      "bytes": 384
+    },
+    "docker.asc": {
+      "sha256": "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570",
+      "bytes": 3817
+    }
+  },
+  "modified": true,
+  "privateKeyIncluded": false,
+  "modifications": [
+    {
+      "date": "2026-10-24",
+      "description": "Normalize signed builtAt to UTC (same instant) for frontend BUILD_TIME validation; runner and source commit unchanged. Re-signed with the original trusted publisher key.",
+      "originalReleaseSha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
+      "legacyBundleDirectory": "legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a"
+    }
+  ]
+}

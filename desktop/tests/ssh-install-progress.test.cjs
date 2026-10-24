@@ -33,6 +33,20 @@ test('component reporting advances no percentage until its whole checkpoint is c
   assert.deepEqual(afterComponent.steps.map(({ state }) => state), ['completed', 'completed', 'current', ...Array(7).fill('pending')]);
 });
 
+test('ready images show download stages while preserving confirmed checkpoints', () => {
+  const progress = model.deriveInstallProgress(status({ phase: 'images:api' }), 'images');
+  assert.equal(progress.percent, 20);
+  assert.equal(progress.completedCount, 2);
+  assert.equal(progress.phaseTitle, 'Загрузка Docker-образов');
+  assert.equal(progress.steps[1].title, 'Проверка готового выпуска');
+  assert.equal(progress.steps[2].title, 'Загрузка Docker-образов');
+  assert.equal(progress.detail, 'Подготовлен компонент: API сервера');
+  assert.equal(model.installPhaseLabel('images', 'images'), 'Загрузка Docker-образов');
+  assert.equal(model.installPhaseLabel('source', 'images'), 'Проверка готового выпуска');
+  assert.equal(model.installPhaseLabel('images', 'source'), 'Сборка компонентов');
+  assert.equal(model.deriveInstallProgress(status()).phaseTitle, 'Сборка компонентов');
+});
+
 test('all server checkpoints contribute equal confirmed shares without time interpolation', () => {
   for (let completed = 0; completed < installPhases.length; completed += 1) {
     const value = status({ phase: installPhases[completed], completedPhases: installPhases.slice(0, completed) });

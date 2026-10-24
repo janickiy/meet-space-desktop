@@ -104,14 +104,45 @@ const knownStates = new Set([
 ]);
 const stoppedStates = new Set(["cancelled", "needs_recovery", "failed"]);
 
+function phasesForMode(imageMode: "images" | "source") {
+  return INSTALL_PHASES.map((phase) => {
+    if (imageMode !== "images") return phase;
+    if (phase.id === "source")
+      return {
+        ...phase,
+        title: "Проверка готового выпуска",
+        description: "Проверяем выбранный выпуск и контрольные суммы образов.",
+      };
+    if (phase.id === "images")
+      return {
+        ...phase,
+        title: "Загрузка Docker-образов",
+        description:
+          "Загружаем, проверяем и подключаем готовые образы выбранного выпуска.",
+      };
+    return phase;
+  });
+}
+
 function phaseIndex(phase: string): number {
   const group = phase.split(":", 1)[0];
   return INSTALL_PHASES.findIndex(({ id }) => id === group);
 }
 
-function componentDetail(phase: string): string | undefined {
+function componentDetail(
+  phase: string,
+  imageMode: "images" | "source" = "source",
+): string | undefined {
   if (!phase.startsWith("images:")) return undefined;
   const id = phase.slice("images:".length);
+  if (imageMode === "images") {
+    const operations: Readonly<Record<string, string>> = {
+      download: "Скачиваем архив готовых Docker-образов",
+      verify: "Проверяем целостность и состав Docker-образов",
+      load: "Подключаем проверенные Docker-образы к Docker",
+    };
+    if (Object.hasOwn(operations, id)) return operations[id];
+  }
   const component = Object.hasOwn(componentLabels, id)
     ? componentLabels[id]
     : undefined;
@@ -120,18 +151,23 @@ function componentDetail(phase: string): string | undefined {
 }
 
 /** Human-readable event labels; never echo unknown remote phase strings. */
-export function installPhaseLabel(phase: string): string {
+export function installPhaseLabel(
+  phase: string,
+  imageMode: "images" | "source" = "source",
+): string {
   if (phase === "queued") return "Ожидание запуска";
   if (phase === "resuming") return "Возобновление установки";
-  const component = componentDetail(phase);
+  const component = componentDetail(phase, imageMode);
   if (component) return component;
-  return INSTALL_PHASES[phaseIndex(phase)]?.title ?? "Этап уточняется";
+  return phasesForMode(imageMode)[phaseIndex(phase)]?.title ?? "Этап уточняется";
 }
 
 /** No timer or event count contributes to progress: only confirmed checkpoints. */
 export function deriveInstallProgress(
   status?: InstallProgressStatus | null,
+  imageMode: "images" | "source" = "source",
 ): InstallProgress {
+  const phases = phasesForMode(imageMode);
   const total = INSTALL_PHASES.length;
   // The IPC parser enforces this same ordered prefix. Keep the view conservative
   // if a future status is incomplete, repeated or inconsistent.
@@ -166,13 +202,13 @@ export function deriveInstallProgress(
       phaseTitle = "Подтверждение завершения";
       detail = "Ожидаем итоговое подтверждение от сервера.";
     } else if (currentIndex !== null) {
-      phaseTitle = INSTALL_PHASES[currentIndex].title;
-      detail = componentDetail(status.phase);
+      phaseTitle = phases[currentIndex].title;
+      detail = componentDetail(status.phase, imageMode);
     } else if (reportedIndex >= 0 && reportedIndex < completedCount) {
       phaseTitle = "Переход к следующему этапу";
-      detail = `Завершён этап: ${INSTALL_PHASES[reportedIndex].title}`;
+      detail = `Завершён этап: ${phases[reportedIndex].title}`;
     } else {
-      phaseTitle = installPhaseLabel(status.phase);
+      phaseTitle = installPhaseLabel(status.phase, imageMode);
     }
   }
 
@@ -187,7 +223,7 @@ export function deriveInstallProgress(
     currentIndex,
     phaseTitle,
     detail,
-    steps: INSTALL_PHASES.map((step, index) => ({
+    steps: phases.map((step, index) => ({
       ...step,
       state:
         index < completedCount

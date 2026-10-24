@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { SshInstallerController } = require('../dist/ssh/controller');
-const { InstallerBundle, canonicalJson, sha256, installPhases, LEGACY_INSTALLER_RELEASE_SHA256 } = require('../dist/ssh/protocol');
+const { InstallerBundle, canonicalJson, sha256, installPhases, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256 } = require('../dist/ssh/protocol');
 const { hostKeyFromBytes } = require('../dist/ssh/transport');
 const { SshError } = require('../dist/ssh/types');
 const bundleRoot = path.join(__dirname, '../resources/server-installer/v1');
@@ -15,10 +15,18 @@ const keyBytes = Buffer.concat([Buffer.from([0,0,0,11]), Buffer.from('ssh-ed2551
 const pin = hostKeyFromBytes(keyBytes);
 const credentials = { kind: 'password', password: 'only-in-memory-fixture-secret' };
 function probe() { return JSON.stringify({ protocol: 'MSPF2', kernel: 'Linux', arch: 'aarch64', cpu: 4, uid: 0, distro: 'ubuntu', distroVersion: '24.04', ramKiB: 8*1048576, diskKiB: 30*1048576, sudo: 'root', docker: 'missing', dockerAccess: false, compose: 'missing', existingContainers: false, existingPaths: false, tcpPorts: [22], udpPorts: [], domainIps: ['8.8.8.8'], hostIps: ['8.8.8.8'], firewall: 'unknown', complete: true }); }
-function planFixture(selectedOptions = options, manifest = InstallerBundle.fromDirectory(bundleRoot).manifest) {
+function planFixture(selectedOptions = options, recipe = InstallerBundle.fromDirectory(bundleRoot).manifest) {
+  const prebuilt = selectedOptions.imageMode === 'images';
+  const sourceLock = { repository: 'janickiy/meet-space', channel: 'prebuilt', ref: 'v1.2.3', version: 'v1.2.3', commit: 'a'.repeat(40), builtAt: '2026-10-24T00:00:00Z', sourceUrl: 'https://codeload.github.com/janickiy/meet-space/tar.gz/' + 'a'.repeat(40), sourceSha256: 'b'.repeat(64), sourceFiles: recipe.sourceFiles };
+  const manifest = prebuilt ? { ...recipe, backendTag: sourceLock.ref, ...Object.fromEntries(['version','commit','builtAt','sourceUrl','sourceSha256','sourceFiles'].map(key => [key,sourceLock[key]])) } : recipe;
   const now = Math.floor(Date.now()/1000);
   const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:['8.8.8.8'], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
   p.options = selectedOptions;
+  if (prebuilt) {
+    p.sourceLock = sourceLock; p.recipeSha256 = sha256(canonicalJson(recipe));
+    p.imageLock = { repository: 'janickiy/meet-space', version: sourceLock.version, commit: sourceLock.commit, platform: 'linux/arm64', url: 'https://github.com/janickiy/meet-space/releases/download/v1.2.3/meetspace-v1.2.3-linux-arm64.tar.gz', sha256: 'd'.repeat(64), indexSha256: 'e'.repeat(64), sizeBytes: 1048576 };
+    p.actions[p.actions.indexOf('build-and-pin-images')] = 'download-verify-load-images';
+  }
   return { ...p, hash:sha256(canonicalJson(p)) };
 }
 async function fixture(t) {
@@ -54,8 +62,8 @@ async function trusted(f) {
 const decodePayload = payload => JSON.parse(Buffer.from(/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1], 'base64'));
 const reply = result => JSON.stringify({ protocol: 'MSI1', ok: true, result });
 const remoteFailure = errorCode => JSON.stringify({ protocol: 'MSI1', ok: false, errorCode });
-function legacyExistingPlan() {
-  const old = InstallerBundle.legacyRecovery(bundleRoot);
+function legacyExistingPlan(recipeHash = PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256) {
+  const old = InstallerBundle.legacyRecovery(bundleRoot, recipeHash);
   const plan = planFixture(options, old.manifest);
   plan.existingJobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62';
   plan.existingPlanHash = 'a'.repeat(64);
@@ -79,22 +87,79 @@ test('read-only plan fallback rediscovers a legacy job and binds subsequent cont
   assert.equal(state.ticket.planHash, plan.existingPlanHash);
   assert.deepEqual(observed, [
     { action: 'plan', release: sha256(canonicalJson(manifest)) },
-    { action: 'plan', release: LEGACY_INSTALLER_RELEASE_SHA256 },
+    { action: 'plan', release: PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256 },
   ]);
   const rejected = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, acceptAcmeTerms: true, confirmDockerInstall: true });
   assert.equal(rejected.error.code, 'PENDING_JOB');
   const resumed = await f.controller.invoke('resume', { confirmedPlanHash: plan.existingPlanHash });
   assert.equal(resumed.error, undefined);
-  assert.equal(observed.at(-1).release, LEGACY_INSTALLER_RELEASE_SHA256);
+  assert.equal(observed.at(-1).release, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256);
   assert.equal(observed.some(item => item.action === 'apply'), false);
   const saved = JSON.parse(await fs.readFile(path.join(f.storageDir, 'ssh-install-ticket.json'), 'utf8'));
-  assert.equal(saved.plan.releaseSha256, LEGACY_INSTALLER_RELEASE_SHA256);
+  assert.equal(saved.plan.releaseSha256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256);
   await f.controller.invoke('detach');
   const restored = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
   t.after(() => restored.dispose()); await restored.load();
   const checked = await restored.invoke('status', { credentials });
   assert.equal(checked.error, undefined);
-  assert.equal(observed.at(-1).release, LEGACY_INSTALLER_RELEASE_SHA256);
+  assert.equal(observed.at(-1).release, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256);
+});
+
+test('older source job can be rediscovered after both newer recipes reject it without changing its options or hash', async t => {
+  const f = await fixture(t); await trusted(f);
+  const plan = legacyExistingPlan(LEGACY_INSTALLER_RELEASE_SHA256), observed = [];
+  f.transport.installer = async (...args) => {
+    const message = decodePayload(args[3]);
+    const recipeHash = sha256(Buffer.from(message.bundle['release.json'], 'base64'));
+    observed.push({ recipeHash, request: message.request });
+    if (recipeHash !== LEGACY_INSTALLER_RELEASE_SHA256) return remoteFailure('PLAN_CHANGED');
+    assert.equal(message.request.options.imageMode, undefined);
+    return reply(plan);
+  };
+  const state = await f.controller.invoke('plan', { options: { ...options, imageMode: 'source' } });
+  assert.equal(state.error, undefined);
+  assert.equal(state.plan.imageMode, 'source');
+  assert.equal(state.ticket.planHash, plan.existingPlanHash);
+  assert.deepEqual(observed.map(item => item.recipeHash), [sha256(canonicalJson(manifest)), PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, LEGACY_INSTALLER_RELEASE_SHA256]);
+});
+
+test('explicit prebuilt selection sends only public options and preserves its frozen archive across apply and recovery', async t => {
+  const f = await fixture(t); await trusted(f);
+  const selected = { ...options, imageMode: 'images', imageRelease: 'v1.2.3' };
+  const state = await f.controller.invoke('plan', { options: selected });
+  assert.equal(state.error, undefined);
+  assert.equal(state.plan.imageMode, 'images');
+  assert.equal(state.plan.imageArchiveSha256, 'd'.repeat(64));
+  assert.equal(state.plan.imageArchiveBytes, 1048576);
+  assert.deepEqual(f.requests.find(item => item.action === 'plan').request.options, selected);
+  const applied = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, confirmDockerInstall: true, acceptAcmeTerms: true });
+  assert.equal(applied.error, undefined);
+  const saved = JSON.parse(await fs.readFile(path.join(f.storageDir, 'ssh-install-ticket.json'), 'utf8'));
+  assert.equal(saved.plan.options.imageMode, 'images');
+  assert.equal(saved.plan.imageLock.version, 'v1.2.3');
+  assert.equal(saved.plan.hash, state.plan.hash);
+  await f.controller.invoke('detach');
+  const reloaded = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
+  t.after(() => reloaded.dispose()); await reloaded.load();
+  assert.equal(reloaded.state().plan.imageMode, 'images');
+  assert.equal(reloaded.state().plan.imageArchiveSha256, saved.plan.imageLock.sha256);
+  const resumed = await reloaded.invoke('resume', { credentials, confirmedPlanHash: saved.planHash });
+  assert.equal(resumed.error, undefined);
+  assert.equal(f.requests.filter(item => item.action === 'plan').length, 1);
+});
+
+test('invalid image choices fail before plan dispatch and prebuilt failure never falls back to source', async t => {
+  for (const selection of [{ imageMode: 'prebuilt' }, { imageMode: null }, { imageMode: 'images', imageRelease: '../latest' }, { imageMode: 'source', imageRelease: 'latest' }, { imageRelease: 'v1.2.3' }]) {
+    const f = await fixture(t); await trusted(f);
+    const state = await f.controller.invoke('plan', { options: { ...options, ...selection } });
+    assert.equal(state.error.code, 'INPUT'); assert.equal(f.calls.includes('plan'), false);
+  }
+  for (const code of ['PLAN_CHANGED', 'EXISTING_INSTALLATION', 'PREBUILT_UNAVAILABLE', 'PREBUILT_INVALID', 'PREBUILT_DOWNLOAD_FAILED']) {
+    const f = await fixture(t); await trusted(f); let calls = 0;
+    f.transport.installer = async () => { calls++; return remoteFailure(code); };
+    const state = await f.controller.invoke('plan', { options: { ...options, imageMode: 'images', imageRelease: 'latest' } });
+    assert.equal(state.error.code, code); assert.equal(calls, 1); assert.equal(state.ticket, undefined);
+  }
 });
 
 test('legacy fallback rejects fresh installs and invalid or changed-option recovery plans', async t => {
@@ -131,7 +196,7 @@ test('a changed legacy plan is still rejected after the current recipe mismatch'
   const f = await fixture(t); await trusted(f); let calls = 0;
   f.transport.installer = async () => { calls++; return remoteFailure('PLAN_CHANGED'); };
   const state = await f.controller.invoke('plan', { options });
-  assert.equal(calls, 2); assert.equal(state.error.code, 'PLAN_CHANGED');
+  assert.equal(calls, 3); assert.equal(state.error.code, 'PLAN_CHANGED');
   assert.equal(state.ticket, undefined); assert.equal(state.plan, undefined);
 });
 

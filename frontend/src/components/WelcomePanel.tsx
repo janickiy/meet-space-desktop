@@ -23,11 +23,6 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
           alt=""
         />
         <span>{PRODUCT_NAME}</span>
-        {installer && (
-          <small className="desktop-ssh-brand-caption">
-            ДЛЯ WINDOWS И LINUX
-          </small>
-        )}
       </div>
       <div className="reference-welcome-copy">
         <span>

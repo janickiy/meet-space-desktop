@@ -15,12 +15,14 @@ export function DesktopInstallProgress({
   status,
   stale,
   checkedAt,
+  imageMode = "source",
 }: {
   status: SshInstallerState["status"];
   stale: boolean;
   checkedAt: number | null;
+  imageMode?: "images" | "source";
 }) {
-  const progress = deriveInstallProgress(status);
+  const progress = deriveInstallProgress(status, imageMode);
   const mode = stale ? "stale" : (status?.state ?? "unknown");
   const title = stale
     ? "Нет актуального состояния"
@@ -38,6 +40,7 @@ export function DesktopInstallProgress({
       ? "Ожидаем подтверждённое состояние сервера"
       : `${progress.percent}%. Завершено этапов: ${progress.completedCount} из ${progress.total}. ${progress.phaseTitle}`;
   const ProgressContainer = completed ? "details" : "div";
+  const PhaseContainer = completed ? "div" : "details";
 
   return (
     <ProgressContainer
@@ -138,62 +141,76 @@ export function DesktopInstallProgress({
         )}
         {!completed && (
           <p className="desktop-ssh-progress-explanation">
-            Процент рассчитан по завершённым этапам. Их длительность
-            различается; во время сборки значение может долго не меняться.
+            Процент — по завершённым этапам. Время каждого этапа различается.
           </p>
         )}
       </section>
       {status && (
-        <ol className="desktop-ssh-phases" aria-label="Ход установки по этапам">
-          {progress.steps.map((step, index) => {
-            const isCurrent =
-              step.state === "current" || step.state === "stopped";
-            const paused = isCurrent && (!active || stale);
-            const label =
-              step.state === "completed"
-                ? "Готово"
-                : isCurrent
-                  ? stale
-                    ? "Нужна проверка"
-                    : step.state === "stopped"
-                      ? "Остановлено"
-                      : status.state === "cancel_requested"
-                        ? "Остановка"
-                        : "Выполняется"
-                  : "Ожидает";
-            return (
-              <li
-                key={step.id}
-                aria-current={isCurrent ? "step" : undefined}
-                className={
-                  step.state === "completed"
-                    ? "is-complete"
-                    : isCurrent
-                      ? `is-current${paused ? " is-paused" : ""}`
-                      : ""
-                }
-              >
-                <span aria-hidden="true">
-                  {step.state === "completed" ? (
-                    <Check size={16} />
-                  ) : isCurrent ? (
-                    paused ? (
-                      <CirclePause size={17} />
+        <PhaseContainer
+          className={completed ? undefined : "desktop-ssh-phase-details"}
+        >
+          {!completed && (
+            <summary>
+              Все этапы установки
+              <span>
+                {progress.completedCount} / {progress.total}
+              </span>
+            </summary>
+          )}
+          <ol
+            className="desktop-ssh-phases"
+            aria-label="Ход установки по этапам"
+          >
+            {progress.steps.map((step, index) => {
+              const isCurrent =
+                step.state === "current" || step.state === "stopped";
+              const paused = isCurrent && (!active || stale);
+              const label =
+                step.state === "completed"
+                  ? "Готово"
+                  : isCurrent
+                    ? stale
+                      ? "Нужна проверка"
+                      : step.state === "stopped"
+                        ? "Остановлено"
+                        : status.state === "cancel_requested"
+                          ? "Остановка"
+                          : "Выполняется"
+                    : "Ожидает";
+              return (
+                <li
+                  key={step.id}
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={
+                    step.state === "completed"
+                      ? "is-complete"
+                      : isCurrent
+                        ? `is-current${paused ? " is-paused" : ""}`
+                        : ""
+                  }
+                >
+                  <span aria-hidden="true">
+                    {step.state === "completed" ? (
+                      <Check size={16} />
+                    ) : isCurrent ? (
+                      paused ? (
+                        <CirclePause size={17} />
+                      ) : (
+                        <LoaderCircle size={17} className="spin" />
+                      )
                     ) : (
-                      <LoaderCircle size={17} className="spin" />
-                    )
-                  ) : (
-                    index + 1
-                  )}
-                </span>
-                <div>
-                  <strong>{step.title}</strong>
-                  <small>{label}</small>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+                      index + 1
+                    )}
+                  </span>
+                  <div>
+                    <strong>{step.title}</strong>
+                    <small>{label}</small>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </PhaseContainer>
       )}
     </ProgressContainer>
   );

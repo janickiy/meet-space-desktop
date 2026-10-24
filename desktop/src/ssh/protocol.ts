@@ -6,8 +6,9 @@ import { isIP } from "node:net";
 export type JsonObject = Record<string, unknown>;
 export type InstallerAction = "plan" | "apply" | "status" | "cancel" | "resume";
 export type InstallState = "running" | "cancel_requested" | "cancelled" | "needs_recovery" | "failed" | "completed";
+export type InstallImageMode = "images" | "source";
 export interface SmtpOptions { host: string; port: number; from: string; username: string; tlsMode: "starttls" | "tls" }
-export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string; smtp?: SmtpOptions }
+export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string; smtp?: SmtpOptions; imageMode?: InstallImageMode; imageRelease?: string }
 export interface InstallEndpoint { host: string; port: number; user: string }
 export interface InstallPlan {
   json: string; hash: string; version: string; commit: string; options: InstallOptions;
@@ -15,6 +16,7 @@ export interface InstallPlan {
   existingJobId?: string; existingPlanHash?: string; sourceSelection?: string; sourceSha256: string;
   resourceProfile?: "standard" | "compact-test"; installDockerPluginsOnly: boolean;
   missingDockerPlugins: string[]; actions: string[];
+  imageMode: InstallImageMode; imageArchiveSha256?: string; imageArchiveBytes?: number;
 }
 export interface InstallTicket {
   endpoint: InstallEndpoint; hostFingerprint: string; plan: InstallPlan; jobId: string; planHash: string;
@@ -35,6 +37,8 @@ export const INSTALLER_TRUST_ROOT_SHA256 = "9f16201125cd17dc9fb90a7579e78589c76e
 // Recovery is limited to this exact previously shipped, still signed recipe.
 // Never derive a resource path from a server response or a saved ticket.
 export const LEGACY_INSTALLER_RELEASE_SHA256 = "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a";
+export const PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256 = "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c";
+export const RECOVERY_INSTALLER_RELEASE_SHA256S: readonly string[] = [PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, LEGACY_INSTALLER_RELEASE_SHA256];
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const STATES: readonly string[] = ["running", "cancel_requested", "cancelled", "needs_recovery", "failed", "completed"];
@@ -56,6 +60,9 @@ function sameKeys(value: JsonObject, keys: readonly string[]): boolean {
   return Object.keys(value).sort().join("\0") === [...keys].sort().join("\0");
 }
 export function sha256(value: string | Buffer): string { return createHash("sha256").update(value).digest("hex"); }
+export function validImageRelease(value: unknown): value is string {
+  return typeof value === "string" && value.length <= 64 && (value === "latest" || /^v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?$/.test(value));
+}
 
 /** Validate public SMTP settings; credentials are sent only with apply, never in a plan. */
 export function smtpOptions(raw: unknown): SmtpOptions {
@@ -150,6 +157,7 @@ export class InstallerBundle {
       requireValue(this.manifest.schema === 1 && this.manifest.installerVersion === "1.0.0" && this.manifest.profile === "source-v1");
       requireValue(this.manifest.runnerSha256 === sha256(files["runner.py"]) && this.manifest.dockerKeySha256 === sha256(files["docker.asc"]));
       requireValue(this.manifest.sourcePolicy === undefined || this.manifest.sourcePolicy === "github-latest-stable-v1");
+      requireValue(this.manifest.prebuiltPolicy === undefined || this.manifest.prebuiltPolicy === "github-prebuilt-v1");
       this.files = Object.fromEntries(installerBundleNames.map(name => [name, Buffer.from(files[name])]));
       deepFreeze(this.manifest);
     } catch { throw new InstallFailure("RELEASE_INVALID"); }
@@ -172,8 +180,8 @@ export class InstallerBundle {
     const recipeHash = plan.sourceLock === undefined ? plan.releaseSha256 : plan.recipeSha256;
     let selected = current;
     if (recipeHash !== sha256(canonicalJson(current.manifest))) {
-      if (recipeHash !== LEGACY_INSTALLER_RELEASE_SHA256) throw new InstallFailure("PLAN_INVALID");
-      selected = InstallerBundle.legacyRecovery(directory);
+      if (typeof recipeHash !== "string" || !RECOVERY_INSTALLER_RELEASE_SHA256S.includes(recipeHash)) throw new InstallFailure("PLAN_INVALID");
+      selected = InstallerBundle.legacyRecovery(directory, recipeHash);
     }
     // The hash is only a selector; every binding and the original plan hash must
     // still validate against the selected signed bundle, with no plan rewriting.
@@ -181,9 +189,10 @@ export class InstallerBundle {
     return selected;
   }
 
-  static legacyRecovery(directory: string): InstallerBundle {
-    const legacy = InstallerBundle.fromDirectory(join(directory, "..", "legacy", LEGACY_INSTALLER_RELEASE_SHA256));
-    if (sha256(canonicalJson(legacy.manifest)) !== LEGACY_INSTALLER_RELEASE_SHA256) throw new InstallFailure("RELEASE_INVALID");
+  static legacyRecovery(directory: string, releaseSha256: string = LEGACY_INSTALLER_RELEASE_SHA256): InstallerBundle {
+    if (!RECOVERY_INSTALLER_RELEASE_SHA256S.includes(releaseSha256)) throw new InstallFailure("RELEASE_INVALID");
+    const legacy = InstallerBundle.fromDirectory(join(directory, "..", "legacy", releaseSha256));
+    if (sha256(canonicalJson(legacy.manifest)) !== releaseSha256) throw new InstallFailure("RELEASE_INVALID");
     return legacy;
   }
 
@@ -215,16 +224,25 @@ export class InstallerBundle {
       requireValue(value.commit === release.commit && value.releaseVersion === release.version && value.runnerSha256 === release.runnerSha256);
       requireValue(value.root === "/opt/meetspace" && value.project === "meetspace");
       const optionsObject = object(value.options);
-      const optionKeys = ["domain", "publicIpv4", ...(optionsObject.acmeEmail === undefined ? [] : ["acmeEmail"]), ...(optionsObject.smtp === undefined ? [] : ["smtp"])];
+      const optionKeys = ["domain", "publicIpv4", ...(optionsObject.acmeEmail === undefined ? [] : ["acmeEmail"]), ...(optionsObject.smtp === undefined ? [] : ["smtp"]), ...(optionsObject.imageMode === undefined ? [] : ["imageMode"]), ...(optionsObject.imageRelease === undefined ? [] : ["imageRelease"])];
       requireValue(sameKeys(optionsObject, optionKeys));
       const options: InstallOptions = { domain: string(optionsObject.domain), publicIpv4: string(optionsObject.publicIpv4), acmeEmail: optionalString(optionsObject.acmeEmail) ?? "" };
       if (optionsObject.smtp !== undefined) options.smtp = smtpOptions(optionsObject.smtp);
+      const imageMode = optionsObject.imageMode === undefined ? "source" : string(optionsObject.imageMode);
+      requireValue(imageMode === "source" || imageMode === "images");
+      if (optionsObject.imageMode !== undefined) options.imageMode = imageMode;
+      if (optionsObject.imageRelease !== undefined) {
+        requireValue(imageMode === "images" && validImageRelease(optionsObject.imageRelease));
+        options.imageRelease = optionsObject.imageRelease;
+      }
       requireValue(validDomain(options.domain) && isIP(options.publicIpv4) === 4);
       requireValue((options.acmeEmail?.length ?? 0) <= 254 && !/[\r\n\x00]/.test(options.acmeEmail ?? ""));
       if (validation.expectedOptions) {
         requireValue(options.domain === validation.expectedOptions.domain && options.publicIpv4 === validation.expectedOptions.publicIpv4);
         requireValue(options.acmeEmail === (validation.expectedOptions.acmeEmail ?? ""));
         requireValue(canonicalJson(options.smtp ?? null) === canonicalJson(validation.expectedOptions.smtp ?? null));
+        requireValue(imageMode === (validation.expectedOptions.imageMode ?? "source"));
+        requireValue((options.imageRelease ?? "latest") === (validation.expectedOptions.imageRelease ?? "latest"));
       }
       const issuedAt = integer(value.issuedAt); const expiresAt = integer(value.expiresAt);
       requireValue(issuedAt > 0 && expiresAt === issuedAt + 900);
@@ -234,6 +252,8 @@ export class InstallerBundle {
       }
       const platform = object(value.platform); const arch = string(platform.arch);
       requireValue(platform.os === "ubuntu" && ["22.04", "24.04"].includes(string(platform.osVersion)) && ["amd64", "arm64"].includes(arch));
+      const imageLock = imageMode === "images" ? this.validateImageLock(value, release, arch) : undefined;
+      if (imageMode === "source") requireValue(value.imageLock === undefined && (value.sourceLock === undefined || object(value.sourceLock).channel !== "prebuilt"));
       const packageMatrix = object(object(release.dockerPackagesByUbuntu)[string(platform.osVersion)]);
       requireValue(canonicalJson(value.dockerPackages) === canonicalJson(packageMatrix[arch]));
       const docker = object(value.docker); const installed = boolean(docker.installed);
@@ -246,7 +266,9 @@ export class InstallerBundle {
       requireValue((!existingJobId && !existingPlanHash) || (existingJobId && UUID.test(existingJobId) && existingPlanHash && HASH.test(existingPlanHash)));
       const dockerActions = installed ? [...(compose ? ["install-compose"] : []), ...(buildx ? ["install-buildx"] : [])] : ["install-docker"];
       if (!dockerActions.length) dockerActions.push("reuse-docker");
-      const actions = [...dockerActions, ...ACTIONS]; requireValue(canonicalJson(value.actions) === canonicalJson(actions));
+      if (imageMode === "images") requireValue(!buildx);
+      const actions = [...dockerActions, ...ACTIONS.map(action => imageMode === "images" && action === "build-and-pin-images" ? "download-verify-load-images" : action)];
+      requireValue(canonicalJson(value.actions) === canonicalJson(actions));
       const lock = value.sourceLock === undefined ? undefined : object(value.sourceLock);
       return {
         json: canonicalJson(value), hash, version: string(value.releaseVersion), commit: string(value.commit), options,
@@ -254,6 +276,7 @@ export class InstallerBundle {
         expiresAt, existingJobId, existingPlanHash, sourceSelection: lock ? `${string(lock.channel)}: ${string(lock.ref)}` : undefined,
         sourceSha256: string(release.sourceSha256), resourceProfile: resourceProfile as InstallPlan["resourceProfile"],
         installDockerPluginsOnly: installed && missingDockerPlugins.length > 0, missingDockerPlugins, actions,
+        imageMode, imageArchiveSha256: imageLock ? string(imageLock.sha256) : undefined, imageArchiveBytes: imageLock ? integer(imageLock.sizeBytes) : undefined,
       };
     } catch (error) {
       if (error instanceof InstallFailure && error.code === "PLAN_EXPIRED") throw error;
@@ -263,8 +286,8 @@ export class InstallerBundle {
 
   private effectiveManifest(plan: JsonObject): JsonObject {
     if (plan.sourceLock === undefined) return this.manifest;
-    requireValue(this.manifest.sourcePolicy === "github-latest-stable-v1");
     const lock = object(plan.sourceLock);
+    requireValue(lock.channel === "prebuilt" ? this.manifest.prebuiltPolicy === "github-prebuilt-v1" : this.manifest.sourcePolicy === "github-latest-stable-v1");
     requireValue(plan.recipeSha256 === sha256(canonicalJson(this.manifest)));
     requireValue(sameKeys(lock, ["repository", "channel", "ref", "version", "commit", "builtAt", "sourceUrl", "sourceSha256", "sourceFiles"]));
     requireValue(lock.repository === "janickiy/meet-space");
@@ -274,15 +297,31 @@ export class InstallerBundle {
     requireValue(version.length <= 64 && /^v?[0-9]+\.[0-9]+\.[0-9]+(?:[+-][A-Za-z0-9.-]+)?$/.test(version));
     requireValue(/^[A-Za-z0-9][A-Za-z0-9._/+-]{0,199}$/.test(ref));
     requireValue(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$/.test(string(lock.builtAt)));
-    requireValue((lock.channel === "release" && version === ref) || (lock.channel === "default-branch" && version === `0.0.0-source.${commit.slice(0, 12)}`));
+    requireValue((["release", "prebuilt"].includes(string(lock.channel)) && version === ref) || (lock.channel === "default-branch" && version === `0.0.0-source.${commit.slice(0, 12)}`));
     const hashes = object(lock.sourceFiles);
     requireValue(sameKeys(hashes, Object.keys(object(this.manifest.sourceFiles))) && Object.values(hashes).every(hash => typeof hash === "string" && HASH.test(hash)));
-    const effective: JsonObject = { ...this.manifest, backendTag: lock.channel === "release" ? ref : null };
+    const effective: JsonObject = { ...this.manifest, backendTag: ["release", "prebuilt"].includes(string(lock.channel)) ? ref : null };
     for (const key of ["version", "commit", "builtAt", "sourceUrl", "sourceSha256", "sourceFiles"]) effective[key] = lock[key];
     effective.dockerfiles = Object.fromEntries(Object.entries(object(this.manifest.dockerfiles)).map(([name, raw]) => {
       const file = object(raw); return [name, { ...file, sha256: hashes[string(file.path)] }];
     }));
     return effective;
+  }
+
+  private validateImageLock(plan: JsonObject, release: JsonObject, arch: string): JsonObject {
+    requireValue(this.manifest.prebuiltPolicy === "github-prebuilt-v1");
+    const lock = object(plan.imageLock), source = object(plan.sourceLock), options = object(plan.options);
+    requireValue(sameKeys(lock, ["repository", "version", "commit", "platform", "url", "sha256", "sizeBytes", "indexSha256"]));
+    requireValue(source.channel === "prebuilt");
+    const version = string(release.version);
+    requireValue(version !== "latest" && validImageRelease(version));
+    requireValue(options.imageRelease === undefined || options.imageRelease === "latest" || options.imageRelease === version);
+    requireValue(lock.repository === "janickiy/meet-space" && lock.version === version && lock.commit === release.commit);
+    requireValue(lock.platform === `linux/${arch}`);
+    requireValue(lock.url === `https://github.com/janickiy/meet-space/releases/download/${version}/meetspace-${version}-linux-${arch}.tar.gz`);
+    requireValue(HASH.test(string(lock.sha256)) && HASH.test(string(lock.indexSha256)));
+    const bytes = integer(lock.sizeBytes); requireValue(bytes > 0 && bytes <= 2 * 1024 ** 3);
+    return lock;
   }
 }
 

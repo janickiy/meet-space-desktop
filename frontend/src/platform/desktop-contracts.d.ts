@@ -181,6 +181,7 @@ export type SshInstallerAction =
 export type SshInstallerCredentials =
   | { kind: "password"; password: string }
   | { kind: "privateKey"; privateKey: string; passphrase?: string };
+export type SshInstallerImageMode = "images" | "source";
 export interface SshInstallerState {
   busy: boolean;
   phase:
@@ -219,6 +220,8 @@ export interface SshInstallerState {
       domain: string;
       publicIpv4: string;
       acmeEmail?: string;
+      imageMode?: SshInstallerImageMode;
+      imageRelease?: string;
       smtp?: {
         host: string;
         port: number;
@@ -238,6 +241,9 @@ export interface SshInstallerState {
     installDockerPluginsOnly: boolean;
     missingDockerPlugins: string[];
     actions: string[];
+    imageMode: SshInstallerImageMode;
+    imageArchiveSha256?: string;
+    imageArchiveBytes?: number;
   };
   ticket?: {
     jobId: string;

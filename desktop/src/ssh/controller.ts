@@ -4,7 +4,7 @@ import path from "node:path";
 import { isIP } from "node:net";
 import { atomicWrite } from "../session/vault";
 import { analyzePreflight } from "./preflight";
-import { InstallerBundle, InstallFailure, assertTicketBinding, jsonObject, parseInstallerReply, parseInstallStatus, smtpOptions, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
+import { InstallerBundle, InstallFailure, RECOVERY_INSTALLER_RELEASE_SHA256S, assertTicketBinding, canonicalJson, jsonObject, parseInstallerReply, parseInstallStatus, sha256, smtpOptions, validImageRelease, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
 import { Ssh2Transport, validateHostKey, type SshTransport } from "./transport";
 import { destroyCredentials, normalizeDomain, objectInput, ownCredentials, SshError, validateEndpoint, type OwnedCredentials, type SshAction, type SshEndpoint, type SshHostKey, type SshInstallerState } from "./types";
 
@@ -21,6 +21,12 @@ function safeError(error: unknown): { code: string; message: string } {
       TICKET_INVALID: "Задание не соответствует серверу или подтверждённому SSH-ключу.",
       INVALID_RESPONSE: "Ответ удалённого установщика не прошёл проверку.",
       RESPONSE_LIMIT: "Ответ удалённого установщика превысил допустимый размер.",
+      PREBUILT_UNAVAILABLE: "Готовые Docker-образы для выбранной версии и архитектуры недоступны. Выберите другую версию или сборку из исходного кода.",
+      PREBUILT_INVALID: "Пакет готовых образов не прошёл проверку. Установка остановлена.",
+      PREBUILT_SECURITY: "Готовые образы не соответствуют требованиям безопасности. Установка остановлена.",
+      PREBUILT_DOWNLOAD_FAILED: "Не удалось скачать готовые Docker-образы. Проверьте подключение сервера к GitHub и повторите попытку.",
+      INVALID_IMAGE_MODE: "Выберите готовые Docker-образы или сборку из исходного кода и проверьте версию.",
+      EXISTING_INSTALLATION: "На сервере уже есть установка MeetSpace. Выберите её исходный способ установки и проверьте состояние задания.",
     };
     return { code: error.code, message: messages[error.code] ?? `Удалённый установщик сообщил: ${error.code}.` };
   }
@@ -37,7 +43,11 @@ function installOptions(raw: unknown): InstallOptions {
     try { smtp = smtpOptions(value.smtp); }
     catch { throw new SshError("INPUT", "Проверьте SMTP-сервер, порт, адрес отправителя и режим TLS."); }
   }
-  return { domain, publicIpv4: value.publicIpv4.trim(), acmeEmail, ...(smtp ? { smtp } : {}) };
+  const imageMode = value.imageMode === undefined ? "source" : value.imageMode;
+  if (imageMode !== "source" && imageMode !== "images") throw new SshError("INPUT", "Выберите способ установки MeetSpace.");
+  if (value.imageRelease !== undefined && (imageMode !== "images" || !validImageRelease(value.imageRelease))) throw new SshError("INPUT", "Выберите latest или укажите версию готовых образов, например v0.4.0.");
+  return { domain, publicIpv4: value.publicIpv4.trim(), acmeEmail, ...(smtp ? { smtp } : {}),
+    ...(value.imageMode === undefined ? {} : { imageMode }), ...(value.imageRelease === undefined ? {} : { imageRelease: value.imageRelease as string }) };
 }
 /** The renderer gets public state only; pins and recovery tickets are the only data written to disk. */
 export class SshInstallerController {
@@ -159,14 +169,31 @@ export class SshInstallerController {
           } catch (error) {
             if (generation !== this.generation) return this.state();
             if (!(error instanceof InstallFailure) || !["PLAN_CHANGED", "EXISTING_INSTALLATION"].includes(error.code)) throw error;
-            // A different computer may have no local recovery ticket. Ask only
-            // the one bundled legacy recipe to identify its existing job; this
-            // read-only fallback must never create a fresh legacy installation.
-            selectedBundle = InstallerBundle.legacyRecovery(this.options.bundleRoot);
-            result = await this.request("plan", { options }, endpoint, pin, selectedBundle);
-            if (generation !== this.generation) return this.state();
-            const recovered = selectedBundle.parsePlan(result, { expectedOptions: options });
-            if (!recovered.existingJobId || !recovered.existingPlanHash) throw new InstallFailure("PLAN_INVALID");
+            // Source-only recovery never changes an explicitly selected images
+            // installation into a source build. Only fixed signed recipes may
+            // identify an existing job; they cannot create a fresh old install.
+            if (options.imageMode === "images") throw error;
+            const { imageMode: _mode, imageRelease: _release, ...legacyOptions } = options;
+            let recoveredResult: JsonObject | undefined, lastError: unknown = error;
+            const currentHash = sha256(canonicalJson(this.bundle.manifest));
+            for (const recipeHash of RECOVERY_INSTALLER_RELEASE_SHA256S) {
+              if (recipeHash === currentHash) continue;
+              if (generation !== this.generation) return this.state();
+              const candidate = InstallerBundle.legacyRecovery(this.options.bundleRoot, recipeHash);
+              try {
+                const candidateResult = await this.request("plan", { options: legacyOptions }, endpoint, pin, candidate);
+                if (generation !== this.generation) return this.state();
+                const recovered = candidate.parsePlan(candidateResult, { expectedOptions: options });
+                if (!recovered.existingJobId || !recovered.existingPlanHash) throw new InstallFailure("PLAN_INVALID");
+                selectedBundle = candidate; recoveredResult = candidateResult; break;
+              } catch (candidateError) {
+                if (generation !== this.generation) return this.state();
+                if (!(candidateError instanceof InstallFailure) || !["PLAN_CHANGED", "EXISTING_INSTALLATION"].includes(candidateError.code)) throw candidateError;
+                lastError = candidateError;
+              }
+            }
+            if (!recoveredResult) throw lastError;
+            result = recoveredResult;
           }
           if (generation !== this.generation) return this.state();
           this.plan = selectedBundle.parsePlan(result, { expectedOptions: options }); this.publishPlan(); this.current.phase = "planned";

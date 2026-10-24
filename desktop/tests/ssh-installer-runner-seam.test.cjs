@@ -22,7 +22,7 @@ legacy = json.loads((root / "legacy" / sys.argv[2] / "release.json").read_text()
 options = {"domain": "meet.example.com", "publicIpv4": "8.8.8.8", "acmeEmail": ""}
 job = "e0b0d6f0-14f6-4c58-a674-9c9665465a62"
 previous = {"commit": legacy["commit"], "releaseVersion": legacy["version"],
-    "releaseSha256": runner.digest(runner.canonical(legacy)), "resourceProfile": "standard"}
+    "releaseSha256": runner.digest(runner.canonical(legacy)), "resourceProfile": "standard", "options": options}
 previous["hash"] = runner.digest(runner.canonical(previous))
 original_hash = previous["hash"]
 marker = {"jobId": job, "commit": legacy["commit"], "domain": options["domain"],
@@ -33,7 +33,7 @@ runner.job_directory = lambda value: pathlib.Path("/unused/read-only-fixture")
 runner.read_json = lambda target: copy.deepcopy(previous)
 runner.platform_facts = lambda: {"os": "ubuntu", "osVersion": "24.04", "arch": "amd64", "cpus": 4, "memoryKiB": 8 * 1024 ** 2}
 runner.disk_free = lambda: 40 * 1024 ** 3
-runner.docker_facts = lambda: {"installed": True, "version": "29.0.0", "composeVersion": "2.0.0"}
+runner.docker_facts = lambda **kwargs: {"installed": True, "version": "29.0.0", "composeVersion": "2.0.0"}
 runner.dns_check = lambda supplied: [supplied["publicIpv4"]]
 def forbidden(*args, **kwargs):
     raise AssertionError("plan must not execute subprocesses or write host state")
@@ -63,4 +63,12 @@ print(json.dumps({"mismatch": mismatch, "recovered": recovered, "tampered": tamp
   assert.equal(actual.recovered.result.releaseSha256, LEGACY_INSTALLER_RELEASE_SHA256);
   assert.equal(actual.tampered.ok, false);
   assert.equal(actual.tampered.errorCode, 'PLAN_CHANGED');
+});
+
+test('bundled Python ready-image installer checks frozen releases, safe imports, recovery and UTC build metadata', () => {
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3',
+    ['-B', path.join(__dirname, 'ssh-installer-prebuilt.py')],
+    { encoding: 'utf8', timeout: 30000 });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
 });

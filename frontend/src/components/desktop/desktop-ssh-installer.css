@@ -138,7 +138,8 @@
 .desktop-ssh-form > .button {
   margin-top: 8px;
 }
-.desktop-ssh-installer :is(input, select, textarea):not([type="checkbox"]) {
+.desktop-ssh-installer
+  :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
   width: 100%;
   min-width: 0;
   min-height: 46px;
@@ -154,7 +155,9 @@
     box-shadow 120ms ease;
 }
 .desktop-ssh-installer
-  :is(input, select, textarea):not([type="checkbox"]):focus-visible {
+  :is(input, select, textarea):not([type="checkbox"]):not(
+    [type="radio"]
+  ):focus-visible {
   outline: none;
   border-color: var(--border-strong);
   box-shadow: none;
@@ -805,7 +808,8 @@
     grid-template-columns: minmax(0, 1fr) 90px;
     gap: 10px;
   }
-  .desktop-ssh-installer :is(input, textarea, select):not([type="checkbox"]) {
+  .desktop-ssh-installer
+    :is(input, textarea, select):not([type="checkbox"]):not([type="radio"]) {
     font-size: calc(16px * var(--text-scale));
   }
 }
@@ -821,7 +825,8 @@
   grid-template-columns: minmax(0, 1fr);
 }
 @media (prefers-reduced-motion: reduce) {
-  .desktop-ssh-installer :is(input, select, textarea):not([type="checkbox"]) {
+  .desktop-ssh-installer
+    :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
     transition: none;
   }
 }
@@ -859,16 +864,6 @@
   font-size: 26px;
   letter-spacing: -1px;
   line-height: 1.2;
-}
-.desktop-ssh-brand-caption {
-  width: 100%;
-  padding-left: 45px;
-  font-size: 8px;
-  font-weight: 500;
-  line-height: 1.2;
-  letter-spacing: 2px;
-  color: var(--ssh-copy);
-  margin-top: -3px;
 }
 .desktop-ssh-art svg {
   stroke-width: 1.7;
@@ -934,7 +929,7 @@
   align-items: center;
   gap: 12px;
   min-height: 38px;
-  margin-bottom: 28px;
+  margin-bottom: 20px;
 }
 :root .desktop-ssh-installer .desktop-ssh-back {
   border: 0;
@@ -979,7 +974,7 @@
 :root .desktop-ssh-steps {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   padding: 0;
-  margin: 0 0 31px;
+  margin: 0 0 24px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -1030,7 +1025,7 @@
 }
 :root .desktop-ssh-heading {
   display: block;
-  margin-bottom: 27px;
+  margin-bottom: 22px;
 }
 .desktop-ssh-heading-kicker {
   display: block;
@@ -1039,14 +1034,14 @@
   line-height: 1.5;
   font-weight: 500;
   letter-spacing: 1.5px;
-  margin-bottom: 13px;
+  margin-bottom: 10px;
 }
 :root .desktop-ssh-installer h1 {
   font-size: calc(33px * var(--text-scale));
   font-weight: 600;
   line-height: 1.18;
   letter-spacing: -1.2px;
-  margin: 0 0 15px;
+  margin: 0 0 12px;
   text-wrap: initial;
 }
 :root .desktop-ssh-installer .desktop-foundation-description {
@@ -1071,7 +1066,7 @@
 }
 :root
   .desktop-ssh-installer
-  :is(input:not([type="checkbox"]), select, textarea) {
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   min-height: 46px;
   border: 1px solid var(--ssh-border);
   border-radius: 9px;
@@ -1138,13 +1133,100 @@
 .desktop-ssh-auth-tabs button:disabled {
   cursor: not-allowed;
 }
+.desktop-ssh-install-source {
+  min-width: 0;
+  padding: 0;
+  margin: 8px 0 12px;
+  border: 0;
+}
+.desktop-ssh-install-source > legend {
+  padding: 0;
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+.desktop-ssh-source-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+:root .desktop-ssh-installer .desktop-ssh-source-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+:root .desktop-ssh-installer .desktop-ssh-source-option[data-selected="true"] {
+  background: var(--ssh-subtle);
+}
+.desktop-ssh-source-option:not([data-selected="true"]):hover {
+  background: var(--ssh-card);
+}
+:root
+  .desktop-ssh-installer
+  .desktop-ssh-source-option:has(input:focus-visible) {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+.desktop-ssh-installer .desktop-ssh-source-option input[type="radio"] {
+  appearance: auto;
+  flex: none;
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  accent-color: var(--primary);
+  outline: none;
+  box-shadow: none;
+  cursor: inherit;
+}
+.desktop-ssh-source-option > span {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+.desktop-ssh-source-option strong {
+  color: var(--text);
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.5;
+}
+.desktop-ssh-source-option small {
+  color: var(--ssh-copy);
+  font-size: calc(11px * var(--text-scale));
+  font-weight: 400;
+  line-height: 1.65;
+}
+:root .desktop-ssh-installer .desktop-ssh-source-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+@container (max-width: 520px) {
+  .desktop-ssh-source-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+:root[data-large-text="true"] .desktop-ssh-source-options {
+  grid-template-columns: minmax(0, 1fr);
+}
 .desktop-ssh-connected {
   gap: 13px;
-  padding: 17px 18px;
+  padding: 13px 16px;
   border: 1px solid var(--ssh-border);
   border-radius: 11px;
   background: var(--ssh-card);
-  margin: 20px 0;
+  margin: 16px 0;
   font-size: calc(13px * var(--text-scale));
   font-weight: 600;
 }
@@ -1292,7 +1374,7 @@
 }
 .desktop-ssh-actions {
   gap: 10px;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 :root .desktop-ssh-installer .button {
   min-height: 44px;
@@ -1309,6 +1391,47 @@
   background: transparent;
   box-shadow: none;
   border-radius: 0;
+}
+.desktop-ssh-live-progress .desktop-ssh-progress-kicker {
+  display: none;
+}
+.desktop-ssh-live-progress .desktop-ssh-progress-top {
+  align-items: center;
+}
+.desktop-ssh-live-progress .desktop-ssh-progress-bar {
+  margin: 14px 0 10px;
+}
+.desktop-ssh-live-progress .desktop-ssh-progress-explanation {
+  margin: 10px 0 0;
+}
+.desktop-ssh-progress .desktop-ssh-background-note {
+  margin: 10px 0 0;
+}
+.desktop-ssh-phase-details {
+  margin: 14px 0 0;
+  border-top: 1px solid var(--ssh-border);
+  border-bottom: 1px solid var(--ssh-border);
+  color: var(--ssh-copy);
+}
+.desktop-ssh-phase-details > summary {
+  padding: 11px 0;
+  cursor: pointer;
+  color: var(--text);
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+.desktop-ssh-phase-details > summary > span {
+  float: right;
+  margin-left: 16px;
+  color: var(--ssh-copy);
+  font-size: calc(11px * var(--text-scale));
+  font-variant-numeric: tabular-nums;
+}
+:root .desktop-ssh-phase-details .desktop-ssh-phases {
+  margin: 0 0 10px;
+}
+.desktop-ssh-live-progress .desktop-ssh-current-phase p {
+  margin: 0;
 }
 :root .desktop-ssh-progress-top h2 {
   font-size: calc(18px * var(--text-scale));
@@ -1432,7 +1555,7 @@
   border-top: 1px solid var(--ssh-border);
   border-bottom: 1px solid var(--ssh-border);
   padding: 0;
-  margin: 0 0 22px;
+  margin: 0 0 14px;
   color: var(--ssh-copy);
   font-size: calc(11px * var(--text-scale));
   line-height: 1.9;
@@ -1447,7 +1570,7 @@
   )
   > summary {
   cursor: pointer;
-  padding: 15px 0;
+  padding: 12px 0;
   color: var(--text);
   font-size: calc(12px * var(--text-scale));
   font-weight: 500;
@@ -1474,8 +1597,8 @@
   font-size: calc(10px * var(--text-scale));
   line-height: 1.7;
   text-align: center;
-  padding-top: 20px;
-  margin: 24px 0 0;
+  padding-top: 12px;
+  margin: 16px 0 0;
 }
 .desktop-ssh-session-note svg {
   flex-shrink: 0;
@@ -1915,4 +2038,44 @@
     margin-bottom: -25px;
     transform: scale(0.75);
   }
+}
+
+/* Keep the current phase and recovery actions together in a laptop viewport. */
+.desktop-ssh-installer[data-state]:not([data-state="completed"])
+  .desktop-ssh-topbar {
+  margin-bottom: 12px;
+}
+:root
+  .desktop-ssh-installer[data-state]:not([data-state="completed"])
+  > .desktop-ssh-steps {
+  margin-bottom: 16px;
+}
+:root
+  .desktop-ssh-installer[data-state]:not([data-state="completed"])
+  > .desktop-ssh-heading {
+  margin-bottom: 16px;
+}
+.desktop-ssh-installer[data-state]:not([data-state="completed"])
+  .desktop-ssh-heading-kicker {
+  margin-bottom: 6px;
+}
+:root .desktop-ssh-installer[data-state]:not([data-state="completed"]) h1 {
+  margin-bottom: 8px;
+}
+.desktop-ssh-installer[data-state]:not([data-state="completed"])
+  > .desktop-ssh-connected {
+  padding: 10px 14px;
+  margin: 12px 0;
+}
+.desktop-ssh-live-progress .desktop-ssh-progress-percent span {
+  display: none;
+}
+.desktop-ssh-live-progress .desktop-ssh-current-phase {
+  margin-top: 10px;
+  padding-top: 8px;
+}
+.desktop-ssh-installer[data-state]:not([data-state="completed"])
+  .desktop-ssh-progress
+  > .desktop-ssh-actions {
+  margin-top: 12px;
 }
