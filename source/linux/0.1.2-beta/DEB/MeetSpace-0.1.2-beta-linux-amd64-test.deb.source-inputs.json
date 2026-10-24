@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "b4dfeb7168b3199e013adcc5b2545ab380568f60",
-  "sourceDirty": true,
-  "sourceTreeSha256": "5823caeb099ab84cbdcb2bdc68b16483dd2c9d91ed8a1f5f8a7c50167d3cc0cc",
+  "sourceCommit": "dff6765b05f252be83db65b1947b36d8efcc9c96",
+  "sourceDirty": false,
+  "sourceTreeSha256": "826ac2e7f34f6ef027139e8a00e7deb69ffaf071f283a6973f4e66e108f124ed",
   "files": [
     {
       "path": ".github/workflows/desktop-acceptance.yml",
@@ -311,8 +311,8 @@
     },
     {
       "path": "desktop/src/broker.ts",
-      "sha256": "9c2be95c242f49fbe77c7fbb9ab42f5afa770839e38231b7cdd400e6d7b72beb",
-      "bytes": 41235
+      "sha256": "2d75027d020308e14e249fafc194ee0c8c6c3c9c2c80de03ceef064b6d3fc1c1",
+      "bytes": 41891
     },
     {
       "path": "desktop/src/downloads.ts",
@@ -326,8 +326,8 @@
     },
     {
       "path": "desktop/src/main.ts",
-      "sha256": "07793862fe7bdeb160a43415111b6c0dedf4643dbf5f90c48499b554ec66a4a8",
-      "bytes": 30850
+      "sha256": "23c615d6dd48a844d3ba695c4524550cd852c981357c3d743ea2e1c41fa342ca",
+      "bytes": 30849
     },
     {
       "path": "desktop/src/media-permissions.ts",
@@ -411,8 +411,8 @@
     },
     {
       "path": "desktop/src/session/vault.ts",
-      "sha256": "5adeb9945d386694d78dd662e0e6ef6fe47235f4a8f397a8e3176b4cfc2cced8",
-      "bytes": 6696
+      "sha256": "8b2a8ddb326000a2c3a8327f4599c0e44f94976cbcb90957b21cd818499f6a24",
+      "bytes": 7299
     },
     {
       "path": "desktop/src/shared/contracts.ts",
@@ -501,8 +501,8 @@
     },
     {
       "path": "desktop/tests/broker-policy.test.cjs",
-      "sha256": "8a8848cb6f2b243bf0e2ccb0729d0a75e43f130bef64a39088b1cd69b0efb2ab",
-      "bytes": 20645
+      "sha256": "38a27199c93423fe040c0cc57bea1984ef3d462101e126c786b7ebb5d0e7a0dc",
+      "bytes": 23781
     },
     {
       "path": "desktop/tests/build-context.test.cjs",
@@ -566,8 +566,8 @@
     },
     {
       "path": "desktop/tests/electron-ssh.cjs",
-      "sha256": "3a2e6f39ad6ab8c030814bf11f4bea65f930af0ed363de682fe48f86dd5a34d3",
-      "bytes": 26149
+      "sha256": "5214902db6bb507afdaba7ac50243778590a63db877d2132b6c1828fc217d595",
+      "bytes": 29999
     },
     {
       "path": "desktop/tests/electron-ui-runner.cjs",
@@ -1496,8 +1496,8 @@
     },
     {
       "path": "frontend/src/components/WelcomePanel.tsx",
-      "sha256": "99a3f25b9f505010d9c29b936ba0c8a94ea21f09090eefac0e8d47bd57cafc27",
-      "bytes": 3300
+      "sha256": "d1964b30b79269fd4bcbe3d4e62848b1c24862847afd2b7332e8ba4298db779f",
+      "bytes": 4612
     },
     {
       "path": "frontend/src/components/WorkspaceSearch.tsx",
@@ -1606,8 +1606,8 @@
     },
     {
       "path": "frontend/src/components/desktop/DesktopInstallProgress.tsx",
-      "sha256": "65af2b822804663f0df43a160883d1dc5d2a536497f105c510bc5c78a3a6dd62",
-      "bytes": 7043
+      "sha256": "a56639ab9fdcffe12bcc56dadc2b0fae2f4a610cf92f1569dd84ccb6faddcbc2",
+      "bytes": 7449
     },
     {
       "path": "frontend/src/components/desktop/DesktopNativeSettings.tsx",
@@ -1621,13 +1621,13 @@
     },
     {
       "path": "frontend/src/components/desktop/DesktopSessionGate.tsx",
-      "sha256": "f4e2a7fe737f367024e3fa8ee4f662e38ea00e13a9e3170fd651dad74689faaf",
-      "bytes": 18561
+      "sha256": "6186b02ef0134908387f483b9bd60506b6450a337531168c610311fae34004c5",
+      "bytes": 19093
     },
     {
       "path": "frontend/src/components/desktop/DesktopSshInstaller.tsx",
-      "sha256": "313d67d08511de66afcdc7d3f33642636f551d269cd2321724e207dd44a33220",
-      "bytes": 48804
+      "sha256": "bd6a838c381db44b65d5b1c99afa22888a5ed30fe3a1dada0d4a172bef8933ca",
+      "bytes": 54941
     },
     {
       "path": "frontend/src/components/desktop/DesktopUpdateSettings.tsx",
@@ -1656,8 +1656,8 @@
     },
     {
       "path": "frontend/src/components/desktop/desktop-ssh-installer.css",
-      "sha256": "54b72cafc999d32e9857f05a1f7b0eafdebbc28b8b2df2474772e992c84a5919",
-      "bytes": 19490
+      "sha256": "0b8896b2389f177c353f9793e478cab63051ac3e1bcc446f50ee336e25b70fec",
+      "bytes": 44676
     },
     {
       "path": "frontend/src/components/desktop/installed-server-connection-message.ts",
@@ -2086,8 +2086,8 @@
     },
     {
       "path": "frontend/src/reference-design.css",
-      "sha256": "a1dfd807e6dd09d2822542e70f4773f64d77e8b5ce005e633cd123936f79b93e",
-      "bytes": 25091
+      "sha256": "327e289fe3674045c665b9cdc462efd9dc5d5175f53bb671f34efef4eb9c4f1d",
+      "bytes": 20789
     },
     {
       "path": "frontend/src/remotePlayback.ts",
