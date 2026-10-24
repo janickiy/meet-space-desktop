@@ -37,9 +37,20 @@ export function DesktopInstallProgress({
     progress.percent === null
       ? "Ожидаем подтверждённое состояние сервера"
       : `${progress.percent}%. Завершено этапов: ${progress.completedCount} из ${progress.total}. ${progress.phaseTitle}`;
+  const ProgressContainer = completed ? "details" : "div";
 
   return (
-    <>
+    <ProgressContainer
+      className={
+        completed ? "desktop-ssh-completed-phases" : "desktop-ssh-live-progress"
+      }
+    >
+      {completed && (
+        <summary>
+          <Check size={16} aria-hidden="true" />
+          Все {progress.total} этапов завершены <span>100%</span>
+        </summary>
+      )}
       <section
         className="desktop-ssh-progress-summary"
         data-mode={mode}
@@ -184,6 +195,6 @@ export function DesktopInstallProgress({
           })}
         </ol>
       )}
-    </>
+    </ProgressContainer>
   );
 }

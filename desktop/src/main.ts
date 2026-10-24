@@ -261,7 +261,7 @@ function installIpc(): void {
   const endpoints: Array<[string, number, (...args: unknown[]) => unknown]> = [
     ["ssh:state", 0, () => sshInstaller!.state()],
     ["ssh:action", 2, (action, input) => sshInstaller!.invoke(action, input)],
-    ["servers:list", 0, () => broker!.serversState()],
+    ["servers:list", 0, () => broker!.listServers()],
     ["servers:probe", 1, (origin) => broker!.probeServer(origin)],
     ["servers:add", 1, (input) => broker!.addServer(input)],
     ["servers:select", 1, (id) => broker!.selectServer(id)],

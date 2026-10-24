@@ -825,3 +825,1094 @@
     transition: none;
   }
 }
+
+/* Supplied installer reference, with the real SSH state and confirmed checkpoints. */
+:root
+  .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome) {
+  grid-template-columns: minmax(330px, 40%) minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.desktop-foundation-installing,
+.desktop-ssh-installer {
+  --ssh-side: #eef2fa;
+  --ssh-card: #f7f9fd;
+  --ssh-subtle: #f0f3f9;
+  --ssh-border: #dfe5f0;
+  --ssh-copy: #758199;
+  --ssh-art-line: #d6dfef;
+}
+:root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
+  height: 100%;
+  min-height: 0;
+  padding: 35px clamp(30px, 3.7vw, 58px) 28px;
+  background: var(--ssh-side);
+  border-right: 1px solid var(--ssh-border);
+  color: var(--text);
+}
+.desktop-foundation-installing .reference-welcome-installer::before {
+  content: none;
+}
+.reference-welcome-installer .reference-welcome-brand {
+  flex-wrap: wrap;
+  font-size: 26px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+.desktop-ssh-brand-caption {
+  width: 100%;
+  padding-left: 45px;
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 2px;
+  color: var(--ssh-copy);
+  margin-top: -3px;
+}
+.desktop-ssh-art svg {
+  stroke-width: 1.7;
+  flex-shrink: 0;
+}
+.reference-welcome-installer .reference-welcome-brand img {
+  width: 35px;
+  height: 35px;
+}
+.reference-welcome-installer .reference-welcome-copy {
+  margin-top: clamp(48px, 9vh, 105px);
+}
+.reference-welcome-installer .reference-welcome-copy > span {
+  font-size: calc(10px * var(--text-scale));
+  letter-spacing: 1.5px;
+  line-height: 1.6;
+  color: var(--ssh-copy);
+  margin: 0;
+}
+.reference-welcome-installer .reference-welcome-copy h2 {
+  font-size: calc(clamp(31px, 3.3vw, 48px) * var(--text-scale));
+  line-height: 1.12;
+  letter-spacing: -2px;
+  margin: 19px 0 23px;
+  max-width: 460px;
+}
+.reference-welcome-installer .reference-welcome-copy p {
+  max-width: 370px;
+  color: var(--ssh-copy);
+  font-size: calc(14px * var(--text-scale));
+  line-height: 1.85;
+  margin: 0;
+}
+.reference-welcome-installer .reference-welcome-footer {
+  color: var(--ssh-copy);
+  font-size: calc(10px * var(--text-scale));
+  padding-top: 24px;
+}
+.reference-welcome-installer .reference-welcome-footer svg {
+  color: var(--primary);
+}
+:root
+  .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
+  > .desktop-foundation-card {
+  align-self: stretch;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 24px clamp(32px, 4.6vw, 72px) 20px;
+}
+:root .desktop-ssh-installer {
+  display: block;
+  width: 100%;
+  max-width: 620px;
+  margin: 0 auto;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.8;
+}
+.desktop-ssh-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  margin-bottom: 28px;
+}
+:root .desktop-ssh-installer .desktop-ssh-back {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 8px 0;
+  color: var(--primary);
+  min-height: 36px;
+  font-size: calc(12px * var(--text-scale));
+}
+.desktop-ssh-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 8px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+.desktop-ssh-close:hover {
+  background: var(--ssh-card);
+}
+.desktop-ssh-step-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  color: var(--ssh-copy);
+  font-size: calc(10px * var(--text-scale));
+  line-height: 1.6;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.desktop-ssh-step-caption strong {
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+:root .desktop-ssh-steps {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0;
+  margin: 0 0 31px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 7px;
+}
+:root .desktop-ssh-steps li {
+  position: relative;
+  padding: 15px 0 0;
+  border-radius: 0;
+  gap: 5px;
+  background: transparent;
+  box-shadow: none;
+  font-size: calc(9px * var(--text-scale));
+  line-height: 1.4;
+  color: #a2aabd;
+  flex-direction: row;
+  text-align: left;
+}
+.desktop-ssh-steps li::before {
+  content: "";
+  height: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  background: var(--ssh-border);
+}
+:root .desktop-ssh-steps li:is([aria-current], .is-complete) {
+  color: var(--primary);
+}
+.desktop-ssh-steps li:is([aria-current], .is-complete)::before {
+  background: var(--primary);
+}
+:root .desktop-ssh-steps li > span {
+  width: 17px;
+  height: 17px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font-size: calc(8px * var(--text-scale));
+}
+.desktop-ssh-steps li > strong {
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:root .desktop-ssh-heading {
+  display: block;
+  margin-bottom: 27px;
+}
+.desktop-ssh-heading-kicker {
+  display: block;
+  color: var(--ssh-copy);
+  font-size: calc(10px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  margin-bottom: 13px;
+}
+:root .desktop-ssh-installer h1 {
+  font-size: calc(33px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -1.2px;
+  margin: 0 0 15px;
+  text-wrap: initial;
+}
+:root .desktop-ssh-installer .desktop-foundation-description {
+  color: var(--ssh-copy);
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.8;
+  max-width: 550px;
+  margin: 0;
+}
+.desktop-ssh-installer > .error-notice {
+  margin: 18px 0;
+}
+.desktop-ssh-form {
+  gap: 8px;
+}
+.desktop-ssh-form > :is(.button, .desktop-ssh-auth) {
+  margin-top: 18px;
+}
+:root .desktop-ssh-installer label {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+:root
+  .desktop-ssh-installer
+  :is(input:not([type="checkbox"]), select, textarea) {
+  min-height: 46px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 400;
+}
+.desktop-ssh-installer :is(input, select, textarea) + label {
+  margin-top: 11px;
+}
+.desktop-ssh-installer .field-hint {
+  font-size: calc(11px * var(--text-scale));
+  color: var(--ssh-copy);
+  line-height: 1.7;
+}
+.desktop-ssh-endpoint {
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 14px;
+  margin-bottom: 11px;
+}
+.desktop-ssh-fields {
+  gap: 17px 15px;
+}
+.desktop-ssh-auth {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin: 21px 0;
+}
+.desktop-ssh-auth legend {
+  font-size: calc(12px * var(--text-scale));
+  padding: 0;
+  margin-bottom: 8px;
+}
+.desktop-ssh-auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 10px;
+  background: var(--ssh-subtle);
+  margin-bottom: 15px;
+}
+.desktop-ssh-auth-tabs button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 43px;
+  padding: 12px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ssh-copy);
+  cursor: pointer;
+  font-size: calc(12px * var(--text-scale));
+}
+.desktop-ssh-auth-tabs button[aria-pressed="true"] {
+  background: var(--surface);
+  box-shadow: 0 1px 5px #34466f08;
+  color: var(--primary);
+}
+.desktop-ssh-auth-tabs button:disabled {
+  cursor: not-allowed;
+}
+.desktop-ssh-connected {
+  gap: 13px;
+  padding: 17px 18px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 11px;
+  background: var(--ssh-card);
+  margin: 20px 0;
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 600;
+}
+.desktop-ssh-connected > svg {
+  width: 23px;
+  height: 23px;
+  color: #8a9bb7;
+}
+.desktop-ssh-connected small {
+  font-size: calc(11px * var(--text-scale));
+  color: var(--ssh-copy);
+}
+.desktop-ssh-installer[data-state="completed"] > .desktop-ssh-connected {
+  display: none;
+}
+.desktop-ssh-state-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 28px 0 24px;
+  border-radius: 18px;
+}
+.desktop-ssh-state-icon.is-success {
+  background: #edf8f1;
+  border: 1px solid #d2eadb;
+  color: #6b9f7b;
+  box-shadow: 0 0 0 12px #f5faf7;
+  transform: rotate(-6deg);
+}
+.desktop-ssh-state-icon.is-success svg {
+  transform: rotate(6deg);
+}
+.desktop-ssh-result-address {
+  padding: 20px 22px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 11px;
+  background: var(--ssh-card);
+  margin: 0 0 25px;
+  color: var(--ssh-copy);
+}
+.desktop-ssh-result-address small {
+  display: block;
+  font-size: calc(9px * var(--text-scale));
+  letter-spacing: 1px;
+  margin-bottom: 9px;
+  line-height: 1.6;
+}
+.desktop-ssh-result-address strong {
+  display: block;
+  font-size: calc(19px * var(--text-scale));
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.4px;
+  overflow-wrap: anywhere;
+}
+.desktop-ssh-result-address > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.7;
+  margin-top: 10px;
+  color: var(--success);
+}
+.desktop-ssh-installer dl {
+  padding: 9px 20px;
+  background: var(--ssh-card);
+  border-color: var(--ssh-border);
+  border-radius: 11px;
+}
+.desktop-ssh-installer dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  gap: 20px;
+}
+.desktop-ssh-installer dt,
+.desktop-ssh-installer dd {
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.7;
+}
+.desktop-ssh-installer dt {
+  color: var(--ssh-copy);
+  flex-shrink: 0;
+}
+.desktop-ssh-installer dd {
+  text-align: right;
+  min-width: 0;
+}
+.desktop-ssh-trust,
+.desktop-ssh-plan,
+.desktop-ssh-preflight {
+  margin-top: 20px;
+}
+.desktop-ssh-note {
+  padding: 15px 16px;
+  border-radius: 10px;
+  background: var(--ssh-card);
+  border-color: var(--ssh-border);
+  color: var(--ssh-copy);
+  margin: 18px 0;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.8;
+}
+.desktop-ssh-checkbox {
+  font-size: calc(12px * var(--text-scale));
+  gap: 11px;
+  margin: 12px 0;
+  min-height: 38px;
+  padding: 9px 0;
+  line-height: 1.7;
+}
+.desktop-ssh-checkbox input {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+}
+.desktop-ssh-checks {
+  display: block;
+  border: 1px solid var(--ssh-border);
+  border-radius: 11px;
+  overflow: hidden;
+}
+.desktop-ssh-checks li {
+  padding: 15px 17px;
+  border: 0;
+  border-radius: 0;
+}
+.desktop-ssh-checks li + li {
+  border-top: 1px solid var(--ssh-border);
+}
+.desktop-ssh-checks strong {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+.desktop-ssh-checks p {
+  margin-top: 3px;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.6;
+}
+.desktop-ssh-check-status {
+  font-size: calc(9px * var(--text-scale));
+}
+.desktop-ssh-actions {
+  gap: 10px;
+  margin-top: 24px;
+}
+:root .desktop-ssh-installer .button {
+  min-height: 44px;
+  padding: 12px 18px;
+  font-size: calc(12px * var(--text-scale));
+  border-radius: 9px;
+}
+.desktop-ssh-progress {
+  scroll-margin-top: 24px;
+}
+:root .desktop-ssh-progress-summary {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+:root .desktop-ssh-progress-top h2 {
+  font-size: calc(18px * var(--text-scale));
+}
+:root .desktop-ssh-progress-percent strong {
+  font-size: calc(28px * var(--text-scale));
+  font-weight: 500;
+}
+:root .desktop-ssh-progress-bar {
+  height: 5px;
+}
+.desktop-ssh-progress-kicker,
+.desktop-ssh-progress-meta,
+.desktop-ssh-current-label,
+.desktop-ssh-progress-explanation,
+.desktop-ssh-progress-freshness {
+  font-size: calc(11px * var(--text-scale));
+}
+.desktop-ssh-current-phase > strong {
+  font-size: calc(14px * var(--text-scale));
+}
+.desktop-ssh-current-phase {
+  margin-top: 14px;
+  padding-top: 12px;
+}
+.desktop-ssh-current-phase p {
+  font-size: calc(11px * var(--text-scale));
+}
+:root .desktop-ssh-phases {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  margin: 19px 0 20px;
+}
+:root .desktop-ssh-phases li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  min-height: 54px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.desktop-ssh-phases li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 40px;
+  bottom: -10px;
+  width: 1px;
+  background: var(--ssh-border);
+}
+:root .desktop-ssh-phases li > span {
+  position: relative;
+  z-index: 1;
+  width: 29px;
+  height: 29px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--ssh-border);
+  font-size: calc(10px * var(--text-scale));
+}
+:root .desktop-ssh-phases li strong {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+}
+:root .desktop-ssh-phases li.is-current strong {
+  font-weight: 600;
+  color: var(--text);
+}
+:root .desktop-ssh-phases li small {
+  font-size: calc(10px * var(--text-scale));
+}
+:root .desktop-ssh-phases li.is-complete > span {
+  background: #f0f8f3;
+  color: #74a88a;
+  border-color: #d4eadc;
+}
+:root .desktop-ssh-phases li.is-complete strong {
+  color: #6d8979;
+}
+:root .desktop-ssh-phases li.is-current > span {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: #ccdafd;
+}
+:root .desktop-ssh-phases li.is-paused > span {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border-color: var(--warning);
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-progress {
+  display: flex;
+  flex-direction: column;
+}
+.desktop-ssh-installer[data-state="completed"]
+  .desktop-ssh-progress
+  > .desktop-ssh-actions {
+  order: 1;
+  margin: 0 0 22px;
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-completed-phases {
+  order: 2;
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-events {
+  order: 3;
+}
+.desktop-ssh-installer
+  :is(
+    .desktop-ssh-completed-phases,
+    .desktop-ssh-events,
+    .desktop-ssh-saved-plan,
+    details.desktop-ssh-recovery,
+    .desktop-ssh-host-details
+  ) {
+  border-top: 1px solid var(--ssh-border);
+  border-bottom: 1px solid var(--ssh-border);
+  padding: 0;
+  margin: 0 0 22px;
+  color: var(--ssh-copy);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.9;
+}
+.desktop-ssh-installer
+  :is(
+    .desktop-ssh-completed-phases,
+    .desktop-ssh-events,
+    .desktop-ssh-saved-plan,
+    details.desktop-ssh-recovery,
+    .desktop-ssh-host-details
+  )
+  > summary {
+  cursor: pointer;
+  padding: 15px 0;
+  color: var(--text);
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+.desktop-ssh-completed-phases > summary > svg {
+  vertical-align: middle;
+  margin-right: 6px;
+  color: var(--success);
+}
+.desktop-ssh-completed-phases > summary > span {
+  float: right;
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
+}
+.desktop-ssh-host-details > form {
+  padding-bottom: 20px;
+}
+.desktop-ssh-session-note {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--ssh-copy);
+  font-size: calc(10px * var(--text-scale));
+  line-height: 1.7;
+  text-align: center;
+  padding-top: 20px;
+  margin: 24px 0 0;
+}
+.desktop-ssh-session-note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.desktop-foundation .desktop-storage-notice,
+.desktop-server-settings .desktop-storage-notice {
+  padding: 16px 18px;
+  margin: 0 0 22px;
+  border: 1px solid #e9d8b9;
+  border-radius: 10px;
+  background: #fff8ed;
+  color: #886630;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.8;
+}
+.desktop-storage-notice > strong {
+  font-weight: 600;
+}
+.desktop-storage-notice > p {
+  margin: 7px 0 14px;
+}
+.desktop-storage-notice > p:last-child {
+  margin-bottom: 0;
+}
+:root[data-theme="dark"] .desktop-storage-notice {
+  background: #3d372f;
+  border-color: #62553e;
+  color: #d8bd91;
+}
+:root[data-theme="dark"]
+  :is(.desktop-foundation-installing, .desktop-ssh-installer) {
+  --ssh-side: #222d40;
+  --ssh-card: #252f41;
+  --ssh-subtle: #1b2536;
+  --ssh-border: #37435a;
+  --ssh-copy: #a1aec5;
+  --ssh-art-line: #3a4a67;
+}
+:root[data-theme="dark"] .desktop-ssh-state-icon.is-success {
+  background: #2e493e;
+  border-color: #46634f;
+  color: #b4d7bd;
+  box-shadow: 0 0 0 12px #263b332c;
+}
+:root[data-theme="dark"] .desktop-ssh-phases li.is-complete > span {
+  background: #2d453b;
+  border-color: #3e5e4f;
+  color: #a2c8b1;
+}
+:root[data-theme="dark"] .desktop-ssh-phases li.is-complete strong {
+  color: #a8c3b4;
+}
+@media (min-width: 1650px) {
+  :root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
+    padding-inline: 72px;
+  }
+  .reference-welcome-installer .reference-welcome-copy h2 {
+    font-size: calc(49px * var(--text-scale));
+  }
+}
+@media (max-width: 1150px) {
+  :root
+    .desktop-foundation.desktop-foundation-installing:has(
+      > .reference-welcome
+    ) {
+    grid-template-columns: minmax(310px, 36%) minmax(0, 1fr);
+  }
+  :root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
+    padding: 29px 30px 25px;
+  }
+  .reference-welcome-installer .reference-welcome-copy {
+    margin-top: 65px;
+  }
+  .reference-welcome-installer .reference-welcome-copy h2 {
+    font-size: calc(35px * var(--text-scale));
+    letter-spacing: -1.5px;
+  }
+  .reference-welcome-installer .reference-welcome-copy p {
+    font-size: calc(13px * var(--text-scale));
+  }
+  :root
+    .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
+    > .desktop-foundation-card {
+    padding-inline: 35px;
+  }
+}
+@media (max-width: 999px) {
+  :root
+    .desktop-foundation.desktop-foundation-installing:has(
+      > .reference-welcome
+    ) {
+    display: block;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  :root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
+    display: none;
+  }
+  :root
+    .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
+    > .desktop-foundation-card {
+    height: 100%;
+    padding: 22px 38px;
+  }
+}
+@media (max-height: 850px) and (min-width: 1000px) {
+  .reference-welcome-installer .reference-welcome-copy {
+    margin-top: 55px;
+  }
+  .reference-welcome-installer .reference-welcome-copy h2 {
+    font-size: calc(36px * var(--text-scale));
+    letter-spacing: -1.4px;
+  }
+  .reference-welcome-installer .reference-welcome-copy p {
+    font-size: calc(13px * var(--text-scale));
+  }
+  .desktop-ssh-topbar {
+    margin-bottom: 19px;
+  }
+  :root .desktop-ssh-steps {
+    margin-bottom: 24px;
+  }
+  :root .desktop-ssh-installer h1 {
+    font-size: calc(30px * var(--text-scale));
+  }
+  :root .desktop-ssh-heading {
+    margin-bottom: 23px;
+  }
+  :root .desktop-ssh-phases li {
+    min-height: 51px;
+  }
+}
+@media (max-width: 600px) {
+  :root
+    .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
+    > .desktop-foundation-card {
+    padding: 16px 22px;
+  }
+  :root .desktop-ssh-installer h1 {
+    font-size: calc(29px * var(--text-scale));
+  }
+  :root .desktop-ssh-steps li {
+    font-size: calc(8px * var(--text-scale));
+  }
+  :root .desktop-ssh-steps li > span {
+    display: none;
+  }
+  .desktop-ssh-endpoint {
+    grid-template-columns: minmax(0, 1fr) 90px;
+    gap: 10px;
+  }
+  .desktop-ssh-installer dl > div {
+    gap: 12px;
+  }
+  .desktop-ssh-installer dt {
+    flex-shrink: 1;
+  }
+}
+:root[data-large-text="true"]
+  .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome) {
+  display: block;
+}
+:root[data-large-text="true"]
+  .desktop-foundation.desktop-foundation-installing
+  > .reference-welcome {
+  display: none;
+}
+:root[data-large-text="true"]
+  .desktop-foundation.desktop-foundation-installing
+  > .desktop-foundation-card {
+  height: 100%;
+}
+
+/* Decorative artwork from the installer reference; it does not represent a live call. */
+.desktop-ssh-art {
+  height: 315px;
+  min-height: 230px;
+  width: 100%;
+  max-width: 440px;
+  margin: 16px auto 20px;
+  position: relative;
+  isolation: isolate;
+}
+.desktop-ssh-art-orbit {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: 250px;
+  height: 250px;
+  border: 1px solid var(--ssh-art-line);
+  border-radius: 50%;
+  z-index: -1;
+}
+.desktop-ssh-art-orbit > div {
+  position: absolute;
+  inset: -44px;
+  border: 1px dashed var(--ssh-art-line);
+  border-radius: 50%;
+  opacity: 0.7;
+}
+.desktop-ssh-art-orbit > div + div {
+  inset: -83px;
+  border-style: solid;
+  opacity: 0.35;
+}
+.desktop-ssh-art:before {
+  content: "";
+  position: absolute;
+  left: 1%;
+  right: 1%;
+  top: 54%;
+  border-top: 1px dashed var(--ssh-art-line);
+  transform: rotate(-25deg);
+  z-index: -1;
+}
+.desktop-ssh-art:after {
+  content: "✦";
+  position: absolute;
+  right: 5%;
+  top: 12%;
+  font-size: 35px;
+  color: #b0a5dc;
+  line-height: 1;
+}
+.desktop-ssh-art-call {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%) rotate(-7deg);
+  width: 245px;
+  height: 187px;
+  padding: 5px 5px 38px;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #fff;
+  border-radius: 17px;
+  box-shadow: 0 17px 35px #415a8c20;
+}
+.desktop-ssh-art-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  left: 10px;
+  top: -17px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  background: #fff;
+  color: #69788e;
+  font-size: 9px;
+  box-shadow: 0 4px 14px #32456d0e;
+  white-space: nowrap;
+}
+.desktop-ssh-art-live:before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  background: #69ae92;
+  border-radius: 50%;
+}
+.desktop-ssh-art-people {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+  min-height: 0;
+}
+.desktop-ssh-art-people > span {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 11px;
+  background: #e2def3;
+  color: #665a9e;
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+.desktop-ssh-art-people > span + span {
+  background: #d9e8f0;
+  color: #4e8097;
+}
+.desktop-ssh-art-people > span:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: -30px;
+  width: 100px;
+  height: 90px;
+  background: #ffffff3d;
+  border-radius: 50%;
+}
+.desktop-ssh-art-people > span:after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  bottom: 37px;
+  width: 45px;
+  height: 45px;
+  background: #ffffff3d;
+  border-radius: 50%;
+}
+.desktop-ssh-art-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: #7b8aa1;
+}
+.desktop-ssh-art-controls > span {
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 7px;
+  background: #f3f5f9;
+}
+.desktop-ssh-art-controls svg {
+  width: 12px;
+  height: 12px;
+}
+.desktop-ssh-art-controls > span:last-child {
+  background: #fce9ec;
+  color: #cc6d7e;
+}
+.desktop-ssh-art-message {
+  position: absolute;
+  right: 0;
+  bottom: 19px;
+  transform: rotate(4deg);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 15px 18px;
+  background: #fff;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  box-shadow: 0 9px 20px #415a8c10;
+  color: #65758d;
+  font-size: 10px;
+  line-height: 1.7;
+  z-index: 2;
+}
+.desktop-ssh-art-message svg {
+  width: 17px;
+  height: 17px;
+  color: var(--primary);
+}
+.desktop-ssh-art-message strong {
+  display: block;
+  color: #414d68;
+  font-weight: 600;
+}
+:root[data-theme="dark"] .desktop-ssh-art-call {
+  background: #3a4964;
+  border-color: #3a4964;
+  box-shadow: 0 17px 35px #0c14253d;
+}
+:root[data-theme="dark"] .desktop-ssh-art-live {
+  background: #3b4962;
+  color: #d0d9eb;
+}
+:root[data-theme="dark"] .desktop-ssh-art-people > span {
+  background: #5a537d;
+  color: #e1dafc;
+}
+:root[data-theme="dark"] .desktop-ssh-art-people > span + span {
+  background: #3e637a;
+  color: #d2eaf7;
+}
+:root[data-theme="dark"] .desktop-ssh-art-people > span:before,
+:root[data-theme="dark"] .desktop-ssh-art-people > span:after {
+  background: #ffffff0d;
+}
+:root[data-theme="dark"] .desktop-ssh-art-controls > span {
+  background: #475671;
+  color: #c5d0e3;
+}
+:root[data-theme="dark"] .desktop-ssh-art-controls > span:last-child {
+  background: #6c4357;
+  color: #f3bdcb;
+}
+:root[data-theme="dark"] .desktop-ssh-art-message {
+  background: #34435d;
+  border-color: #465774;
+  color: #d0d9eb;
+  box-shadow: 0 9px 20px #09132620;
+}
+:root[data-theme="dark"] .desktop-ssh-art-message strong {
+  color: #eef2ff;
+}
+@media (min-width: 1650px) {
+  .desktop-ssh-art {
+    margin-top: 40px;
+    transform: scale(1.08);
+  }
+}
+@media (max-width: 1150px) {
+  .desktop-ssh-art {
+    transform: scale(0.88);
+    transform-origin: center top;
+    margin-bottom: -20px;
+  }
+}
+@media (max-height: 850px) and (min-width: 1000px) {
+  .desktop-ssh-art {
+    height: 275px;
+    min-height: 210px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    transform: scale(0.92);
+    transform-origin: center top;
+  }
+}
+@media (max-height: 680px) and (min-width: 1000px) {
+  .reference-welcome-installer .reference-welcome-copy {
+    margin-top: 28px;
+  }
+  .reference-welcome-installer .reference-welcome-copy h2 {
+    font-size: calc(32px * var(--text-scale));
+    margin-bottom: 17px;
+  }
+  .desktop-ssh-art {
+    height: 230px;
+    min-height: 170px;
+    margin-bottom: -25px;
+    transform: scale(0.75);
+  }
+}

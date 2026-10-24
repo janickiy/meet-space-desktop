@@ -1,8 +1,10 @@
 import {
   MessageSquare,
+  MessageCircle,
   Mic,
   MonitorUp,
   PhoneOff,
+  Phone,
   ShieldCheck,
   Video,
 } from "lucide-react";
@@ -21,6 +23,11 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
           alt=""
         />
         <span>{PRODUCT_NAME}</span>
+        {installer && (
+          <small className="desktop-ssh-brand-caption">
+            ДЛЯ WINDOWS И LINUX
+          </small>
+        )}
       </div>
       <div className="reference-welcome-copy">
         <span>
@@ -58,49 +65,84 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
           )}
         </p>
       </div>
-      <div className="reference-welcome-art" aria-hidden="true">
-        <div className="reference-welcome-call">
-          <div className="reference-welcome-live">
-            <i />
-            Команда на связи
+      {installer ? (
+        <div className="desktop-ssh-art" aria-hidden="true">
+          <div className="desktop-ssh-art-orbit">
+            <div />
+            <div />
           </div>
-          <div className="reference-welcome-people">
-            <div>
-              <span>АС</span>
-              <small>Вы</small>
-            </div>
-            <div>
+          <div className="desktop-ssh-art-call">
+            <span className="desktop-ssh-art-live">Встреча команды</span>
+            <div className="desktop-ssh-art-people">
               <span>АК</span>
-              <small>Анна</small>
-            </div>
-            <div>
               <span>МП</span>
-              <small>Максим</small>
+            </div>
+            <div className="desktop-ssh-art-controls">
+              <span>
+                <Video />
+              </span>
+              <span>
+                <Mic />
+              </span>
+              <span>
+                <Phone />
+              </span>
             </div>
           </div>
-          <div className="reference-welcome-controls">
-            <span>
-              <Mic />
-            </span>
-            <span>
-              <Video />
-            </span>
-            <span>
-              <MonitorUp />
-            </span>
-            <span>
-              <PhoneOff />
-            </span>
+          <div className="desktop-ssh-art-message">
+            <MessageCircle />
+            <div>
+              Хорошие идеи.
+              <br />
+              <strong>Начинаются здесь.</strong>
+            </div>
           </div>
         </div>
-        <div className="reference-welcome-message">
-          <MessageSquare />
-          <div>
-            <strong>Отличная идея.</strong>
-            <p>Давайте сделаем вместе!</p>
+      ) : (
+        <div className="reference-welcome-art" aria-hidden="true">
+          <div className="reference-welcome-call">
+            <div className="reference-welcome-live">
+              <i />
+              Команда на связи
+            </div>
+            <div className="reference-welcome-people">
+              <div>
+                <span>АС</span>
+                <small>Вы</small>
+              </div>
+              <div>
+                <span>АК</span>
+                <small>Анна</small>
+              </div>
+              <div>
+                <span>МП</span>
+                <small>Максим</small>
+              </div>
+            </div>
+            <div className="reference-welcome-controls">
+              <span>
+                <Mic />
+              </span>
+              <span>
+                <Video />
+              </span>
+              <span>
+                <MonitorUp />
+              </span>
+              <span>
+                <PhoneOff />
+              </span>
+            </div>
+          </div>
+          <div className="reference-welcome-message">
+            <MessageSquare />
+            <div>
+              <strong>Отличная идея.</strong>
+              <p>Давайте сделаем вместе!</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
       <div className="reference-welcome-footer">
         <ShieldCheck size={15} />
         {installer

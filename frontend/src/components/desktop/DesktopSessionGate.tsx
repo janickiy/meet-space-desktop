@@ -254,7 +254,7 @@ function connectionMessage(error: unknown): string {
   if (code === "INCOMPATIBLE_SERVER" || code === "incompatible_server")
     return "На этом адресе не найден совместимый сервер MeetSpace.";
   if (code === "STORAGE_UNAVAILABLE" || code === "storage_unavailable")
-    return "Защищённое хранилище недоступно. Перезапустите приложение и повторите попытку.";
+    return "Защищённое хранилище недоступно. Разблокируйте системное хранилище паролей, затем повторите проверку.";
   return "Не удалось подключиться. Проверьте адрес, подключение к сети и сертификат сервера.";
 }
 
@@ -317,11 +317,17 @@ function ServerSettings({
     const connected = await desktopBridge().selectServer(profile.id);
     if (active.current) onConnected(connected);
   }
+  async function checkStorage() {
+    const next = await desktopBridge().listServers();
+    if (active.current) onState(next);
+    return next.storageAvailable;
+  }
   const content = installingServer ? (
     <DesktopSshInstaller
       onBack={() => setInstallingServer(false)}
       onConnect={(serverOrigin) => connectOrigin(serverOrigin)}
       canConnect={state.storageAvailable}
+      onCheckStorage={checkStorage}
     />
   ) : showIntro ? (
     <div className="reference-onboarding-intro">
@@ -394,11 +400,26 @@ function ServerSettings({
         </>
       )}
       {!state.storageAvailable && (
-        <ErrorNotice>
-          {runtime?.platform === "linux"
-            ? "Защищённое хранилище паролей Linux недоступно. Разблокируйте системную связку ключей и перезапустите MeetSpace. Для входа требуется GNOME Keyring или KWallet; пароли без защиты не сохраняются."
-            : "Защищённое хранилище недоступно. Сохранение подключения и вход сейчас недоступны."}
-        </ErrorNotice>
+        <div className="desktop-storage-notice" role="status">
+          <p>
+            {runtime?.platform === "linux"
+              ? "Разблокируйте системное хранилище паролей Linux, затем повторите проверку. Для входа требуется GNOME Keyring или KWallet."
+              : "Защищённое хранилище недоступно. Сохранение подключения и вход сейчас недоступны."}
+          </p>
+          <Button
+            type="button"
+            variant="secondary"
+            busy={busy}
+            disabled={busy}
+            onClick={() =>
+              void run(async () => {
+                await checkStorage();
+              })
+            }
+          >
+            Проверить хранилище
+          </Button>
+        </div>
       )}
       {state.items.length > 0 && (
         <div className="desktop-server-list" aria-label="Сохранённые серверы">

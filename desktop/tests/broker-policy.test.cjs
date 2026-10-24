@@ -34,12 +34,13 @@ async function setup(t, options = {}) {
     if (resource === "/api/v1/auth/logout") return json(200, { status: "success" });
     return json(401, { status: "failed", message: "unauthorized" });
   } };
-  const broker = new MeetSpaceBroker({ storageDir: await temp(t), cipher: options.cipher || cipher(), transport, emit: (event) => events.push(event), createSocket() { const socket = new EventEmitter(); socket.terminate = () => {}; socket.close = () => {}; sockets.push(socket); return socket; } });
+  const storageDir = options.storageDir || await temp(t);
+  const broker = new MeetSpaceBroker({ storageDir, cipher: options.cipher || cipher(), transport, emit: (event) => events.push(event), createSocket() { const socket = new EventEmitter(); socket.terminate = () => {}; socket.close = () => {}; sockets.push(socket); return socket; } });
   t.after(() => broker.dispose()); await broker.initialize();
   const state = await broker.addServer({ origin: "https://test.invalid", label: "Test" }); await broker.selectServer(state.items[0].id);
   const http = (resource, extras = {}) => broker.http({ id: randomUUID(), method: "POST", path: "/api/v1" + resource, responseType: "json", ...extras });
   const login = async () => (await http("/auth/login", { body: { email: "test@fixture.invalid", password: "fixture-password" } })).body.accessToken;
-  return { broker, calls, events, sockets, http, login };
+  return { broker, calls, events, sockets, http, login, storageDir };
 }
 
 test("server origins canonicalize HTTPS only and reject authority/path confusion", () => {
@@ -89,6 +90,44 @@ test("unavailable OS encryption leaves server profiles usable and denies auth wi
   const { broker, calls, login } = await setup(t, { cipher: { isAvailable: () => false, encrypt() { throw new Error(); }, decrypt() { throw new Error(); } } });
   assert.equal(broker.serversState().storageAvailable, false); const count = calls.length;
   await assert.rejects(login(), /secure_storage_unavailable/); assert.equal(calls.length, count);
+});
+
+test("explicit server refresh recovers an initially locked keyring and preserves encrypted sessions", async (t) => {
+  const storageDir = await temp(t), encryption = cipher(); let available = true;
+  encryption.isAvailable = () => available;
+  const first = await setup(t, { storageDir, cipher: encryption });
+  await first.login(); first.broker.dispose();
+  const filename = path.join(storageDir, "sessions.encrypted"), before = await fs.readFile(filename);
+  available = false;
+  const { broker, calls, events, http, login } = await setup(t, { storageDir, cipher: encryption });
+  assert.equal(broker.serversState().storageAvailable, false);
+  const count = calls.length;
+  await assert.rejects(login(), /secure_storage_unavailable/);
+  assert.equal((await broker.listServers()).storageAvailable, false);
+  assert.equal(calls.length, count);
+  assert.deepEqual(await fs.readFile(filename), before);
+  available = true;
+  const states = await Promise.all([broker.listServers(), broker.listServers()]);
+  assert.ok(states.every(state => state.storageAvailable));
+  assert.equal(events.filter(event => event.kind === "servers" && event.state.storageAvailable).length, 1);
+  assert.equal(calls.length, count, "keyring retry does not send any server credentials");
+  assert.deepEqual(await fs.readFile(filename), before, "successful recovery only reads an existing vault");
+  const response = await http("/auth/refresh", { body: {} });
+  assert.match(response.body.accessToken, /^desktop-session:/);
+  assert.ok(calls.find(call => new URL(call.url).pathname.endsWith("/auth/refresh") && call.headers.Cookie.includes(SECRET)));
+  assert.equal(JSON.stringify(states).includes(SECRET), false);
+});
+
+test("keyring retry never overwrites corrupt or unreadable encrypted sessions", async (t) => {
+  const storageDir = await temp(t), filename = path.join(storageDir, "sessions.encrypted");
+  const original = Buffer.from("corrupt-encrypted-vault-preserve-for-recovery");
+  await fs.writeFile(filename, original);
+  const { broker, calls, login } = await setup(t, { storageDir });
+  const count = calls.length;
+  for (let retry = 0; retry < 2; retry++) assert.equal((await broker.listServers()).storageAvailable, false);
+  await assert.rejects(login(), /secure_storage_unavailable/);
+  assert.equal(calls.length, count);
+  assert.deepEqual(await fs.readFile(filename), original);
 });
 
 test("IPC HTTP envelopes cannot inject headers, arbitrary URLs, oversized bodies or unbounded JSON nesting", async (t) => {
@@ -211,10 +250,19 @@ test("transient WebSocket close reasons retain reconnect semantics and unknown d
 
 test("logout clears main identity even if OS encryption becomes unavailable during the session", async (t) => {
   const encryption = cipher(); let available = true; encryption.isAvailable = () => available;
-  const { broker, http, login } = await setup(t, { cipher: encryption }); const marker = await login(); available = false;
+  const { broker, http, login, storageDir } = await setup(t, { cipher: encryption }); const marker = await login(); available = false;
   await assert.rejects(http("/auth/logout", { body: { userId: USER } }), /secure_storage_unavailable/);
   assert.equal(broker.serversState().storageAvailable, false);
   await assert.rejects(broker.http({ id: "after-logout", method: "GET", path: "/api/v1/conferences", responseType: "json", token: marker }), /authentication_required/);
+  available = true;
+  assert.equal((await broker.listServers()).storageAvailable, true);
+  const restored = new CookieVault(storageDir, encryption); await restored.load();
+  const id = broker.serversState().selectedId;
+  assert.equal(restored.header(id, "/api/v1/auth/refresh"), "", "retry must not resurrect the pre-logout disk cookie");
+  assert.deepEqual(restored.pending(id), [SECRET]);
+  const disk = await fs.readFile(path.join(storageDir, "sessions.encrypted"));
+  assert.equal(disk.includes(SECRET), false);
+  await assert.rejects(broker.http({ id: "after-keyring-recovery", method: "GET", path: "/api/v1/conferences", responseType: "json", token: marker }), /authentication_required/);
 });
 
 test("guest logout preserves a separately saved account cookie for explicit later restoration", async (t) => {

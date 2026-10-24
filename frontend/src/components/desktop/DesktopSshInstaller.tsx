@@ -6,9 +6,10 @@ import {
   CircleHelp,
   CircleX,
   KeyRound,
-  Server,
+  LockKeyhole,
   ShieldCheck,
   TriangleAlert,
+  X,
 } from "lucide-react";
 import { desktopBridge } from "../../platform/desktop";
 import type {
@@ -57,14 +58,17 @@ export function DesktopSshInstaller({
   onBack,
   onConnect,
   canConnect,
+  onCheckStorage,
 }: {
   onBack: () => void;
   onConnect: (origin: string) => Promise<void>;
   canConnect: boolean;
+  onCheckStorage: () => Promise<boolean>;
 }) {
   const [state, setState] = useState<SshInstallerState | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [storageRetryMessage, setStorageRetryMessage] = useState("");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("22");
   const [user, setUser] = useState("root");
@@ -230,33 +234,97 @@ export function DesktopSshInstaller({
     (!!error || !!state?.error || !state?.hasCredentials);
   useEffect(() => {
     if (!ticket || !identity?.trusted) return;
-    progressRef.current?.querySelector("h2")?.focus({ preventScroll: true });
-    progressRef.current?.scrollIntoView({ block: "start" });
-  }, [ticket?.jobId, identity?.trusted]);
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.closest(".desktop-foundation-card")?.scrollTo({ top: 0 });
+  }, [ticket?.jobId, identity?.trusted, status?.state === "completed"]);
   const expired = !!plan && plan.expiresAt * 1000 <= now;
   const needsDockerConsent =
     !!plan && (plan.installDocker || plan.installDockerPluginsOnly);
-  const currentStep = !identity ? 0 : !identity.trusted ? 1 : ticket ? 4 : plan ? 3 : 2;
+  const currentStep = !identity
+    ? 0
+    : !identity.trusted
+      ? 1
+      : ticket
+        ? 4
+        : plan
+          ? 3
+          : 2;
   const observedEndpointMatches =
     state?.endpoint?.host === host.trim() &&
     state.endpoint.port === Number(port) &&
     state.endpoint.user === user.trim();
+  const completed = status?.state === "completed";
+  const pageHeading = completed
+    ? {
+        kicker: "ГОТОВО К ОБЩЕНИЮ",
+        title: "Ваше пространство готово.",
+        description:
+          "Установка завершена. Подключитесь и войдите в аккаунт вашего пространства.",
+      }
+    : ticket
+      ? {
+          kicker: "СОЗДАЁМ ПРОСТРАНСТВО",
+          title: "Установка MeetSpace",
+          description:
+            "Настраиваем ваш сервер. Здесь видны текущий этап и подтверждённый прогресс установки.",
+        }
+      : plan
+        ? {
+            kicker: "ПЕРЕД УСТАНОВКОЙ",
+            title: "Всё по плану.",
+            description: "Проверьте параметры пространства и план установки.",
+          }
+        : identity?.trusted
+          ? {
+              kicker: "ДОСТУП ПО SSH",
+              title: "Доступ к серверу.",
+              description:
+                "Подтвердите доступ для проверки сервера перед установкой.",
+            }
+          : identity
+            ? {
+                kicker: "ИДЕНТИЧНОСТЬ СЕРВЕРА",
+                title: "Проверим ключ сервера.",
+                description:
+                  "При первом подключении нужно убедиться, что это именно ваш сервер.",
+              }
+            : {
+                kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
+                title: "Начнём с сервера.",
+                description:
+                  "Укажите Linux-хост, на котором будет работать MeetSpace.",
+              };
+  const HostFormContainer =
+    identity && observedEndpointMatches ? "details" : "div";
+  const RecoveryContainer = ticket ? "details" : "div";
 
   const credentialsForm = !state?.hasCredentials && (
     <fieldset className="desktop-ssh-auth" disabled={disabled}>
       <legend>Доступ по SSH</legend>
-      <label htmlFor="desktop-ssh-auth-kind">Способ входа</label>
-      <select
-        id="desktop-ssh-auth-kind"
-        value={authKind}
-        onChange={(event) => {
-          setAuthKind(event.target.value as "password" | "privateKey");
-          clearCredentials();
-        }}
+      <div
+        className="desktop-ssh-auth-tabs"
+        role="group"
+        aria-label="Способ входа по SSH"
       >
-        <option value="password">Пароль</option>
-        <option value="privateKey">Приватный ключ</option>
-      </select>
+        {(["password", "privateKey"] as const).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            aria-pressed={authKind === kind}
+            onClick={() => {
+              setAuthKind(kind);
+              clearCredentials();
+            }}
+          >
+            {kind === "password" ? (
+              <LockKeyhole size={16} />
+            ) : (
+              <KeyRound size={16} />
+            )}
+            {kind === "password" ? "Пароль SSH" : "Приватный ключ"}
+          </button>
+        ))}
+      </div>
       {authKind === "password" ? (
         <>
           <label htmlFor="desktop-ssh-password">Пароль SSH-пользователя</label>
@@ -333,53 +401,76 @@ export function DesktopSshInstaller({
     <section
       className="desktop-ssh-installer"
       aria-labelledby="desktop-ssh-title"
+      data-state={status?.state}
     >
-      <Button
-        type="button"
-        variant="secondary"
-        className="desktop-ssh-back"
-        onClick={onBack}
-      >
-        <ArrowLeft size={16} aria-hidden="true" />К подключению к серверу
-      </Button>
-
-      <ol className="desktop-ssh-steps" aria-label="Этапы установки">
-        {["Сервер", "Ключ сервера", "Доступ SSH", "План", "Установка"].map((label, index) => (
-          <li
-            key={label}
-            aria-current={
-              index === currentStep && status?.state !== "completed"
-                ? "step"
-                : undefined
-            }
-            className={
-              index < currentStep || status?.state === "completed"
-                ? "is-complete"
-                : ""
-            }
+      <div className="desktop-ssh-topbar">
+        {!completed && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="desktop-ssh-back"
+            onClick={onBack}
           >
-            <span aria-hidden="true">
-              {index < currentStep || status?.state === "completed" ? (
-                <Check size={12} />
-              ) : (
-                index + 1
-              )}
-            </span>
-            <strong>{label}</strong>
-          </li>
-        ))}
+            <ArrowLeft size={16} aria-hidden="true" />
+            {ticket ? "Закрыть мастер" : "Назад"}
+          </Button>
+        )}
+        <button
+          className="desktop-ssh-close"
+          type="button"
+          onClick={onBack}
+          aria-label="Закрыть мастер установки"
+        >
+          <X size={20} />
+        </button>
+      </div>
+      <div className="desktop-ssh-step-caption">
+        <span>Подключение сервера</span>
+        <strong>{String(currentStep + 1).padStart(2, "0")} / 05</strong>
+      </div>
+      <ol className="desktop-ssh-steps" aria-label="Этапы установки">
+        {["Сервер", "Ключ сервера", "Доступ SSH", "План", "Установка"].map(
+          (label, index) => (
+            <li
+              key={label}
+              aria-current={
+                index === currentStep && status?.state !== "completed"
+                  ? "step"
+                  : undefined
+              }
+              className={
+                index < currentStep || status?.state === "completed"
+                  ? "is-complete"
+                  : ""
+              }
+            >
+              <span aria-hidden="true">
+                {index < currentStep || status?.state === "completed" ? (
+                  <Check size={12} />
+                ) : (
+                  index + 1
+                )}
+              </span>
+              <strong>{label}</strong>
+            </li>
+          ),
+        )}
       </ol>
       <header className="desktop-ssh-heading">
-        <div className="desktop-ssh-title-icon" aria-hidden="true">
-          <Server size={26} />
-        </div>
+        {completed && (
+          <div className="desktop-ssh-state-icon is-success" aria-hidden="true">
+            <Check size={30} />
+          </div>
+        )}
         <div>
+          <span className="desktop-ssh-heading-kicker">
+            {pageHeading.kicker}
+          </span>
           <h1 id="desktop-ssh-title" ref={heading} tabIndex={-1}>
-            Установить сервер по SSH
+            {pageHeading.title}
           </h1>
           <p className="desktop-foundation-description">
-            Настроим MeetSpace на вашем Linux-хосте: проверим доступ, подготовим
-            план и запустим установку после вашего подтверждения.
+            {pageHeading.description}
           </p>
         </div>
       </header>
@@ -407,77 +498,88 @@ export function DesktopSshInstaller({
               Подтвердите подключение к тому же хосту, чтобы продолжить.
             </p>
           )}
-          <form
-            className="desktop-ssh-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setTrustConfirmed(false);
-              void act("discover", {
-                endpoint: {
-                  host: host.trim(),
-                  port: Number(port),
-                  user: user.trim(),
-                },
-              });
-            }}
+          <HostFormContainer
+            className={
+              HostFormContainer === "details"
+                ? "desktop-ssh-host-details"
+                : "desktop-ssh-host-form"
+            }
           >
-            <div className="desktop-ssh-endpoint">
-              <div>
-                <label htmlFor="desktop-ssh-host">SSH-адрес хоста</label>
-                <input
-                  id="desktop-ssh-host"
-                  required
-                  maxLength={253}
-                  value={host}
-                  disabled={disabled || !!ticket}
-                  placeholder="203.0.113.10 или server.example.com"
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(event) => {
-                    setHost(event.target.value);
-                    setTrustConfirmed(false);
-                  }}
-                />
-              </div>
-              <div>
-                <label htmlFor="desktop-ssh-port">Порт</label>
-                <input
-                  id="desktop-ssh-port"
-                  type="number"
-                  required
-                  min={1}
-                  max={65535}
-                  value={port}
-                  disabled={disabled || !!ticket}
-                  onChange={(event) => {
-                    setPort(event.target.value);
-                    setTrustConfirmed(false);
-                  }}
-                />
-              </div>
-            </div>
-            <label htmlFor="desktop-ssh-user">SSH-пользователь</label>
-            <input
-              id="desktop-ssh-user"
-              required
-              maxLength={64}
-              value={user}
-              disabled={disabled || !!ticket}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => {
-                setUser(event.target.value);
+            {HostFormContainer === "details" && (
+              <summary>Параметры SSH-подключения</summary>
+            )}
+            <form
+              className="desktop-ssh-form"
+              onSubmit={(event) => {
+                event.preventDefault();
                 setTrustConfirmed(false);
+                void act("discover", {
+                  endpoint: {
+                    host: host.trim(),
+                    port: Number(port),
+                    user: user.trim(),
+                  },
+                });
               }}
-            />
-            <p className="field-hint">
-              Ubuntu 22.04 / 24.04, root или sudo без пароля. Пароль и ключ ещё
-              не передаются.
-            </p>
-            <Button type="submit" busy={busy} disabled={disabled}>
-              Проверить ключ хоста
-            </Button>
-          </form>
+            >
+              <div className="desktop-ssh-endpoint">
+                <div>
+                  <label htmlFor="desktop-ssh-host">SSH-адрес хоста</label>
+                  <input
+                    id="desktop-ssh-host"
+                    required
+                    maxLength={253}
+                    value={host}
+                    disabled={disabled || !!ticket}
+                    placeholder="203.0.113.10 или server.example.com"
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(event) => {
+                      setHost(event.target.value);
+                      setTrustConfirmed(false);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="desktop-ssh-port">Порт</label>
+                  <input
+                    id="desktop-ssh-port"
+                    type="number"
+                    required
+                    min={1}
+                    max={65535}
+                    value={port}
+                    disabled={disabled || !!ticket}
+                    onChange={(event) => {
+                      setPort(event.target.value);
+                      setTrustConfirmed(false);
+                    }}
+                  />
+                </div>
+              </div>
+              <label htmlFor="desktop-ssh-user">SSH-пользователь</label>
+              <input
+                id="desktop-ssh-user"
+                required
+                maxLength={64}
+                value={user}
+                disabled={disabled || !!ticket}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => {
+                  setUser(event.target.value);
+                  setTrustConfirmed(false);
+                }}
+              />
+              <p className="field-hint">
+                Ubuntu 22.04 / 24.04, root или sudo без пароля. Пароль и ключ
+                ещё не передаются.
+              </p>
+              <Button type="submit" busy={busy} disabled={disabled}>
+                Проверить ключ хоста
+              </Button>
+            </form>
+          </HostFormContainer>
           {identity &&
             observedEndpointMatches &&
             state.error?.code !== "HOST_KEY_CHANGED" && (
@@ -817,10 +919,46 @@ export function DesktopSshInstaller({
               )}
               {status?.state !== "completed" && credentialsForm}
               {!canConnect && status?.state === "completed" && (
-                <ErrorNotice>
-                  Защищённое хранилище недоступно. Перезапустите приложение,
-                  затем подключитесь к установленному серверу.
-                </ErrorNotice>
+                <div className="desktop-storage-notice" role="status">
+                  <strong>
+                    Сервер установлен. Осталось подключить приложение.
+                  </strong>
+                  <p>
+                    На этом устройстве недоступно защищённое хранилище паролей.
+                    Разблокируйте его в системе, затем повторите проверку.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    busy={busy}
+                    disabled={disabled}
+                    onClick={() => {
+                      if (inFlight.current) return;
+                      inFlight.current = true;
+                      setBusy(true);
+                      setStorageRetryMessage("");
+                      void onCheckStorage()
+                        .then((available) => {
+                          if (alive.current && !available)
+                            setStorageRetryMessage(
+                              "Хранилище пока недоступно. Проверьте, что системное хранилище паролей разблокировано.",
+                            );
+                        })
+                        .catch(() => {
+                          if (alive.current)
+                            setStorageRetryMessage(
+                              "Не удалось проверить хранилище. Повторите попытку.",
+                            );
+                        })
+                        .finally(() => {
+                          inFlight.current = false;
+                          if (alive.current) setBusy(false);
+                        });
+                    }}
+                  >
+                    Проверить хранилище
+                  </Button>
+                  {storageRetryMessage && <p>{storageRetryMessage}</p>}
+                </div>
               )}
               {status?.errorCode && (
                 <ErrorNotice>
@@ -831,11 +969,14 @@ export function DesktopSshInstaller({
                 </ErrorNotice>
               )}
               {status?.state === "completed" && (
-                <p className="desktop-ssh-note">
-                  Сервер доступен по адресу{" "}
-                  <strong>https://{ticket.domain}</strong>. Подключитесь и
-                  войдите в аккаунт MeetSpace.
-                </p>
+                <div className="desktop-ssh-result-address">
+                  <small>АДРЕС ВАШЕГО ПРОСТРАНСТВА</small>
+                  <strong>https://{ticket.domain}</strong>
+                  <span>
+                    <CircleCheck size={15} aria-hidden="true" />
+                    HTTPS · сервер готов к подключению
+                  </span>
+                </div>
               )}
               <div className="desktop-ssh-actions">
                 {status?.state === "completed" && (
@@ -1190,7 +1331,10 @@ export function DesktopSshInstaller({
         </>
       )}
       {(ticket || identity?.trusted) && (
-        <div className="desktop-ssh-recovery">
+        <RecoveryContainer className="desktop-ssh-recovery">
+          {ticket && (
+            <summary>Управление локальной карточкой установки</summary>
+          )}
           {ticket && (
             <label className="desktop-ssh-checkbox">
               <input
@@ -1226,8 +1370,13 @@ export function DesktopSshInstaller({
           >
             {ticket ? "Удалить локальную карточку" : "Выбрать другой хост"}
           </Button>
-        </div>
+        </RecoveryContainer>
       )}
+      <p className="desktop-ssh-session-note">
+        <LockKeyhole size={14} aria-hidden="true" />
+        Данные доступа используются только в текущей сессии и удаляются из
+        памяти при закрытии мастера.
+      </p>
     </section>
   );
 }

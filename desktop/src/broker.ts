@@ -100,6 +100,20 @@ export class MeetSpaceBroker {
     if (this.profiles.selectedId) void this.flushRevocations(this.profiles.selectedId);
   }
   serversState(): DesktopServerState { return { items: this.profiles.items.map((item) => ({ ...item })), selectedId: this.profiles.selectedId, generation: this.generation, storageAvailable: this.storageReady && this.vault.available() }; }
+  /** Recheck local encryption on an explicit UI refresh, without losing sessions. */
+  listServers(): Promise<DesktopServerState> {
+    return this.ordered("auth", async () => {
+      if (this.disposed) throw new Error("stale_request");
+      const wasAvailable = this.serversState().storageAvailable;
+      if (!this.storageReady) {
+        try { await this.vault.recover(); this.storageReady = this.vault.available(); }
+        catch { this.storageReady = false; }
+      }
+      const state = this.serversState();
+      if (state.storageAvailable !== wasAvailable) this.emit({ kind: "servers", type: "changed", state });
+      return state;
+    });
+  }
   private emit(event: DesktopTransportEvent): void { if (!this.disposed) this.options.emit(event); }
   private sanitize(value: unknown, extraSecrets: string[] = []): unknown {
     const secrets = [...extraSecrets, this.identity?.jwt ?? "", ...this.vault.header(this.profiles.selectedId ?? "", AUTH + "refresh").split("; ").map((cookie) => cookie.slice(cookie.indexOf("=") + 1))].filter((secret) => secret.length >= 32);

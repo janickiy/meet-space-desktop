@@ -26,16 +26,20 @@ export async function atomicWrite(filename: string, value: string | Uint8Array):
 export class CookieVault {
   private state: Record<string, ServerCookies> = {};
   private writes = Promise.resolve();
+  private loaded = false;
   private readonly filename: string;
   constructor(storageDir: string, private readonly cipher: Cipher) {
     this.filename = path.join(storageDir, "sessions.encrypted");
   }
   available(): boolean { return this.cipher.isAvailable(); }
   async load(): Promise<void> {
+    if (!this.available()) throw new Error("secure_storage_unavailable");
     let raw: Buffer;
     try { raw = await readFile(this.filename); }
-    catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return; throw new Error("secure_storage_unavailable"); }
-    if (!this.available()) throw new Error("secure_storage_unavailable");
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") { this.loaded = true; return; }
+      throw new Error("secure_storage_unavailable");
+    }
     try {
       if (raw.length > 512 * 1024) throw new Error();
       const parsed: unknown = JSON.parse(this.cipher.decrypt(raw));
@@ -49,7 +53,20 @@ export class CookieVault {
           if (!cookieName.test(name) || !cookie || !secret.test(cookie.value) || !Number.isFinite(cookie.expiresAt)) throw new Error();
       }
       this.state = parsed as Record<string, ServerCookies>;
+      this.loaded = true;
     } catch { throw new Error("secure_storage_corrupt"); }
+  }
+  /** A locked keyring can become available while the app is still running. */
+  async recover(): Promise<void> {
+    if (!this.available()) throw new Error("secure_storage_unavailable");
+    if (!this.loaded) {
+      // Never replace an unreadable existing vault with an empty one.
+      await this.load();
+      return;
+    }
+    // A failed write may already have removed cookies from memory (logout).
+    // Persist that state instead of resurrecting stale credentials from disk.
+    await this.save();
   }
   private record(id: string): ServerCookies {
     return this.state[id] ??= { cookies: {}, pending: [] };
