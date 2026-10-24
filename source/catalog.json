@@ -1,12 +1,12 @@
 {
   "schemaVersion": 2,
   "pathBase": "source/",
-  "publishedVersion": "0.1.4-beta",
-  "latestPublishedSourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-  "latestPublishedSourceCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-  "scope": "Verified unsigned beta 0.1.4 distributions. All eight latest Windows/Linux packages include the signed ready-Docker-image installer with source-build fallback choice and reference layout; secure-storage recovery, compact conference controls, offline QR invitations and attachments remain. Earlier versions retain their original bytes.",
-  "distributionCount": 34,
-  "uniqueBinaryCount": 34,
+  "publishedVersion": "0.1.5-beta",
+  "latestPublishedSourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+  "latestPublishedSourceCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+  "scope": "Verified unsigned beta 0.1.5 distributions. All eight latest Windows/Linux packages include the corrected installer layout and explicit saved-job recovery entry, without presenting unknown status as active installation. Earlier versions retain their original bytes.",
+  "distributionCount": 42,
+  "uniqueBinaryCount": 42,
   "attachmentExtensions": 75,
   "packages": [
     {
@@ -532,7 +532,7 @@
       "bytes": 119218986,
       "sha256": "4f8b6bb93e9fca9f14b9ebe894a3225065abbc1d5ce001805a1ff430b2515ac5",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-arm64-test.AppImage",
       "originalPaths": [
         "desktop/artifacts/linux/AppImage/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-arm64-test.AppImage"
@@ -554,7 +554,7 @@
       "bytes": 127060741,
       "sha256": "cc7d42cd6161e2528a9234dc355d35ef495ca8265b6c4728799820a65894d50e",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-x86_64-test.AppImage",
       "originalPaths": [
         "desktop/artifacts/linux/AppImage/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-x86_64-test.AppImage"
@@ -576,7 +576,7 @@
       "bytes": 100476352,
       "sha256": "02704649a1aad068be2624093746f9b9b36f32ae8a5e732f2c66b47e2f67a21d",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-amd64-test.deb",
       "originalPaths": [
         "desktop/artifacts/linux/DEB/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-amd64-test.deb"
@@ -598,7 +598,7 @@
       "bytes": 95699808,
       "sha256": "70eafcaa73b78e596cfb0794c28777119d86efac02868faeee4b66836933a8fb",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-arm64-test.deb",
       "originalPaths": [
         "desktop/artifacts/linux/DEB/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-arm64-test.deb"
@@ -620,7 +620,7 @@
       "bytes": 85830221,
       "sha256": "e835e21141d2c8f0f4897581a75466c0f76d7110c84ebb39cb805fab6052deb7",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-aarch64-test.rpm",
       "originalPaths": [
         "desktop/artifacts/linux/RPM/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-aarch64-test.rpm"
@@ -642,7 +642,7 @@
       "bytes": 90090181,
       "sha256": "1a198218e4c06a5c70aff9ad9de6e4046ad56fdbd8c49993fca4644f41a9a2c5",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-linux-x86_64-test.rpm",
       "originalPaths": [
         "desktop/artifacts/linux/RPM/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-x86_64-test.rpm"
@@ -664,7 +664,7 @@
       "bytes": 116527659,
       "sha256": "a1fe5618763919250251112ae1690bc1a4174b9802bb3a5601010730d7df0d5a",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-win-arm64-test-setup.exe",
       "originalPaths": [
         "desktop/artifacts/MeetSpace-0.1.4-beta-win-arm64-test-setup.exe"
@@ -686,7 +686,7 @@
       "bytes": 121786956,
       "sha256": "57f9577203eadc69b8a00a108e4c3e8bc9f81c1c34123827299c3b5e06f9feb8",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
-      "latest": true,
+      "latest": false,
       "originalName": "MeetSpace-0.1.4-beta-win-x64-test-setup.exe",
       "originalPaths": [
         "desktop/artifacts/MeetSpace-0.1.4-beta-win-x64-test-setup.exe"
@@ -695,6 +695,182 @@
       "latestForVersion": true,
       "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
       "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "AppImage",
+      "arch": "arm64",
+      "bytes": 119219217,
+      "sha256": "4d2d12ff0d17765a5d654fcb5ebf483b00b2cfe6193cc712d0ff095eb4748152",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-arm64-test.AppImage",
+      "originalPaths": [
+        "desktop/artifacts/linux/AppImage/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage"
+      ],
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "AppImage",
+      "arch": "x64",
+      "bytes": 127056781,
+      "sha256": "57ee5ae486b93c1fada6244ca4d7b819d060c7659b54ed88f4201bed0aa59251",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage",
+      "originalPaths": [
+        "desktop/artifacts/linux/AppImage/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage"
+      ],
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "DEB",
+      "arch": "x64",
+      "bytes": 100477564,
+      "sha256": "0b13105b76ac8ed0bdc574f55b0f69600bff6a738ac574ccba177aff3b6a7e47",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-amd64-test.deb",
+      "originalPaths": [
+        "desktop/artifacts/linux/DEB/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-amd64-test.deb"
+      ],
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "DEB",
+      "arch": "arm64",
+      "bytes": 95700848,
+      "sha256": "7d65235d7530253ee244c9c9fb51940e824c32a0e8b0ea8b3379bd7e5afc839c",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-arm64-test.deb",
+      "originalPaths": [
+        "desktop/artifacts/linux/DEB/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-arm64-test.deb"
+      ],
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "RPM",
+      "arch": "arm64",
+      "bytes": 85829357,
+      "sha256": "75aff4c32cdd58bacde0637c4a02eb9776768968dbbe413fee7880aa14a75544",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-aarch64-test.rpm",
+      "originalPaths": [
+        "desktop/artifacts/linux/RPM/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm"
+      ],
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Linux",
+      "version": "0.1.5-beta",
+      "format": "RPM",
+      "arch": "x64",
+      "bytes": 90110785,
+      "sha256": "4044d826c8a80fbc94652aac767eec28b51ad633d2efddeb68dea807b09973a8",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-linux-x86_64-test.rpm",
+      "originalPaths": [
+        "desktop/artifacts/linux/RPM/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm"
+      ],
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Windows",
+      "version": "0.1.5-beta",
+      "format": "NSIS",
+      "arch": "arm64",
+      "bytes": 116528456,
+      "sha256": "763166b6df38c5d8ef6480e6b149c152d380e5e8f68d302f0c427dc5007adf28",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-win-arm64-test-setup.exe",
+      "originalPaths": [
+        "desktop/artifacts/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe"
+      ],
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildSourceDirty": false,
+      "buildVerificationResult": "PASS",
+      "sourceInputCount": 440,
+      "sourceInputsMatchPublishedCommit": true
+    },
+    {
+      "platform": "Windows",
+      "version": "0.1.5-beta",
+      "format": "NSIS",
+      "arch": "x64",
+      "bytes": 121787702,
+      "sha256": "860df4c516466931f97c15b1b163239e78ae28d389a7e14f0efa4d221b443ac8",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
+      "latest": true,
+      "originalName": "MeetSpace-0.1.5-beta-win-x64-test-setup.exe",
+      "originalPaths": [
+        "desktop/artifacts/MeetSpace-0.1.5-beta-win-x64-test-setup.exe"
+      ],
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe",
+      "latestForVersion": true,
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -704,21 +880,21 @@
   "latestPackages": [
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "AppImage",
       "arch": "arm64",
-      "bytes": 119218986,
-      "sha256": "4f8b6bb93e9fca9f14b9ebe894a3225065abbc1d5ce001805a1ff430b2515ac5",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 119219217,
+      "sha256": "4d2d12ff0d17765a5d654fcb5ebf483b00b2cfe6193cc712d0ff095eb4748152",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-arm64-test.AppImage",
+      "originalName": "MeetSpace-0.1.5-beta-linux-arm64-test.AppImage",
       "originalPaths": [
-        "desktop/artifacts/linux/AppImage/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-arm64-test.AppImage"
+        "desktop/artifacts/linux/AppImage/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage"
       ],
-      "path": "linux/0.1.4-beta/AppImage/MeetSpace-0.1.4-beta-linux-arm64-test.AppImage",
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -726,21 +902,21 @@
     },
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "AppImage",
       "arch": "x64",
-      "bytes": 127060741,
-      "sha256": "cc7d42cd6161e2528a9234dc355d35ef495ca8265b6c4728799820a65894d50e",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 127056781,
+      "sha256": "57ee5ae486b93c1fada6244ca4d7b819d060c7659b54ed88f4201bed0aa59251",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-x86_64-test.AppImage",
+      "originalName": "MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage",
       "originalPaths": [
-        "desktop/artifacts/linux/AppImage/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-x86_64-test.AppImage"
+        "desktop/artifacts/linux/AppImage/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage"
       ],
-      "path": "linux/0.1.4-beta/AppImage/MeetSpace-0.1.4-beta-linux-x86_64-test.AppImage",
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -748,21 +924,21 @@
     },
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "DEB",
       "arch": "x64",
-      "bytes": 100476352,
-      "sha256": "02704649a1aad068be2624093746f9b9b36f32ae8a5e732f2c66b47e2f67a21d",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 100477564,
+      "sha256": "0b13105b76ac8ed0bdc574f55b0f69600bff6a738ac574ccba177aff3b6a7e47",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-amd64-test.deb",
+      "originalName": "MeetSpace-0.1.5-beta-linux-amd64-test.deb",
       "originalPaths": [
-        "desktop/artifacts/linux/DEB/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-amd64-test.deb"
+        "desktop/artifacts/linux/DEB/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-amd64-test.deb"
       ],
-      "path": "linux/0.1.4-beta/DEB/MeetSpace-0.1.4-beta-linux-amd64-test.deb",
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -770,21 +946,21 @@
     },
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "DEB",
       "arch": "arm64",
-      "bytes": 95699808,
-      "sha256": "70eafcaa73b78e596cfb0794c28777119d86efac02868faeee4b66836933a8fb",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 95700848,
+      "sha256": "7d65235d7530253ee244c9c9fb51940e824c32a0e8b0ea8b3379bd7e5afc839c",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-arm64-test.deb",
+      "originalName": "MeetSpace-0.1.5-beta-linux-arm64-test.deb",
       "originalPaths": [
-        "desktop/artifacts/linux/DEB/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-arm64-test.deb"
+        "desktop/artifacts/linux/DEB/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-arm64-test.deb"
       ],
-      "path": "linux/0.1.4-beta/DEB/MeetSpace-0.1.4-beta-linux-arm64-test.deb",
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -792,21 +968,21 @@
     },
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "RPM",
       "arch": "arm64",
-      "bytes": 85830221,
-      "sha256": "e835e21141d2c8f0f4897581a75466c0f76d7110c84ebb39cb805fab6052deb7",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 85829357,
+      "sha256": "75aff4c32cdd58bacde0637c4a02eb9776768968dbbe413fee7880aa14a75544",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-aarch64-test.rpm",
+      "originalName": "MeetSpace-0.1.5-beta-linux-aarch64-test.rpm",
       "originalPaths": [
-        "desktop/artifacts/linux/RPM/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/arm64/MeetSpace-0.1.4-beta-linux-aarch64-test.rpm"
+        "desktop/artifacts/linux/RPM/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/arm64/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm"
       ],
-      "path": "linux/0.1.4-beta/RPM/MeetSpace-0.1.4-beta-linux-aarch64-test.rpm",
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -814,21 +990,21 @@
     },
     {
       "platform": "Linux",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "RPM",
       "arch": "x64",
-      "bytes": 90090181,
-      "sha256": "1a198218e4c06a5c70aff9ad9de6e4046ad56fdbd8c49993fca4644f41a9a2c5",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 90110785,
+      "sha256": "4044d826c8a80fbc94652aac767eec28b51ad633d2efddeb68dea807b09973a8",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-linux-x86_64-test.rpm",
+      "originalName": "MeetSpace-0.1.5-beta-linux-x86_64-test.rpm",
       "originalPaths": [
-        "desktop/artifacts/linux/RPM/0.1.4-beta/7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184/x64/MeetSpace-0.1.4-beta-linux-x86_64-test.rpm"
+        "desktop/artifacts/linux/RPM/0.1.5-beta/de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215/x64/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm"
       ],
-      "path": "linux/0.1.4-beta/RPM/MeetSpace-0.1.4-beta-linux-x86_64-test.rpm",
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -836,21 +1012,21 @@
     },
     {
       "platform": "Windows",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "NSIS",
       "arch": "arm64",
-      "bytes": 116527659,
-      "sha256": "a1fe5618763919250251112ae1690bc1a4174b9802bb3a5601010730d7df0d5a",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 116528456,
+      "sha256": "763166b6df38c5d8ef6480e6b149c152d380e5e8f68d302f0c427dc5007adf28",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-win-arm64-test-setup.exe",
+      "originalName": "MeetSpace-0.1.5-beta-win-arm64-test-setup.exe",
       "originalPaths": [
-        "desktop/artifacts/MeetSpace-0.1.4-beta-win-arm64-test-setup.exe"
+        "desktop/artifacts/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe"
       ],
-      "path": "windows/0.1.4-beta/MeetSpace-0.1.4-beta-win-arm64-test-setup.exe",
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -858,21 +1034,21 @@
     },
     {
       "platform": "Windows",
-      "version": "0.1.4-beta",
+      "version": "0.1.5-beta",
       "format": "NSIS",
       "arch": "x64",
-      "bytes": 121786956,
-      "sha256": "57f9577203eadc69b8a00a108e4c3e8bc9f81c1c34123827299c3b5e06f9feb8",
-      "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184",
+      "bytes": 121787702,
+      "sha256": "860df4c516466931f97c15b1b163239e78ae28d389a7e14f0efa4d221b443ac8",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215",
       "latest": true,
-      "originalName": "MeetSpace-0.1.4-beta-win-x64-test-setup.exe",
+      "originalName": "MeetSpace-0.1.5-beta-win-x64-test-setup.exe",
       "originalPaths": [
-        "desktop/artifacts/MeetSpace-0.1.4-beta-win-x64-test-setup.exe"
+        "desktop/artifacts/MeetSpace-0.1.5-beta-win-x64-test-setup.exe"
       ],
-      "path": "windows/0.1.4-beta/MeetSpace-0.1.4-beta-win-x64-test-setup.exe",
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe",
       "latestForVersion": true,
-      "sourceCodeCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
-      "buildBaseCommit": "abfb787c62ab46da7ed57e74f3b2be421e5b803e",
+      "sourceCodeCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
+      "buildBaseCommit": "c7666c0f6cc35ccaa2ae0466f7f5f16b93f90f48",
       "buildSourceDirty": false,
       "buildVerificationResult": "PASS",
       "sourceInputCount": 440,
@@ -2064,6 +2240,300 @@
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184"
     },
     {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage",
+      "bytes": 119219217,
+      "sha256": "4d2d12ff0d17765a5d654fcb5ebf483b00b2cfe6193cc712d0ff095eb4748152",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.linux-artifact-verification.json",
+      "bytes": 25030,
+      "sha256": "fd0a261d91f353f2fef9a078ff4bbc1e1a1d01e1a77d616abbc08722925b945a",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.linux-packaging-build.json",
+      "bytes": 1010,
+      "sha256": "d0762c8d42a2eb161a3895290db8c1b37be8cae2e7c680939538d4d0df6f80cc",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.linux-publication.json",
+      "bytes": 682,
+      "sha256": "cda922deeb8cafd94e81527e1d4cda790df0787ed2bc9873de56153959be3e4b",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.sha256",
+      "bytes": 113,
+      "sha256": "57bffe1b7b9e81311350c5d666512b822642d6f3777037278a7c563590b9e829",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.sha512",
+      "bytes": 177,
+      "sha256": "d25aedbe6dc21bbb7ca8784bc11aa1a03062b8f9c12448e6bb5569b930273125",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-arm64-test.AppImage.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage",
+      "bytes": 127056781,
+      "sha256": "57ee5ae486b93c1fada6244ca4d7b819d060c7659b54ed88f4201bed0aa59251",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.linux-artifact-verification.json",
+      "bytes": 29271,
+      "sha256": "3fc41e117ab6c5617c9e94d4d1e4fb45fc5348621ec6406fd329b66fee80bd09",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.linux-packaging-build.json",
+      "bytes": 1008,
+      "sha256": "b2785152a689d30cc1130c77ddbabf15e51a85387221cb3d0a2ceac53720ce67",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.linux-publication.json",
+      "bytes": 590,
+      "sha256": "419ece6a2fd991d7ad46ba93dea61f024038fa0f25c01081ed93f7f4b1fa6ff4",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "afff300ca1e1d43875f26dc8f782a067b9ea98bc46ac3d83d3050583ed38003e",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "c0451f08ce06fc0594373055d256b7cf5bab5e8634efe0c2d03ce8c96df169c5",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/AppImage/MeetSpace-0.1.5-beta-linux-x86_64-test.AppImage.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb",
+      "bytes": 100477564,
+      "sha256": "0b13105b76ac8ed0bdc574f55b0f69600bff6a738ac574ccba177aff3b6a7e47",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.linux-artifact-verification.json",
+      "bytes": 29271,
+      "sha256": "3fc41e117ab6c5617c9e94d4d1e4fb45fc5348621ec6406fd329b66fee80bd09",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.linux-packaging-build.json",
+      "bytes": 1008,
+      "sha256": "b2785152a689d30cc1130c77ddbabf15e51a85387221cb3d0a2ceac53720ce67",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.linux-publication.json",
+      "bytes": 575,
+      "sha256": "4ddacd12ae0a970ed08e1b8a8e238728f59d519d52de95facd25d999421cefcb",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "c724e1d69a718f32b9a9217f6ee27484352f4c7800b4103e1598f0102696629e",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "2b00c21e9e58b3ffb59ee4e3786035b4ce9ae3103965a964da76fba06e79e7fd",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-amd64-test.deb.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb",
+      "bytes": 95700848,
+      "sha256": "7d65235d7530253ee244c9c9fb51940e824c32a0e8b0ea8b3379bd7e5afc839c",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.linux-artifact-verification.json",
+      "bytes": 25030,
+      "sha256": "fd0a261d91f353f2fef9a078ff4bbc1e1a1d01e1a77d616abbc08722925b945a",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.linux-packaging-build.json",
+      "bytes": 1010,
+      "sha256": "d0762c8d42a2eb161a3895290db8c1b37be8cae2e7c680939538d4d0df6f80cc",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.linux-publication.json",
+      "bytes": 667,
+      "sha256": "f80d5923cd1cbe5e0fddff885611ebe56e899c348205699683953b575d03dd27",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.sha256",
+      "bytes": 108,
+      "sha256": "2d64fb5fe0fbed174dcf6b7cfba916fbba9d32fe6d4e60edbd2285b95a868250",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.sha512",
+      "bytes": 172,
+      "sha256": "cf33264a0fd6b0b89bae6100ee1b6c3cbb7ef62de314f70501c33cbc414d89d4",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/DEB/MeetSpace-0.1.5-beta-linux-arm64-test.deb.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm",
+      "bytes": 85829357,
+      "sha256": "75aff4c32cdd58bacde0637c4a02eb9776768968dbbe413fee7880aa14a75544",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.linux-artifact-verification.json",
+      "bytes": 25030,
+      "sha256": "fd0a261d91f353f2fef9a078ff4bbc1e1a1d01e1a77d616abbc08722925b945a",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.linux-packaging-build.json",
+      "bytes": 1010,
+      "sha256": "d0762c8d42a2eb161a3895290db8c1b37be8cae2e7c680939538d4d0df6f80cc",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.linux-publication.json",
+      "bytes": 667,
+      "sha256": "44c71df90e013015cb512a16668f168731039695d2737e214539557340cb01e2",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.sha256",
+      "bytes": 110,
+      "sha256": "9e38c53a38d6cf247f515cdd6bafbb8ae1f824722dca5673e7f16465ea9e5805",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.sha512",
+      "bytes": 174,
+      "sha256": "52655b519f7abac652a5687dc922476eab8d8a8917a60342db20d1b6168e35d9",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-aarch64-test.rpm.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm",
+      "bytes": 90110785,
+      "sha256": "4044d826c8a80fbc94652aac767eec28b51ad633d2efddeb68dea807b09973a8",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.linux-artifact-verification.json",
+      "bytes": 29271,
+      "sha256": "3fc41e117ab6c5617c9e94d4d1e4fb45fc5348621ec6406fd329b66fee80bd09",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.linux-packaging-build.json",
+      "bytes": 1008,
+      "sha256": "b2785152a689d30cc1130c77ddbabf15e51a85387221cb3d0a2ceac53720ce67",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.linux-publication.json",
+      "bytes": 575,
+      "sha256": "abe3015685112db5de733a6c636410412309c78723387fb8fa2d580f3edfde9a",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.sha256",
+      "bytes": 109,
+      "sha256": "1b175f8ceae63318dc84dca6c3bf742cf29edd9ceeb63fc4a4b4a8be1c144d3e",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.sha512",
+      "bytes": 173,
+      "sha256": "86b9f441de9198375e2187912f169d8bb4de94eef95ed7d0d0fbe2b35c924ac5",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "linux/0.1.5-beta/RPM/MeetSpace-0.1.5-beta-linux-x86_64-test.rpm.source-inputs.json",
+      "bytes": 77613,
+      "sha256": "8f8965ccaff3174406e0b43ef5283d0f7285701addeb5e9d0c28630f1e7f4e86",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
       "path": "windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe",
       "bytes": 118653443,
       "sha256": "e5bd349144c8970b72b229f2f74b147e6da2a81fa647c8615cf1781ea5539499",
@@ -2342,6 +2812,62 @@
       "sha256": "34fcfbccbc2b09efcc0bedaab237428d86c6f0e7d28f63abd78abd262aa2b129",
       "kind": "checksum",
       "sourceTreeSha256": "7d3f51bd7c9b0387dfdffaa84655c192ea5890e31e0b1b7ac7424f7f2efb7184"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe",
+      "bytes": 116528456,
+      "sha256": "763166b6df38c5d8ef6480e6b149c152d380e5e8f68d302f0c427dc5007adf28",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe.blockmap",
+      "bytes": 122159,
+      "sha256": "958a275585f51a3f7a055e76c910d70841437e9f53895a8334f7981095ab709d",
+      "kind": "update-blockmap",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe.json",
+      "bytes": 3226,
+      "sha256": "de244e1264e1914b39f15ed65434ba33d2d14a284c10851b66e03552edbd6444",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-arm64-test-setup.exe.sha256",
+      "bytes": 112,
+      "sha256": "edb969b087f10b00a7f74d17d1c3a8271771dab1901e535f3e041003454e59fb",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe",
+      "bytes": 121787702,
+      "sha256": "860df4c516466931f97c15b1b163239e78ae28d389a7e14f0efa4d221b443ac8",
+      "kind": "distribution",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe.blockmap",
+      "bytes": 129043,
+      "sha256": "20acba463879a57c4d263264a68a95c4425a176fb6475acdda811eedbef60521",
+      "kind": "update-blockmap",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe.json",
+      "bytes": 3259,
+      "sha256": "e713fe7f03d07818ff7403f59044eb8ae16eba122c3f049d791b7daad7d8d385",
+      "kind": "verification-metadata",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
+    },
+    {
+      "path": "windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe.sha256",
+      "bytes": 110,
+      "sha256": "06946ec14953b1de0b520262204c6c6b1a97d498bfaa62479f017127e4f325e8",
+      "kind": "checksum",
+      "sourceTreeSha256": "de97d1f5a78a39067a48cea4f5df4629ebe14f0395bd82774f5660dc3d27a215"
     }
   ],
   "legacyPathMappings": [
