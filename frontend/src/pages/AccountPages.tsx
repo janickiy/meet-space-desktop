@@ -9,18 +9,19 @@ import {
   Moon,
   Search,
   Palette,
-  Mic,
   Video,
+  Server,
+  LogOut,
   Sun,
   UserRound,
   UsersRound,
   Monitor,
   ChevronsUpDown,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth";
 import { AccountManagement } from "../components/AccountManagement";
-import { PRODUCT_NAME } from "../brand";
+import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
 import { formatDate, initials } from "../utils";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Loading } from "../components/ui";
@@ -29,6 +30,8 @@ import { AudioSettings, VideoSettings } from "../components/DeviceSettings";
 import { TEXT_SIZE_OPTIONS, useAppearance } from "../appearance";
 import type { TextSize } from "../appearance";
 import { isDesktopBuild } from "../platform/build";
+import { DesktopConnectionSettings } from "../components/desktop/DesktopSessionGate";
+import "../components/account-settings-modal.css";
 import { DesktopNativeSettings } from "../components/desktop/DesktopNativeSettings";
 import "./history-notifications.css";
 
@@ -36,7 +39,10 @@ import "./history-notifications.css";
  * @return Содержимое настроек без интеграций и неподдерживаемого раздела безопасности.
  */
 export function SettingsPage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [leaving, setLeaving] = useState(false);
   const [name, setName] = useState(user?.displayName || "");
   const [saving, setSaving] = useState(false);
   const [profileError, setProfileError] = useState<unknown>();
@@ -47,35 +53,47 @@ export function SettingsPage() {
   const tabs = [
     ...(!guest
       ? [
-          { id: "profile", label: "Профиль", Icon: UserRound },
+          { id: "profile", label: "Мой профиль", Icon: UserRound },
           { id: "accounts", label: "Аккаунты", Icon: UsersRound },
         ]
       : []),
-    { id: "audio", label: "Аудио", Icon: Mic },
-    { id: "video", label: "Видео", Icon: Video },
+    { id: "devices", label: "Устройства", Icon: Video },
     ...(!guest
       ? [{ id: "notifications", label: "Уведомления", Icon: Bell }]
       : []),
-    { id: "appearance", label: "Оформление", Icon: Palette },
+    { id: "appearance", label: "Внешний вид", Icon: Palette },
     ...(isDesktopBuild
-      ? [{ id: "desktop", label: "Приложение", Icon: Monitor }]
+      ? [
+          { id: "connection", label: "Подключение", Icon: Server },
+          { id: "desktop", label: "Приложение", Icon: Monitor },
+        ]
       : []),
   ] as const;
   const [activeSection, setActiveSection] = useState<string>(() => {
     const section = window.location.hash;
     if (section === "#accounts" && !guest) return "accounts";
     return ["#audio-video", "#audio-settings"].includes(section)
-      ? "audio"
+      ? "devices"
       : section === "#video-settings"
-        ? "video"
+        ? "devices"
         : section === "#notification-settings" && !guest
           ? "notifications"
           : section === "#appearance-settings"
             ? "appearance"
             : guest
-              ? "audio"
+              ? "devices"
               : "profile";
   });
+  useEffect(() => {
+    if (location.hash === "#accounts" && !guest) {
+      setActiveSection("accounts");
+      setMobileSectionOpen(true);
+    }
+    if (location.hash === "#connection" && isDesktopBuild) {
+      setActiveSection("connection");
+      setMobileSectionOpen(true);
+    }
+  }, [location.hash, guest]);
   const prefix = useId();
   const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const [horizontalTabs, setHorizontalTabs] = useState(
@@ -211,9 +229,21 @@ export function SettingsPage() {
             />
           </button>
         ))}
+        <div className="reference-settings-version">
+          <img
+            src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
+            width="23"
+            height="23"
+            alt=""
+          />
+          <span>
+            {PRODUCT_NAME}
+            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.2-beta"}</small>
+          </span>
+        </div>
       </div>
       <div
-        className={`account-dialog-panel settings-section-content ${["audio", "video"].includes(activeSection) ? "account-media-panel" : ""}`}
+        className={`account-dialog-panel settings-section-content ${activeSection === "devices" ? "account-media-panel" : ""}`}
         role="tabpanel"
         id={`${prefix}-${activeSection}-panel`}
         aria-labelledby={`${prefix}-${activeSection}-tab`}
@@ -242,8 +272,10 @@ export function SettingsPage() {
           >
             <div className="profile-section-heading">
               <div>
-                <h2 id="profile-heading">Ваш профиль</h2>
-                <p className="field-hint">Как вас видят участники встречи.</p>
+                <h2 id="profile-heading">Мой профиль</h2>
+                <p className="field-hint">
+                  Так вас видят участники рабочего пространства.
+                </p>
               </div>
               <span className="profile-initials" aria-hidden="true">
                 {(user?.displayName || user?.email || "?")
@@ -252,9 +284,12 @@ export function SettingsPage() {
                   .toLocaleUpperCase("ru-RU")}
               </span>
             </div>
-            <form onSubmit={(event) => void saveProfile(event)}>
+            <form
+              className="reference-profile-form"
+              onSubmit={(event) => void saveProfile(event)}
+            >
               <label className="field">
-                <span>Имя для встреч</span>
+                <span>Имя и фамилия</span>
                 <input
                   autoComplete="name"
                   value={name}
@@ -271,7 +306,7 @@ export function SettingsPage() {
                 От 1 до 100 символов.
               </p>
               <label className="field">
-                <span>Email</span>
+                <span>Электронная почта</span>
                 <input
                   type="email"
                   value={user?.email || ""}
@@ -291,10 +326,23 @@ export function SettingsPage() {
                   busy={saving}
                   disabled={name.trim() === (user?.displayName || "")}
                 >
-                  Сохранить имя
+                  Сохранить изменения
                 </Button>
               </div>
             </form>
+            <Button
+              variant="outline"
+              busy={leaving}
+              onClick={() => {
+                setLeaving(true);
+                void logout().finally(() => {
+                  setLeaving(false);
+                  navigate("/login", { replace: true });
+                });
+              }}
+            >
+              <LogOut size={15} /> Выйти из аккаунта
+            </Button>
             <p className="profile-created">
               <CalendarDays size={16} aria-hidden="true" /> Регистрация:{" "}
               {user && formatDate(user.createdAt)}
@@ -302,8 +350,15 @@ export function SettingsPage() {
           </section>
         )}
         {activeSection === "accounts" && !guest && <AccountManagement />}
-        {activeSection === "audio" && <AudioSettings />}
-        {activeSection === "video" && <VideoSettings />}
+        {activeSection === "devices" && (
+          <div className="reference-devices">
+            <VideoSettings />
+            <AudioSettings />
+          </div>
+        )}
+        {activeSection === "connection" && isDesktopBuild && (
+          <DesktopConnectionSettings />
+        )}
         {activeSection === "desktop" && isDesktopBuild && (
           <DesktopNativeSettings />
         )}
@@ -313,7 +368,7 @@ export function SettingsPage() {
         {activeSection === "appearance" && (
           <div className="appearance-settings" id="appearance-settings">
             <div className="account-settings-section-heading">
-              <h2>Оформление</h2>
+              <h2>Внешний вид</h2>
               <p>Настройте {PRODUCT_NAME} под себя</p>
             </div>
             <fieldset className="appearance-theme-block">

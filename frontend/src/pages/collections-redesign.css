@@ -31,20 +31,27 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 38px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 10px 14px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
 }
 .collection-view-toggle button[aria-pressed="true"] {
   color: var(--primary);
   background: var(--primary-soft);
   font-weight: 600;
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.collection-view-toggle button:hover:not([aria-pressed="true"]) {
+  background: var(--surface-soft);
+  color: var(--text);
 }
 .collection-view-toggle svg {
   flex: none;
@@ -83,8 +90,15 @@
   text-align: left;
   cursor: pointer;
 }
-.meetings-quick-action:hover {
-  border-color: var(--primary);
+.meetings-quick-action:not(.meetings-quick-primary):hover {
+  border-color: var(--border-strong);
+}
+.meetings-quick-action > span {
+  min-width: 0;
+}
+.meetings-quick-action strong,
+.meetings-quick-action small {
+  overflow-wrap: anywhere;
 }
 .meetings-quick-symbol {
   display: grid;
@@ -98,8 +112,9 @@
 }
 .meetings-quick-action strong {
   display: block;
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 650;
+  line-height: 1.4;
 }
 .meetings-quick-action small {
   display: block;
@@ -141,8 +156,7 @@
   opacity: 0.85;
 }
 .dashboard-all .dashboard-columns {
-  grid-template-columns: minmax(0, 1fr) 276px;
-  gap: 26px;
+  grid-template-columns: minmax(0, 1fr);
 }
 .dashboard-all .conferences-panel {
   background: transparent;
@@ -157,7 +171,7 @@
 .meetings-section-heading h2 {
   margin: 0;
   font-size: calc(18px * var(--text-scale));
-  font-weight: 600;
+  font-weight: 650;
 }
 .dashboard-all .list-toolbar {
   display: flex;
@@ -181,13 +195,14 @@
   min-height: 44px;
   border-radius: 0;
   background: transparent;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--muted);
 }
 .dashboard-all .tab-active {
   color: var(--primary);
   background: transparent;
   box-shadow: none;
+  font-weight: 650;
 }
 .dashboard-all .tab-active::after {
   display: block;
@@ -196,7 +211,7 @@
   bottom: -1px;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 3px;
   border-radius: 2px;
   background: var(--primary);
 }
@@ -213,12 +228,13 @@
 .dashboard-all .dashboard-search-row > select {
   max-width: 170px;
   min-width: 0;
+  min-height: 44px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   color: var(--text);
   padding: 8px 10px;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .dashboard-all .dashboard-mobile-filter.button {
   display: inline-flex;
@@ -252,41 +268,49 @@
   border-radius: 0;
 }
 .dashboard-all .dashboard-meeting-row {
-  grid-template-columns: 67px minmax(0, 1fr) auto;
+  grid-template-columns: 76px minmax(0, 1fr) auto;
   min-height: 104px;
   gap: 16px;
   padding: 18px 16px;
   border: 1px solid var(--border);
   border-radius: 11px;
   background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 .dashboard-all .conference-list > .dashboard-meeting-row:last-child {
   border-bottom: 1px solid var(--border);
 }
 .dashboard-all .dashboard-meeting-row:hover {
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  border-color: var(--border-strong);
+}
+.dashboard-all .dashboard-meeting-row:focus-within,
+.folders-page .folder-row:focus-within,
+.recordings-page .recordings-row:focus-within {
+  border-color: var(--border-strong);
 }
 .dashboard-all .dashboard-meeting-time {
   font-size: calc(18px * var(--text-scale));
   padding-right: 12px;
 }
 .dashboard-all .dashboard-meeting-time small {
-  font-size: calc(10px * var(--text-scale));
+  font-size: var(--text-xs);
   color: var(--muted);
   font-weight: 400;
 }
 .dashboard-all .conference-row-copy > .status-badge {
   display: inline-flex;
   margin: 0 0 7px;
-  padding: 3px 6px;
+  padding: 4px 8px;
   border: 0;
   border-radius: 4px;
-  font-size: calc(9px * var(--text-scale));
+  font-size: var(--text-xs);
+  line-height: 1.4;
 }
 .dashboard-all .conference-row-copy h3 {
   margin: 0 0 7px;
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 650;
+  line-height: 1.45;
 }
 .dashboard-all .conference-row-copy p {
   display: flex;
@@ -294,14 +318,15 @@
   gap: 5px;
   flex-wrap: wrap;
   margin: 0;
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-xs);
   line-height: 1.6;
 }
 .dashboard-all .dashboard-meeting-action {
-  gap: 0;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .dashboard-all .dashboard-meeting-action > .button {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .dashboard-all .meeting-open-link {
   color: var(--muted);
@@ -323,122 +348,6 @@
   display: inline;
   margin-left: 8px;
 }
-.meetings-overview {
-  min-width: 0;
-}
-.meetings-mini-calendar {
-  padding: 17px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 11px;
-}
-.meetings-mini-calendar header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 5px;
-}
-.meetings-mini-calendar header h3 {
-  margin: 0;
-  text-transform: capitalize;
-  font-size: var(--text-xs);
-  font-weight: 600;
-}
-.meetings-mini-calendar header > div {
-  display: flex;
-}
-.meetings-mini-calendar header button {
-  width: 30px;
-  height: 34px;
-  min-width: 30px;
-  min-height: 34px;
-  padding: 4px;
-}
-.meetings-mini-days {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px 1px;
-  text-align: center;
-}
-.meetings-mini-weekday {
-  color: var(--muted);
-  font-size: calc(10px * var(--text-scale));
-  margin-bottom: 8px;
-}
-.meetings-mini-days a {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 29px;
-  min-height: 31px;
-  margin: auto;
-  text-decoration: none;
-  color: var(--text);
-  font-size: calc(11px * var(--text-scale));
-  border-radius: 7px;
-}
-.meetings-mini-days a:hover {
-  background: var(--primary-soft);
-}
-.meetings-mini-days a.outside-month {
-  color: var(--muted);
-  opacity: 0.65;
-}
-.meetings-mini-days a[aria-current="date"] {
-  background: var(--primary);
-  color: var(--primary-contrast);
-}
-.meetings-mini-days .has-meeting::after {
-  content: "";
-  position: absolute;
-  bottom: 3px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.meetings-mini-calendar > p {
-  margin: 16px 0 0;
-  border-top: 1px solid var(--border);
-  padding-top: 15px;
-  font-size: calc(10px * var(--text-scale));
-  color: var(--muted);
-  line-height: 1.5;
-}
-.meetings-materials-note {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  margin-top: 24px;
-  padding: 18px 16px;
-  background: var(--primary-soft);
-  border-radius: 11px;
-  color: var(--muted);
-}
-.meetings-materials-note > svg {
-  flex: none;
-  color: var(--primary);
-}
-.meetings-materials-note strong {
-  color: var(--text);
-  font-weight: 600;
-  font-size: var(--text-xs);
-}
-.meetings-materials-note p {
-  margin: 6px 0;
-  font-size: calc(11px * var(--text-scale));
-  line-height: 1.8;
-}
-.meetings-materials-note a {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 34px;
-  color: var(--primary);
-  font-size: calc(11px * var(--text-scale));
-  text-decoration: none;
-}
 /* Folders retain the same real ordering, permissions and item actions in both views. */
 .folders-page .folder-list {
   border: 0;
@@ -452,6 +361,7 @@
   padding: 20px;
   min-height: 98px;
   background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 .folders-page .folder-list > .folder-row {
   border-radius: 12px;
@@ -467,7 +377,9 @@
   background: none;
 }
 .folders-page .folder-item-copy strong {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
+  font-weight: 650;
+  line-height: 1.45;
 }
 .folders-page .folder-count {
   background: none;
@@ -477,7 +389,7 @@
   align-items: center;
   gap: 12px;
   color: var(--muted);
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-xs);
 }
 .folder-card-footer > span {
   white-space: nowrap;
@@ -534,13 +446,35 @@
   background: var(--surface);
   border: 1px solid var(--border);
 }
+.folders-page .folder-empty,
+.recordings-page .recordings-empty {
+  padding: clamp(32px, 5vw, 56px) 24px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.folders-page .folder-empty > svg,
+.recordings-page .recordings-empty > svg {
+  box-sizing: content-box;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.folders-page .folder-empty p,
+.recordings-page .recordings-empty p {
+  max-width: 480px;
+  margin-inline: auto;
+  font-size: var(--text-base);
+  line-height: 1.65;
+}
 /* Recording covers use API previews or an explicitly decorative fallback. */
 .recordings-page .recordings-selection {
   gap: 12px 16px;
   padding-bottom: 20px;
 }
 .recordings-page .recordings-selection-note {
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-xs);
 }
 .recordings-page .recordings-list {
   gap: 14px;
@@ -553,6 +487,7 @@
   padding: 14px;
   gap: 24px;
   grid-template-columns: 168px minmax(0, 1fr) auto;
+  box-shadow: var(--shadow-card);
 }
 .recordings-page .recordings-thumbnail {
   border-radius: 8px;
@@ -576,7 +511,7 @@
   left: 10px;
   top: 10px;
   opacity: 0.8;
-  font-size: calc(10px * var(--text-scale));
+  font-size: var(--text-xs);
 }
 .recordings-page .recordings-thumbnail-tiles {
   display: grid;
@@ -610,13 +545,15 @@
   color: #619685;
 }
 .recordings-page .recordings-row-title {
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  font-weight: 650;
 }
 .recordings-page .recordings-meta {
   font-size: var(--text-xs);
 }
 .recordings-page .recordings-row-owner {
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-xs);
 }
 .recordings-page .recordings-layout-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -644,7 +581,7 @@
 }
 .recordings-page .recordings-layout-grid .recordings-watch {
   margin-right: auto;
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
 }
 .calendar-page .calendar-card {
   padding: 0;
@@ -693,10 +630,6 @@
   background: var(--surface);
 }
 @container (max-width: 980px) {
-  .dashboard-all .dashboard-columns {
-    grid-template-columns: minmax(0, 1fr) 238px;
-    gap: 18px;
-  }
   .meetings-quick-action {
     padding: 16px 13px;
     gap: 10px;
@@ -706,12 +639,6 @@
   }
 }
 @container (max-width: 760px) {
-  .dashboard-all .dashboard-columns {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .meetings-overview {
-    display: none;
-  }
   .meetings-date {
     display: none;
   }
@@ -757,7 +684,7 @@
     min-height: 44px;
   }
   .dashboard-all .dashboard-meeting-row {
-    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-columns: 68px minmax(0, 1fr);
     gap: 12px;
   }
   .dashboard-all .dashboard-meeting-action {
@@ -805,9 +732,6 @@
 :root[data-large-text="true"] .recordings-page .recordings-layout-grid {
   grid-template-columns: minmax(0, 1fr);
 }
-:root[data-large-text="true"] .meetings-overview {
-  display: none;
-}
 .meetings-day-heading {
   display: flex;
   align-items: center;
@@ -826,45 +750,638 @@
   background: var(--border);
   flex: 1;
 }
-.meetings-live-section {
-  margin-top: 24px;
+
+/* Collection layout from decs_maket. Data and actions remain server-backed. */
+.folders-page,
+.recordings-page {
+  max-width: 1300px;
+  margin-inline: auto;
 }
-.meetings-live-section h3 {
-  margin: 0 0 12px;
-  font-size: var(--text-xs);
+.folders-heading h1,
+.recordings-heading h1,
+.calendar-page .page-heading h1 {
+  font-size: calc(28px * var(--text-scale));
   font-weight: 600;
+  letter-spacing: -0.8px;
 }
-.meetings-live-section > p {
-  margin: 0;
-  color: var(--muted);
-  font-size: var(--text-xs);
-  line-height: 1.6;
+.folders-heading p,
+.recordings-heading p,
+.calendar-page .page-heading p {
+  font-size: calc(11px * var(--text-scale));
 }
-.meetings-live-card {
-  display: block;
-  margin-bottom: 10px;
-  padding: 15px;
-  border: 1px solid color-mix(in srgb, var(--success) 20%, var(--border));
-  border-radius: 11px;
+.folders-page .collection-view-toggle,
+.recordings-page .collection-view-toggle {
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+}
+.folders-page .collection-view-toggle button,
+.recordings-page .collection-view-toggle button {
+  min-height: 31px;
+  padding: 7px 11px;
+  font-size: calc(11px * var(--text-scale));
+  gap: 7px;
+  box-shadow: none;
+}
+.folders-page .collection-view-toggle svg,
+.recordings-page .collection-view-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+.folders-page .folder-row {
+  box-shadow: none;
+  min-height: 85px;
+}
+.folders-page .folder-row:hover,
+.folders-page .folder-row:focus-within {
   background: var(--surface);
-  color: var(--text);
-  text-decoration: none;
 }
-.meetings-live-card .status-badge {
-  font-size: calc(10px * var(--text-scale));
+.folders-page .folder-collection.folder-layout-grid {
+  gap: 18px;
 }
-.meetings-live-card > strong {
-  display: block;
-  margin: 10px 0 14px;
-  font-size: var(--text-xs);
+.folders-page .folder-symbol {
+  width: 43px;
+  height: 43px;
+  border-radius: 11px;
+}
+.folders-page .folder-symbol svg {
+  width: 23px;
+  height: 23px;
+}
+.folders-page .folder-item-copy strong {
+  font-size: calc(14px * var(--text-scale));
   font-weight: 600;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
-.meetings-live-card > span:last-child {
+.folders-page .folder-item-copy small {
+  font-size: calc(11px * var(--text-scale));
+}
+.folders-page .folder-collection .folder-count {
+  display: none;
+}
+.folders-page .folder-collection.folder-layout-grid .folder-link {
+  gap: 17px;
+  min-height: 175px;
+}
+.folders-page .folder-collection.folder-layout-grid .folder-item-copy {
+  gap: 5px;
+  flex: none;
+}
+.folders-page .folder-card-footer {
+  gap: 2px;
+  font-size: calc(9px * var(--text-scale));
+}
+.folders-page .folder-card-footer > span {
+  margin-right: auto;
+}
+.folders-page .folder-card-footer .icon-button {
+  width: 29px;
+  min-width: 29px;
+  height: 29px;
+  min-height: 29px;
+  padding: 5px;
+  color: var(--muted);
+}
+.folders-page .folder-order-actions {
   display: flex;
-  justify-content: space-between;
+  gap: 2px;
+}
+.folders-page .folder-order-actions button:disabled {
+  opacity: 0.35;
+}
+.folders-page .folder-collection.folder-layout-grid .folder-card-footer {
+  padding: 9px 12px 9px 20px;
+}
+.folders-page .folder-collection.folder-layout-list .folder-row {
+  padding: 18px 22px;
+  gap: 17px;
+}
+.folders-page .folder-collection.folder-layout-list .folder-item-copy strong {
+  font-size: calc(12px * var(--text-scale));
+}
+.folders-page .folder-collection.folder-layout-list .folder-item-copy small {
+  font-size: calc(10px * var(--text-scale));
+}
+.folders-page .folder-collection.folder-layout-list .folder-card-footer > span {
+  margin-right: 14px;
+}
+.folders-page .folder-private-note {
+  font-size: calc(10px * var(--text-scale));
+  gap: 7px;
+}
+.folders-page .folder-private-note svg {
+  width: 13px;
+  height: 13px;
+}
+.folders-page .folder-toolbar {
+  column-gap: 16px;
+  row-gap: 18px;
+  margin-bottom: 23px;
+}
+.folders-page .folder-candidate-filters {
+  flex: 1;
+  display: flex;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  gap: 26px;
+}
+.folders-page .folder-candidate-filters button {
+  background: transparent;
+  border-radius: 0;
+  padding: 10px 0 12px;
+  min-height: 39px;
+  font-size: calc(11px * var(--text-scale));
+  box-shadow: none;
+}
+.folders-page .folder-candidate-filters button[aria-pressed="true"] {
+  background: transparent;
+  box-shadow: none;
+}
+.folders-page .folder-detail-search {
+  flex: 0 1 230px;
+  width: 230px;
+  min-height: 38px;
+  padding-inline: 12px;
+  font-size: calc(11px * var(--text-scale));
+}
+.folders-page .folder-detail-search input {
+  min-height: 36px;
+}
+.folders-page .folder-contents.folder-layout-list {
+  display: block;
+  padding: 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+.folders-page .folder-contents.folder-layout-list .folder-row {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  min-height: 75px;
+  padding: 20px 0;
+}
+.folders-page .folder-contents.folder-layout-list .folder-row:last-child {
+  border-bottom: 0;
+}
+.folders-page .folder-contents .folder-item-copy strong {
+  font-size: calc(12px * var(--text-scale));
+}
+.folders-page .folder-contents .folder-item-copy small {
+  font-size: calc(10px * var(--text-scale));
+}
+.folders-page .folder-contents.folder-layout-grid .folder-row {
+  position: relative;
+  min-height: 180px;
+  padding: 22px;
+}
+.folders-page .folder-contents.folder-layout-grid .folder-link {
+  flex-direction: column;
+  gap: 16px;
+}
+.folders-page .folder-contents.folder-layout-grid .folder-item-copy {
+  flex-basis: auto;
+  padding-right: 20px;
+}
+.folders-page .folder-contents.folder-layout-grid .folder-row > .item-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.folders-page .folder-item-section h2 {
+  font-size: calc(13px * var(--text-scale));
+}
+.recordings-page {
+  --recordings-control-height: max(38px, calc(22px * var(--text-scale) + 14px));
+}
+.recordings-page .recordings-heading {
+  margin-bottom: 24px;
   align-items: center;
-  gap: 8px;
+}
+.recordings-page .recordings-count {
+  font-size: calc(10px * var(--text-scale));
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.recordings-page .recordings-selection {
+  grid-template-columns: minmax(180px, 1.15fr) minmax(150px, 0.75fr) minmax(
+      180px,
+      1fr
+    ) auto;
+  gap: 12px;
+  border: 0;
+  padding: 0;
+  margin: 0 0 25px;
+  align-items: center;
+}
+.recordings-page .recordings-search-field {
+  order: -1;
+  min-width: 0;
+}
+.recordings-page .recordings-search input,
+.recordings-page select {
+  font-size: calc(11px * var(--text-scale));
+}
+.recordings-page select {
+  min-height: var(--recordings-control-height);
+}
+.recordings-page .recordings-selection-note {
+  font-size: calc(10px * var(--text-scale));
+}
+.recordings-page .recordings-library-heading h2 {
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+}
+.recordings-page .recordings-library-context {
+  font-size: calc(10px * var(--text-scale));
+}
+.recordings-page .recordings-row {
+  box-shadow: none;
+  padding: 0;
+  gap: 0;
+  grid-template-columns: 190px minmax(0, 1fr) auto;
+  border-radius: 11px;
+}
+.recordings-page .recordings-row:hover,
+.recordings-page .recordings-row:focus-within {
+  background: var(--surface);
+}
+.recordings-page .recordings-row-info {
+  padding: 18px;
+}
+.recordings-page .recordings-row-title {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 600;
+}
+.recordings-page .recordings-meta,
+.recordings-page .recordings-row-owner {
+  font-size: calc(10px * var(--text-scale));
+}
+.recordings-page .recordings-row-actions {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  gap: 6px;
+}
+.recordings-page .recordings-row-type {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: calc(9px * var(--text-scale));
+}
+.recordings-page .recordings-watch,
+.recordings-page .recordings-menu-trigger {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  min-width: 30px;
+  padding: 6px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--muted);
+}
+.recordings-page .recordings-thumbnail {
+  border-radius: 10px 0 0 10px;
+  height: 100%;
+  min-height: 122px;
+}
+.recordings-page .recordings-thumbnail-label {
+  display: none;
+}
+.recordings-page .recordings-layout-grid .recordings-thumbnail {
+  aspect-ratio: auto;
+  height: 155px;
+  min-height: 155px;
+  border-radius: 10px 10px 0 0;
+}
+.recordings-page .recordings-layout-grid .recordings-row-info {
+  padding: 18px 18px 0;
+}
+.recordings-page .recordings-layout-grid .recordings-row-actions {
+  padding: 10px 12px 12px 18px;
+}
+.recordings-page .recordings-layout-grid .recordings-watch {
+  margin-right: 0;
+}
+.recordings-page .recordings-retention,
+.recordings-page .recordings-history-link {
+  font-size: calc(10px * var(--text-scale));
+}
+.recording-detail-page .recording-detail-heading {
+  margin-bottom: 24px;
+}
+.recording-detail-page .recording-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.recording-detail-page .recordings-back {
+  margin: 0;
+  font-size: calc(11px * var(--text-scale));
+}
+.recording-detail-page
+  .recording-detail-header-actions
+  .recordings-menu-trigger {
+  width: 38px;
+  height: 38px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.recording-detail-page .recording-detail-layout {
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
+  gap: 24px;
+}
+.recording-detail-page .recording-detail-player {
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  background: #1b2233;
+  color: #fff;
+  overflow: hidden;
+}
+.recording-detail-page .recording-detail-player video {
+  aspect-ratio: 16 / 10;
+}
+.recording-detail-page .recording-detail-player .recordings-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
+  border: 0;
+  background: transparent;
+  color: #c2c9d8;
+}
+.recording-detail-page .recording-detail-player .recordings-empty h2 {
+  color: #fff;
+}
+.recording-detail-page .recording-detail-player .recordings-empty p {
+  font-size: calc(12px * var(--text-scale));
+}
+.recording-detail-page .recording-detail-player-audio {
+  aspect-ratio: 16 / 10;
+}
+.recording-detail-page .recording-detail-audio {
+  min-height: 100%;
+  color: #c2c9d8;
+}
+.recording-detail-page .recording-detail-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  gap: 20px;
+}
+.recording-detail-page .recording-detail-section h2 {
+  font-size: calc(16px * var(--text-scale));
+  font-weight: 600;
+  margin: 0 0 20px;
+}
+.recording-detail-page .recording-detail-info {
+  display: block;
+  margin-bottom: 24px;
+}
+.recording-detail-page .recording-detail-info > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.7;
+}
+.recording-detail-page .recording-detail-info dd {
+  font-size: inherit;
+  text-align: right;
+  max-width: 62%;
+}
+.recording-detail-page .recording-detail-about-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.recording-detail-page .recording-detail-about-actions > .button,
+.recording-detail-page .recording-detail-about-actions .button {
+  width: 100%;
+  font-size: calc(11px * var(--text-scale));
+  white-space: normal;
+}
+.recording-detail-page .recording-detail-materials > summary {
   color: var(--muted);
   font-size: calc(11px * var(--text-scale));
+  cursor: pointer;
+}
+.recording-detail-page .recording-detail-materials {
+  border-inline-start: 0;
+  border-top: 1px solid var(--border);
+  padding: 20px 0 0;
+}
+.recording-detail-page
+  .recording-detail-about-actions
+  > .recordings-copy-fallback {
+  position: static;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-shadow: none;
+}
+.recording-detail-page .recording-detail-materials[open] > summary {
+  margin-bottom: 18px;
+}
+.calendar-page .calendar-toolbar {
+  justify-content: flex-start;
+  gap: 10px;
+  margin: 24px 0 20px;
+}
+.calendar-page .calendar-period-group {
+  margin-right: 0;
+  width: auto;
+}
+.calendar-page .calendar-period {
+  font-size: calc(17px * var(--text-scale));
+  margin-right: 6px;
+}
+.calendar-page .calendar-toolbar-zone {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
+}
+.calendar-page .calendar-navigation {
+  margin: 0;
+}
+.calendar-page .calendar-navigation .button,
+.calendar-page .calendar-navigation .icon-button {
+  min-height: 32px;
+  height: 32px;
+  font-size: calc(10px * var(--text-scale));
+}
+.calendar-page .calendar-navigation .icon-button {
+  width: 30px;
+  min-width: 30px;
+}
+.calendar-page .calendar-view-switch {
+  margin-left: 8px;
+  background: var(--surface);
+  border-radius: 7px;
+}
+.calendar-page .calendar-view-switch button {
+  min-height: 28px;
+  padding: 5px 9px;
+  font-size: calc(10px * var(--text-scale));
+  border-bottom: 0;
+  box-shadow: none;
+}
+.calendar-page .calendar-view-switch button[aria-pressed="true"] {
+  background: var(--primary-soft);
+}
+.calendar-page .calendar-weekday {
+  background: var(--canvas);
+  font-size: calc(10px * var(--text-scale));
+  padding: 14px 8px;
+}
+.calendar-page .calendar-month-day {
+  padding: 9px;
+}
+.calendar-page .calendar-day-heading time {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: calc(10px * var(--text-scale));
+  font-weight: 400;
+}
+.calendar-page .calendar-add-day {
+  opacity: 0;
+}
+.calendar-page .calendar-month-day:hover .calendar-add-day,
+.calendar-page .calendar-month-day:focus-within .calendar-add-day {
+  opacity: 1;
+}
+.calendar-page .calendar-event {
+  padding: 6px;
+  margin: 4px 0;
+  min-height: 0;
+}
+.calendar-page .calendar-event strong {
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 400;
+}
+.calendar-page .calendar-event strong time {
+  font-weight: 600;
+}
+.calendar-page .calendar-event span {
+  font-size: calc(10px * var(--text-scale));
+}
+.calendar-page .calendar-footer-note {
+  font-size: calc(10px * var(--text-scale));
+}
+@media (min-width: 1600px) {
+  .recordings-page .recordings-layout-grid .recordings-thumbnail {
+    height: 190px;
+  }
+}
+@media (max-width: 1180px) {
+  .recordings-page .recordings-selection {
+    grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr);
+  }
+  .recordings-page .recordings-selection .collection-view-toggle {
+    justify-self: end;
+  }
+  .recordings-page .recordings-layout-list .recordings-row-type {
+    display: none;
+  }
+  .folders-page .folder-toolbar .folder-candidate-filters {
+    flex-basis: 100%;
+  }
+  .folders-page .folder-toolbar .folder-detail-search {
+    flex: 1;
+  }
+}
+@media (max-width: 950px) {
+  .recording-detail-page .recording-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recording-detail-page .recording-detail-about-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .recording-detail-page .recording-detail-about-actions > * {
+    flex: 1 1 210px;
+  }
+}
+@media (min-width: 701px) and (max-width: 1023px) {
+  .calendar-page .calendar-grid-scroll {
+    display: block;
+  }
+  .calendar-page .calendar-mobile-agenda {
+    display: none;
+  }
+  .calendar-page .calendar-month-grid {
+    min-width: 630px;
+    grid-template-columns: repeat(7, minmax(90px, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .folders-page .folder-collection.folder-layout-list .folder-row {
+    padding: 16px;
+    gap: 12px;
+  }
+  .folders-page .folder-card-footer > span {
+    display: none;
+  }
+  .folders-page
+    .folder-collection.folder-layout-grid
+    .folder-card-footer
+    > span {
+    display: block;
+  }
+  .folders-page .folder-toolbar {
+    align-items: stretch;
+  }
+  .folders-page .folder-toolbar .folder-detail-search {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .recordings-page .recordings-selection {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .recordings-page .recordings-selection .recordings-search-field {
+    grid-column: 1 / -1;
+  }
+  .recordings-page .recordings-selection .collection-view-toggle {
+    grid-column: 1 / -1;
+  }
+  .recordings-page .recordings-row {
+    grid-template-columns: 108px minmax(0, 1fr);
+  }
+  .recordings-page .recordings-row-actions {
+    padding: 0 12px 12px;
+  }
+  .recordings-page .recordings-row-info {
+    padding: 12px;
+  }
+  .recordings-page .recordings-thumbnail {
+    border-radius: 10px 0 0 0;
+  }
+  .recording-detail-page .recording-detail-header-actions {
+    flex-wrap: wrap;
+  }
+  .recording-detail-page .recording-detail-heading {
+    align-items: flex-start;
+  }
+  .calendar-page .calendar-toolbar-zone {
+    flex-basis: 100%;
+    margin: 0;
+  }
 }

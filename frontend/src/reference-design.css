@@ -1,0 +1,1118 @@
+/* Dimensions and local typefaces from decs_maket. Shared renderer for Windows/Linux. */
+@font-face {
+  font-family: "MeetSpace Inter";
+  src: url("/fonts/reference/inter-latin-400-normal.woff2");
+  font-weight: 100 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MeetSpace Inter";
+  src: url("/fonts/reference/inter-cyrillic-400-normal.woff2");
+  font-weight: 100 500;
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MeetSpace Inter";
+  src: url("/fonts/reference/inter-latin-600-normal.woff2");
+  font-weight: 600 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "MeetSpace Inter";
+  src: url("/fonts/reference/inter-cyrillic-600-normal.woff2");
+  font-weight: 600 900;
+  unicode-range: U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+  font-display: swap;
+}
+:root {
+  --sidebar-width: 218px;
+  --workspace-gutter: 34px;
+}
+body {
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+svg.lucide {
+  stroke-width: 1.75;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+}
+.page-heading h1 {
+  font-size: calc(28px * var(--text-scale));
+  line-height: 1.5;
+  letter-spacing: -0.9px;
+  margin: 0;
+}
+.page-heading p {
+  font-size: calc(11px * var(--text-scale));
+  margin-top: 5px;
+}
+.app-shell .app-chrome {
+  font-size: calc(10px * var(--text-scale));
+}
+.chrome-context,
+.chrome-workspace {
+  font-size: calc(10px * var(--text-scale));
+}
+.app-shell .sidebar {
+  padding: 26px 14px 12px;
+}
+.app-shell .sidebar-head {
+  padding: 0 10px 28px;
+}
+.workspace-brand,
+.workspace-brand > span {
+  font-size: 22px;
+  line-height: 30px;
+  letter-spacing: -0.8px;
+}
+.app-shell .sidebar-caption {
+  padding: 0 13px 8px;
+  font-size: calc(9px * var(--text-scale));
+  letter-spacing: 1.35px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.sidebar .sidebar-nav {
+  gap: 0;
+}
+.app-shell .sidebar .nav-item {
+  min-height: 40px;
+  padding: 11px 13px;
+  border-radius: 7px;
+  margin-bottom: 4px;
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+  gap: 12px;
+}
+.app-shell .sidebar .nav-active {
+  font-weight: 600;
+}
+.app-shell .sidebar button.nav-item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  text-align: left;
+}
+.app-shell .sidebar button.nav-item:hover {
+  background: var(--canvas);
+}
+.sidebar .nav-item > svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.7;
+}
+.app-shell .sidebar-personal-caption {
+  margin: 28px 0 0;
+  padding: 0 13px 8px;
+}
+.sidebar-personal-caption a {
+  min-height: 20px;
+  min-width: 20px;
+}
+.app-shell .sidebar-service-nav {
+  margin-top: auto;
+  padding-top: 20px;
+}
+.app-shell .sidebar-bottom {
+  border-top: 1px solid var(--border);
+  padding: 0;
+  margin: 0;
+}
+.sidebar .profile.profile-button {
+  padding: 16px 3px 2px;
+  gap: 10px;
+  min-height: 0;
+  border: 0;
+  width: 100%;
+  border-radius: 0;
+}
+.sidebar .profile strong {
+  font-size: calc(10px * var(--text-scale));
+  line-height: 1.5;
+}
+.sidebar .profile span:not(.avatar) {
+  font-size: calc(9px * var(--text-scale));
+}
+.sidebar .profile .avatar {
+  background: #e4ebff;
+  color: #7794d6;
+  font-size: calc(10px * var(--text-scale));
+  width: 34px;
+  height: 34px;
+}
+.sidebar-server-status {
+  padding: 10px 13px 18px;
+}
+.sidebar-server-status .desktop-server-button {
+  justify-content: flex-start;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  min-height: 0;
+  padding: 0;
+  gap: 7px;
+  color: var(--muted);
+  font-size: calc(9px * var(--text-scale));
+  font-weight: 400;
+  width: 100%;
+}
+.sidebar-server-status .desktop-server-button:before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #48b296;
+  flex: none;
+}
+.sidebar-server-status .desktop-server-button svg {
+  display: none;
+}
+.workspace-top {
+  min-height: 70px;
+  padding: 0 32px;
+}
+.workspace-context {
+  font-size: calc(11px * var(--text-scale));
+}
+.workspace-context strong {
+  font-weight: 400;
+}
+.workspace-search-trigger {
+  min-height: 34px;
+  padding: 8px 11px;
+  border-radius: 7px;
+  font-size: calc(10px * var(--text-scale));
+}
+.workspace-search-trigger svg {
+  width: 15px;
+  height: 15px;
+}
+.workspace-search-trigger kbd {
+  font-size: calc(9px * var(--text-scale));
+}
+.workspace-top .notification-bell {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+}
+.workspace-main {
+  padding: 28px var(--workspace-gutter);
+}
+.button {
+  min-height: 40px;
+  padding: 10px 17px;
+  font-size: calc(12px * var(--text-scale));
+  border-radius: 8px;
+  font-weight: 600;
+  gap: 9px;
+}
+.button svg {
+  width: 17px;
+  height: 17px;
+}
+.button-secondary,
+.button-outline {
+  border-color: var(--border);
+}
+.button-primary {
+  box-shadow: 0 4px 10px #4967eb18;
+}
+.button:hover:not(:disabled) {
+  transform: none;
+}
+.icon-button {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 7px;
+}
+.field {
+  font-size: calc(12px * var(--text-scale));
+  gap: 7px;
+}
+.field input,
+.field textarea,
+.field select {
+  min-height: 40px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: calc(12px * var(--text-scale));
+  border-color: var(--border);
+}
+.field-hint {
+  font-size: calc(11px * var(--text-scale));
+}
+.content-card {
+  box-shadow: none;
+}
+.modal-backdrop {
+  backdrop-filter: blur(5px);
+}
+.modal:not(.account-settings-modal):not(.meeting-editor-modal) {
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: 0 30px 100px #111d4633;
+}
+.modal > h2 {
+  font-size: calc(21px * var(--text-scale));
+  font-weight: 600;
+  letter-spacing: -0.4px;
+}
+.workspace-search-dialog {
+  width: min(520px, calc(100vw - 32px));
+  padding: 26px;
+}
+.workspace-search-input {
+  border-radius: 8px;
+  padding: 10px 12px;
+  gap: 9px;
+}
+.workspace-search-input input {
+  font-size: calc(12px * var(--text-scale));
+}
+.workspace-search-results a {
+  padding: 13px;
+  gap: 12px;
+}
+.workspace-search-results strong {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 600;
+}
+.workspace-search-results small,
+.workspace-search-caption {
+  font-size: calc(10px * var(--text-scale));
+}
+.workspace-search-results a:hover {
+  background: var(--canvas);
+}
+.workspace-help > p {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.workspace-help dl {
+  margin: 20px 0;
+}
+.workspace-help dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-xs);
+}
+.workspace-help dd {
+  margin: 0;
+}
+.workspace-help kbd {
+  font: inherit;
+  color: var(--muted);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 7px;
+}
+.workspace-help-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 15px;
+}
+.workspace-help-brand p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+.reference-settings-version {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid var(--border);
+  margin: 28px 14px 0;
+  padding-top: 22px;
+  font-size: calc(9px * var(--text-scale));
+  color: var(--muted);
+}
+.reference-settings-version small {
+  display: block;
+  font-size: calc(8px * var(--text-scale));
+  margin-top: 4px;
+}
+/* The supplied reference uses a page for settings, and dialogs only inside a call. */
+.reference-settings-page {
+  max-width: 1450px;
+  margin: auto;
+}
+.reference-settings-page .account-dialog-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 25px;
+  padding: 0;
+  align-items: start;
+}
+.reference-settings-page .account-current-identity {
+  grid-column: 1/-1;
+  margin: 0;
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.reference-settings-page .account-dialog-tabs {
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  gap: 5px;
+  overflow: visible;
+}
+.reference-settings-page .account-dialog-tabs button {
+  padding: 14px 15px;
+  min-height: 46px;
+  font-size: calc(12px * var(--text-scale));
+  border-radius: 8px;
+  margin: 0;
+  color: var(--muted);
+}
+.reference-settings-page .account-dialog-tabs button[aria-selected="true"] {
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.reference-settings-page .account-dialog-panel {
+  min-height: 540px;
+  height: auto;
+  overflow: visible;
+  padding: 30px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.reference-settings-page .account-dialog-panel > .content-card {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+.reference-settings-page .profile-section-heading {
+  padding-bottom: 25px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 25px;
+}
+.reference-settings-page h2 {
+  font-size: calc(17px * var(--text-scale));
+  letter-spacing: -0.25px;
+}
+.reference-settings-page .appearance-theme-options {
+  max-width: 460px;
+  gap: 17px;
+}
+.reference-profile-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 22px;
+}
+.reference-profile-form > .field {
+  grid-row: 1;
+  font-size: calc(11px * var(--text-scale));
+}
+.reference-profile-form > .field input {
+  font-size: calc(11px * var(--text-scale));
+  min-height: 41px;
+}
+.reference-profile-form > .field-hint {
+  font-size: calc(9px * var(--text-scale));
+  margin: 0 0 16px;
+}
+.reference-profile-form > .profile-save-row,
+.reference-profile-form > .error-notice,
+.reference-profile-form > [role="status"] {
+  grid-column: 1/-1;
+}
+.reference-profile-form .profile-save-row {
+  border-top: 1px solid var(--border);
+  padding-top: 22px;
+  margin-top: 10px;
+  margin-bottom: 24px;
+}
+.reference-devices {
+  display: grid;
+  gap: 28px;
+}
+.reference-panel-heading {
+  padding-bottom: 25px;
+  margin-bottom: 25px;
+  border-bottom: 1px solid var(--border);
+}
+.reference-panel-heading p {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 7px;
+}
+.reference-connection-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  padding: 20px;
+  border-radius: 9px;
+  margin-bottom: 24px;
+}
+.reference-connection-card > svg {
+  color: var(--primary);
+}
+.reference-connection-card p {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  margin: 5px 0 0;
+}
+.reference-connection-settings > .button {
+  margin-top: 22px;
+}
+/* First run and sign in share the exact two-column welcome composition. */
+:root .desktop-foundation:has(> .reference-welcome) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  justify-items: stretch;
+  padding: 0;
+  background: var(--surface);
+  min-height: 100dvh;
+}
+:root .desktop-foundation:has(> .reference-welcome) > .desktop-foundation-card {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  width: 100%;
+  max-width: none;
+  align-self: center;
+  padding: 50px 55px;
+  margin: 0;
+  min-width: 0;
+  background: var(--surface);
+}
+:root
+  .desktop-foundation:not(.desktop-foundation-installing)
+  > .desktop-foundation-card
+  > * {
+  width: min(100%, 390px);
+  margin-left: auto;
+  margin-right: auto;
+}
+:root .desktop-foundation-card h1 {
+  font-size: calc(29px * var(--text-scale));
+  letter-spacing: -1.1px;
+  line-height: 1.35;
+  font-weight: 600;
+  margin-bottom: 13px;
+}
+:root .desktop-foundation-description {
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 25px;
+}
+:root .desktop-foundation .desktop-foundation-label {
+  font-size: calc(8px * var(--text-scale));
+  letter-spacing: 1.7px;
+  color: var(--primary);
+  margin-bottom: 18px;
+}
+.reference-server-options {
+  display: grid;
+  gap: 12px;
+  margin: 30px 0 24px;
+}
+.reference-server-options > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 15px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+}
+.reference-server-options > button[aria-pressed="true"] {
+  background: var(--primary-soft);
+  border-color: var(--border-strong);
+}
+.reference-server-options > button > span {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--primary);
+  flex: none;
+}
+.reference-server-options > button > span svg {
+  width: 18px;
+  height: 18px;
+}
+.reference-server-options strong {
+  display: block;
+  font-size: calc(11px * var(--text-scale));
+  margin-bottom: 7px;
+}
+.reference-server-options small {
+  font-size: calc(9px * var(--text-scale));
+  color: var(--muted);
+}
+.reference-server-options > button > svg {
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+  flex: none;
+}
+.reference-server-options > button[aria-pressed="true"] > svg {
+  color: var(--primary);
+}
+.reference-onboarding-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-bottom: 32px;
+}
+:root .desktop-server-form {
+  gap: 9px;
+  font-size: calc(11px * var(--text-scale));
+  font-weight: 600;
+}
+:root .desktop-server-form input {
+  min-height: 41px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+}
+:root .desktop-ssh-entry strong {
+  font-size: calc(12px * var(--text-scale));
+}
+:root .desktop-ssh-entry p {
+  font-size: calc(10px * var(--text-scale));
+}
+:root .auth-page.auth-business-page:not(.auth-business-success) {
+  display: block;
+  background: var(--surface);
+  padding: 0;
+  min-height: 100dvh;
+}
+:root .auth-business-page:not(.auth-business-success) .auth-business-header {
+  position: absolute;
+  top: 22px;
+  right: 30px;
+  z-index: 2;
+  padding: 0;
+  width: auto;
+  gap: 14px;
+}
+:root
+  .auth-business-page:not(.auth-business-success)
+  .auth-business-header
+  > .brand,
+:root .auth-business-page:not(.auth-business-success) .auth-back {
+  display: none;
+}
+:root
+  .auth-business-page:not(.auth-business-success)
+  .auth-business-header
+  .desktop-server-button {
+  border: 0;
+  background: transparent;
+  font-size: calc(10px * var(--text-scale));
+  font-weight: 400;
+  min-height: 32px;
+  box-shadow: none;
+  padding: 6px 9px;
+}
+:root .auth-business-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  align-items: stretch;
+}
+:root .auth-business-layout > .auth-card {
+  align-self: center;
+  width: calc(100% - 110px);
+  max-width: 390px;
+  margin: 70px auto;
+  padding: 36px 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+}
+:root .auth-business-page .auth-tagline {
+  font-size: calc(8px * var(--text-scale));
+  letter-spacing: 1.7px;
+  color: var(--primary);
+  margin: 0 0 18px;
+}
+:root .auth-business-page .auth-heading h1 {
+  font-size: calc(29px * var(--text-scale));
+  letter-spacing: -1.1px;
+  line-height: 1.35;
+  margin: 0 0 13px;
+  font-weight: 600;
+}
+:root .auth-business-page .auth-heading p {
+  font-size: calc(12px * var(--text-scale));
+  color: var(--muted);
+  line-height: 1.8;
+}
+:root .auth-business-page .field {
+  font-size: calc(11px * var(--text-scale));
+  gap: 9px;
+  margin-bottom: 19px;
+}
+:root .auth-business-page .field input {
+  min-height: 41px;
+  padding: 10px 12px;
+  font-size: calc(12px * var(--text-scale));
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.reference-auth-tabs {
+  display: flex;
+  gap: 25px;
+  border-bottom: 1px solid var(--border);
+  margin: 27px 0;
+}
+.reference-auth-tabs a {
+  padding-bottom: 11px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  text-decoration: none;
+}
+.reference-auth-tabs a[aria-current] {
+  color: var(--primary);
+  font-weight: 600;
+  border-color: var(--primary);
+}
+:root .auth-business-page .auth-footer,
+:root .auth-business-page .auth-switch {
+  display: none;
+}
+:root .auth-business-page .auth-invitation-note {
+  font-size: calc(9px * var(--text-scale));
+  line-height: 1.8;
+  margin-top: 22px;
+}
+/* SSH keeps the real host/plan/ten-phase protocol, with the reference visual hierarchy. */
+:root .desktop-foundation-installing:has(> .reference-welcome) {
+  grid-template-columns: minmax(330px, 40%) minmax(0, 1fr);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+:root .desktop-foundation-installing > .reference-welcome {
+  height: 100%;
+  min-height: 0;
+  padding: 35px clamp(30px, 3.7vw, 58px) 28px;
+}
+:root
+  .desktop-foundation-installing:has(> .reference-welcome)
+  > .desktop-foundation-card {
+  align-self: stretch;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px clamp(32px, 4.6vw, 72px) 20px;
+}
+:root .desktop-ssh-installer {
+  width: 100%;
+  max-width: 620px;
+  margin: auto;
+  gap: 22px;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.8;
+}
+:root .desktop-ssh-installer .desktop-ssh-back {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 8px 0;
+  color: var(--primary);
+  min-height: 36px;
+  font-size: calc(12px * var(--text-scale));
+}
+:root .desktop-ssh-heading {
+  display: block;
+}
+.desktop-ssh-heading .desktop-ssh-title-icon {
+  display: none;
+}
+:root .desktop-ssh-installer h1 {
+  font-size: calc(33px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -1.2px;
+}
+:root .desktop-ssh-installer .desktop-foundation-description {
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.8;
+  max-width: 550px;
+  margin-top: 15px;
+}
+:root .desktop-ssh-steps {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  gap: 7px;
+}
+:root .desktop-ssh-steps li {
+  position: relative;
+  padding: 15px 0 0;
+  border-radius: 0;
+  gap: 5px;
+  background: transparent;
+  box-shadow: none;
+  font-size: calc(9px * var(--text-scale));
+  line-height: 1.4;
+}
+.desktop-ssh-steps li:before {
+  content: "";
+  height: 3px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  border-radius: 3px;
+  background: var(--border);
+}
+.desktop-ssh-steps li[aria-current]:before,
+.desktop-ssh-steps li.is-complete:before {
+  background: var(--primary);
+}
+:root .desktop-ssh-steps li > span {
+  width: 17px;
+  height: 17px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font-size: calc(8px * var(--text-scale));
+}
+:root .desktop-ssh-form label {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+}
+:root .desktop-ssh-form :is(input:not([type="checkbox"]), select, textarea) {
+  min-height: 46px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: calc(13px * var(--text-scale));
+  font-weight: 400;
+}
+:root .desktop-ssh-progress-summary {
+  padding: 18px 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+:root .desktop-ssh-progress-top h2 {
+  font-size: calc(18px * var(--text-scale));
+}
+:root .desktop-ssh-progress-percent strong {
+  font-size: calc(28px * var(--text-scale));
+  font-weight: 500;
+}
+:root .desktop-ssh-progress-bar {
+  height: 5px;
+}
+:root .desktop-ssh-phases {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+:root .desktop-ssh-phases li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  min-height: 54px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.desktop-ssh-phases li:not(:last-child):before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 40px;
+  bottom: -10px;
+  width: 1px;
+  background: var(--border);
+}
+:root .desktop-ssh-phases li > span {
+  position: relative;
+  z-index: 1;
+  width: 29px;
+  height: 29px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: calc(10px * var(--text-scale));
+}
+:root .desktop-ssh-phases li strong {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+}
+:root .desktop-ssh-phases li.is-current strong {
+  font-weight: 600;
+  color: var(--text);
+}
+:root .desktop-ssh-phases li small {
+  font-size: calc(10px * var(--text-scale));
+}
+:root .desktop-ssh-phases li.is-complete > span {
+  background: var(--success-soft);
+  color: var(--success);
+}
+:root .desktop-ssh-phases li.is-current > span {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+@media (min-width: 1600px) {
+  :root .auth-business-layout > .auth-card {
+    max-width: 420px;
+  }
+  :root
+    .desktop-foundation:has(> .reference-welcome)
+    > .desktop-foundation-card {
+    padding-inline: 80px;
+  }
+}
+@media (max-width: 767px) {
+  :root .auth-business-layout,
+  :root .desktop-foundation:has(> .reference-welcome) {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
+  }
+  :root .auth-business-layout > .auth-card {
+    width: calc(100% - 40px);
+    margin: 75px auto 25px;
+  }
+  :root
+    .desktop-foundation:has(> .reference-welcome)
+    > .desktop-foundation-card {
+    padding: 32px 20px;
+  }
+  :root .desktop-foundation-installing > .desktop-foundation-card {
+    overflow: visible;
+  }
+  :root .desktop-ssh-installer h1 {
+    font-size: calc(28px * var(--text-scale));
+  }
+}
+/* Neutral focus is a deliberate user preference; structural panels never gain a ring. */
+:is(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select
+):focus {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--border-strong);
+}
+:is(main, section, form, [role="tabpanel"])[tabindex]:focus {
+  outline: none;
+}
+@media (min-width: 1600px) {
+  :root {
+    --sidebar-width: 238px;
+    --workspace-gutter: 50px;
+  }
+  .workspace-main {
+    padding-block: 36px;
+  }
+  .reference-settings-page .account-dialog-panel {
+    padding: 37px;
+    max-width: 1040px;
+  }
+}
+@media (min-width: 951px) and (max-width: 1180px) {
+  :root {
+    --sidebar-width: 188px;
+    --workspace-gutter: 24px;
+  }
+  .app-shell .sidebar {
+    padding-inline: 10px;
+  }
+  .app-shell .sidebar-head {
+    padding-left: 6px;
+  }
+  .workspace-brand,
+  .workspace-brand > span {
+    font-size: 20px;
+  }
+  .workspace-top {
+    padding-inline: 24px;
+  }
+  .workspace-main {
+    padding-block: 25px;
+  }
+  .workspace-search-trigger {
+    width: 240px;
+  }
+  .app-shell .sidebar .nav-item {
+    justify-content: flex-start;
+  }
+  .sidebar .nav-label-text,
+  .sidebar .profile > div,
+  .sidebar-caption,
+  .sidebar-folders {
+    display: initial;
+  }
+  .sidebar .brand > span:last-child,
+  .sidebar .nav-label-text,
+  .sidebar .profile > div {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  .sidebar .sidebar-folders {
+    display: flex;
+    flex-direction: column;
+  }
+  .app-shell .sidebar-personal-caption {
+    display: flex;
+  }
+  .workspace-brand span {
+    display: inline;
+  }
+  .reference-settings-page .account-dialog-layout {
+    grid-template-columns: 175px minmax(0, 1fr);
+    gap: 18px;
+  }
+  .reference-settings-page .account-dialog-panel {
+    padding: 24px;
+  }
+}
+@media (min-width: 768px) and (max-width: 950px) {
+  :root {
+    --sidebar-width: 72px;
+    --workspace-gutter: 22px;
+    --workspace-shell-height: 100px;
+  }
+  .app-shell .sidebar {
+    padding: 25px 8px 14px;
+    align-items: center;
+  }
+  .app-shell .sidebar-head {
+    padding: 0 0 25px;
+  }
+  .app-shell .sidebar .nav-item {
+    width: 44px;
+    padding: 13px;
+    margin-bottom: 7px;
+    justify-content: center;
+  }
+  .sidebar-caption,
+  .sidebar-personal-caption,
+  .sidebar-folders,
+  .sidebar-server-status,
+  .sidebar .profile > div,
+  .sidebar .profile-chevron,
+  .sidebar .nav-label-text {
+    display: none !important;
+  }
+  .app-shell .sidebar-service-nav {
+    width: 44px;
+  }
+  .sidebar .profile.profile-button {
+    justify-content: center;
+    padding: 15px 0 0;
+  }
+  .workspace-top {
+    min-height: 62px;
+    padding: 0 20px;
+  }
+  .chrome-workspace {
+    display: none;
+  }
+  .reference-settings-page .account-dialog-layout {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .reference-settings-page .account-dialog-panel {
+    padding: 20px;
+  }
+  .reference-profile-form {
+    grid-template-columns: 1fr;
+  }
+  .reference-profile-form > .field {
+    grid-row: auto;
+  }
+}
+@media (max-width: 767px) {
+  .workspace-main {
+    padding: 24px 16px calc(88px + env(safe-area-inset-bottom));
+  }
+  .workspace-search-trigger {
+    min-height: 34px;
+    padding: 8px;
+    width: 34px;
+  }
+  .reference-settings-page .account-dialog-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .reference-settings-page .account-dialog-panel {
+    min-height: 0;
+    padding: 20px;
+  }
+  .reference-profile-form {
+    display: block;
+  }
+  .reference-settings-page .account-dialog-tabs button {
+    min-height: 48px;
+  }
+  .reference-settings-page
+    .account-dialog-layout.account-mobile-section
+    > .account-current-identity {
+    display: none;
+  }
+}

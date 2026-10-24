@@ -190,6 +190,56 @@ test("invalid server metadata is rejected before a profile is saved", async (t) 
   assert.equal(c.broker.serversState().items.length, 2);
 });
 
+test("official 0.4.0 source and stable releases pass the same HTTPS/API checks and can be selected and authenticated", async (t) => {
+  const c = await context(t);
+  for (const version of ["v0.4.0-source.a7d037ea9c22", "0.4.0", "v0.4.0", "v1.2.3"]) {
+    const server = await createFixture({ name: `supported-${version}`, certificates, version });
+    t.after(() => server.close());
+    const checked = await c.broker.probeServer(server.origin);
+    assert.equal(checked.version, version); assert.equal(checked.apiVersion, 1); assert.equal(checked.authRequired, true);
+    assert.deepEqual(server.requests.map(entry => entry.path), ["/version", "/api/v1/auth/me", "/api/v1/capabilities"]);
+    for (const request of server.requests) assert.equal(request.headers.authorization, undefined);
+    await c.broker.addServer({ origin: server.origin });
+    const saved = c.broker.serversState().items.find(item => item.origin === server.origin);
+    assert.equal(saved.version, version);
+    assert.equal(saved.label, new URL(server.origin).host, 'An origin-only connection automatically uses the server host as its label');
+    await c.broker.selectServer(saved.id);
+    const marker = await c.login(server);
+    assert.equal((await c.http("GET", "/auth/me", undefined, marker)).body.user.id, server.users[0].id);
+  }
+});
+
+test("0.4.0 compatibility does not admit unsupported versions or bypass API authentication and TLS validation", async (t) => {
+  const c = await context(t);
+  for (const version of ["0.3.3", "0.4.1", "0.40.0", "2.0.0", "v0.4.0garbage", "v0.4.0-", "0.4.0/invalid", "1.0"]) {
+    const server = await createFixture({ name: "unsupported", certificates, version });
+    try {
+      await assert.rejects(c.broker.addServer({ origin: server.origin }), /incompatible_server/);
+      assert.deepEqual(server.requests.map(entry => entry.path), ["/version"]);
+    } finally { await server.close(); }
+  }
+  const supported = await createFixture({ name: "supported-api-check", certificates, version: "v0.4.0-source.a7d037ea9c22" });
+  t.after(() => supported.close());
+  for (const pathname of ["/api/v1/auth/me", "/api/v1/capabilities"]) {
+    // Keep a real trusted HTTPS response, but expose an incompatible public API
+    // status to prove the new product version does not skip either auth probe.
+    const strict = new MeetSpaceBroker({ ...c.options, transport: { request: async input => {
+      const response = await c.options.transport.request(input);
+      return new URL(input.url).pathname === pathname ? { ...response, status: 200 } : response;
+    } } });
+    try {
+      await strict.initialize();
+      await assert.rejects(strict.addServer({ origin: supported.origin }), /incompatible_server/);
+      assert.equal(strict.serversState().items.length, 2);
+    } finally { strict.dispose(); }
+  }
+  const untrusted = new MeetSpaceBroker({ ...c.options, transport: createNodeHttpsTransport({ timeoutMs: 2000 }) });
+  try { await assert.rejects(untrusted.probeServer(supported.origin), /tls_error/); }
+  finally { untrusted.dispose(); }
+  await assert.rejects(c.broker.probeServer(supported.origin.replace("https:", "http:")), /invalid_server/);
+  assert.equal(c.broker.serversState().items.length, 2);
+});
+
 test("guest join intercepts credentials, resumes only the current guest, and never persists or refreshes its access token", async (t) => {
   const c = await context(t);
   const guestPath = `/conference-invites/${INVITE}/guest`;

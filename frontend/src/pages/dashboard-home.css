@@ -113,7 +113,7 @@
 }
 @media (hover: hover) {
   .home-action-card:hover {
-    border-color: var(--primary);
+    border-color: var(--border-strong);
     box-shadow: var(--shadow-float);
     transform: translateY(-2px);
   }

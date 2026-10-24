@@ -83,7 +83,7 @@
   font-weight: 600;
 }
 .account-dialog-tabs button:focus-visible {
-  outline: 3px solid var(--primary);
+  outline: 3px solid var(--focus);
   outline-offset: -3px;
 }
 .account-settings-modal .account-dialog-panel {

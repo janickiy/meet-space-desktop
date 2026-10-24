@@ -45,6 +45,7 @@ export class SshInstallerController {
   private readonly pins = new Map<string, SshHostKey>();
   private readonly transport: SshTransport;
   private readonly bundle: InstallerBundle;
+  private recoveryBundle?: InstallerBundle;
   private credentials?: OwnedCredentials;
   private observed?: SshHostKey;
   private plan?: InstallPlan;
@@ -79,9 +80,12 @@ export class SshInstallerController {
       const content = await readFile(this.ticketFile, "utf8");
       const saved = jsonObject(content);
       if (saved.schema !== 1) throw new Error();
-      const endpoint = validateEndpoint(saved.endpoint), plan = this.bundle.parsePlan(objectInput(saved.plan), { allowExpired: true });
+      const rawPlan = objectInput(saved.plan);
+      const recoveryBundle = InstallerBundle.forSavedPlan(this.options.bundleRoot, rawPlan);
+      const endpoint = validateEndpoint(saved.endpoint), plan = recoveryBundle.parsePlan(rawPlan, { allowExpired: true });
       const ticket: InstallTicket = { endpoint, plan, jobId: saved.jobId as string, planHash: saved.planHash as string, hostFingerprint: saved.hostFingerprint as string };
       assertTicketBinding(ticket);
+      this.recoveryBundle = recoveryBundle;
       this.ticket = ticket; this.plan = plan; this.current.endpoint = endpoint; this.current.phase = "planned";
       this.publishPlan(); this.publishTicket();
       const pin = this.pins.get(pinId(endpoint));
@@ -113,7 +117,7 @@ export class SshInstallerController {
     try {
       if (action === "forget") {
         if (input.confirm !== true) throw new SshError("CONFIRMATION", "Подтвердите удаление локальной карточки задания.");
-        await rm(this.ticketFile, { force: true }); if (generation !== this.generation) return this.state(); this.ticket = undefined; this.plan = undefined; this.clearCredentials();
+        await rm(this.ticketFile, { force: true }); if (generation !== this.generation) return this.state(); this.ticket = undefined; this.plan = undefined; this.recoveryBundle = undefined; this.clearCredentials();
         this.current = { busy: true, phase: "idle", hasCredentials: false }; this.observed = undefined;
       } else if (action === "discover") {
         const endpoint = validateEndpoint(input.endpoint);
@@ -149,10 +153,28 @@ export class SshInstallerController {
           const options = installOptions(input.options);
           if (!this.current.preflight || this.current.preflight.domain !== options.domain || !this.current.preflight.ready) throw new SshError("PREFLIGHT_REQUIRED", "Сначала выполните проверку сервера и устраните блокирующие замечания.");
           if (this.ticket) throw new SshError("PENDING_JOB", "Сохранённое задание доступно через проверку состояния и продолжение. Для нового плана сначала удалите локальную карточку.");
-          const result = await this.request("plan", { options }, endpoint, pin);
+          let result: JsonObject, selectedBundle = this.bundle;
+          try {
+            result = await this.request("plan", { options }, endpoint, pin);
+          } catch (error) {
+            if (generation !== this.generation) return this.state();
+            if (!(error instanceof InstallFailure) || !["PLAN_CHANGED", "EXISTING_INSTALLATION"].includes(error.code)) throw error;
+            // A different computer may have no local recovery ticket. Ask only
+            // the one bundled legacy recipe to identify its existing job; this
+            // read-only fallback must never create a fresh legacy installation.
+            selectedBundle = InstallerBundle.legacyRecovery(this.options.bundleRoot);
+            result = await this.request("plan", { options }, endpoint, pin, selectedBundle);
+            if (generation !== this.generation) return this.state();
+            const recovered = selectedBundle.parsePlan(result, { expectedOptions: options });
+            if (!recovered.existingJobId || !recovered.existingPlanHash) throw new InstallFailure("PLAN_INVALID");
+          }
           if (generation !== this.generation) return this.state();
-          this.plan = this.bundle.parsePlan(result, { expectedOptions: options }); this.publishPlan(); this.current.phase = "planned";
-          if (this.plan.existingJobId) { this.ticket = this.createTicket(endpoint, pin); await this.saveTicket(); this.publishTicket(); }
+          this.plan = selectedBundle.parsePlan(result, { expectedOptions: options }); this.publishPlan(); this.current.phase = "planned";
+          if (this.plan.existingJobId) {
+            this.recoveryBundle = selectedBundle; this.ticket = this.createTicket(endpoint, pin); await this.saveTicket();
+            if (generation !== this.generation) return this.state();
+            this.publishTicket();
+          }
         } else if (action === "apply") {
           if (this.ticket) throw new SshError("PENDING_JOB", "Задание уже сохранено. Проверьте состояние и используйте продолжение вместо повторного запуска.");
           if (!this.plan || input.confirmedPlanHash !== this.plan.hash || input.acceptAcmeTerms !== true || (this.plan.installDocker && input.confirmDockerInstall !== true)) throw new SshError("CONFIRMATION", "Подтвердите показанный план, условия ACME и необходимые изменения Docker.");
@@ -198,8 +220,9 @@ export class SshInstallerController {
     if (!pin || !this.current.identity?.trusted || pin.fingerprint !== this.current.identity.fingerprint) throw new SshError("UNTRUSTED_HOST", "Сначала проверьте и подтвердите SSH-ключ сервера.");
     return pin;
   }
-  private async request(action: InstallerAction, data: JsonObject, endpoint: SshEndpoint, pin: SshHostKey): Promise<JsonObject> {
-    const payload = this.bundle.payload(action, data);
+  private async request(action: InstallerAction, data: JsonObject, endpoint: SshEndpoint, pin: SshHostKey, readOnlyPlanBundle?: InstallerBundle): Promise<JsonObject> {
+    const bundle = action === "plan" && readOnlyPlanBundle ? readOnlyPlanBundle : ["status", "cancel", "resume"].includes(action) ? this.recoveryBundle ?? this.bundle : this.bundle;
+    const payload = bundle.payload(action, data);
     try { return parseInstallerReply(await this.transport.installer(endpoint, this.credentials!, pin, payload, this.operation!.signal, action === "plan" ? 180_000 : 60_000)); }
     finally { payload.fill(0); }
   }

@@ -15,10 +15,11 @@ import {
 import { RealtimePanel } from "../RealtimePanel";
 import { RecordingNotice } from "../RecordingNotice";
 import { RecordingPanel } from "../RecordingPanel";
-import { ConferenceInviteContent } from "../ConferenceInvitations";
+import { ConferenceInvitationDialog } from "../ConferenceInvitations";
 import { Button, ErrorNotice, Modal } from "../ui";
 import { MeetingClock } from "./MeetingClock";
 import { ConferenceRoomSidebar } from "./ConferenceRoomSidebar";
+import { ConferenceControlButton } from "./ConferenceControlButton";
 import type { ActiveConferenceViewProps } from "./types";
 import { initials } from "../../utils";
 
@@ -59,7 +60,6 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
     panelTrigger,
     utility,
     setUtility,
-    invitationBusy,
     setInvitationBusy,
     confirm,
     setConfirm,
@@ -72,7 +72,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
         : "Идёт запись";
   return (
     <div
-      className={`conference-room-page ${panelOpen ? "room-panel-open" : "room-panel-closed"}`}
+      className={`conference-room-page call-reference-room ${panelOpen ? "room-panel-open" : "room-panel-closed"}`}
     >
       <header className="room-header">
         <Link
@@ -196,6 +196,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
       <section className="conference-stage" aria-label="Активная встреча">
         <div className="conference-stage-main">
           <RealtimePanel
+            compactControls
             conferenceId={id}
             membership={membership}
             live={live}
@@ -203,44 +204,39 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
             controlsTarget={controlsTarget}
             reconnectTarget={reconnectTarget}
             endControls={
-              <Button
-                variant="danger"
+              <ConferenceControlButton
+                danger
                 busy={mutation.isPending}
                 aria-label="Покинуть конференцию"
                 onClick={() => setConfirm("leave")}
-              >
-                <LogOut size={20} />
-                Выйти
-              </Button>
+                icon={<LogOut size={24} />}
+                label="Выйти"
+              />
             }
             controls={
               <>
-                <Button
-                  variant="secondary"
+                <ConferenceControlButton
                   className="room-participants-control"
                   aria-expanded={panelOpen && stagePanel === "participants"}
                   onClick={(event) => {
                     panelTrigger.current = event.currentTarget;
                     setStagePanel("participants");
-                    setPanelOpen(true);
+                    setPanelOpen(!(panelOpen && stagePanel === "participants"));
                   }}
-                >
-                  <Users size={18} />
-                  Участники
-                </Button>
-                <Button
-                  variant="secondary"
+                  icon={<Users size={24} />}
+                  label="Участники"
+                />
+                <ConferenceControlButton
                   aria-keyshortcuts="C"
                   aria-expanded={panelOpen && stagePanel === "chat"}
                   onClick={(event) => {
                     panelTrigger.current = event.currentTarget;
                     setStagePanel("chat");
-                    setPanelOpen(true);
+                    setPanelOpen(!(panelOpen && stagePanel === "chat"));
                   }}
-                >
-                  <MessageCircle size={18} />
-                  Чат
-                </Button>
+                  icon={<MessageCircle size={24} />}
+                  label="Чат"
+                />
               </>
             }
           />
@@ -289,45 +285,35 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           </div>
         )}
       </footer>
-      {utility && (utility !== "recording" || recordingAccess) && (
+      {utility === "invite" && (
+        <ConferenceInvitationDialog
+          conference={conference}
+          canInvite={canInvite}
+          onClose={() => setUtility(null)}
+          onBusyChange={setInvitationBusy}
+        />
+      )}
+      {utility === "recording" && recordingAccess && (
         <Modal
-          title={
-            utility === "recording"
-              ? "Записи конференции"
-              : "Пригласить участников"
-          }
-          onClose={() => {
-            if (!invitationBusy) setUtility(null);
-          }}
-          returnFocus={
-            utility === "recording"
-              ? () =>
-                  recordingOpener.current?.isConnected
-                    ? recordingOpener.current
-                    : document.querySelector<HTMLButtonElement>(
-                        ".room-header-stop-recording, .room-header-action",
-                      )
-              : undefined
+          title="Записи конференции"
+          onClose={() => setUtility(null)}
+          returnFocus={() =>
+            recordingOpener.current?.isConnected
+              ? recordingOpener.current
+              : document.querySelector<HTMLButtonElement>(
+                  ".room-header-stop-recording, .room-header-action",
+                )
           }
         >
-          {utility === "recording" ? (
-            <RecordingPanel
-              conference={conference}
-              membership={membership}
-              showHistory={false}
-              onStarted={() => {
-                // После запуска возвращаем фокус к новой кнопке остановки записи.
-                recordingOpener.current = null;
-                setUtility(null);
-              }}
-            />
-          ) : (
-            <ConferenceInviteContent
-              conference={conference}
-              canInvite={canInvite}
-              onBusyChange={setInvitationBusy}
-            />
-          )}
+          <RecordingPanel
+            conference={conference}
+            membership={membership}
+            showHistory={false}
+            onStarted={() => {
+              recordingOpener.current = null;
+              setUtility(null);
+            }}
+          />
         </Modal>
       )}
       {confirm && (

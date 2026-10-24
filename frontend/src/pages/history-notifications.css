@@ -12,7 +12,7 @@
 }
 
 .history-tabs button:focus-visible {
-  outline: 3px solid var(--primary);
+  outline: 3px solid var(--focus);
   outline-offset: -3px;
 }
 
@@ -148,8 +148,7 @@
   min-height: 42px;
 }
 .history-search:focus-within {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  border-color: var(--border-strong);
 }
 .history-library > .field-hint {
   margin: 16px 0 22px;

@@ -50,7 +50,7 @@
 .device-select:focus-visible,
 .device-test:focus-visible,
 .device-output-picker:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 .device-select:disabled {
@@ -138,7 +138,7 @@
   transform: translateX(18px);
 }
 .device-toggle-row input:focus-visible + .device-switch {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus);
   outline-offset: 3px;
 }
 .device-toggle-row input:disabled + .device-switch {

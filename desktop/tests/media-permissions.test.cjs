@@ -50,6 +50,30 @@ test("camera/microphone permissions require the owned trusted main document", ()
   assert.equal(f.controller.request(f.contents, "media", details), false);
 });
 
+test("invitation copying grants only sanitized writes from the owned main document", () => {
+  const f = fixture();
+  const permission = "clipboard-sanitized-write";
+  const details = { isMainFrame: true, requestingUrl: `${origin}/conferences/test`, securityOrigin: origin };
+  assert.equal(f.controller.request(f.contents, permission, details), true);
+  assert.equal(f.controller.check(f.contents, permission, origin, details), true);
+  for (const denied of ["clipboard-read", "deprecated-sync-clipboard-read", "clipboard-write", "unknown"]) {
+    assert.equal(f.controller.request(f.contents, denied, details), false);
+    assert.equal(f.controller.check(f.contents, denied, origin, details), false);
+  }
+  for (const patch of [{ isMainFrame: false }, { requestingUrl: "https://evil.invalid/" }, { securityOrigin: "app://evil" }]) {
+    assert.equal(f.controller.request(f.contents, permission, { ...details, ...patch }), false);
+    assert.equal(f.controller.check(f.contents, permission, origin, { ...details, ...patch }), false);
+  }
+  assert.equal(f.controller.check(f.contents, permission, "https://evil.invalid", details), false);
+  assert.equal(f.controller.check(f.contents, permission, origin, { ...details, embeddingOrigin: "https://evil.invalid" }), false);
+  const foreign = { isDestroyed: () => false };
+  assert.equal(f.controller.request(foreign, permission, details), false);
+  assert.equal(f.controller.check(foreign, permission, origin, details), false);
+  f.setOwner(null);
+  assert.equal(f.controller.request(f.contents, permission, details), false);
+  assert.equal(f.controller.check(f.contents, permission, origin, details), false);
+});
+
 test("development permission is restricted to the explicit loopback Vite origin", () => {
   const f = fixture({ development: true });
   f.frame.url = "http://127.0.0.1:5173/";

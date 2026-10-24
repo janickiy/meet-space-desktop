@@ -169,8 +169,7 @@
   opacity: 0.85;
 }
 .auth-business-page .auth-card .field input:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: none;
   box-shadow: none;
 }
 .auth-business-page .auth-card .password-input input {
@@ -286,10 +285,6 @@
   font-size: calc(11px * var(--text-scale));
   line-height: 1.6;
 }
-.auth-business-page .auth-footer .copyright {
-  margin: 0;
-  font-size: inherit;
-}
 
 /* Фотография декоративна; подписи остаются настоящим текстом страницы. */
 .auth-team-photo {
@@ -341,9 +336,6 @@
   color: var(--muted);
   font-size: var(--text-base);
   line-height: 1.7;
-}
-.auth-business-success .auth-footer {
-  justify-content: center;
 }
 @media (max-width: 1199px) {
   .auth-business-layout {

@@ -135,10 +135,7 @@ function FolderList() {
               </span>
               <span className="folder-item-copy">
                 <strong>{folder.name}</strong>
-                <small>
-                  {folder.conversationCount} чатов · {folder.conferenceCount}{" "}
-                  встреч
-                </small>
+                <small>{folder.itemCount} элементов</small>
               </span>
               <span
                 className="folder-count"
@@ -149,27 +146,41 @@ function FolderList() {
             </Link>
             <div className="folder-card-footer">
               <span>Только для вас</span>
+              <div
+                className="folder-order-actions"
+                aria-label={`Порядок папки: ${folder.name}`}
+              >
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Переместить выше: ${folder.name}`}
+                  disabled={index === 0 || order.isPending}
+                  onClick={() => move(index, -1)}
+                >
+                  <ArrowUp size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Переместить ниже: ${folder.name}`}
+                  disabled={index === items.length - 1 || order.isPending}
+                  onClick={() => move(index, 1)}
+                >
+                  <ArrowDown size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Переименовать: ${folder.name}`}
+                  disabled={order.isPending}
+                  onClick={() => setManage({ mode: "rename", folder })}
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                </button>
+              </div>
               <ItemActions
                 label={`Действия с папкой: ${folder.name}`}
                 actions={[
-                  {
-                    label: "Переименовать",
-                    icon: <Pencil size={18} aria-hidden="true" />,
-                    run: () => setManage({ mode: "rename", folder }),
-                    disabled: order.isPending,
-                  },
-                  {
-                    label: "Переместить выше",
-                    icon: <ArrowUp size={18} aria-hidden="true" />,
-                    run: () => move(index, -1),
-                    disabled: index === 0 || order.isPending,
-                  },
-                  {
-                    label: "Переместить ниже",
-                    icon: <ArrowDown size={18} aria-hidden="true" />,
-                    run: () => move(index, 1),
-                    disabled: index === items.length - 1 || order.isPending,
-                  },
                   {
                     label: "Удалить папку",
                     icon: <Trash2 size={18} aria-hidden="true" />,

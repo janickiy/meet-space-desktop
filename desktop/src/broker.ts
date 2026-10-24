@@ -250,7 +250,9 @@ export class MeetSpaceBroker {
     try {
       const response = await this.request(origin, "/version", operation);
       const version = decodeJSON(response);
-      if (!successful(response.status) || !record(version) || typeof version.version !== "string" || !/^v?1\.\d+\.\d+(?:[-+.][A-Za-z0-9_.+-]+)?$/.test(version.version) || version.version.length > 100 || typeof version.commit !== "string" || !/^[a-f0-9]{7,40}$/.test(version.commit) || typeof version.buildTime !== "string" || !Number.isFinite(Date.parse(version.buildTime))) throw new Error("incompatible_server");
+      // The official 0.4.0 source release implements API v1 too; its product
+      // version must not be mistaken for the API contract's major version.
+      if (!successful(response.status) || !record(version) || typeof version.version !== "string" || !/^v?(?:0\.4\.0|1\.\d+\.\d+)(?:[-+.][A-Za-z0-9_.+-]+)?$/.test(version.version) || version.version.length > 100 || typeof version.commit !== "string" || !/^[a-f0-9]{7,40}$/.test(version.commit) || typeof version.buildTime !== "string" || !Number.isFinite(Date.parse(version.buildTime))) throw new Error("incompatible_server");
       for (const path of [AUTH + "me", "/api/v1/capabilities"]) {
         const probe = await this.request(origin, path, operation);
         const data = decodeJSON(probe);

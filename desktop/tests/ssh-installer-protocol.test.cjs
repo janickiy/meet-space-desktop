@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const {
   InstallerBundle, InstallFailure, sha256, canonicalJson, jsonObject,
   parseInstallerReply, parseInstallStatus, assertTicketBinding,
-  installerBundleNames, installPhases, INSTALLER_COMMAND,
+  installerBundleNames, installPhases, INSTALLER_COMMAND, LEGACY_INSTALLER_RELEASE_SHA256,
 } = require('../dist/ssh/protocol.js');
 
 const directory = path.join(__dirname, '../resources/server-installer/v1');
@@ -18,8 +18,8 @@ const jobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62';
 const fingerprint = 'SHA256:' + Buffer.alloc(32, 7).toString('base64').replace(/=+$/, '');
 const signHash = value => ({ ...value, hash: sha256(canonicalJson(Object.fromEntries(Object.entries(value).filter(([key]) => key !== 'hash')))) });
 
-function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-stable-v1', platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false } = {}) {
-  const manifest = JSON.parse(JSON.stringify(bundle.manifest));
+function fixture({ sourceLock = bundle.manifest.sourcePolicy === 'github-latest-stable-v1', platform = '24.04', arch = 'arm64', installed = false, compose = false, buildx = false, selectedBundle = bundle } = {}) {
+  const manifest = JSON.parse(JSON.stringify(selectedBundle.manifest));
   const lock = {
     repository: 'janickiy/meet-space', channel: 'release', ref: 'v1.2.3', version: 'v1.2.3',
     commit: 'a'.repeat(40), builtAt: '2026-10-18T00:00:00Z',
@@ -57,10 +57,10 @@ function status(t = ticket()) {
 }
 const failure = (fn, code) => assert.throws(fn, error => error instanceof InstallFailure && error.code === code);
 
-test('production bundle retains upstream bytes/provenance and verifies pinned RSA trust', () => {
+test('production bundle verifies pinned RSA trust and records the signed UTC metadata correction', () => {
   const provenance = JSON.parse(fs.readFileSync(path.join(directory, '../provenance.json')));
   assert.equal(provenance.commit, '9789b64ecc28fe265d4a059d36912db39ab0c2eb');
-  assert.equal(provenance.modified, false);
+  assert.equal(provenance.modified, true);
   assert.deepEqual(fs.readdirSync(directory).sort(), [...installerBundleNames].sort());
   for (const [name, data] of Object.entries(files())) {
     assert.equal(sha256(data), provenance.files[name].sha256);
@@ -70,6 +70,45 @@ test('production bundle retains upstream bytes/provenance and verifies pinned RS
   assert.equal(InstallerBundle.fromDirectory(directory).manifest.profile, 'source-v1');
   assert.equal(Object.isFrozen(bundle.manifest), true);
   assert.equal(Object.isFrozen(bundle.manifest.sourceFiles), true);
+  const legacy = InstallerBundle.fromDirectory(path.join(directory, '..', 'legacy', LEGACY_INSTALLER_RELEASE_SHA256));
+  assert.match(bundle.manifest.builtAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+  assert.equal(Date.parse(bundle.manifest.builtAt), Date.parse(legacy.manifest.builtAt));
+  assert.equal(canonicalJson(bundle.manifest), canonicalJson({ ...legacy.manifest, builtAt: bundle.manifest.builtAt }));
+  assert.equal(provenance.modifications.at(-1).originalReleaseSha256, sha256(canonicalJson(legacy.manifest)));
+});
+
+test('saved recovery selects the exact signed legacy recipe without rewriting the plan', () => {
+  const legacy = InstallerBundle.fromDirectory(path.join(directory, '..', 'legacy', LEGACY_INSTALLER_RELEASE_SHA256));
+  const originalPlan = fixture({ selectedBundle: legacy });
+  const originalBytes = canonicalJson(originalPlan);
+  failure(() => bundle.parsePlan(originalPlan, { allowExpired: true }), 'PLAN_INVALID');
+  const selected = InstallerBundle.forSavedPlan(directory, originalPlan);
+  assert.equal(sha256(canonicalJson(selected.manifest)), LEGACY_INSTALLER_RELEASE_SHA256);
+  assert.equal(selected.parsePlan(originalPlan, { allowExpired: true }).hash, originalPlan.hash);
+  assert.equal(canonicalJson(originalPlan), originalBytes);
+  assert.deepEqual(InstallerBundle.forSavedPlan(directory, fixture()).manifest, bundle.manifest);
+  for (const releaseSha256 of ['../v1', 'f'.repeat(64), undefined]) {
+    failure(() => InstallerBundle.forSavedPlan(directory, signHash({ ...originalPlan, releaseSha256: releaseSha256 ?? null })), 'PLAN_INVALID');
+  }
+  failure(() => InstallerBundle.forSavedPlan(directory, { ...originalPlan, options: { ...options, domain: 'changed.example.com' } }), 'PLAN_INVALID');
+});
+
+test('missing, corrupted or substituted recovery bundles fail closed', t => {
+  const root = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'meetspace-recovery-bundles-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const current = path.join(root, 'v1'), legacyPath = path.join(root, 'legacy', LEGACY_INSTALLER_RELEASE_SHA256);
+  fs.cpSync(directory, current, { recursive: true });
+  const sourceLegacy = path.join(directory, '..', 'legacy', LEGACY_INSTALLER_RELEASE_SHA256);
+  const plan = fixture({ selectedBundle: InstallerBundle.fromDirectory(sourceLegacy) });
+  failure(() => InstallerBundle.forSavedPlan(current, plan), 'RELEASE_INVALID');
+  fs.cpSync(directory, legacyPath, { recursive: true });
+  failure(() => InstallerBundle.forSavedPlan(current, plan), 'RELEASE_INVALID');
+  fs.cpSync(sourceLegacy, legacyPath, { recursive: true });
+  fs.appendFileSync(path.join(legacyPath, 'runner.py'), '\n');
+  failure(() => InstallerBundle.forSavedPlan(current, plan), 'RELEASE_INVALID');
+  fs.cpSync(sourceLegacy, legacyPath, { recursive: true });
+  fs.appendFileSync(path.join(current, 'release.json'), '\n');
+  failure(() => InstallerBundle.forSavedPlan(current, plan), 'RELEASE_INVALID');
 });
 
 test('any public bundle substitution, extra file, unsafe size or fake signing key fails closed', () => {

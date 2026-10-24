@@ -44,9 +44,9 @@ import type {
   Participant,
 } from "../types";
 import { formatDate, initials } from "../utils";
-import { ConferenceInviteContent } from "./ConferenceInvitations";
+import { ConferenceInvitationDialog } from "./ConferenceInvitations";
 import { DirectCallButton } from "./DirectCallButton";
-import { Button, CopyLink, ErrorNotice, Loading, Modal } from "./ui";
+import { Button, ErrorNotice, Loading, Modal } from "./ui";
 import "./conference-chat-info.css";
 
 export type ConferenceChatView =
@@ -144,7 +144,17 @@ export function ConferenceChatInfoModal({
     profileBusy ||
     leave.isPending ||
     notifications.isPending;
-  const link = safeRecordingUrl(info?.inviteUrl);
+  if (info && view === "invite")
+    return (
+      <ConferenceInvitationDialog
+        conference={{ ...conference, title: info.title }}
+        canInvite={info.canInvite}
+        onClose={onClose}
+        onBack={() => setView("info")}
+        returnFocus={returnFocus}
+        onBusyChange={setInvitationBusy}
+      />
+    );
 
   return (
     <Modal
@@ -276,24 +286,6 @@ export function ConferenceChatInfoModal({
               Покинуть чат
             </button>
           </div>
-        </>
-      )}
-      {info && view === "invite" && (
-        <>
-          {info.canInvite ? (
-            <ConferenceInviteContent
-              conference={{ ...conference, title: info.title }}
-              canInvite
-              onBusyChange={setInvitationBusy}
-            />
-          ) : (
-            <>
-              <p className="modal-description">
-                Участников добавляет организатор или соорганизатор встречи.
-              </p>
-              {link && <CopyLink value={link} />}
-            </>
-          )}
         </>
       )}
       {info && view === "leave" && (

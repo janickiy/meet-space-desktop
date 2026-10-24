@@ -46,6 +46,8 @@ export class MediaPermissions {
       (details.embeddingOrigin && !isTrustedRendererUrl(details.embeddingOrigin, this.options.development)) ||
       (details.securityOrigin && !isTrustedRendererUrl(details.securityOrigin, this.options.development))) return false;
     if (permission === "media") return ["audio", "video", "unknown"].includes(details.mediaType ?? "unknown");
+    // Copying invitation text needs write-only access; clipboard reads stay denied.
+    if (permission === "clipboard-sanitized-write") return true;
     // Display capture is separately gated on a user gesture and an explicit source choice.
     return permission === "display-capture" || permission === "speaker-selection";
   }
@@ -57,6 +59,7 @@ export class MediaPermissions {
     // Electron 44 asks for `media` with [] before calling the display handler.
     // That handler still requires user activation and an explicit picker choice.
     if (permission === "media") return Array.isArray(details.mediaTypes) && details.mediaTypes.every(type => type === "audio" || type === "video");
+    if (permission === "clipboard-sanitized-write") return true;
     return permission === "display-capture" || permission === "speaker-selection";
   }
 

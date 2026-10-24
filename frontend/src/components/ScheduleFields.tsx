@@ -14,6 +14,7 @@ export function ScheduleFields({
   duration,
   onDuration,
   disabled = false,
+  layout = "standard",
 }: {
   value: string;
   onChange: /**
@@ -34,8 +35,68 @@ export function ScheduleFields({
    * @returns void — значение не возвращается; функция выполняет описанные действия.
    */ (value: string) => void;
   disabled?: boolean;
+  layout?: "standard" | "editor";
 }) {
   const utc = localSchedule(value);
+  if (layout === "editor") {
+    const [date = "", time = ""] = value.split("T");
+    const options = [
+      ...new Set([
+        15,
+        30,
+        45,
+        60,
+        90,
+        120,
+        ...(duration ? [Number(duration)] : []),
+      ]),
+    ].sort((a, b) => a - b);
+    return (
+      <div className="schedule-fields schedule-fields-editor">
+        <div className="meeting-editor-time-grid">
+          <label className="field" htmlFor="scheduled-date">
+            Дата
+            <input
+              id="scheduled-date"
+              type="date"
+              value={date}
+              onChange={(event) => onChange(`${event.target.value}T${time}`)}
+              disabled={disabled}
+            />
+          </label>
+          <label className="field" htmlFor="scheduled-time">
+            Начало
+            <input
+              id="scheduled-time"
+              type="time"
+              value={time}
+              onChange={(event) => onChange(`${date}T${event.target.value}`)}
+              disabled={disabled}
+            />
+          </label>
+          <label className="field" htmlFor="planned-duration">
+            Длительность
+            <select
+              id="planned-duration"
+              value={duration}
+              onChange={(event) => onDuration(event.target.value)}
+              disabled={disabled}
+            >
+              <option value="">Не указана</option>
+              {options.map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes} минут
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="field-hint">
+          Часовой пояс: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="schedule-fields">
       <label className="field" htmlFor="scheduled-at">

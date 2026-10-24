@@ -20,7 +20,11 @@ export function DirectCallButton({
   return (
     <button
       type="button"
-      className={label ? "button button-outline" : "icon-button"}
+      className={
+        label
+          ? "button button-outline direct-call-trigger"
+          : "icon-button direct-call-trigger"
+      }
       aria-label={`Позвонить: ${name}`}
       title={calls.busy ? "У вас уже есть звонок" : `Позвонить: ${name}`}
       disabled={calls.busy}

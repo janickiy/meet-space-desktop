@@ -66,6 +66,7 @@ export function DirectUserInfoModal({
   return (
     <UserInfoModal
       person={conversation.peer}
+      conversationId={conversation.id}
       subtitle="Участник вашей переписки"
       online={presence.online}
       presencePending={presence.isPending}

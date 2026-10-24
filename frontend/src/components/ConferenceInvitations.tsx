@@ -1,42 +1,184 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Mail, Search, X } from "lucide-react";
+import { Check, Copy, Mail, Search, X } from "lucide-react";
 import { api } from "../api";
 import type { Conference, InvitationUser } from "../types";
 import { inviteLink } from "../utils";
-import { Button, CopyLink, ErrorNotice } from "./ui";
+import { qrCodePath } from "../vendor/qr-code.js";
+import { Button, CopyLink, ErrorNotice, Modal } from "./ui";
 import "./conference-invitations.css";
 
 const maxRecipients = 20;
 
-/** Общая форма приглашения используется при создании встречи и внутри комнаты. */
-export function ConferenceInviteContent({
+/** Sharing and server invitations use the same two-step dialog in every meeting entry point. */
+export function ConferenceInvitationDialog({
   conference,
   canInvite,
+  onClose,
+  onBack,
+  returnFocus,
   onBusyChange,
 }: {
   conference: Conference;
   canInvite: boolean;
+  onClose: () => void;
+  onBack?: () => void;
+  returnFocus?: () => HTMLElement | null;
   onBusyChange?: (busy: boolean) => void;
 }) {
+  const [step, setStep] = useState<"share" | "invite">("share");
+  const [busy, setBusy] = useState(false);
+  const content = useRef<HTMLDivElement>(null);
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    content.current?.closest('[role="dialog"]')?.scrollTo(0, 0);
+    content.current
+      ?.querySelector<HTMLElement>(
+        step === "invite" ? "[data-autofocus]" : ".call-share-invite-button",
+      )
+      ?.focus();
+  }, [step]);
+  useEffect(() => {
+    onBusyChange?.(busy);
+    return () => onBusyChange?.(false);
+  }, [busy, onBusyChange]);
+  const link = inviteLink(conference.inviteCode);
+  const invitationText = `Приглашаю на встречу «${conference.title}».\n\nПодключиться к встрече: ${link}`;
   return (
-    <div className="conference-invitations">
-      <p className="modal-description">{conference.title}</p>
-      <CopyLink value={inviteLink(conference.inviteCode)} />
-      <p className="field-hint">По приглашению можно войти без аккаунта.</p>
-      {canInvite && (
-        <>
-          <div className="invitation-form-divider">
-            <span>или отправьте приглашение</span>
+    <Modal
+      title={step === "share" ? "Поделиться встречей" : "Пригласить участников"}
+      className={step === "share" ? "call-share-modal" : "call-invite-modal"}
+      returnFocus={returnFocus}
+      onClose={() => {
+        if (!busy) onClose();
+      }}
+    >
+      <div ref={content}>
+        {step === "share" ? (
+          <div className="call-share-dialog">
+            <p className="call-share-title">{conference.title}</p>
+            <div className="call-share-card">
+              <div className="call-share-copy">
+                <h3>Ссылка на встречу</h3>
+                <p>
+                  Поделитесь ссылкой или отсканируйте QR-код, чтобы открыть
+                  встречу.
+                </p>
+                <CopyLink value={link} />
+                <p className="call-share-local-note">
+                  По ссылке можно присоединиться без аккаунта.
+                </p>
+              </div>
+              <aside className="call-share-qr">
+                <MeetingQrCode link={link} />
+                <strong>QR-код встречи</strong>
+                <p>Отсканируйте, чтобы открыть ссылку</p>
+              </aside>
+            </div>
+            {(canInvite || onBack) && (
+              <div className="call-share-footer">
+                {onBack && (
+                  <Button variant="secondary" onClick={onBack}>
+                    Назад
+                  </Button>
+                )}
+                {canInvite && (
+                  <Button
+                    className="call-share-invite-button"
+                    onClick={() => setStep("invite")}
+                  >
+                    <Mail size={18} aria-hidden="true" /> Пригласить участников
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
+        ) : (
           <ConferenceInvitationForm
             key={conference.id}
             conferenceId={conference.id}
-            onBusyChange={onBusyChange}
+            canInvite={canInvite}
+            invitationText={invitationText}
+            onBack={() => setStep("share")}
+            onBusyChange={setBusy}
           />
-        </>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function MeetingQrCode({ link }: { link: string }) {
+  let qr;
+  try {
+    qr = qrCodePath(link);
+  } catch {
+    /* The usable URL remains visible if encoding fails. */
+  }
+  return (
+    <div
+      className="call-share-qr-code"
+      role="img"
+      aria-label="QR-код ссылки на встречу"
+    >
+      {qr ? (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0 0 ${qr.size} ${qr.size}`}
+          aria-hidden="true"
+          shapeRendering="crispEdges"
+        >
+          <rect width={qr.size} height={qr.size} fill="#fff" />
+          <path d={qr.path} fill="#111927" />
+        </svg>
+      ) : (
+        <span>QR-код недоступен. Используйте ссылку на встречу.</span>
       )}
+    </div>
+  );
+}
+
+function CopyInvitation({ text }: { text: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "error">("idle");
+  useEffect(() => {
+    if (state === "idle") return;
+    const timer = window.setTimeout(() => setState("idle"), 2500);
+    return () => window.clearTimeout(timer);
+  }, [state]);
+  return (
+    <div className="call-invite-copy">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={async () => {
+          try {
+            if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+            await navigator.clipboard.writeText(text);
+            setState("copied");
+          } catch {
+            setState("error");
+          }
+        }}
+      >
+        {state === "copied" ? (
+          <Check size={16} aria-hidden="true" />
+        ) : (
+          <Copy size={16} aria-hidden="true" />
+        )}
+        {state === "copied" ? "Скопировано" : "Копировать приглашение"}
+      </Button>
+      <span role="status">
+        {state === "error"
+          ? "Не удалось скопировать. Выделите текст и скопируйте вручную."
+          : state === "copied"
+            ? "Приглашение скопировано."
+            : ""}
+      </span>
     </div>
   );
 }
@@ -44,10 +186,16 @@ export function ConferenceInviteContent({
 /** Сохраняет введённых получателей, пока сервер не подтвердит постановку приглашений в очередь. */
 export function ConferenceInvitationForm({
   conferenceId,
+  canInvite,
   onBusyChange,
+  invitationText,
+  onBack,
 }: {
   conferenceId: string;
+  canInvite: boolean;
   onBusyChange?: (busy: boolean) => void;
+  invitationText?: string;
+  onBack?: () => void;
 }) {
   const id = useId();
   const [emailsText, setEmailsText] = useState("");
@@ -55,6 +203,7 @@ export function ConferenceInvitationForm({
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<InvitationUser[]>([]);
   const [validation, setValidation] = useState("");
+  const form = useRef<HTMLFormElement>(null);
   const submitting = useRef(false);
   useEffect(() => {
     const timer = window.setTimeout(() => setSearch(queryText.trim()), 300);
@@ -63,7 +212,7 @@ export function ConferenceInvitationForm({
   const query = useQuery({
     queryKey: ["invitation-users", conferenceId, search],
     queryFn: ({ signal }) => api.invitationUsers(conferenceId, search, signal),
-    enabled: Array.from(search).length >= 2,
+    enabled: canInvite && Array.from(search).length >= 2,
     retry: false,
     staleTime: 30_000,
   });
@@ -79,6 +228,18 @@ export function ConferenceInvitationForm({
       submitting.current = false;
     },
   });
+  useLayoutEffect(() => {
+    if (!invitation.isPending) return;
+    const dialog = form.current?.closest<HTMLElement>('[role="dialog"]');
+    // Disabling the submitting control must not move keyboard focus to the background.
+    dialog?.focus({ preventScroll: true });
+    // Chromium can finish blurring a newly disabled control after the layout effect.
+    const frame = window.requestAnimationFrame(() => {
+      if (dialog?.isConnected && !dialog.contains(document.activeElement))
+        dialog.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [invitation.isPending]);
   useEffect(() => {
     onBusyChange?.(invitation.isPending);
     return () => onBusyChange?.(false);
@@ -106,7 +267,7 @@ export function ConferenceInvitationForm({
 
   function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting.current) return;
+    if (submitting.current || !canInvite) return;
     setValidation("");
     invitation.reset();
     const entered = [
@@ -148,22 +309,63 @@ export function ConferenceInvitationForm({
   const currentSearch = queryText.trim() === search;
   const hasSearch = Array.from(queryText.trim()).length >= 2;
   return (
-    <form className="conference-invitation-form" onSubmit={submit} noValidate>
+    <form
+      ref={form}
+      className="conference-invitation-form"
+      onSubmit={submit}
+      noValidate
+      aria-busy={invitation.isPending}
+    >
+      {!canInvite && (
+        <ErrorNotice>
+          Право приглашать участников изменилось. Поделиться ссылкой на встречу
+          можно на предыдущем шаге.
+        </ErrorNotice>
+      )}
+      {invitationText && (
+        <p className="modal-description">
+          Отправьте приглашение участникам или скопируйте текст со ссылкой на
+          встречу.
+        </p>
+      )}
       <label className="field" htmlFor={`${id}-emails`}>
-        Email участников
-        <textarea
+        Электронная почта участников
+        <input
           id={`${id}-emails`}
+          type="text"
+          inputMode="email"
           data-autofocus
-          placeholder="colleague@example.com"
+          placeholder="anna@company.ru, max@company.ru"
           autoComplete="off"
-          rows={2}
           maxLength={6000}
           value={emailsText}
-          disabled={invitation.isPending}
+          disabled={invitation.isPending || !canInvite}
           aria-describedby={`${id}-email-hint`}
           onChange={(event) => {
             edit();
             setEmailsText(event.target.value);
+          }}
+          onPaste={(event) => {
+            const pasted = event.clipboardData.getData("text/plain");
+            if (!/[\r\n]/.test(pasted)) return;
+            event.preventDefault();
+            const input = event.currentTarget;
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? start;
+            const inserted = pasted
+              .replace(/\r\n?|\n/g, ", ")
+              .slice(0, 6000 - input.value.length + end - start);
+            edit();
+            setEmailsText(
+              input.value.slice(0, start) + inserted + input.value.slice(end),
+            );
+            window.requestAnimationFrame(() => {
+              if (input.isConnected)
+                input.setSelectionRange(
+                  start + inserted.length,
+                  start + inserted.length,
+                );
+            });
           }}
         />
       </label>
@@ -171,6 +373,20 @@ export function ConferenceInvitationForm({
         Несколько адресов разделяйте запятой или новой строкой. До{" "}
         {maxRecipients} получателей за один раз.
       </p>
+      {invitationText && (
+        <>
+          <label className="field" htmlFor={`${id}-text`}>
+            Текст приглашения
+            <textarea
+              id={`${id}-text`}
+              readOnly
+              rows={5}
+              value={invitationText}
+            />
+          </label>
+          <CopyInvitation text={invitationText} />
+        </>
+      )}
       <label className="field" htmlFor={`${id}-search`}>
         Добавить пользователей системы
         <span className="invitation-search-field">
@@ -182,7 +398,7 @@ export function ConferenceInvitationForm({
             autoComplete="off"
             maxLength={100}
             value={queryText}
-            disabled={invitation.isPending}
+            disabled={invitation.isPending || !canInvite}
             aria-describedby={`${id}-search-hint`}
             onChange={(event) => setQueryText(event.target.value)}
           />
@@ -199,7 +415,7 @@ export function ConferenceInvitationForm({
               <button
                 type="button"
                 aria-label={`Убрать ${user.email}`}
-                disabled={invitation.isPending}
+                disabled={invitation.isPending || !canInvite}
                 onClick={() => toggle(user)}
               >
                 <X size={15} aria-hidden="true" />
@@ -245,7 +461,7 @@ export function ConferenceInvitationForm({
                         : user.email
                     }
                     checked={selected.some((item) => item.id === user.id)}
-                    disabled={invitation.isPending}
+                    disabled={invitation.isPending || !canInvite}
                     onChange={() => toggle(user)}
                   />
                   <span>
@@ -284,10 +500,23 @@ export function ConferenceInvitationForm({
           </ul>
         </div>
       )}
-      <Button type="submit" busy={invitation.isPending} className="full-width">
-        <Mail size={18} aria-hidden="true" />
-        Пригласить участников
-      </Button>
+      <div className="call-invite-actions">
+        {onBack && (
+          <Button
+            type="button"
+            variant="secondary"
+            className="call-invite-back"
+            disabled={invitation.isPending}
+            onClick={onBack}
+          >
+            Назад
+          </Button>
+        )}
+        <Button type="submit" busy={invitation.isPending} disabled={!canInvite}>
+          <Mail size={18} aria-hidden="true" />
+          Отправить приглашения
+        </Button>
+      </div>
     </form>
   );
 }

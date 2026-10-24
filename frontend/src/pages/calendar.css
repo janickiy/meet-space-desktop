@@ -3,6 +3,215 @@
   max-width: none;
   margin: 0;
 }
+
+/* The reference opens meeting details in a centred, fully keyboard-accessible dialog. */
+.modal.calendar-meeting-modal {
+  position: relative;
+  width: 760px;
+  max-width: 100%;
+  max-height: calc(100dvh - 78px);
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  box-shadow: 0 32px 100px #111d463d;
+}
+.modal.calendar-meeting-modal > h2 {
+  margin: 0;
+  min-height: 118px;
+  flex-shrink: 0;
+  padding: 51px 70px 26px 108px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(115deg, var(--primary-soft), var(--surface) 80%);
+  color: var(--text);
+  font-size: calc(25px * var(--text-scale));
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.modal.calendar-meeting-modal > .modal-close {
+  top: 26px;
+  right: 26px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--surface);
+}
+.calendar-meeting-emblem {
+  position: absolute;
+  left: 30px;
+  top: 28px;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 5px 16px #4967eb0b;
+}
+.calendar-meeting-status {
+  position: absolute;
+  top: 23px;
+  left: 108px;
+}
+.calendar-meeting-status .status-badge {
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: calc(10px * var(--text-scale));
+  background: var(--surface);
+}
+.calendar-meeting-content {
+  padding: 26px 30px;
+  overflow: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.calendar-meeting-facts {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 4px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--canvas);
+}
+.calendar-meeting-facts > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px 0;
+}
+.calendar-meeting-facts > div:nth-child(2n) {
+  padding-left: 20px;
+}
+.calendar-meeting-facts > div:nth-child(n + 3) {
+  border-top: 1px solid var(--border);
+}
+.calendar-fact-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  color: var(--primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+.calendar-meeting-facts > div > div {
+  min-width: 0;
+}
+.calendar-meeting-facts dt {
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  margin-bottom: 6px;
+}
+.calendar-meeting-facts dd {
+  margin: 0;
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.calendar-meeting-note {
+  margin: 22px 0 0;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.8;
+  color: var(--muted);
+}
+.calendar-meeting-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 30px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.calendar-meeting-owner-actions,
+.calendar-meeting-primary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.calendar-meeting-primary-actions {
+  margin-left: auto;
+}
+.calendar-meeting-footer .button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: calc(12px * var(--text-scale));
+}
+.calendar-meeting-owner-actions .button {
+  background: transparent;
+  color: var(--muted);
+  padding-inline: 10px;
+}
+.calendar-cancel-action:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+@media (max-width: 650px) {
+  .modal.calendar-meeting-modal > h2 {
+    padding: 49px 55px 22px 85px;
+    font-size: calc(22px * var(--text-scale));
+  }
+  .calendar-meeting-emblem {
+    left: 22px;
+    top: 27px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+  .calendar-meeting-status {
+    left: 85px;
+  }
+  .calendar-meeting-content {
+    padding: 22px;
+  }
+  .calendar-meeting-facts {
+    padding: 2px 14px;
+  }
+  .calendar-meeting-facts > div {
+    gap: 9px;
+  }
+  .calendar-meeting-facts > div:nth-child(2n) {
+    padding-left: 12px;
+  }
+  .calendar-meeting-facts dd {
+    font-size: calc(12px * var(--text-scale));
+  }
+  .calendar-meeting-footer {
+    padding: 16px 22px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .calendar-meeting-primary-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .calendar-meeting-footer .button {
+    padding: 10px 12px;
+  }
+}
+@media (max-width: 470px) {
+  .calendar-meeting-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .calendar-meeting-facts > div:nth-child(2n) {
+    padding-left: 0;
+  }
+  .calendar-meeting-facts > div:nth-child(n + 2) {
+    border-top: 1px solid var(--border);
+  }
+}
 .calendar-page .page-heading {
   align-items: center;
 }
@@ -190,7 +399,7 @@
   cursor: pointer;
 }
 .calendar-event:hover {
-  outline: 1px solid var(--primary);
+  outline: 1px solid var(--focus);
 }
 .calendar-event strong {
   display: block;

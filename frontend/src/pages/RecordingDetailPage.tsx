@@ -5,16 +5,20 @@ import {
   ArrowLeft,
   CalendarDays,
   Clock3,
+  Check,
   Download,
   FileArchive,
   FileAudio,
   FileImage,
   FileVideo,
+  Link as LinkIcon,
   RefreshCw,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { isDesktopBuild } from "../platform/build";
+import { serviceOrigin } from "../platform/urls";
+import { RecordingActions } from "../components/RecordingActions";
 import {
   NativeAssetStatus,
   NativeSaveButton,
@@ -28,6 +32,7 @@ import {
   recordingMediaFile,
   recordingFileAvailable,
   recordingPreviewFile,
+  recordingDetailPath,
   safeRecordingUrl,
 } from "../recordingPresentation";
 import "./recordings.css";
@@ -107,6 +112,8 @@ function RecordingDetailContent({
   const [mediaFailed, setMediaFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [mediaRevision, setMediaRevision] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [manualLink, setManualLink] = useState("");
   const mounted = useRef(true);
   const native = useNativeAsset(`${userId}:${conferenceId}:${recordingId}`);
   useEffect(() => {
@@ -180,9 +187,9 @@ function RecordingDetailContent({
   }
 
   const backLink = (
-    <Link className="recordings-back" to={backPath}>
+    <Link className="button button-outline recordings-back" to={backPath}>
       <ArrowLeft size={18} aria-hidden="true" />
-      Назад к записям
+      Все записи
     </Link>
   );
   if (
@@ -255,10 +262,41 @@ function RecordingDetailContent({
     history.isSuccess && history.data.item.conference.id === conferenceId
       ? history.data.item
       : undefined;
+  const detailPath = recordingDetailPath(conferenceId, recordingId);
+  async function copyLink() {
+    const link = new URL(detailPath, serviceOrigin()).href;
+    try {
+      await navigator.clipboard.writeText(link);
+      if (!mounted.current) return;
+      setCopied(true);
+      setManualLink("");
+    } catch {
+      if (!mounted.current) return;
+      setCopied(false);
+      setManualLink(link);
+    }
+  }
+  const downloadAction =
+    playable && isDesktopBuild && mediaAsset ? (
+      <NativeSaveButton asset={mediaAsset} className="button button-primary">
+        <Download size={17} aria-hidden="true" />
+        {audioOnly ? "Скачать аудиозапись" : "Скачать видеозапись"}
+      </NativeSaveButton>
+    ) : playable && !isDesktopBuild ? (
+      <a
+        className="button button-primary"
+        href={mediaUrl}
+        download
+        target="_blank"
+        rel="noreferrer"
+      >
+        <Download size={17} aria-hidden="true" />
+        {audioOnly ? "Скачать аудиозапись" : "Скачать видеозапись"}
+      </a>
+    ) : null;
 
   return (
     <div className="recordings-page recording-detail-page">
-      {backLink}
       <header className="recordings-heading recording-detail-heading">
         <div>
           <h1>{meeting.title || "Запись встречи"}</h1>
@@ -273,28 +311,15 @@ function RecordingDetailContent({
             </span>
           </p>
         </div>
-        {playable && isDesktopBuild && mediaAsset ? (
-          <NativeSaveButton
-            asset={mediaAsset}
-            className="button button-primary"
-          >
-            <Download size={17} aria-hidden="true" /> Скачать запись
-          </NativeSaveButton>
-        ) : (
-          playable &&
-          !isDesktopBuild && (
-            <a
-              className="button button-primary"
-              href={mediaUrl}
-              download
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Download size={17} aria-hidden="true" />
-              Скачать запись
-            </a>
-          )
-        )}
+        <div className="recording-detail-header-actions">
+          {backLink}
+          <RecordingActions
+            title={meeting.title}
+            path={detailPath}
+            downloadUrl={playable ? media?.url : undefined}
+            asset={playable ? mediaAsset : undefined}
+          />
+        </div>
       </header>
       <div className="recording-detail-layout">
         <div className="recording-detail-main">
@@ -378,7 +403,7 @@ function RecordingDetailContent({
                 <dd>{recordingDate(item)}</dd>
               </div>
               <div>
-                <dt>Длительность записи</dt>
+                <dt>Длительность</dt>
                 <dd>{formatRecordingDuration(item.durationSec)}</dd>
               </div>
               {media && (
@@ -389,86 +414,110 @@ function RecordingDetailContent({
               )}
               {meetingHistory?.owner.displayName && (
                 <div>
-                  <dt>Организатор встречи</dt>
+                  <dt>Организатор</dt>
                   <dd>{meetingHistory.owner.displayName}</dd>
                 </div>
               )}
               {meetingHistory && (
                 <div>
-                  <dt>Участники встречи</dt>
+                  <dt>Участники</dt>
                   <dd>{meetingHistory.participantCount}</dd>
                 </div>
               )}
             </dl>
+            <div className="recording-detail-about-actions">
+              {downloadAction}
+              <Button variant="outline" onClick={() => void copyLink()}>
+                {copied ? (
+                  <Check size={17} aria-hidden="true" />
+                ) : (
+                  <LinkIcon size={17} aria-hidden="true" />
+                )}
+                {copied ? "Ссылка скопирована" : "Скопировать ссылку"}
+              </Button>
+              {manualLink && (
+                <label className="recordings-copy-fallback">
+                  Скопируйте ссылку вручную
+                  <input
+                    aria-label="Ссылка на запись"
+                    value={manualLink}
+                    readOnly
+                    onFocus={(event) => event.currentTarget.select()}
+                  />
+                </label>
+              )}
+            </div>
           </section>
-          <section
-            className="recording-detail-section recording-detail-materials"
-            aria-labelledby="recording-materials-title"
-          >
-            <h2 id="recording-materials-title">Материалы записи</h2>
-            {materials.length > 0 ? (
-              <>
-                <ul className="recording-detail-files">
-                  {materials.map((file) => {
-                    const Icon =
-                      materialIcons[
-                        file.fileType as keyof typeof materialIcons
-                      ];
-                    return (
-                      <li
-                        key={`${file.fileType}:${file.index}`}
-                        className="recording-detail-file"
-                      >
-                        <span className="recordings-file-icon">
-                          <Icon size={22} aria-hidden="true" />
-                        </span>
-                        <div className="recording-detail-file-info">
-                          <strong>{materialLabels[file.fileType]}</strong>
-                          <span>{formatRecordingSize(file.sizeBytes)}</span>
-                        </div>
-                        {isDesktopBuild && file.uuid ? (
-                          <NativeSaveButton
-                            asset={{
-                              kind: "recording",
-                              conferenceId,
-                              recordingId,
-                              fileId: file.uuid,
-                            }}
-                            className="recording-detail-download"
-                            aria-label={`Скачать: ${materialLabels[file.fileType]}`}
-                          >
-                            <Download size={18} aria-hidden="true" />
-                            <span>Скачать</span>
-                          </NativeSaveButton>
-                        ) : (
-                          !isDesktopBuild && (
-                            <a
+          {materials.some(
+            (file) =>
+              file.uuid !== media?.uuid || file.fileType !== media?.fileType,
+          ) && (
+            <details className="recording-detail-section recording-detail-materials">
+              <summary>Материалы записи</summary>
+              {materials.length > 0 ? (
+                <>
+                  <ul className="recording-detail-files">
+                    {materials.map((file) => {
+                      const Icon =
+                        materialIcons[
+                          file.fileType as keyof typeof materialIcons
+                        ];
+                      return (
+                        <li
+                          key={`${file.fileType}:${file.index}`}
+                          className="recording-detail-file"
+                        >
+                          <span className="recordings-file-icon">
+                            <Icon size={22} aria-hidden="true" />
+                          </span>
+                          <div className="recording-detail-file-info">
+                            <strong>{materialLabels[file.fileType]}</strong>
+                            <span>{formatRecordingSize(file.sizeBytes)}</span>
+                          </div>
+                          {isDesktopBuild && file.uuid ? (
+                            <NativeSaveButton
+                              asset={{
+                                kind: "recording",
+                                conferenceId,
+                                recordingId,
+                                fileId: file.uuid,
+                              }}
                               className="recording-detail-download"
-                              href={file.url}
-                              download
-                              target="_blank"
-                              rel="noreferrer"
                               aria-label={`Скачать: ${materialLabels[file.fileType]}`}
                             >
                               <Download size={18} aria-hidden="true" />
                               <span>Скачать</span>
-                            </a>
-                          )
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-                <p className="field-hint recording-detail-download-note">
-                  {isDesktopBuild
-                    ? "Выберите место сохранения в системном окне. Доступ к файлу проверяется заново."
-                    : "Если файл открылся в браузере, сохраните его через меню плеера или браузера."}
-                </p>
-              </>
-            ) : (
-              <p className="field-hint">Доступных материалов пока нет.</p>
-            )}
-          </section>
+                            </NativeSaveButton>
+                          ) : (
+                            !isDesktopBuild && (
+                              <a
+                                className="recording-detail-download"
+                                href={file.url}
+                                download
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={`Скачать: ${materialLabels[file.fileType]}`}
+                              >
+                                <Download size={18} aria-hidden="true" />
+                                <span>Скачать</span>
+                              </a>
+                            )
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="field-hint recording-detail-download-note">
+                    {isDesktopBuild
+                      ? "Выберите место сохранения в системном окне. Доступ к файлу проверяется заново."
+                      : "Если файл открылся в браузере, сохраните его через меню плеера или браузера."}
+                  </p>
+                </>
+              ) : (
+                <p className="field-hint">Доступных материалов пока нет.</p>
+              )}
+            </details>
+          )}
         </aside>
       </div>
     </div>

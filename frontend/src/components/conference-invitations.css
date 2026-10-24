@@ -131,9 +131,10 @@
 }
 .invitation-result {
   padding: 14px;
-  border: 1px solid #bee4d3;
+  border: 1px solid var(--success);
   border-radius: 9px;
-  background: #effaf5;
+  background: var(--success-soft);
+  color: var(--text);
   margin-bottom: 16px;
 }
 .invitation-result ul {
@@ -148,4 +149,267 @@
 .invitation-card > .button {
   margin-top: 16px;
   width: 100%;
+}
+
+/* Conference sharing follows calls.css in the supplied design, using real server URLs. */
+.modal.modal.modal.call-share-modal {
+  width: 850px;
+  max-width: 90vw;
+  max-height: calc(100dvh - 90px);
+  padding: 28px;
+  border-radius: 20px;
+}
+.modal.call-share-modal > h2 {
+  margin: 0 40px 15px 0;
+  font-size: calc(24px * var(--text-scale));
+  letter-spacing: -0.6px;
+  line-height: 1.3;
+}
+.call-share-title {
+  margin: 0 0 25px;
+  color: var(--muted);
+  font-size: calc(14px * var(--text-scale));
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.call-share-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: center;
+  gap: 28px;
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface-soft);
+}
+.call-share-copy {
+  min-width: 0;
+}
+.call-share-copy h3 {
+  margin: 0 0 12px;
+  font-size: calc(16px * var(--text-scale));
+  letter-spacing: -0.2px;
+}
+.call-share-copy > p {
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.65;
+  color: var(--muted);
+}
+.call-share-card .copy-link {
+  margin: 20px 0 0;
+  padding: 5px;
+  gap: 5px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+.call-share-card .copy-link input {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  padding: 10px 8px;
+  border-radius: 6px;
+  font-size: calc(12px * var(--text-scale));
+  text-overflow: ellipsis;
+}
+.call-share-card .copy-link .button {
+  flex: none;
+  min-height: 38px;
+  padding: 9px 13px;
+  gap: 7px;
+  font-size: calc(12px * var(--text-scale));
+  background: var(--surface-soft);
+  border: 0;
+  box-shadow: none;
+}
+.call-share-card .copy-feedback {
+  min-height: 20px;
+  font-size: calc(11px * var(--text-scale));
+}
+.call-share-copy > .call-share-local-note {
+  margin-top: 2px;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.6;
+}
+.call-share-qr {
+  min-width: 0;
+  text-align: center;
+}
+.call-share-qr-code {
+  display: grid;
+  place-items: center;
+  width: 200px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  padding: 18px;
+  margin: 0 auto 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+  color: #1e2535;
+}
+.call-share-qr-code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.call-share-qr-code > span {
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.5;
+}
+.call-share-qr strong {
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.5;
+}
+.call-share-qr > p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.55;
+}
+.call-share-footer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 23px;
+  border-top: 1px solid var(--border);
+}
+.call-share-footer .button {
+  min-height: 44px;
+  padding: 12px 22px;
+  font-size: calc(13px * var(--text-scale));
+  white-space: normal;
+}
+.modal.modal.call-invite-modal {
+  width: 520px;
+  max-width: calc(100vw - 40px);
+  padding: 26px;
+}
+.modal.call-invite-modal > h2 {
+  font-size: calc(21px * var(--text-scale));
+  margin-bottom: 20px;
+}
+.call-invite-modal .conference-invitation-form {
+  margin-top: 0;
+}
+.call-invite-modal .field {
+  margin-bottom: 6px;
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 600;
+}
+.call-invite-modal .field :is(input, textarea) {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 400;
+}
+.call-invite-modal .field textarea[readonly] {
+  min-height: 115px;
+  line-height: 1.6;
+  background: var(--surface-soft);
+}
+.call-invite-copy {
+  margin: 12px 0 20px;
+}
+.call-invite-copy .button {
+  font-size: calc(12px * var(--text-scale));
+}
+.call-invite-copy > span {
+  display: block;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+.call-invite-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+.call-invite-actions .button {
+  min-height: 44px;
+  font-size: calc(12px * var(--text-scale));
+  white-space: normal;
+}
+@media (max-width: 850px) {
+  .modal.modal.modal.call-share-modal {
+    padding: 24px;
+    max-width: calc(100vw - 40px);
+  }
+  .modal.call-share-modal > h2 {
+    font-size: calc(22px * var(--text-scale));
+  }
+  .call-share-card {
+    grid-template-columns: minmax(0, 1fr) 170px;
+    gap: 22px;
+    padding: 20px;
+  }
+  .call-share-qr-code {
+    width: 170px;
+    padding: 15px;
+  }
+  .call-share-card .copy-link .button {
+    font-size: calc(11px * var(--text-scale));
+    padding: 9px 10px;
+  }
+}
+@media (max-height: 760px) {
+  .modal.modal.modal.call-share-modal {
+    padding: 23px;
+    max-height: calc(100dvh - 78px);
+  }
+  .call-share-title {
+    margin-bottom: 18px;
+  }
+  .call-share-card {
+    grid-template-columns: minmax(0, 1fr) 180px;
+    gap: 24px;
+    padding: 20px;
+  }
+  .call-share-qr-code {
+    width: 180px;
+    padding: 16px;
+    margin-bottom: 9px;
+  }
+  .call-share-card .copy-link {
+    margin-top: 15px;
+  }
+  .call-share-footer {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
+}
+@media (max-width: 650px) {
+  .call-share-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 18px;
+  }
+  .call-share-title {
+    margin-bottom: 18px;
+  }
+  .call-share-qr-code {
+    width: 156px;
+    padding: 13px;
+  }
+  .call-share-copy h3 {
+    font-size: calc(15px * var(--text-scale));
+  }
+  .call-share-card .copy-link {
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .call-share-card .copy-link input {
+    flex-basis: 120px;
+  }
+  .call-share-qr strong {
+    font-size: calc(11px * var(--text-scale));
+  }
+  .modal.call-share-modal > h2 {
+    font-size: calc(20px * var(--text-scale));
+  }
+  .call-share-footer {
+    margin-top: 20px;
+    padding-top: 20px;
+  }
 }

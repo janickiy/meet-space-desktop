@@ -223,6 +223,13 @@ async function inspectPayload(directory, { arch, inputs, version, appImage }) {
       if (!packagedFiles.includes(`/${directory}/${relative}`)) fail(`compiled build file omitted from ASAR: ${directory}/${relative}`);
     }
   }
+  const { InstallerBundle, installerBundleNames, LEGACY_INSTALLER_RELEASE_SHA256, canonicalJson } = require("../dist/ssh/protocol.js");
+  for (const directory of ["v1", `legacy/${LEGACY_INSTALLER_RELEASE_SHA256}`]) {
+    const bundleFiles = Object.fromEntries(installerBundleNames.map(name => [name, extractFile(asar, `resources/server-installer/${directory}/${name}`)]));
+    const verified = new InstallerBundle(bundleFiles);
+    if (directory !== "v1" && digest(Buffer.from(canonicalJson(verified.manifest))) !== LEGACY_INSTALLER_RELEASE_SHA256)
+      fail("packaged recovery installer differs from the supported signed release");
+  }
   const json = (file) => JSON.parse(extractFile(asar, file).toString("utf8"));
   if (JSON.stringify(json("dist/update-trust.json")) !== JSON.stringify({ enabled: false })) fail("test build update trust must be disabled");
   if (JSON.stringify(json("dist/source-inputs.json")) !== JSON.stringify(inputs)) fail("packaged source snapshot differs from frozen manifest");

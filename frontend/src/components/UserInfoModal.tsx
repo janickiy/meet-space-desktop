@@ -1,9 +1,10 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { MessageCircle, UserRound } from "lucide-react";
 import type { PersonalPeer } from "../types";
 import { initials } from "../utils";
 import { DirectCallButton } from "./DirectCallButton";
 import { Button, Modal } from "./ui";
+import { ConversationFiles } from "./ConversationFiles";
 import "./chat-profiles.css";
 
 /** Общая карточка пользователя для личной переписки и списка участников группы. */
@@ -16,7 +17,9 @@ export function UserInfoModal({
   onCallStart = onClose,
   returnFocus,
   actions,
+  conversationId,
 }: {
+  conversationId?: string;
   person: PersonalPeer;
   subtitle: string;
   online?: boolean;
@@ -26,6 +29,7 @@ export function UserInfoModal({
   returnFocus?: () => HTMLElement | null;
   actions?: ReactNode;
 }) {
+  const [tab, setTab] = useState<"profile" | "files">("profile");
   const statusText = presencePending
     ? "Проверяем статус…"
     : online === true
@@ -83,27 +87,56 @@ export function UserInfoModal({
             onStart={onCallStart}
           />
         </div>
-        <div className="personal-profile-section-label">Профиль</div>
-        <dl className="personal-profile-details">
-          <div>
-            <dt>
-              <UserRound size={16} aria-hidden="true" />
-              Имя и фамилия
-            </dt>
-            <dd>{person.displayName}</dd>
-          </div>
-          <div>
-            <dt>
-              <MessageCircle size={16} aria-hidden="true" />
-              Переписка
-            </dt>
-            <dd>Личный чат</dd>
-          </div>
-          <div>
-            <dt>Идентификатор пользователя</dt>
-            <dd className="personal-user-id">{person.id}</dd>
-          </div>
-        </dl>
+        <nav
+          className="group-profile-tabs"
+          aria-label="Разделы информации о пользователе"
+        >
+          <button
+            type="button"
+            aria-current={tab === "profile" ? "page" : undefined}
+            onClick={() => setTab("profile")}
+          >
+            Профиль
+          </button>
+          {conversationId && (
+            <button
+              type="button"
+              aria-current={tab === "files" ? "page" : undefined}
+              onClick={() => setTab("files")}
+            >
+              Файлы
+            </button>
+          )}
+        </nav>
+        <div className="chat-profile-pane">
+          {tab === "files" && conversationId ? (
+            <ConversationFiles
+              conversationId={conversationId}
+              onAccessDenied={onClose}
+            />
+          ) : (
+            <dl className="personal-profile-details">
+              <div>
+                <dt>
+                  <UserRound size={16} aria-hidden="true" />
+                  Имя и фамилия
+                </dt>
+                <dd>{person.displayName}</dd>
+              </div>
+              <div>
+                <dt>
+                  <MessageCircle size={16} aria-hidden="true" />
+                  Переписка
+                </dt>
+                <dd>Личный чат</dd>
+              </div>
+              <div>
+                <dt>Идентификатор пользователя</dt>
+                <dd className="personal-user-id">{person.id}</dd>
+              </div>
+            </dl>
+          )}
+        </div>
       </div>
     </Modal>
   );

@@ -1,13 +1,6 @@
 import { DesktopServerButton } from "./components/desktop/DesktopSessionGate";
 import { lazy, Suspense } from "react";
-import {
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
 import { useAuth } from "./auth";
 import { Brand, Button, ErrorNotice, Loading } from "./components/ui";
 import { Layout } from "./components/Layout";
@@ -15,7 +8,6 @@ import { Landing } from "./pages/Landing";
 import { AuthPage, RegistrationSuccess } from "./pages/AuthPages";
 import { Link } from "react-router";
 import { CalendarCallback } from "./components/IntegrationsSettings";
-import { AccountSettingsModal } from "./components/AccountSettingsModal";
 
 const PersonalPage = lazy(() =>
   import("./pages/PersonalPage").then((module) => ({
@@ -86,19 +78,24 @@ const PreJoinPage = lazy(() =>
   })),
 );
 
-/** Поддерживает прямые ссылки на настройки: за диалогом находится главная страница.
- * @return Диалог аккаунта; при закрытии прямой адрес заменяется адресом кабинета.
- */
+const SettingsPage = lazy(() =>
+  import("./pages/AccountPages").then((module) => ({
+    default: module.SettingsPage,
+  })),
+);
+
+/** Настройки — самостоятельный раздел; параметры устройств в звонке остаются диалогом. */
 function SettingsRoute() {
-  const navigate = useNavigate();
   return (
-    <>
-      <Dashboard />
-      <AccountSettingsModal
-        onClose={() => navigate("/app", { replace: true })}
-        returnFocus={() => document.getElementById("workspace-main")}
-      />
-    </>
+    <section className="reference-settings-page">
+      <header className="page-heading">
+        <div>
+          <h1>Настройки</h1>
+          <p>Ваш профиль, устройства и личные предпочтения</p>
+        </div>
+      </header>
+      <SettingsPage />
+    </section>
   );
 }
 

@@ -65,15 +65,26 @@ export async function generateNotices() {
     // Vite injects its module-preload runtime helper into the bundled renderer.
     { directory: path.join(frontend, 'node_modules/vite'), scope: 'bundled renderer build helper', packageOnly: true },
   ]);
+  const qrLicenseFilename = 'frontend/src/vendor/LICENSE';
+  const qrLicense = await readFile(path.join(frontend, 'src/vendor/LICENSE'), 'utf8');
+  if (!qrLicense.trim()) throw new Error('Empty license for vendored Nayuki QR generator');
+  components.push({
+    name: 'nayuki-qr-code-generator',
+    version: 'git-3c6d0b3cefb4e049dc337e82237c9644399716a8',
+    license: 'MIT',
+    scopes: ['vendored offline renderer QR generator'],
+    licenses: [{ filename: qrLicenseFilename, sha256: sha256(qrLicense), text: qrLicense }],
+  });
+  components.sort((a, b) => `${a.name}@${a.version}`.localeCompare(`${b.name}@${b.version}`, 'en'));
   const header = 'MEETSPACE — THIRD-PARTY NOTICES\n\n' +
-    'This file reproduces licenses from the installed, lockfile-pinned dependencies.\n' +
+    'This file reproduces licenses from the installed, lockfile-pinned dependencies and vendored components.\n' +
     'MeetSpace application code and supplied branding are not licensed by this file.\n' +
     'The application package is UNLICENSED; distribution rights require owner approval.\n' +
     'The conservative dependency inventory may include installed type-only peers.\n' +
     'Electron and Chromium notices are shipped separately as LICENSE.electron.txt and LICENSES.chromium.html.\n\n';
   const text = header + components.map(item => `${'='.repeat(72)}\n${item.name}@${item.version} (${item.license})\n${item.scopes.join('; ')}\n\n` +
     item.licenses.map(license => `--- ${license.filename} ---\n${license.text.trimEnd()}\n`).join('\n')).join('\n');
-  const manifest = { schemaVersion: 1, applicationLicense: 'UNLICENSED', inventory: 'actual installed production closure plus Vite injected helper; conservative installed peers included',
+  const manifest = { schemaVersion: 1, applicationLicense: 'UNLICENSED', inventory: 'actual installed production closure plus Vite injected helper and vendored QR generator; conservative installed peers included',
     lockfiles: { frontend: sha256(await readFile(path.join(frontend, 'package-lock.json'))), desktop: sha256(await readFile(path.join(desktop, 'package-lock.json'))) },
     noticesSha256: sha256(text), separateNotices: ['LICENSE.electron.txt', 'LICENSES.chromium.html'],
     components: components.map(item => ({ ...item, licenses: item.licenses.map(({ text: _text, ...license }) => license) })) };

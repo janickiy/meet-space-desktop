@@ -1,16 +1,16 @@
 /* Personal chats follow the supplied desktop design; meeting chat keeps its compact rail. */
 .personal-thread.chat-panel .chat-messages {
-  padding: 24px 24px 12px;
+  padding: 25px 28px;
   gap: 0;
   background: var(--surface);
 }
 .personal-thread.chat-panel .chat-message {
   position: relative;
-  max-width: 90%;
+  max-width: calc(100% - 35px);
   align-self: flex-start;
   gap: 10px;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0 0 19px;
   border: 0;
   background: transparent;
 }
@@ -22,23 +22,30 @@
   display: none;
 }
 .personal-thread.chat-panel .chat-message-avatar {
-  width: 32px;
-  height: 32px;
+  width: 29px;
+  height: 29px;
   border-radius: 50%;
-  font-size: calc(10px * var(--text-scale));
+  font-size: calc(8px * var(--text-scale));
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.personal-header .personal-peer-button .personal-avatar:not(.group-avatar),
+.personal-thread.chat-panel
+  .chat-message:not(.chat-message-own)
+  .chat-message-avatar {
   color: var(--primary);
   background: var(--primary-soft);
 }
 .personal-thread.chat-panel .chat-message-content {
   flex: 0 1 auto;
-  max-width: 560px;
+  max-width: 480px;
 }
 .personal-thread.chat-panel .chat-message header {
   gap: 8px;
   margin: 0 0 6px;
 }
 .personal-thread.chat-panel .chat-message header strong {
-  font-size: calc(12px * var(--text-scale));
+  font-size: calc(10px * var(--text-scale));
   font-weight: 600;
 }
 .personal-thread.chat-panel .chat-message header time,
@@ -49,21 +56,21 @@
   justify-content: flex-end;
 }
 .personal-thread.chat-panel .chat-message-bubble {
-  padding: 12px 16px;
-  border-radius: 0 12px 12px 12px;
+  padding: 12px 14px;
+  border-radius: 0 10px 10px 10px;
   background: var(--surface-soft);
 }
 .personal-thread.chat-panel .chat-message-own .chat-message-bubble {
-  border-radius: 12px 0 12px 12px;
+  border-radius: 10px 0 10px 10px;
   background: var(--primary-soft);
 }
 .personal-thread.chat-panel .chat-text {
   font-size: calc(13px * var(--text-scale));
-  line-height: 1.75;
+  line-height: 1.65;
 }
 .personal-thread.chat-panel .chat-message-tools {
   position: absolute;
-  top: 14px;
+  top: 21px;
   left: calc(100% + 3px);
   opacity: 0;
   margin: 0;
@@ -79,13 +86,19 @@
 .personal-thread.chat-panel .chat-message-tools .icon-button {
   width: 28px;
   min-width: 28px;
-  min-height: 32px;
-  height: 32px;
+  min-height: 27px;
+  height: 27px;
 }
 .personal-thread.chat-panel .chat-day-label {
-  margin: 0 0 28px;
+  margin: 0 0 27px;
   padding: 0;
-  font-size: calc(10px * var(--text-scale));
+  font-size: calc(9px * var(--text-scale));
+  justify-content: center;
+  font-weight: 400;
+}
+.personal-thread.chat-panel .chat-day-label::before,
+.personal-thread.chat-panel .chat-day-label::after {
+  display: none;
 }
 .personal-thread.chat-panel .chat-day-label > span {
   border: 0;
@@ -118,45 +131,46 @@
   min-height: 32px;
 }
 .personal-thread.chat-panel .chat-composer {
-  padding: 0 24px 18px;
+  padding: 0 24px 13px;
   border: 0;
   background: var(--surface);
 }
 .personal-thread.chat-panel .chat-compose-row {
-  grid-template-columns: 36px 36px minmax(0, 1fr) 40px;
-  grid-template-rows: auto 40px;
-  padding: 10px 12px;
+  grid-template-columns: 30px 30px minmax(0, 1fr) 40px;
+  grid-template-rows: auto 30px;
+  padding: 10px 12px 8px;
   gap: 4px;
   border-color: var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
 }
 .personal-thread.chat-panel .chat-compose-field textarea {
-  min-height: 46px;
-  padding: 0;
-  font-size: calc(13px * var(--text-scale));
+  min-height: 25px;
+  max-height: 140px;
+  padding: 1px 0 3px;
+  font-size: calc(12px * var(--text-scale));
 }
 .personal-thread.chat-panel .chat-compose-keyhint {
   display: none;
 }
 .personal-thread.chat-panel .chat-compose-caption {
-  margin: 8px 0 0;
-  font-size: calc(10px * var(--text-scale));
+  margin: 6px 0 0;
+  font-size: calc(9px * var(--text-scale));
 }
 .personal-thread.chat-panel .chat-uploads-compact > .button,
 .personal-thread.chat-panel .chat-compose-row .emoji-picker-trigger {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
   border-color: transparent;
   background: transparent;
   color: var(--muted);
 }
 .personal-thread.chat-panel .chat-send-button.button {
   width: 40px;
-  height: 36px;
+  height: 30px;
   min-width: 40px;
-  min-height: 36px;
+  min-height: 30px;
   border-radius: 8px;
   background: var(--primary);
   box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 18%, transparent);
@@ -193,5 +207,53 @@
   .personal-thread.chat-panel .chat-compose-field textarea {
     font-size: 16px;
     min-height: 38px;
+  }
+}
+
+.personal-thread .chat-message-bubble > .chat-personal-message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: calc(9px * var(--text-scale));
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.personal-thread .chat-personal-message-meta time {
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.personal-thread .chat-personal-message-meta .chat-sent-status {
+  display: inline-flex;
+  color: var(--primary);
+}
+.personal-thread .chat-personal-message-meta .chat-sent-status svg {
+  width: 13px;
+  height: 13px;
+}
+.personal-thread .chat-message-tools > .item-actions > .icon-button {
+  border: 0;
+  background: var(--surface);
+  border-radius: 7px;
+}
+@media (min-width: 768px) and (max-width: 1180px) {
+  .personal-thread.chat-panel .chat-messages {
+    padding-inline: 22px;
+  }
+  .personal-thread.chat-panel .chat-message-bubble {
+    padding: 11px 12px;
+  }
+  .personal-thread.chat-panel .chat-text {
+    font-size: calc(12px * var(--text-scale));
+  }
+  .personal-thread.chat-panel .chat-composer {
+    padding-inline: 20px;
+  }
+}
+@media (hover: none) {
+  .personal-thread.chat-panel .chat-message-tools {
+    opacity: 1;
   }
 }

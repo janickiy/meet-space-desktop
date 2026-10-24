@@ -32,6 +32,9 @@ export const INSTALLER_COMMAND = 'if [ "$(id -u)" = 0 ]; then exec /usr/bin/pyth
 export const installPhases = ["docker", "source", "images", "configuration", "dependencies", "backup", "migrations", "https", "services", "readiness"] as const;
 export const installerBundleNames = ["runner.py", "trust-root.pem", "release.json", "release.sig", "docker.asc"] as const;
 export const INSTALLER_TRUST_ROOT_SHA256 = "9f16201125cd17dc9fb90a7579e78589c76ecbfdb1ee80df3428ee34d6b90dfc";
+// Recovery is limited to this exact previously shipped, still signed recipe.
+// Never derive a resource path from a server response or a saved ticket.
+export const LEGACY_INSTALLER_RELEASE_SHA256 = "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a";
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const STATES: readonly string[] = ["running", "cancel_requested", "cancelled", "needs_recovery", "failed", "completed"];
@@ -162,6 +165,26 @@ export class InstallerBundle {
       }));
       return new InstallerBundle(files);
     } catch { throw new InstallFailure("RELEASE_INVALID"); }
+  }
+
+  static forSavedPlan(directory: string, plan: JsonObject): InstallerBundle {
+    const current = InstallerBundle.fromDirectory(directory);
+    const recipeHash = plan.sourceLock === undefined ? plan.releaseSha256 : plan.recipeSha256;
+    let selected = current;
+    if (recipeHash !== sha256(canonicalJson(current.manifest))) {
+      if (recipeHash !== LEGACY_INSTALLER_RELEASE_SHA256) throw new InstallFailure("PLAN_INVALID");
+      selected = InstallerBundle.legacyRecovery(directory);
+    }
+    // The hash is only a selector; every binding and the original plan hash must
+    // still validate against the selected signed bundle, with no plan rewriting.
+    selected.parsePlan(plan, { allowExpired: true });
+    return selected;
+  }
+
+  static legacyRecovery(directory: string): InstallerBundle {
+    const legacy = InstallerBundle.fromDirectory(join(directory, "..", "legacy", LEGACY_INSTALLER_RELEASE_SHA256));
+    if (sha256(canonicalJson(legacy.manifest)) !== LEGACY_INSTALLER_RELEASE_SHA256) throw new InstallFailure("RELEASE_INVALID");
+    return legacy;
   }
 
   payload(action: InstallerAction, request: JsonObject): Buffer {

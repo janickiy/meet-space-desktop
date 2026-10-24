@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Check, KeyRound, Server, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  CircleCheck,
+  CircleHelp,
+  CircleX,
+  KeyRound,
+  Server,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import { desktopBridge } from "../../platform/desktop";
 import type {
   SshInstallerAction,
@@ -7,24 +17,10 @@ import type {
   SshInstallerState,
 } from "../../platform/desktop-contracts";
 import { Button, ErrorNotice, Loading } from "../ui";
+import { installedServerConnectionMessage } from "./installed-server-connection-message";
+import { DesktopInstallProgress } from "./DesktopInstallProgress";
+import { installPhaseLabel } from "./ssh-install-progress";
 import "./desktop-ssh-installer.css";
-
-const phases = [
-  ["docker", "Подготовка Docker"],
-  ["source", "Проверка исходного кода"],
-  ["images", "Сборка компонентов"],
-  ["configuration", "Настройка сервера"],
-  ["dependencies", "Запуск базы данных"],
-  ["backup", "Резервная копия"],
-  ["migrations", "Подготовка базы данных"],
-  ["https", "Сертификат HTTPS"],
-  ["services", "Запуск MeetSpace"],
-  ["readiness", "Проверка готовности"],
-] as const;
-
-function phaseGroup(phase: string): string {
-  return phase.split(":", 1)[0];
-}
 
 const statusLabels: Record<string, string> = {
   running: "Установка выполняется",
@@ -40,6 +36,13 @@ const checkLabels = {
   warn: "Обратите внимание",
   blocked: "Нужно исправить",
   unknown: "Не проверено",
+};
+
+const checkIcons = {
+  pass: CircleCheck,
+  warn: TriangleAlert,
+  blocked: CircleX,
+  unknown: CircleHelp,
 };
 
 function failureMessage(cause: unknown): string {
@@ -90,9 +93,11 @@ export function DesktopSshInstaller({
   const [resumeConfirmed, setResumeConfirmed] = useState(false);
   const [forgetConfirmed, setForgetConfirmed] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [lastStatusAt, setLastStatusAt] = useState<number | null>(null);
   const alive = useRef(true);
   const inFlight = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   const clearCredentials = () => {
     setPassword("");
@@ -143,6 +148,14 @@ export function DesktopSshInstaller({
     setError("");
     try {
       const next = await desktopBridge().sshInstaller(action, input);
+      if (
+        alive.current &&
+        next.status &&
+        !next.error &&
+        ["apply", "status", "resume", "cancel"].includes(action)
+      )
+        setLastStatusAt(Date.now());
+      if (alive.current && action === "forget") setLastStatusAt(null);
       acceptState(next);
       return next;
     } catch (cause) {
@@ -210,10 +223,20 @@ export function DesktopSshInstaller({
   const plan = state?.plan;
   const ticket = state?.ticket;
   const status = state?.status;
+  const PlanContainer = ticket ? "details" : "div";
+  const staleStatus =
+    !!status &&
+    ["running", "cancel_requested"].includes(status.state) &&
+    (!!error || !!state?.error || !state?.hasCredentials);
+  useEffect(() => {
+    if (!ticket || !identity?.trusted) return;
+    progressRef.current?.querySelector("h2")?.focus({ preventScroll: true });
+    progressRef.current?.scrollIntoView({ block: "start" });
+  }, [ticket?.jobId, identity?.trusted]);
   const expired = !!plan && plan.expiresAt * 1000 <= now;
   const needsDockerConsent =
     !!plan && (plan.installDocker || plan.installDockerPluginsOnly);
-  const currentStep = !identity?.trusted ? 0 : ticket ? 3 : plan ? 2 : 1;
+  const currentStep = !identity ? 0 : !identity.trusted ? 1 : ticket ? 4 : plan ? 3 : 2;
   const observedEndpointMatches =
     state?.endpoint?.host === host.trim() &&
     state.endpoint.port === Number(port) &&
@@ -319,30 +342,47 @@ export function DesktopSshInstaller({
       >
         <ArrowLeft size={16} aria-hidden="true" />К подключению к серверу
       </Button>
-      <div className="desktop-ssh-title-icon" aria-hidden="true">
-        <Server size={24} />
-      </div>
-      <h1 id="desktop-ssh-title" ref={heading} tabIndex={-1}>
-        Установить сервер по SSH
-      </h1>
-      <p className="desktop-foundation-description">
-        Настроим MeetSpace на вашем Linux-хосте: проверим доступ, подготовим
-        план и запустим установку после вашего подтверждения.
-      </p>
+
       <ol className="desktop-ssh-steps" aria-label="Этапы установки">
-        {["Хост", "Проверка", "План", "Установка"].map((label, index) => (
+        {["Сервер", "Ключ сервера", "Доступ SSH", "План", "Установка"].map((label, index) => (
           <li
             key={label}
-            aria-current={index === currentStep ? "step" : undefined}
-            className={index < currentStep ? "is-complete" : ""}
+            aria-current={
+              index === currentStep && status?.state !== "completed"
+                ? "step"
+                : undefined
+            }
+            className={
+              index < currentStep || status?.state === "completed"
+                ? "is-complete"
+                : ""
+            }
           >
             <span aria-hidden="true">
-              {index < currentStep ? <Check size={12} /> : index + 1}
+              {index < currentStep || status?.state === "completed" ? (
+                <Check size={12} />
+              ) : (
+                index + 1
+              )}
             </span>
-            {label}
+            <strong>{label}</strong>
           </li>
         ))}
       </ol>
+      <header className="desktop-ssh-heading">
+        <div className="desktop-ssh-title-icon" aria-hidden="true">
+          <Server size={26} />
+        </div>
+        <div>
+          <h1 id="desktop-ssh-title" ref={heading} tabIndex={-1}>
+            Установить сервер по SSH
+          </h1>
+          <p className="desktop-foundation-description">
+            Настроим MeetSpace на вашем Linux-хосте: проверим доступ, подготовим
+            план и запустим установку после вашего подтверждения.
+          </p>
+        </div>
+      </header>
       <ErrorNotice>{error || state?.error?.message || null}</ErrorNotice>
       {!state && !error && <Loading />}
       {!state && error && (
@@ -530,50 +570,60 @@ export function DesktopSshInstaller({
                 });
               }}
             >
-              <label htmlFor="desktop-ssh-domain">
-                Домен будущего MeetSpace
-              </label>
-              <input
-                id="desktop-ssh-domain"
-                required
-                maxLength={253}
-                value={domain}
+              <fieldset
+                className="desktop-ssh-auth desktop-ssh-network"
                 disabled={disabled}
-                placeholder="meet.example.com"
-                autoComplete="off"
-                spellCheck={false}
-                onChange={(event) => setDomain(event.target.value)}
-              />
-              <label htmlFor="desktop-ssh-public-ip">
-                Публичный IPv4 хоста
-              </label>
-              <input
-                id="desktop-ssh-public-ip"
-                required
-                maxLength={15}
-                value={publicIpv4}
-                disabled={disabled}
-                placeholder="203.0.113.10"
-                autoComplete="off"
-                inputMode="decimal"
-                onChange={(event) => setPublicIpv4(event.target.value)}
-              />
-              <p className="field-hint">
-                A-запись домена должна вести прямо на этот IPv4. Для сертификата
-                HTTPS нужны доступные порты 80 и 443.
-              </p>
-              <label htmlFor="desktop-ssh-acme-email">
-                Email для сертификата HTTPS
-              </label>
-              <input
-                id="desktop-ssh-acme-email"
-                type="email"
-                maxLength={254}
-                value={acmeEmail}
-                disabled={disabled}
-                autoComplete="email"
-                onChange={(event) => setAcmeEmail(event.target.value)}
-              />
+              >
+                <legend>Адрес сервера</legend>
+                <div className="desktop-ssh-fields">
+                  <div>
+                    <label htmlFor="desktop-ssh-domain">Домен MeetSpace</label>
+                    <input
+                      id="desktop-ssh-domain"
+                      required
+                      maxLength={253}
+                      value={domain}
+                      placeholder="meet.example.com"
+                      autoComplete="off"
+                      spellCheck={false}
+                      aria-describedby="desktop-ssh-network-hint"
+                      onChange={(event) => setDomain(event.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="desktop-ssh-public-ip">
+                      Публичный IPv4 хоста
+                    </label>
+                    <input
+                      id="desktop-ssh-public-ip"
+                      required
+                      maxLength={15}
+                      value={publicIpv4}
+                      placeholder="203.0.113.10"
+                      autoComplete="off"
+                      inputMode="decimal"
+                      aria-describedby="desktop-ssh-network-hint"
+                      onChange={(event) => setPublicIpv4(event.target.value)}
+                    />
+                  </div>
+                </div>
+                <p className="field-hint" id="desktop-ssh-network-hint">
+                  A-запись домена должна вести прямо на этот IPv4. Для
+                  сертификата HTTPS нужны доступные порты 80 и 443.
+                </p>
+                <label htmlFor="desktop-ssh-acme-email">
+                  Email для сертификата HTTPS{" "}
+                  <span className="muted">(необязательно)</span>
+                </label>
+                <input
+                  id="desktop-ssh-acme-email"
+                  type="email"
+                  maxLength={254}
+                  value={acmeEmail}
+                  autoComplete="email"
+                  onChange={(event) => setAcmeEmail(event.target.value)}
+                />
+              </fieldset>
               <fieldset className="desktop-ssh-auth" disabled={disabled}>
                 <legend>Почтовые уведомления</legend>
                 <label className="desktop-ssh-checkbox">
@@ -681,17 +731,34 @@ export function DesktopSshInstaller({
           )}
           {state?.preflight && !ticket && (
             <div className="desktop-ssh-preflight">
-              <h2>Проверка хоста</h2>
+              <div className="desktop-ssh-section-heading">
+                <h2>Проверка хоста</h2>
+                <span>
+                  Готово:{" "}
+                  {
+                    state.preflight.checks.filter(
+                      (check) => check.level === "pass",
+                    ).length
+                  }{" "}
+                  из {state.preflight.checks.length}
+                </span>
+              </div>
               <ul className="desktop-ssh-checks">
-                {state.preflight.checks.map((check) => (
-                  <li key={check.id} data-level={check.level}>
-                    <div>
-                      <strong>{check.title}</strong>
-                      <span>{checkLabels[check.level]}</span>
-                    </div>
-                    <p>{check.detail}</p>
-                  </li>
-                ))}
+                {state.preflight.checks.map((check) => {
+                  const StatusIcon = checkIcons[check.level];
+                  return (
+                    <li key={check.id} data-level={check.level}>
+                      <div>
+                        <strong>{check.title}</strong>
+                        <span className="desktop-ssh-check-status">
+                          <StatusIcon size={14} aria-hidden="true" />
+                          {checkLabels[check.level]}
+                        </span>
+                      </div>
+                      <p>{check.detail}</p>
+                    </li>
+                  );
+                })}
               </ul>
               {!plan && (
                 <Button
@@ -734,9 +801,170 @@ export function DesktopSshInstaller({
               )}
             </div>
           )}
+          {ticket && (
+            <div className="desktop-ssh-progress" ref={progressRef}>
+              <DesktopInstallProgress
+                status={status}
+                stale={staleStatus}
+                checkedAt={lastStatusAt}
+              />
+              {status?.state !== "completed" && (
+                <p className="field-hint desktop-ssh-background-note">
+                  Установка на сервере не зависит от открытого окна. Для
+                  проверки состояния после повторного открытия приложения
+                  понадобятся данные SSH.
+                </p>
+              )}
+              {status?.state !== "completed" && credentialsForm}
+              {!canConnect && status?.state === "completed" && (
+                <ErrorNotice>
+                  Защищённое хранилище недоступно. Перезапустите приложение,
+                  затем подключитесь к установленному серверу.
+                </ErrorNotice>
+              )}
+              {status?.errorCode && (
+                <ErrorNotice>
+                  Установщик остановился на этапе «
+                  {installPhaseLabel(status.phase.split(":", 1)[0])}
+                  ». Код: {status.errorCode}. Исправьте причину на хосте, затем
+                  проверьте состояние.
+                </ErrorNotice>
+              )}
+              {status?.state === "completed" && (
+                <p className="desktop-ssh-note">
+                  Сервер доступен по адресу{" "}
+                  <strong>https://{ticket.domain}</strong>. Подключитесь и
+                  войдите в аккаунт MeetSpace.
+                </p>
+              )}
+              <div className="desktop-ssh-actions">
+                {status?.state === "completed" && (
+                  <Button
+                    busy={busy}
+                    disabled={disabled || !canConnect}
+                    onClick={() => {
+                      if (inFlight.current) return;
+                      inFlight.current = true;
+                      setBusy(true);
+                      setError("");
+                      void onConnect(`https://${ticket.domain}`)
+                        .catch((cause) => {
+                          if (alive.current)
+                            setError(installedServerConnectionMessage(cause));
+                        })
+                        .finally(() => {
+                          inFlight.current = false;
+                          if (alive.current) setBusy(false);
+                        });
+                    }}
+                  >
+                    Подключиться к MeetSpace
+                  </Button>
+                )}
+                {status?.state !== "completed" && (
+                  <Button
+                    variant="secondary"
+                    busy={busy}
+                    disabled={disabled || !credentialReady}
+                    onClick={() =>
+                      void act("status", { credentials: credentials() })
+                    }
+                  >
+                    Проверить состояние
+                  </Button>
+                )}
+                {status &&
+                  ["running", "cancel_requested"].includes(status.state) && (
+                    <Button
+                      variant="secondary"
+                      disabled={
+                        disabled ||
+                        !credentialReady ||
+                        status.state === "cancel_requested"
+                      }
+                      onClick={() =>
+                        void act("cancel", { credentials: credentials() })
+                      }
+                    >
+                      Остановить установку
+                    </Button>
+                  )}
+              </div>
+              {status &&
+                ["cancelled", "needs_recovery", "failed"].includes(
+                  status.state,
+                ) && (
+                  <>
+                    <label className="desktop-ssh-checkbox">
+                      <input
+                        id="desktop-ssh-resume-consent"
+                        type="checkbox"
+                        checked={resumeConfirmed}
+                        disabled={disabled}
+                        onChange={(event) =>
+                          setResumeConfirmed(event.target.checked)
+                        }
+                      />
+                      <span>
+                        Продолжить установку по сохранённому плану. Установщик
+                        проверит уже выполненные шаги.
+                      </span>
+                    </label>
+                    <Button
+                      disabled={
+                        disabled || !credentialReady || !resumeConfirmed
+                      }
+                      onClick={() => {
+                        setResumeConfirmed(false);
+                        void act("resume", {
+                          confirmedPlanHash: ticket.planHash,
+                          credentials: credentials(),
+                        });
+                      }}
+                    >
+                      Возобновить установку
+                    </Button>
+                  </>
+                )}
+              <details className="desktop-ssh-events">
+                <summary>Сведения об установке</summary>
+                <dl>
+                  <div>
+                    <dt>Идентификатор</dt>
+                    <dd>
+                      <code>{ticket.jobId}</code>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>SHA-256 плана</dt>
+                    <dd>
+                      <code>{ticket.planHash}</code>
+                    </dd>
+                  </div>
+                </dl>
+                {!!status?.events.length && (
+                  <ol>
+                    {status.events.slice(-20).map((event) => (
+                      <li key={event.sequence}>
+                        {installPhaseLabel(event.phase)}:{" "}
+                        {statusLabels[event.state] ?? "Обновление состояния"}
+                        {event.errorCode ? ` · ${event.errorCode}` : ""}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </details>
+            </div>
+          )}
           {plan && (
-            <div className="desktop-ssh-plan">
-              <h2>{ticket ? "Сохранённый план" : "План установки"}</h2>
+            <PlanContainer
+              className={`desktop-ssh-plan${ticket ? " desktop-ssh-saved-plan" : ""}`}
+            >
+              {ticket ? (
+                <summary>Сохранённый план установки</summary>
+              ) : (
+                <h2>План установки</h2>
+              )}
               <dl>
                 <div>
                   <dt>Почтовые уведомления</dt>
@@ -816,11 +1044,13 @@ export function DesktopSshInstaller({
                   </div>
                 )}
               </dl>
-              <p className="desktop-ssh-note">
-                Установщик подготовит компоненты MeetSpace, базу данных и
-                сертификат HTTPS. Существующие данные сохраняются. Изменения на
-                хосте начнутся только после подтверждения.
-              </p>
+              {!ticket && (
+                <p className="desktop-ssh-note">
+                  Установщик подготовит компоненты MeetSpace, базу данных и
+                  сертификат HTTPS. Существующие данные сохраняются. Изменения
+                  на хосте начнутся только после подтверждения.
+                </p>
+              )}
               {!ticket && (
                 <>
                   {credentialsForm}
@@ -955,195 +1185,7 @@ export function DesktopSshInstaller({
                   </div>
                 </>
               )}
-            </div>
-          )}
-          {ticket && (
-            <div className="desktop-ssh-progress">
-              <h2 role="status" aria-live="polite">
-                {status
-                  ? statusLabels[status.state]
-                  : "Проверим состояние установки"}
-              </h2>
-              <p className="field-hint">
-                Установка выполняется на хосте и продолжится при закрытии
-                приложения. Для следующего подключения понадобится снова ввести
-                данные SSH.
-              </p>
-              {status?.state !== "completed" && credentialsForm}
-              {!canConnect && status?.state === "completed" && (
-                <ErrorNotice>
-                  Защищённое хранилище недоступно. Перезапустите приложение,
-                  затем подключитесь к установленному серверу.
-                </ErrorNotice>
-              )}
-              {status && (
-                <ol className="desktop-ssh-phases">
-                  {phases.map(([id, label]) => (
-                    <li
-                      key={id}
-                      className={
-                        status.completedPhases.includes(id)
-                          ? "is-complete"
-                          : phaseGroup(status.phase) === id
-                            ? "is-current"
-                            : ""
-                      }
-                    >
-                      <span aria-hidden="true">
-                        {status.completedPhases.includes(id) ? (
-                          <Check size={14} />
-                        ) : (
-                          ""
-                        )}
-                      </span>
-                      {label}
-                      {phaseGroup(status.phase) === id &&
-                        status.state === "running" && (
-                          <small>Выполняется</small>
-                        )}
-                    </li>
-                  ))}
-                </ol>
-              )}
-              {status?.errorCode && (
-                <ErrorNotice>
-                  Установщик остановился на этапе «
-                  {phases.find(
-                    ([id]) => id === phaseGroup(status.phase),
-                  )?.[1] ?? "подготовка"}
-                  ». Код: {status.errorCode}. Исправьте причину на хосте, затем
-                  проверьте состояние.
-                </ErrorNotice>
-              )}
-              {status?.state === "completed" && (
-                <p className="desktop-ssh-note">
-                  Сервер доступен по адресу{" "}
-                  <strong>https://{ticket.domain}</strong>. Подключитесь и
-                  войдите в аккаунт MeetSpace.
-                </p>
-              )}
-              <div className="desktop-ssh-actions">
-                {status?.state === "completed" && (
-                  <Button
-                    busy={busy}
-                    disabled={disabled || !canConnect}
-                    onClick={() => {
-                      if (inFlight.current) return;
-                      inFlight.current = true;
-                      setBusy(true);
-                      setError("");
-                      void onConnect(`https://${ticket.domain}`)
-                        .catch(() => {
-                          if (alive.current)
-                            setError(
-                              "Сервер установлен, но HTTPS-подключение ещё недоступно. Проверьте DNS и сертификат, затем повторите попытку.",
-                            );
-                        })
-                        .finally(() => {
-                          inFlight.current = false;
-                          if (alive.current) setBusy(false);
-                        });
-                    }}
-                  >
-                    Подключиться к MeetSpace
-                  </Button>
-                )}
-                {status?.state !== "completed" && (
-                  <Button
-                    variant="secondary"
-                    busy={busy}
-                    disabled={disabled || !credentialReady}
-                    onClick={() =>
-                      void act("status", { credentials: credentials() })
-                    }
-                  >
-                    Проверить состояние
-                  </Button>
-                )}
-                {status &&
-                  ["running", "cancel_requested"].includes(status.state) && (
-                    <Button
-                      variant="secondary"
-                      disabled={
-                        disabled ||
-                        !credentialReady ||
-                        status.state === "cancel_requested"
-                      }
-                      onClick={() =>
-                        void act("cancel", { credentials: credentials() })
-                      }
-                    >
-                      Остановить установку
-                    </Button>
-                  )}
-              </div>
-              {status &&
-                ["cancelled", "needs_recovery", "failed"].includes(
-                  status.state,
-                ) && (
-                  <>
-                    <label className="desktop-ssh-checkbox">
-                      <input
-                        id="desktop-ssh-resume-consent"
-                        type="checkbox"
-                        checked={resumeConfirmed}
-                        disabled={disabled}
-                        onChange={(event) =>
-                          setResumeConfirmed(event.target.checked)
-                        }
-                      />
-                      <span>
-                        Продолжить установку по сохранённому плану. Установщик
-                        проверит уже выполненные шаги.
-                      </span>
-                    </label>
-                    <Button
-                      disabled={
-                        disabled || !credentialReady || !resumeConfirmed
-                      }
-                      onClick={() => {
-                        setResumeConfirmed(false);
-                        void act("resume", {
-                          confirmedPlanHash: ticket.planHash,
-                          credentials: credentials(),
-                        });
-                      }}
-                    >
-                      Возобновить установку
-                    </Button>
-                  </>
-                )}
-              <details className="desktop-ssh-events">
-                <summary>Сведения об установке</summary>
-                <dl>
-                  <div>
-                    <dt>Идентификатор</dt>
-                    <dd>
-                      <code>{ticket.jobId}</code>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>SHA-256 плана</dt>
-                    <dd>
-                      <code>{ticket.planHash}</code>
-                    </dd>
-                  </div>
-                </dl>
-                {!!status?.events.length && (
-                  <ol>
-                    {status.events.slice(-20).map((event) => (
-                      <li key={event.sequence}>
-                        {phases.find(
-                          ([id]) => id === phaseGroup(event.phase),
-                        )?.[1] ?? "Подготовка"}
-                        : {statusLabels[event.state] ?? "Обновление состояния"}
-                        {event.errorCode ? ` · ${event.errorCode}` : ""}
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </details>
-            </div>
+            </PlanContainer>
           )}
         </>
       )}

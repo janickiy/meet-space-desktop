@@ -6,9 +6,9 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
   const result: Result<T> = await ipcRenderer.invoke(channel, ...args);
   if (!result || typeof result !== "object") throw new Error("Некорректный ответ приложения");
   if (result.ok) return result.value;
-  const error = new Error(result.error.message) as Error & { code: string };
-  error.code = result.error.code;
-  throw error;
+  // contextBridge drops custom properties on Error instances. A plain rejection
+  // preserves the native code so the renderer can select a fixed, safe message.
+  throw { code: result.error.code, message: result.error.message };
 }
 
 // Sandboxed preload is self-contained: only the Electron import exists at runtime.

@@ -54,8 +54,10 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     const field = (selector, value) => execute(`(() => { const element = document.querySelector(${JSON.stringify(selector)}); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(element, ${JSON.stringify(value)}); element.dispatchEvent(new Event('input', {bubbles:true})); element.dispatchEvent(new Event('change', {bubbles:true})); })()`);
     const route = async value => { window.webContents.send("meetspace:route", value); await until(() => execute(`location.pathname + location.search === ${JSON.stringify(value)}`), "Product route applies"); };
     await execute("window.__productErrors=[]; window.addEventListener('error', event => window.__productErrors.push(event.message)); void 0");
+    await visible("Начнём с подключения");
+    await clickText("Продолжить");
     await visible("Подключиться к серверу");
-    await field("#desktop-server-origin", fixture.origin); await field("#desktop-server-label", "Product fixture");
+    await field("#desktop-server-origin", fixture.origin);
     await click(".desktop-server-form button[type=submit]");
     await until(() => execute("location.pathname === '/login' && !!document.querySelector('#email')"), "Login after server onboarding");
     const recordingPath = `/recordings/${RECORDING}?conference=${CONFERENCE}`;
@@ -69,7 +71,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     assert.equal(await execute("[...document.querySelectorAll('[src],a[href]')].some(e => (e.src || e.href || '').includes('must-not-load.fixture.invalid'))"), false);
     checks.push("real login keeps protected recording return route; ready server file UUID displays without remote media or auto download");
 
-    await clickText("Скачать запись"); await visible("Файл сохранён");
+    await clickText("Скачать видеозапись"); await visible("Файл сохранён");
     assert.deepEqual(saves[0].asset, { kind: "recording", conferenceId: CONFERENCE, recordingId: RECORDING, fileId: FILE });
     await clickText("Открыть запись"); await until(() => opens.length === 1, "Recording playback passes IPC");
     const first = opens[0];
@@ -113,18 +115,34 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     assert.equal(await execute("!!document.querySelector('.sidebar-nav a[href=\"/analytics\"]')"), false);
     assert.equal(fixture.requests.some(request => /\/analytics(?:\?|$)/.test(request.path)), false);
     checks.push("server disabled analytics is absent in navigation and deep route fails closed without analytics request");
-    await route("/app/settings"); await visible("Ваш профиль");
-    assert.equal(await execute("!!document.querySelector('[role=dialog] [role=tablist]')"), true);
-    const settingsLabels = await execute("[...document.querySelectorAll('[role=dialog] [role=tab]')].map(e=>e.textContent)");
-    assert.ok(settingsLabels.some(label => label.includes("Оформление")));
-    assert.ok(settingsLabels.some(label => /Приложение|Компьютер|Windows/.test(label)), "Native settings reuses existing account dialog");
+    await route("/app/settings"); await visible("Мой профиль");
+    assert.equal(await execute("!!document.querySelector('.reference-settings-page [role=tablist]') && !document.querySelector('.account-settings-modal')"), true);
+    const settingsLabels = await execute("[...document.querySelectorAll('.reference-settings-page [role=tab]')].map(e=>e.textContent)");
+    assert.ok(settingsLabels.some(label => label.includes("Внешний вид")));
+    assert.ok(settingsLabels.some(label => label.includes("Устройства")));
+    assert.ok(settingsLabels.some(label => /Приложение|Компьютер|Windows/.test(label)), "Native settings are available on the settings page");
+    assert.equal(await execute("[...document.querySelectorAll('.reference-settings-page button')].some(button=>button.textContent.trim()==='Выйти из аккаунта')"), true, "Account logout remains accessible on the profile page");
     const screenshotDirectory = path.resolve(__dirname, "../artifacts");
     await fs.mkdir(screenshotDirectory, { recursive: true });
     window.setSize(1280, 900);
     for (const theme of ["light", "dark"]) {
-      await clickText("Оформление"); await click(`input[type=radio][value=${theme}]`);
+      await clickText("Внешний вид"); await click(`input[type=radio][value=${theme}]`);
       await until(() => execute(`document.documentElement.dataset.theme === ${JSON.stringify(theme)}`), "Existing appearance preference updates theme");
-      await clickText("Приложение"); await visible("Запускать MeetSpace при входе в Windows");
+      await clickText("Приложение"); await visible("Запускать MeetSpace при входе в систему");
+      const startup = await execute(`(async()=>{
+        const [runtime,preferences]=await Promise.all([window.meetspaceDesktop.getRuntimeInfo(),window.meetspaceDesktop.getNativePreferences()]);
+        const label=[...document.querySelectorAll('.desktop-native-toggle')].find(element=>element.textContent.trim()==='Запускать MeetSpace при входе в систему');
+        const checkbox=label?.querySelector('input[type=checkbox]');
+        return {platform:runtime.platform,supported:preferences.startupSupported,reason:preferences.startupReason,enabled:preferences.startAtLogin,checked:checkbox?.checked,disabled:checkbox?.disabled};
+      })()`);
+      assert.equal(startup.platform,process.platform,"Native settings report the actual test host platform");
+      assert.equal(startup.checked,startup.enabled,"Startup control reflects the native preference");
+      assert.equal(startup.disabled,!startup.supported,"Startup control is gated by the actual platform capability");
+      if(!startup.supported) await visible(startup.reason==='conflict'
+        ? "Автозапуск уже настроен другим способом."
+        : startup.platform==='linux' ? "Автозапуск можно включить в установленном приложении Linux"
+        : startup.platform==='win32' ? "Автозапуск можно включить в установленном приложении Windows."
+        : "Автозапуск в этой среде пока недоступен.");
       await visible("Издатель, подпись и канал выпуска ещё не настроены");
       assert.equal(await execute("!!document.querySelector('.desktop-native-updates button')"), false, "Disabled updater offers no release actions");
       await execute("Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations !== Infinity).map(a=>a.finished.catch(()=>{})))");
@@ -132,7 +150,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
       await new Promise(resolve => setTimeout(resolve, 120));
       await fs.writeFile(path.join(screenshotDirectory, `stage06-settings-${theme}.png`), (await window.webContents.capturePage()).toPNG());
     }
-    checks.push("existing account settings keeps accessible tabs and integrates native settings in the same dialog");
+    checks.push("settings page keeps accessible tabs, profile logout and native settings, with combined devices and appearance sections");
     checks.push("actual settings shows disabled Stage06 updates and never claims a release is current or offers install");
     // Exercise UI transitions through the real typed preload and transport events.
     // Signature and installer execution are independent native tests; no OS install occurs here.

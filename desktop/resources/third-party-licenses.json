@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "applicationLicense": "UNLICENSED",
-  "inventory": "actual installed production closure plus Vite injected helper; conservative installed peers included",
+  "inventory": "actual installed production closure plus Vite injected helper and vendored QR generator; conservative installed peers included",
   "lockfiles": {
     "frontend": "db689fe131fe448895897cb4e5b0e52fee907644b71140c10d607c71c7ac55ba",
     "desktop": "b44129e97b3ba17142aab6ece4064e7d1157fac1ebbce6e23902235e68094fac"
   },
-  "noticesSha256": "1ae47e18bf9640db03ccaf9ff71cb123dcd7f6b0990359d9a081f043bbea0ebd",
+  "noticesSha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241",
   "separateNotices": [
     "LICENSE.electron.txt",
     "LICENSES.chromium.html"
@@ -149,6 +149,20 @@
         {
           "filename": "LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
+        }
+      ]
+    },
+    {
+      "name": "nayuki-qr-code-generator",
+      "version": "git-3c6d0b3cefb4e049dc337e82237c9644399716a8",
+      "license": "MIT",
+      "scopes": [
+        "vendored offline renderer QR generator"
+      ],
+      "licenses": [
+        {
+          "filename": "frontend/src/vendor/LICENSE",
+          "sha256": "013bb580e895ea9ac7c2e56665b3fda772d45cadc36ede41daa369b13b0aa533"
         }
       ]
     },

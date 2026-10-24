@@ -153,16 +153,17 @@ const {
     await execute(
       "window.__uiStreamEvents = []; window.meetspaceDesktop.onTransportEvent(e => { if (e.kind === 'stream') window.__uiStreamEvents.push({id:e.id,type:e.type,status:e.status,headers:e.headers, bytes:e.data?.byteLength, nativeArray:e.data instanceof Uint8Array}); }); window.__uiErrors=[]; window.addEventListener('error',e=>window.__uiErrors.push(e.message)); void 0",
     );
+    await visible("Начнём с подключения");
+    await click(".reference-onboarding-intro .button");
     await visible("Подключиться к серверу");
     assert.equal(
       await execute(
-        "!!document.querySelector('.brand img[src*=meetspace-horizontal]')",
+        "!!document.querySelector('.reference-welcome-brand img[src*=meetspace-symbol-color]')",
       ),
       true,
       "First run reuses the shipped brand",
     );
     await field("#desktop-server-origin", alpha.origin);
-    await field("#desktop-server-label", "UI Alpha");
     await click(".desktop-server-form button[type=submit]");
     await login(alpha);
     checks.push(
@@ -369,7 +370,6 @@ const {
     // Open server settings underneath the fixture modal only in this harness.
     await openSettings();
     await field("#desktop-server-origin", beta.origin);
-    await field("#desktop-server-label", "UI Beta");
     await click(".desktop-server-form button[type=submit]");
     await until(
       () =>
@@ -402,7 +402,7 @@ const {
     );
 
     await openSettings();
-    await selectSaved("UI Alpha");
+    await selectSaved(new URL(alpha.origin).host);
     await visible(alpha.users[0].displayName);
     assert.equal(
       requestCount(alpha, "/api/v1/auth/login"),
@@ -413,7 +413,7 @@ const {
     window.webContents.reload();
     await visible("Не удалось проверить сессию");
     await openSettings();
-    await selectSaved("UI Beta");
+    await selectSaved(new URL(beta.origin).host);
     await visible(beta.users[0].displayName);
     assert.equal(requestCount(beta, "/api/v1/auth/login"), 1);
     checks.push(

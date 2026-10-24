@@ -413,7 +413,7 @@ body {
 }
 .sidebar :focus-visible,
 .app-chrome :focus-visible {
-  outline-color: #f6ccff;
+  outline-color: var(--focus);
 }
 .workspace {
   grid-column: 2;
@@ -491,40 +491,6 @@ body {
   padding: 28px var(--workspace-gutter) 40px;
   flex: 1;
 }
-.workspace-footer {
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 14px var(--workspace-gutter);
-  color: var(--muted);
-  font-size: calc(10px * var(--text-scale));
-  border-top: 1px solid var(--border);
-  margin: 0;
-}
-.copyright {
-  margin: 0;
-  font-size: calc(12px * var(--text-scale));
-  line-height: 1.6;
-  color: inherit;
-  overflow-wrap: anywhere;
-}
-.copyright a {
-  color: inherit;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
-}
-.copyright a:hover {
-  color: var(--primary);
-  text-decoration-color: currentColor;
-}
-.auth-footer .copyright {
-  margin-top: 8px;
-}
-.workspace-footer > span:first-child {
-  color: var(--text);
-  font-size: calc(12px * var(--text-scale));
-}
 .mobile-bottom-nav {
   display: none;
 }
@@ -582,7 +548,6 @@ body {
 .app-shell:has(.conference-room-page) > .sidebar,
 .app-shell:has(.conference-room-page) > .app-chrome,
 .app-shell:has(.conference-room-page) .workspace-top,
-.app-shell:has(.conference-room-page) .workspace-footer,
 .app-shell:has(.conference-room-page) .mobile-bottom-nav {
   display: none;
 }
@@ -818,8 +783,7 @@ body {
   .sidebar {
     padding-inline: 10px;
   }
-  .workspace-top,
-  .workspace-footer {
+  .workspace-top {
     padding-inline: var(--workspace-gutter);
   }
   .workspace-main {
@@ -975,18 +939,8 @@ body {
     display: none;
   }
   .workspace-main {
-    padding: 24px var(--workspace-gutter);
-  }
-  .workspace-footer {
-    display: flex;
-    justify-content: center;
-    padding: 14px var(--workspace-gutter)
+    padding: 24px var(--workspace-gutter)
       calc(88px + env(safe-area-inset-bottom));
-    text-align: center;
-  }
-  .app-shell:has(.personal-page.personal-selected) .workspace-footer,
-  .app-shell:has(.personal-page[data-keyboard-open="true"]) .workspace-footer {
-    display: none;
   }
   .mobile-bottom-nav {
     display: flex;

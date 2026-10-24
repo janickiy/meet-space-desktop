@@ -4,7 +4,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { SshInstallerController } = require('../dist/ssh/controller');
-const { InstallerBundle, canonicalJson, sha256, installPhases } = require('../dist/ssh/protocol');
+const { InstallerBundle, canonicalJson, sha256, installPhases, LEGACY_INSTALLER_RELEASE_SHA256 } = require('../dist/ssh/protocol');
 const { hostKeyFromBytes } = require('../dist/ssh/transport');
 const { SshError } = require('../dist/ssh/types');
 const bundleRoot = path.join(__dirname, '../resources/server-installer/v1');
@@ -15,7 +15,7 @@ const keyBytes = Buffer.concat([Buffer.from([0,0,0,11]), Buffer.from('ssh-ed2551
 const pin = hostKeyFromBytes(keyBytes);
 const credentials = { kind: 'password', password: 'only-in-memory-fixture-secret' };
 function probe() { return JSON.stringify({ protocol: 'MSPF2', kernel: 'Linux', arch: 'aarch64', cpu: 4, uid: 0, distro: 'ubuntu', distroVersion: '24.04', ramKiB: 8*1048576, diskKiB: 30*1048576, sudo: 'root', docker: 'missing', dockerAccess: false, compose: 'missing', existingContainers: false, existingPaths: false, tcpPorts: [22], udpPorts: [], domainIps: ['8.8.8.8'], hostIps: ['8.8.8.8'], firewall: 'unknown', complete: true }); }
-function planFixture(selectedOptions = options) {
+function planFixture(selectedOptions = options, manifest = InstallerBundle.fromDirectory(bundleRoot).manifest) {
   const now = Math.floor(Date.now()/1000);
   const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:['8.8.8.8'], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
   p.options = selectedOptions;
@@ -29,7 +29,7 @@ async function fixture(t) {
     async probe(e,c,p,d,signal){calls.push('probe');owned.push(c);if(error)throw error;return probe()},
     async installer(e,c,p,payload,signal){
       const encoded=/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1];
-      const {action,request}=JSON.parse(Buffer.from(encoded,'base64'));calls.push(action);requests.push({action,request});owned.push(c);if(error)throw error;
+      const {action,request,bundle}=JSON.parse(Buffer.from(encoded,'base64'));calls.push(action);requests.push({action,request,releaseSha256:sha256(Buffer.from(bundle['release.json'],'base64'))});owned.push(c);if(error)throw error;
       if(action==='plan'){const result=planFixture(request.options);plans.push(result);return JSON.stringify({protocol:'MSI1',ok:true,result})}
       const plan=plans.at(-1)??planFixture();
       return JSON.stringify({protocol:'MSI1',ok:true,result:{jobId:request.jobId,planHash:request.planHash??request.confirmedPlanHash,commit:plan.commit,domain:plan.options.domain,releaseVersion:plan.releaseVersion,state:statusState,phase:statusState==='completed'?'readiness':'images',completedPhases:statusState==='completed'?[...installPhases]:['docker','source'],events:[]}})
@@ -45,6 +45,115 @@ async function planned(f){
   s=await f.controller.invoke('preflight',{domain:options.domain,credentials});assert.equal(s.preflight.ready,true);
   s=await f.controller.invoke('plan',{options});assert.ok(s.plan,JSON.stringify(s.error));return s;
 }
+async function trusted(f) {
+  await f.controller.invoke('discover', { endpoint });
+  await f.controller.invoke('acceptHostKey', { fingerprint: pin.fingerprint });
+  const state = await f.controller.invoke('preflight', { domain: options.domain, credentials });
+  assert.equal(state.preflight.ready, true);
+}
+const decodePayload = payload => JSON.parse(Buffer.from(/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1], 'base64'));
+const reply = result => JSON.stringify({ protocol: 'MSI1', ok: true, result });
+const remoteFailure = errorCode => JSON.stringify({ protocol: 'MSI1', ok: false, errorCode });
+function legacyExistingPlan() {
+  const old = InstallerBundle.legacyRecovery(bundleRoot);
+  const plan = planFixture(options, old.manifest);
+  plan.existingJobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62';
+  plan.existingPlanHash = 'a'.repeat(64);
+  plan.hash = sha256(canonicalJson(Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'hash'))));
+  return plan;
+}
+
+test('read-only plan fallback rediscovers a legacy job and binds subsequent control to its original recipe', async t => {
+  const f = await fixture(t); await trusted(f);
+  const original = f.transport.installer, observed = [], plan = legacyExistingPlan();
+  f.transport.installer = async (...args) => {
+    const message = decodePayload(args[3]);
+    observed.push({ action: message.action, release: sha256(Buffer.from(message.bundle['release.json'], 'base64')) });
+    assert.deepEqual(args[0], endpoint); assert.equal(args[2].fingerprint, pin.fingerprint);
+    if (message.action === 'plan') return observed.length === 1 ? remoteFailure('PLAN_CHANGED') : reply(plan);
+    return original(...args);
+  };
+  const state = await f.controller.invoke('plan', { options });
+  assert.equal(state.error, undefined);
+  assert.equal(state.ticket.jobId, plan.existingJobId);
+  assert.equal(state.ticket.planHash, plan.existingPlanHash);
+  assert.deepEqual(observed, [
+    { action: 'plan', release: sha256(canonicalJson(manifest)) },
+    { action: 'plan', release: LEGACY_INSTALLER_RELEASE_SHA256 },
+  ]);
+  const rejected = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, acceptAcmeTerms: true, confirmDockerInstall: true });
+  assert.equal(rejected.error.code, 'PENDING_JOB');
+  const resumed = await f.controller.invoke('resume', { confirmedPlanHash: plan.existingPlanHash });
+  assert.equal(resumed.error, undefined);
+  assert.equal(observed.at(-1).release, LEGACY_INSTALLER_RELEASE_SHA256);
+  assert.equal(observed.some(item => item.action === 'apply'), false);
+  const saved = JSON.parse(await fs.readFile(path.join(f.storageDir, 'ssh-install-ticket.json'), 'utf8'));
+  assert.equal(saved.plan.releaseSha256, LEGACY_INSTALLER_RELEASE_SHA256);
+  await f.controller.invoke('detach');
+  const restored = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
+  t.after(() => restored.dispose()); await restored.load();
+  const checked = await restored.invoke('status', { credentials });
+  assert.equal(checked.error, undefined);
+  assert.equal(observed.at(-1).release, LEGACY_INSTALLER_RELEASE_SHA256);
+});
+
+test('legacy fallback rejects fresh installs and invalid or changed-option recovery plans', async t => {
+  for (const mutate of [
+    plan => { plan.existingJobId = null; plan.existingPlanHash = null; },
+    plan => { plan.options = { ...plan.options, domain: 'other.example.com' }; },
+    plan => { plan.runnerSha256 = 'f'.repeat(64); },
+  ]) {
+    const f = await fixture(t); await trusted(f);
+    const plan = legacyExistingPlan(); mutate(plan);
+    plan.hash = sha256(canonicalJson(Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'hash'))));
+    let calls = 0;
+    f.transport.installer = async () => ++calls === 1 ? remoteFailure('EXISTING_INSTALLATION') : reply(plan);
+    const state = await f.controller.invoke('plan', { options });
+    assert.equal(state.error.code, 'PLAN_INVALID'); assert.equal(state.ticket, undefined); assert.equal(state.plan, undefined);
+    assert.equal(calls, 2);
+    assert.equal((await f.controller.invoke('apply', { confirmedPlanHash: plan.hash, acceptAcmeTerms: true, confirmDockerInstall: true })).error.code, 'CONFIRMATION');
+    assert.equal(calls, 2);
+  }
+});
+
+test('plan fallback never follows network, changed-host-key or other installer errors', async t => {
+  for (const error of [new SshError('NETWORK', 'fixture'), new SshError('HOST_KEY_CHANGED', 'fixture'), 'PLAN_EXPIRED', 'RELEASE_INVALID']) {
+    const f = await fixture(t); await trusted(f); let calls = 0;
+    f.transport.installer = async () => { calls++; if (typeof error === 'string') return remoteFailure(error); throw error; };
+    const state = await f.controller.invoke('plan', { options });
+    assert.equal(calls, 1); assert.equal(state.ticket, undefined);
+    assert.equal(state.error.code, typeof error === 'string' ? error : error.code);
+    if (error.code === 'HOST_KEY_CHANGED') { assert.equal(state.identity.trusted, false); assert.equal(state.hasCredentials, false); }
+  }
+});
+
+test('a changed legacy plan is still rejected after the current recipe mismatch', async t => {
+  const f = await fixture(t); await trusted(f); let calls = 0;
+  f.transport.installer = async () => { calls++; return remoteFailure('PLAN_CHANGED'); };
+  const state = await f.controller.invoke('plan', { options });
+  assert.equal(calls, 2); assert.equal(state.error.code, 'PLAN_CHANGED');
+  assert.equal(state.ticket, undefined); assert.equal(state.plan, undefined);
+});
+
+test('detach stops fallback before dispatch or prevents a late legacy plan from restoring stale state', async t => {
+  for (const waitOnLegacy of [false, true]) {
+    const f = await fixture(t); await trusted(f);
+    let calls = 0, release, started;
+    const waiting = new Promise(resolve => { started = resolve; });
+    f.transport.installer = async () => {
+      calls++;
+      if (waitOnLegacy && calls === 1) return remoteFailure('EXISTING_INSTALLATION');
+      started(); return new Promise(resolve => { release = resolve; });
+    };
+    const pending = f.controller.invoke('plan', { options });
+    await waiting; const detached = await f.controller.invoke('detach');
+    release(waitOnLegacy ? reply(legacyExistingPlan()) : remoteFailure('EXISTING_INSTALLATION'));
+    const state = await pending;
+    assert.equal(calls, waitOnLegacy ? 2 : 1);
+    assert.equal(state.ticket, undefined); assert.equal(state.plan, undefined); assert.equal(state.hasCredentials, false);
+    assert.equal(state.phase, detached.phase); assert.equal(state.busy, false);
+  }
+});
 
 test('explicit pin confirmation precedes credentials; native state and disk never serialize secrets',async t=>{
   const f=await fixture(t);
@@ -91,6 +200,54 @@ test('public ticket is saved before remote apply, survives detach/reload; duplic
   assert.equal(reloaded.state().ticket.jobId,applied.ticket.jobId);assert.equal(reloaded.state().hasCredentials,false);assert.equal(reloaded.state().identity.trusted,true);
   const missing=await reloaded.invoke('status');assert.equal(missing.error.code,'CREDENTIALS');
   f.setState('completed');const done=await reloaded.invoke('status',{credentials});assert.equal(done.phase,'completed');assert.equal(done.hasCredentials,false);
+});
+
+test('an existing legacy ticket survives an app update and keeps its signed bundle for status, resume and cancel', async t => {
+  const f = await fixture(t); await planned(f);
+  const legacy = InstallerBundle.fromDirectory(path.join(bundleRoot, '..', 'legacy', LEGACY_INSTALLER_RELEASE_SHA256));
+  const plan = planFixture(options, legacy.manifest);
+  // Recovery may happen long after the original fifteen-minute approval window.
+  plan.issuedAt -= 86400; plan.expiresAt -= 86400;
+  plan.hash = sha256(canonicalJson(Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'hash'))));
+  const saved = { schema: 1, endpoint, hostFingerprint: pin.fingerprint, jobId: 'e0b0d6f0-14f6-4c58-a674-9c9665465a62', planHash: plan.hash, plan };
+  const filename = path.join(f.storageDir, 'ssh-install-ticket.json');
+  const originalBytes = JSON.stringify(saved);
+  await fs.writeFile(filename, originalBytes);
+  const restored = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
+  t.after(() => restored.dispose()); await restored.load();
+  assert.equal(restored.state().error, undefined);
+  assert.equal(restored.state().ticket.planHash, plan.hash);
+  assert.equal(restored.state().hasCredentials, false);
+  const checked = await restored.invoke('status', { credentials });
+  assert.equal(checked.status.state, 'running');
+  await restored.invoke('detach');
+  const resumed = await restored.invoke('resume', { credentials, confirmedPlanHash: plan.hash });
+  assert.equal(resumed.status.state, 'running');
+  await restored.invoke('cancel');
+  for (const entry of f.requests.filter(item => ['status', 'resume', 'cancel'].includes(item.action))) {
+    assert.equal(entry.releaseSha256, LEGACY_INSTALLER_RELEASE_SHA256);
+    assert.equal(entry.request.planHash, plan.hash);
+  }
+  assert.equal(await fs.readFile(filename, 'utf8'), originalBytes);
+  await restored.invoke('forget', { confirm: true });
+  await restored.invoke('discover', { endpoint });
+  await restored.invoke('preflight', { domain: options.domain, credentials });
+  const fresh = await restored.invoke('plan', { options });
+  assert.equal(fresh.error, undefined);
+  assert.equal(f.requests.at(-1).action, 'plan');
+  assert.equal(f.requests.at(-1).releaseSha256, sha256(canonicalJson(manifest)));
+});
+
+test('unknown or changed saved recipes cannot trigger an installer request', async t => {
+  const f = await fixture(t); await planned(f);
+  const plan = planFixture(); plan.releaseSha256 = 'f'.repeat(64);
+  plan.hash = sha256(canonicalJson(Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'hash'))));
+  await fs.writeFile(path.join(f.storageDir, 'ssh-install-ticket.json'), JSON.stringify({ schema: 1, endpoint, hostFingerprint: pin.fingerprint, jobId: 'e0b0d6f0-14f6-4c58-a674-9c9665465a62', planHash: plan.hash, plan }));
+  const restored = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
+  t.after(() => restored.dispose()); await restored.load();
+  assert.equal(restored.state().error.code, 'STORAGE');
+  assert.equal(restored.state().ticket, undefined);
+  assert.equal(f.requests.some(item => ['status', 'resume', 'cancel'].includes(item.action)), false);
 });
 test('auth failure and detach scrub owned credential buffers; changed key cannot be blindly accepted',async t=>{
   const f=await fixture(t);await planned(f);f.setError(new SshError('AUTH','SSH-сервер отклонил пароль или ключ.'));

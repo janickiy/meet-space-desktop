@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../auth";
 import { Brand } from "../components/ui";
-import { Copyright } from "../components/Copyright";
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME, PRODUCT_TAGLINE } from "../brand";
 import { LandingScene } from "./LandingScene";
 import "./landing.css";
@@ -120,7 +119,6 @@ export function Landing() {
           <strong>{PRODUCT_NAME}</strong>
           <span>Ближе, где бы вы ни были.</span>
         </span>
-        <Copyright />
       </footer>
     </div>
   );

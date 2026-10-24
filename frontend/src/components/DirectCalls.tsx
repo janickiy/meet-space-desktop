@@ -636,6 +636,9 @@ function CallRinging({
               }}
             >
               {devices.microphoneEnabled ? <Mic /> : <MicOff />}
+              <span className="direct-call-control-caption" aria-hidden="true">
+                Микрофон
+              </span>
             </button>
             <button
               type="button"
@@ -652,6 +655,9 @@ function CallRinging({
               onClick={() => setCamera(!devices.cameraEnabled)}
             >
               {devices.cameraEnabled ? <Video /> : <VideoOff />}
+              <span className="direct-call-control-caption" aria-hidden="true">
+                Камера
+              </span>
             </button>
           </>
         )}

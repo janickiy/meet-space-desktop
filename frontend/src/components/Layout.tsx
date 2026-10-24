@@ -1,5 +1,10 @@
 import { DesktopServerButton } from "./desktop/DesktopSessionGate";
-import { ChevronRight, ChevronsUpDown, MessageCircle } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronsUpDown,
+  CircleHelp,
+  MessageCircle,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import { isDesktopBuild } from "../platform/build";
@@ -14,7 +19,6 @@ import {
   CalendarDays,
   Home,
   Folder,
-  LogOut,
   Ellipsis,
   Menu,
   CirclePlay,
@@ -26,7 +30,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../auth";
 import { initials } from "../utils";
-import { Brand, Loading } from "./ui";
+import { Brand, Loading, Modal } from "./ui";
 import { NotificationBell } from "./NotificationBell";
 import { UnreadMessageCount } from "./UnreadMessageCount";
 import { useNotificationStream } from "../notifications";
@@ -34,7 +38,6 @@ import { useCapabilities } from "../useCapabilities";
 import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
 import { AccountSettingsModal } from "./AccountSettingsModal";
 import { AccountSettingsContext } from "./AccountSettingsContext";
-import { Copyright } from "./Copyright";
 import { DirectCallsProvider } from "./DirectCalls";
 
 /**
@@ -43,7 +46,7 @@ import { DirectCallsProvider } from "./DirectCalls";
  * @return Общая оболочка с лениво загружаемым защищённым маршрутом.
  */
 export function Layout() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   useNotificationStream(user?.guestConferenceId ? undefined : user?.id);
   const personal = usePersonalRealtime(
     user?.guestConferenceId ? undefined : user?.id,
@@ -58,11 +61,8 @@ export function Layout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const settingsOpener = useRef<HTMLElement | null>(null);
-  const settingsRouteOpen = ["/app/settings", "/settings"].includes(
-    location.pathname,
-  );
-  const [leaving, setLeaving] = useState(false);
   const sidebar = useRef<HTMLElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const bottomButton = useRef<HTMLButtonElement>(null);
@@ -93,11 +93,8 @@ export function Layout() {
     )
       return;
     event.preventDefault();
-    settingsOpener.current = open
-      ? opener.current || menuButton.current
-      : event.currentTarget;
     setOpen(false);
-    showAccountSettings(settingsOpener.current!);
+    navigate("/app/settings");
   }
   useEffect(() => {
     if (!open) return;
@@ -143,16 +140,6 @@ export function Layout() {
     };
   }, [open]);
 
-  /** Завершает локальную сессию и возвращает к форме входа даже при сетевом отказе logout. */
-  const leaveAccount = () => {
-    setLeaving(true);
-    void logout()
-      .catch(() => {})
-      .finally(() => {
-        setLeaving(false);
-        navigate("/login", { replace: true });
-      });
-  };
   if (user?.guestConferenceId)
     return (
       <AccountSettingsContext.Provider value={showAccountSettings}>
@@ -165,21 +152,6 @@ export function Layout() {
               <Outlet />
             </Suspense>
           </main>
-        </div>
-        {settingsDialog}
-      </AccountSettingsContext.Provider>
-    );
-  if (
-    /^\/(?:conferences|meetings)\/[^/]+\/(?:join|prejoin)$/.test(
-      location.pathname,
-    )
-  )
-    return (
-      <AccountSettingsContext.Provider value={showAccountSettings}>
-        <div inert={settingsOpen}>
-          <Suspense fallback={<Loading />}>
-            <Outlet />
-          </Suspense>
         </div>
         {settingsDialog}
       </AccountSettingsContext.Provider>
@@ -237,7 +209,7 @@ export function Layout() {
             </button>
           </div>
         )}
-        <div className="app-shell" inert={settingsOpen || settingsRouteOpen}>
+        <div className="app-shell" inert={settingsOpen || helpOpen}>
           <a className="skip-link" href="#workspace-main">
             Перейти к содержимому
           </a>
@@ -283,25 +255,12 @@ export function Layout() {
                 <X />
               </button>
             </div>
-            <div className="sidebar-workspace-card">
-              {isDesktopBuild ? (
-                <DesktopServerButton />
-              ) : (
-                <Link to="/conferences" className="workspace-identity">
-                  <span className="workspace-symbol">М</span>
-                  <span>
-                    <strong>Моё пространство</strong>
-                    <small>Встречи и общение</small>
-                  </span>
-                  <ChevronsUpDown size={14} aria-hidden="true" />
-                </Link>
-              )}
-            </div>
             <p className="sidebar-caption">Рабочее пространство</p>
             <nav className="sidebar-nav" aria-label="Основная навигация">
               {items.map(({ to, label, Icon, ...props }) => (
                 <NavLink
                   key={to}
+                  aria-label={label}
                   to={to}
                   {...props}
                   onClick={(event) =>
@@ -371,6 +330,7 @@ export function Layout() {
               {serviceItems.map(({ to, label, Icon }) => (
                 <NavLink
                   key={to}
+                  aria-label={label}
                   to={to}
                   onClick={(event) =>
                     to === "/app/settings"
@@ -385,20 +345,31 @@ export function Layout() {
                   <span className="nav-label-text">{label}</span>
                 </NavLink>
               ))}
+              <button
+                className="nav-item"
+                aria-label="Помощь и сочетания"
+                onClick={() => {
+                  setOpen(false);
+                  setHelpOpen(true);
+                }}
+              >
+                <CircleHelp size={18} aria-hidden="true" />
+                <span className="nav-label-text">Помощь и сочетания</span>
+              </button>
             </nav>
+            {isDesktopBuild && (
+              <div className="sidebar-server-status">
+                <DesktopServerButton compact />
+              </div>
+            )}
             <div className="sidebar-bottom">
               <button
                 type="button"
                 className="profile profile-button"
                 aria-label="Открыть настройки аккаунта"
-                onClick={(event) => {
-                  const target = open
-                    ? opener.current ||
-                      menuButton.current ||
-                      event.currentTarget
-                    : event.currentTarget;
+                onClick={() => {
                   setOpen(false);
-                  showAccountSettings(target);
+                  navigate("/app/settings#accounts");
                 }}
               >
                 <span className="avatar">
@@ -413,16 +384,6 @@ export function Layout() {
                   className="profile-chevron"
                   aria-hidden="true"
                 />
-              </button>
-              <button
-                className="logout-button"
-                disabled={leaving}
-                onClick={leaveAccount}
-              >
-                <LogOut size={22} />
-                <span className="nav-label-text">
-                  {leaving ? "Выходим…" : "Выйти из аккаунта"}
-                </span>
               </button>
             </div>
           </aside>
@@ -466,9 +427,6 @@ export function Layout() {
                 <Outlet />
               </Suspense>
             </main>
-            <footer className="workspace-footer">
-              <Copyright />
-            </footer>
             <nav className="mobile-bottom-nav" aria-label="Быстрая навигация">
               <NavLink to="/app" end aria-label="Главная — быстрая навигация">
                 <Home size={20} />
@@ -512,6 +470,55 @@ export function Layout() {
           </div>
         </div>
         {settingsDialog}
+        {helpOpen && (
+          <Modal
+            title="Помощь и сочетания клавиш"
+            onClose={() => setHelpOpen(false)}
+            className="workspace-help"
+          >
+            <p>Быстрый доступ к действиям в MeetSpace.</p>
+            <dl>
+              <div>
+                <dt>Поиск в пространстве</dt>
+                <dd>
+                  <kbd>Ctrl K</kbd>
+                </dd>
+              </div>
+              <div>
+                <dt>Закрыть диалог</dt>
+                <dd>
+                  <kbd>Esc</kbd>
+                </dd>
+              </div>
+              <div>
+                <dt>Отправить сообщение</dt>
+                <dd>
+                  <kbd>Enter</kbd>
+                </dd>
+              </div>
+              <div>
+                <dt>Новая строка в сообщении</dt>
+                <dd>
+                  <kbd>Shift Enter</kbd>
+                </dd>
+              </div>
+            </dl>
+            <div className="workspace-help-brand">
+              <img
+                src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
+                width="32"
+                height="32"
+                alt=""
+              />
+              <div>
+                <strong>{PRODUCT_NAME}</strong>
+                <p>
+                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.2-beta"}
+                </p>
+              </div>
+            </div>
+          </Modal>
+        )}
       </DirectCallsProvider>
     </AccountSettingsContext.Provider>
   );

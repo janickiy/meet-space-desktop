@@ -16,7 +16,9 @@ import {
   MicOff,
   ShieldCheck,
   Settings,
-  X,
+  ArrowLeft,
+  ArrowRight,
+  Video,
 } from "lucide-react";
 import { api, ApiError } from "../api";
 import type { Invite } from "../types";
@@ -45,6 +47,7 @@ import {
 import { initials } from "../utils";
 import { MeetingSkeleton } from "../components/MeetingSkeleton";
 import "./prejoin.css";
+import "./call-reference.css";
 
 type InputKind = "audio" | "video";
 
@@ -714,6 +717,29 @@ export function PreJoinPage({
           {inputOptions("audioinput", preferences.audioInputId)}
         </select>
       </label>
+      <label className="prejoin-level">
+        <span>
+          <Mic size={17} aria-hidden="true" />
+          Уровень микрофона
+        </span>
+        <meter
+          className="sr-only"
+          min={0}
+          max={1}
+          value={microphoneOn ? level : 0}
+        />
+        <span className="prejoin-meter-bars" aria-hidden="true">
+          {Array.from({ length: 20 }, (_, index) => (
+            <i
+              key={index}
+              className={
+                microphoneOn && level > index / 20 ? "prejoin-meter-lit" : ""
+              }
+            />
+          ))}
+        </span>
+      </label>
+
       <label className="field">
         Камера
         <select
@@ -757,25 +783,21 @@ export function PreJoinPage({
     </div>
   );
   return (
-    <main className="prejoin-page prejoin-parity-page">
+    <main className="prejoin-page prejoin-parity-page prejoin-reference-page">
       <header className="prejoin-brand">
-        <Brand to={home} />
-        <DesktopServerButton />
-        <Link
-          className="icon-button"
-          to={home}
-          aria-label="Закрыть подключение"
-        >
-          <X size={20} />
+        <Link className="prejoin-back" to={home} aria-label="К встречам">
+          <ArrowLeft size={15} aria-hidden="true" />
+          Все встречи
         </Link>
+        <DesktopServerButton />
       </header>
       <div className="prejoin-heading">
         <div>
           <span className="eyebrow">
-            {invitation ? "ВАС ПРИГЛАСИЛИ" : "ПЕРЕД ПОДКЛЮЧЕНИЕМ"}
+            {invitation ? "ВАС ПРИГЛАСИЛИ" : "ПОЧТИ НА МЕСТЕ"}
           </span>
           <h1>{meeting.title}</h1>
-          <p>Убедитесь, что вас хорошо видно и слышно.</p>
+          <p>Проверьте звук и устраивайтесь поудобнее</p>
         </div>
       </div>
       <form
@@ -808,80 +830,64 @@ export function PreJoinPage({
                 <span className="prejoin-initials">
                   {initials(name || "Гость")}
                 </span>
-                <span>
-                  <CameraOff size={21} aria-hidden="true" />
-                  Камера выключена
-                </span>
+                <strong className="prejoin-person-name">
+                  {name || "Гость"}
+                </strong>
+                <span>Ваша камера выключена</span>
               </div>
             )}
-            <span className="prejoin-preview-name">{name || "Гость"} · вы</span>
+            {cameraOn && (
+              <span className="prejoin-preview-name">
+                {name || "Гость"} · вы
+              </span>
+            )}
+            <div className="prejoin-toggles">
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label={
+                  microphoneOn ? "Выключить микрофон" : "Включить микрофон"
+                }
+                aria-pressed={microphoneOn}
+                disabled={busy.audio || join.isPending}
+                onClick={() =>
+                  void capture("audio", !microphoneOn, preferences.audioInputId)
+                }
+              >
+                {microphoneOn ? <Mic size={21} /> : <MicOff size={21} />}
+                <span>Микрофон</span>
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label={cameraOn ? "Выключить камеру" : "Включить камеру"}
+                aria-pressed={cameraOn}
+                disabled={busy.video || join.isPending}
+                onClick={() =>
+                  void capture("video", !cameraOn, preferences.videoInputId)
+                }
+              >
+                {cameraOn ? <Camera size={21} /> : <CameraOff size={21} />}
+                <span>Камера</span>
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="prejoin-mobile-devices"
+                aria-label="Настройки устройств"
+                aria-haspopup="dialog"
+                disabled={join.isPending}
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings size={21} />
+                <span>Устройства</span>
+              </Button>
+            </div>
           </div>
-          <div className="prejoin-toggles">
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={
-                microphoneOn ? "Выключить микрофон" : "Включить микрофон"
-              }
-              aria-pressed={microphoneOn}
-              disabled={busy.audio || join.isPending}
-              onClick={() =>
-                void capture("audio", !microphoneOn, preferences.audioInputId)
-              }
-            >
-              {microphoneOn ? <Mic size={21} /> : <MicOff size={21} />}
-              <span>Микрофон</span>
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={cameraOn ? "Выключить камеру" : "Включить камеру"}
-              aria-pressed={cameraOn}
-              disabled={busy.video || join.isPending}
-              onClick={() =>
-                void capture("video", !cameraOn, preferences.videoInputId)
-              }
-            >
-              {cameraOn ? <Camera size={21} /> : <CameraOff size={21} />}
-              <span>Камера</span>
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              className="prejoin-mobile-devices"
-              aria-label="Настройки устройств"
-              aria-haspopup="dialog"
-              disabled={join.isPending}
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings size={21} />
-              <span>Устройства</span>
-            </Button>
-          </div>
-          <label className="prejoin-level">
-            <span>
-              <Mic size={17} aria-hidden="true" />
-              Уровень микрофона
-            </span>
-            <meter
-              className="sr-only"
-              min={0}
-              max={1}
-              value={microphoneOn ? level : 0}
-            />
-            <span className="prejoin-meter-bars" aria-hidden="true">
-              {Array.from({ length: 20 }, (_, index) => (
-                <i
-                  key={index}
-                  className={
-                    microphoneOn && level > index / 20
-                      ? "prejoin-meter-lit"
-                      : ""
-                  }
-                />
-              ))}
-            </span>
-          </label>
+          <p className="prejoin-preview-privacy">
+            <ShieldCheck size={14} aria-hidden="true" />
+            Камера и микрофон подключатся к встрече только после входа.
+          </p>
           {playbackBlocked && (
             <Button
               type="button"
@@ -907,7 +913,7 @@ export function PreJoinPage({
         </section>
         <section className="content-card prejoin-settings">
           <h2>
-            {guestMode ? "Как вас представить?" : "Всё готово к встрече?"}
+            {guestMode ? "Как вас представить?" : "Готовы присоединиться?"}
           </h2>
           {guestMode ? (
             <label className="field">
@@ -976,9 +982,11 @@ export function PreJoinPage({
             busy={join.isPending}
             disabled={disabled}
           >
+            <Video size={17} aria-hidden="true" />
             {meeting.status === "scheduled"
               ? "Ожидаем начала встречи"
-              : "Подключиться"}
+              : "Присоединиться к встрече"}
+            <ArrowRight size={16} aria-hidden="true" />
           </Button>
           <p className="prejoin-privacy">
             <ShieldCheck size={16} aria-hidden="true" />

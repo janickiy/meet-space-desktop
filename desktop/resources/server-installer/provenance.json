@@ -13,11 +13,11 @@
       "bytes": 625
     },
     "release.json": {
-      "sha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
-      "bytes": 5882
+      "sha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "bytes": 5877
     },
     "release.sig": {
-      "sha256": "98aea5d79d368fc325dafc34d2fb32270d16ac4e36cab7d814ad98f1499dfbc6",
+      "sha256": "fe8db88b1b252e1f2669522239fc7f4927c881e2955a84dbd40b8583c77f6c8a",
       "bytes": 384
     },
     "docker.asc": {
@@ -25,6 +25,14 @@
       "bytes": 3817
     }
   },
-  "modified": false,
-  "privateKeyIncluded": false
+  "modified": true,
+  "privateKeyIncluded": false,
+  "modifications": [
+    {
+      "date": "2026-10-24",
+      "description": "Normalize signed builtAt to UTC (same instant) for frontend BUILD_TIME validation; runner and source commit unchanged. Re-signed with the original trusted publisher key.",
+      "originalReleaseSha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
+      "legacyBundleDirectory": "legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a"
+    }
+  ]
 }

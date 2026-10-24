@@ -6,9 +6,13 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Clock3,
+  Globe2,
+  Pencil,
   Plus,
+  Trash2,
+  UserRound,
   Video,
-  X,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
@@ -97,18 +101,11 @@ function CalendarMeeting({
       onClick={() => onSelect(meeting)}
       aria-label={`${meeting.title}, ${formatDate(date.toISOString())}`}
     >
-      <strong>{meeting.title}</strong>
-      <span>
-        {time}
-        {meeting.plannedDurationMin
-          ? ` · ${meeting.plannedDurationMin} мин`
-          : ""}
-        {meeting.status === "cancelled"
-          ? " · Отменена"
-          : meeting.status === "active"
-            ? " · Идёт сейчас"
-            : ""}
-      </span>
+      <strong>
+        <time dateTime={date.toISOString()}>{time}</time> {meeting.title}
+      </strong>
+      {meeting.status === "cancelled" && <span>Отменена</span>}
+      {meeting.status === "active" && <span>Идёт сейчас</span>}
     </button>
   );
 }
@@ -130,17 +127,6 @@ function CalendarMeetingDetails({
   const { user } = useAuth();
   const client = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
-  const panel = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const opener =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    panel.current?.focus();
-    return () => {
-      if (opener?.isConnected) opener.focus();
-    };
-  }, []);
   const canChange =
     meeting.ownerId === user?.id &&
     ["created", "scheduled"].includes(meeting.status);
@@ -186,63 +172,97 @@ function CalendarMeetingDetails({
       </Modal>
     );
   return (
-    <div
-      className="calendar-details-popover"
-      ref={panel}
-      role="dialog"
-      aria-label={meeting.title}
-      tabIndex={-1}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          event.stopPropagation();
-          onClose();
-        }
-      }}
+    <Modal
+      title={meeting.title}
+      className="calendar-meeting-modal"
+      onClose={onClose}
     >
-      <header>
-        <h3>{meeting.title}</h3>
-        <button
-          className="icon-button"
-          aria-label="Закрыть карточку встречи"
-          onClick={onClose}
-        >
-          <X size={18} />
-        </button>
-      </header>
-      <div className="calendar-meeting-details">
+      <span className="calendar-meeting-emblem" aria-hidden="true">
+        <Video size={28} />
+      </span>
+      <div className="calendar-meeting-status">
         <StatusBadge status={meeting.status} />
-        <p>
-          <CalendarDays size={17} aria-hidden="true" />
-          {formatDate(meeting.scheduledAt!)}
-          {meeting.plannedDurationMin
-            ? ` · ${meeting.plannedDurationMin} мин`
-            : ""}
+      </div>
+      <div className="calendar-meeting-content">
+        <dl className="calendar-meeting-facts">
+          <div>
+            <span className="calendar-fact-icon">
+              <CalendarDays size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <dt>Дата и время</dt>
+              <dd>{formatDate(meeting.scheduledAt!)}</dd>
+            </div>
+          </div>
+          <div>
+            <span className="calendar-fact-icon">
+              <Clock3 size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <dt>Длительность</dt>
+              <dd>
+                {meeting.plannedDurationMin
+                  ? `${meeting.plannedDurationMin} минут`
+                  : "Не указана"}
+              </dd>
+            </div>
+          </div>
+          <div>
+            <span className="calendar-fact-icon">
+              <UserRound size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <dt>Ваша роль</dt>
+              <dd>
+                {meeting.ownerId === user?.id ? "Организатор" : "Участник"}
+              </dd>
+            </div>
+          </div>
+          <div>
+            <span className="calendar-fact-icon">
+              <Globe2 size={17} aria-hidden="true" />
+            </span>
+            <div>
+              <dt>Часовой пояс</dt>
+              <dd>{Intl.DateTimeFormat().resolvedOptions().timeZone}</dd>
+            </div>
+          </div>
+        </dl>
+        <p className="calendar-meeting-note">
+          Встреча начнётся, когда организатор запустит её. Ссылки и участники
+          доступны на странице встречи.
         </p>
-        <p className="field-hint">
-          {meeting.ownerId === user?.id ? "Вы организатор" : "Вы участник"} ·{" "}
-          {Intl.DateTimeFormat().resolvedOptions().timeZone}
-          <br />
-          Встреча не начнётся автоматически.
-        </p>
-        <Link
-          className="button button-primary"
-          to={past ? `/history/${meeting.id}` : `/meetings/${meeting.id}`}
-        >
-          <Video size={17} aria-hidden="true" />
-          {past ? "Открыть историю" : "Открыть встречу"}
-        </Link>
+      </div>
+      <footer className="calendar-meeting-footer">
         {canChange && (
-          <div className="calendar-meeting-actions">
-            <Button variant="outline" onClick={() => onEdit(meeting)}>
-              Изменить расписание
+          <div className="calendar-meeting-owner-actions">
+            <Button variant="secondary" onClick={() => onEdit(meeting)}>
+              <Pencil size={16} aria-hidden="true" /> Изменить
             </Button>
-            <Button variant="secondary" onClick={() => setConfirmCancel(true)}>
-              Отменить встречу
-            </Button>
+            <button
+              type="button"
+              className="icon-button calendar-cancel-action"
+              aria-label="Отменить встречу"
+              onClick={() => setConfirmCancel(true)}
+            >
+              <Trash2 size={17} aria-hidden="true" />
+            </button>
           </div>
         )}
-      </div>
-    </div>
+        <div className="calendar-meeting-primary-actions">
+          <Button variant="outline" onClick={onClose}>
+            Закрыть
+          </Button>
+          <Link
+            className="button button-primary"
+            to={past ? `/history/${meeting.id}` : `/meetings/${meeting.id}`}
+          >
+            <Video size={17} aria-hidden="true" />
+            {past ? "Открыть историю" : "Открыть встречу"}
+          </Link>
+        </div>
+      </footer>
+    </Modal>
   );
 }
 
@@ -338,7 +358,7 @@ export function CalendarPage() {
           to="/meetings/new?scheduled=1&returnTo=calendar"
         >
           <Plus size={18} aria-hidden="true" />
-          Запланировать
+          Запланировать встречу
         </Link>
       </section>
       <section className="calendar-card" aria-label="Календарь встреч">
@@ -347,15 +367,8 @@ export function CalendarPage() {
             <h2 className="calendar-period" aria-live="polite">
               {label}
             </h2>
-            <span>
-              Предстоящие встречи ·{" "}
-              {Intl.DateTimeFormat().resolvedOptions().timeZone}
-            </span>
           </div>
           <div className="calendar-navigation">
-            <Button variant="outline" onClick={() => setAnchor(new Date())}>
-              Сегодня
-            </Button>
             <button
               type="button"
               className="icon-button"
@@ -372,7 +385,13 @@ export function CalendarPage() {
             >
               <ChevronRight size={18} />
             </button>
+            <Button variant="outline" onClick={() => setAnchor(new Date())}>
+              Сегодня
+            </Button>
           </div>
+          <span className="calendar-toolbar-zone">
+            {Intl.DateTimeFormat().resolvedOptions().timeZone}
+          </span>
           <div
             className="calendar-view-switch"
             role="group"

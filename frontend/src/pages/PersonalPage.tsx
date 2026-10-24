@@ -82,20 +82,14 @@ export function PersonalPage() {
         (viewport?.height ?? window.innerHeight) + (viewport?.offsetTop ?? 0);
       const keyboard = visibleHeight < window.innerHeight - 100;
       setKeyboardOpen(keyboard);
-      const footerHeight =
-        document.querySelector(".workspace-footer")?.getBoundingClientRect()
-          .height ?? 0;
       const bottom = id
         ? 0
         : keyboard
           ? 12
-          : Math.max(
-              footerHeight,
-              (document
-                .querySelector(".mobile-bottom-nav")
-                ?.getBoundingClientRect().height ?? 64) + 20,
-            );
-      // Прокрутка страницы не должна увеличивать переписку и снова выталкивать футер за экран.
+          : (document
+              .querySelector(".mobile-bottom-nav")
+              ?.getBoundingClientRect().height ?? 64) + 20;
+      // Прокрутка страницы не должна увеличивать переписку за пределы видимой области.
       const documentTop = element.getBoundingClientRect().top + window.scrollY;
       element.style.setProperty(
         "--personal-mobile-height",
@@ -106,17 +100,17 @@ export function PersonalPage() {
     viewport?.addEventListener("resize", measure);
     viewport?.addEventListener("scroll", measure);
     window.addEventListener("resize", measure);
-    const footer = document.querySelector(".workspace-footer");
-    const footerResize =
+    const navigation = document.querySelector(".mobile-bottom-nav");
+    const navigationResize =
       typeof ResizeObserver === "undefined"
         ? undefined
         : new ResizeObserver(measure);
-    if (footer) footerResize?.observe(footer);
+    if (navigation) navigationResize?.observe(navigation);
     return () => {
       viewport?.removeEventListener("resize", measure);
       viewport?.removeEventListener("scroll", measure);
       window.removeEventListener("resize", measure);
-      footerResize?.disconnect();
+      navigationResize?.disconnect();
     };
   }, [id]);
   const { user } = useAuth();
@@ -420,7 +414,6 @@ export function PersonalPage() {
                   <DirectCallButton
                     userId={selected.peer.id}
                     name={selected.peer.displayName}
-                    label
                   />
                 )}
                 {selected && (

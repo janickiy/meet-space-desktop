@@ -432,11 +432,13 @@ for (const arch of architectures) {
         throw new Error(`Packaged runtime differs from the pinned local dependency: ${file}`);
     }
     // Verify all signed installer assets inside the final NSIS payload.
-    const { InstallerBundle } = require("../dist/ssh/protocol.js");
-    const bundleFiles = {};
-    for (const name of ["runner.py", "release.json", "release.sig", "trust-root.pem", "docker.asc"])
-      bundleFiles[name] = extractFile(appAsar, `resources/server-installer/v1/${name}`);
-    new InstallerBundle(bundleFiles);
+    const { InstallerBundle, installerBundleNames, LEGACY_INSTALLER_RELEASE_SHA256, canonicalJson } = require("../dist/ssh/protocol.js");
+    for (const directory of ["v1", `legacy/${LEGACY_INSTALLER_RELEASE_SHA256}`]) {
+      const bundleFiles = Object.fromEntries(installerBundleNames.map(name => [name, extractFile(appAsar, `resources/server-installer/${directory}/${name}`)]));
+      const verified = new InstallerBundle(bundleFiles);
+      if (directory !== "v1" && hash(Buffer.from(canonicalJson(verified.manifest))) !== LEGACY_INSTALLER_RELEASE_SHA256)
+        throw new Error("Packaged recovery installer differs from the supported signed release");
+    }
     const runtimeDirectory = path.join(temporary, "runtime");
     extractAll(appAsar, runtimeDirectory);
     const sshCheck = spawnSync(process.execPath, [path.join(desktop, "scripts/verify-ssh-runtime.cjs"), runtimeDirectory], {

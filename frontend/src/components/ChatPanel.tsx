@@ -10,6 +10,7 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import {
+  Check,
   Download,
   FileText,
   MessageCircle,
@@ -816,23 +817,27 @@ export function MessageThread({
                         {own && !personal && (
                           <span className="chat-message-self">вы</span>
                         )}
-                        <time
-                          dateTime={message.createdAt}
-                          title={formatDate(message.createdAt)}
-                        >
-                          {chatTime(message.createdAt)}
-                        </time>
-                        {message.version > 1 &&
-                          !message.deletedAt &&
-                          !message.call && (
-                            <span
-                              className="chat-message-edited"
-                              title="Сообщение изменено"
+                        {!personal && (
+                          <>
+                            <time
+                              dateTime={message.createdAt}
+                              title={formatDate(message.createdAt)}
                             >
-                              <Pencil size={11} aria-hidden="true" />
-                              <span className="sr-only">изменено</span>
-                            </span>
-                          )}
+                              {chatTime(message.createdAt)}
+                            </time>
+                            {message.version > 1 &&
+                              !message.deletedAt &&
+                              !message.call && (
+                                <span
+                                  className="chat-message-edited"
+                                  title="Сообщение изменено"
+                                >
+                                  <Pencil size={11} aria-hidden="true" />
+                                  <span className="sr-only">изменено</span>
+                                </span>
+                              )}
+                          </>
+                        )}
                       </header>
                       <div className="chat-message-bubble">
                         {message.replyPreview && (
@@ -920,6 +925,28 @@ export function MessageThread({
                               )}
                             </div>
                           ))}
+                        {personal && (
+                          <footer className="chat-personal-message-meta">
+                            {message.version > 1 &&
+                              !message.deletedAt &&
+                              !message.call && <span>изменено</span>}
+                            <time
+                              dateTime={message.createdAt}
+                              title={formatDate(message.createdAt)}
+                            >
+                              {chatTime(message.createdAt)}
+                            </time>
+                            {own && !message.deletedAt && (
+                              <span
+                                className="chat-sent-status"
+                                title="Отправлено"
+                                aria-label="Отправлено"
+                              >
+                                <Check size={13} aria-hidden="true" />
+                              </span>
+                            )}
+                          </footer>
+                        )}
                       </div>
                     </div>
                     {!message.deletedAt &&
@@ -1079,7 +1106,7 @@ export function MessageThread({
                   aria-label="Сообщение"
                   id={`chat-text-${scopeId}`}
                   value={text}
-                  rows={2}
+                  rows={personal ? 1 : 2}
                   placeholder={composerPlaceholder}
                   disabled={send.isPending}
                   onSelect={rememberSelection}

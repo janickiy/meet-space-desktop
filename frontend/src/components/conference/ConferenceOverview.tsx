@@ -5,7 +5,7 @@ import { AnalyticsPanel } from "../AnalyticsPanel";
 import { WaitingRoomPanel } from "../WaitingRoomPanel";
 import { ChatPanel } from "../ChatPanel";
 import { ConferenceCalendarStatus } from "../IntegrationsSettings";
-import { ConferenceInviteContent } from "../ConferenceInvitations";
+import { ConferenceInvitationDialog } from "../ConferenceInvitations";
 import { EditSchedule } from "../ConferenceModals";
 import { Brand, Button, ErrorNotice, Modal } from "../ui";
 import { ConferenceDetails } from "./ConferenceDetails";
@@ -42,7 +42,6 @@ export function ConferenceOverview(props: ConferenceViewProps) {
     latestMessages,
     utility,
     setUtility,
-    invitationBusy,
     setInvitationBusy,
     confirm,
     setConfirm,
@@ -149,18 +148,12 @@ export function ConferenceOverview(props: ConferenceViewProps) {
     <>
       <ConferenceDetails {...props} />
       {utility === "invite" && (
-        <Modal
-          title="Пригласить участников"
-          onClose={() => {
-            if (!invitationBusy) setUtility(null);
-          }}
-        >
-          <ConferenceInviteContent
-            conference={conference}
-            canInvite={canInvite}
-            onBusyChange={setInvitationBusy}
-          />
-        </Modal>
+        <ConferenceInvitationDialog
+          conference={conference}
+          canInvite={canInvite}
+          onClose={() => setUtility(null)}
+          onBusyChange={setInvitationBusy}
+        />
       )}
       <WaitingRoomPanel
         conferenceId={id}

@@ -7,7 +7,14 @@ import {
   type ReactNode,
 } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { Server } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Circle,
+  CircleCheck,
+  Server,
+  Users,
+} from "lucide-react";
 import { Brand, Button, ErrorNotice, Loading, Modal } from "../ui";
 import { configureAuth } from "../../api";
 import { platform } from "../../platform";
@@ -23,7 +30,7 @@ import { saveSession } from "../../utils";
 import "./desktop-foundation.css";
 import { DesktopScreenPicker } from "./DesktopScreenPicker";
 import { DesktopSshInstaller } from "./DesktopSshInstaller";
-import { AuthTeamVisual } from "../AuthTeamVisual";
+import { WelcomePanel } from "../WelcomePanel";
 
 const ServerContext = createContext<{
   profile: DesktopServerProfile;
@@ -32,8 +39,10 @@ const ServerContext = createContext<{
 
 export function DesktopServerButton({
   className = "",
+  compact = false,
 }: {
   className?: string;
+  compact?: boolean;
 }) {
   const context = useContext(ServerContext);
   if (!context) return null;
@@ -45,8 +54,37 @@ export function DesktopServerButton({
       title={context.profile.origin}
     >
       <Server size={18} aria-hidden="true" />
-      <span>Сервер: {context.profile.label}</span>
+      <span>
+        {compact ? context.profile.label : `Сервер: ${context.profile.label}`}
+      </span>
     </button>
+  );
+}
+
+export function DesktopConnectionSettings() {
+  const context = useContext(ServerContext);
+  if (!context) return null;
+  return (
+    <section className="reference-connection-settings">
+      <header className="reference-panel-heading">
+        <h2>Подключение к серверу</h2>
+        <p>Все встречи, сообщения и записи — в вашем пространстве.</p>
+      </header>
+      <div className="reference-connection-card">
+        <Server size={24} aria-hidden="true" />
+        <div>
+          <strong>{context.profile.label}</strong>
+          <p>{context.profile.origin}</p>
+        </div>
+      </div>
+      <p className="field-hint">
+        Используйте адрес сервера вашей команды или настройте собственный сервер
+        MeetSpace.
+      </p>
+      <Button variant="secondary" onClick={context.open}>
+        Настроить подключение
+      </Button>
+    </section>
   );
 }
 
@@ -238,9 +276,14 @@ function ServerSettings({
   const [origin, setOrigin] = useState(
     selected?.origin ?? "https://meeting.janickiy.com",
   );
-  const [label, setLabel] = useState(selected?.label ?? "");
   const [probe, setProbe] = useState<DesktopProbeResult | null>(null);
   const [installingServer, setInstallingServer] = useState(false);
+  const [showIntro, setShowIntro] = useState(
+    !embedded && state.items.length === 0,
+  );
+  const [connectionChoice, setConnectionChoice] = useState<"existing" | "own">(
+    "existing",
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const active = useRef(true);
@@ -261,13 +304,12 @@ function ServerSettings({
       if (active.current) setBusy(false);
     }
   }
-  async function connectOrigin(serverOrigin: string, serverLabel?: string) {
+  async function connectOrigin(serverOrigin: string) {
     const checked = await desktopBridge().probeServer(serverOrigin.trim());
     if (!active.current) return;
     setProbe(checked);
     const saved = await desktopBridge().addServer({
       origin: checked.origin,
-      label: serverLabel?.trim() || undefined,
     });
     if (!active.current) return;
     const profile = saved.items.find((item) => item.origin === checked.origin);
@@ -281,11 +323,69 @@ function ServerSettings({
       onConnect={(serverOrigin) => connectOrigin(serverOrigin)}
       canConnect={state.storageAvailable}
     />
+  ) : showIntro ? (
+    <div className="reference-onboarding-intro">
+      <span className="desktop-foundation-label">
+        ВАШЕ РАБОЧЕЕ ПРОСТРАНСТВО
+      </span>
+      <h1 id="desktop-title">Начнём с подключения</h1>
+      <p className="desktop-foundation-description">
+        Выберите, где будет работать ваша команда.
+      </p>
+      <div className="reference-server-options">
+        {(["existing", "own"] as const).map((choice) => {
+          const Icon = choice === "existing" ? Users : Server;
+          return (
+            <button
+              type="button"
+              key={choice}
+              aria-pressed={connectionChoice === choice}
+              onClick={() => setConnectionChoice(choice)}
+            >
+              <span>
+                <Icon />
+              </span>
+              <div>
+                <strong>
+                  {choice === "existing"
+                    ? "Присоединиться к команде"
+                    : "Развернуть свой сервер"}
+                </strong>
+                <small>
+                  {choice === "existing"
+                    ? "У меня есть адрес рабочего сервера"
+                    : "Установка на удалённый Linux VPS по SSH"}
+                </small>
+              </div>
+              {connectionChoice === choice ? <CircleCheck /> : <Circle />}
+            </button>
+          );
+        })}
+      </div>
+      <Button
+        className="full-width"
+        onClick={() => {
+          setShowIntro(false);
+          if (connectionChoice === "own") setInstallingServer(true);
+        }}
+      >
+        Продолжить <ArrowRight size={15} />
+      </Button>
+    </div>
   ) : (
     <>
       {!embedded && (
         <>
-          <Brand />
+          <button
+            className="reference-onboarding-back"
+            disabled={busy}
+            onClick={() => setShowIntro(true)}
+          >
+            <ArrowLeft size={14} /> Назад
+          </button>
+          <span className="desktop-foundation-label">
+            ШАГ 1 ИЗ 2 · ПОДКЛЮЧЕНИЕ
+          </span>
           <h1 id="desktop-title">Подключиться к серверу</h1>
           <p className="desktop-foundation-description">
             Укажите адрес вашего MeetSpace. Затем войдите в аккаунт этого
@@ -326,7 +426,6 @@ function ServerSettings({
                 disabled={busy}
                 onClick={() => {
                   setOrigin(profile.origin);
-                  setLabel(profile.label);
                   setProbe(null);
                   setError("");
                 }}
@@ -354,7 +453,7 @@ function ServerSettings({
         onSubmit={(event) => {
           event.preventDefault();
           void run(async () => {
-            await connectOrigin(origin, label);
+            await connectOrigin(origin);
           });
         }}
       >
@@ -373,17 +472,6 @@ function ServerSettings({
             setOrigin(event.target.value);
             setProbe(null);
           }}
-        />
-        <label htmlFor="desktop-server-label">
-          Название <span className="muted">(необязательно)</span>
-        </label>
-        <input
-          id="desktop-server-label"
-          maxLength={80}
-          value={label}
-          disabled={busy}
-          placeholder="Рабочий сервер"
-          onChange={(event) => setLabel(event.target.value)}
         />
         <ErrorNotice>{error || null}</ErrorNotice>
         {probe && <p role="status">Сервер доступен · версия {probe.version}</p>}
@@ -435,19 +523,7 @@ function ServerSettings({
     <main
       className={`page-center desktop-foundation${installingServer ? " desktop-foundation-installing" : ""}`}
     >
-      <aside
-        className="desktop-welcome"
-        aria-label="Добро пожаловать в MeetSpace"
-      >
-        <span>ВАШЕ РАБОЧЕЕ ПРОСТРАНСТВО</span>
-        <h2>
-          В одной команде.
-          <br />
-          На одной волне.
-        </h2>
-        <p>Встречи, чаты и совместная работа — в одном пространстве.</p>
-        <AuthTeamVisual />
-      </aside>
+      <WelcomePanel installer={installingServer} />
       <section
         className="content-card desktop-foundation-card"
         aria-labelledby={

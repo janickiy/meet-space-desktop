@@ -2,14 +2,7 @@ import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import { useRef, useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Link as LinkIcon,
-  MessageSquare,
-  Play,
-  Video,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Link as LinkIcon } from "lucide-react";
 import { api, errorMessage } from "../api";
 import { useAuth } from "../auth";
 import {
@@ -21,8 +14,7 @@ import {
 } from "../components/ui";
 import { passwordLength, safeNext, utf8Bytes } from "../utils";
 import { PRODUCT_DESCRIPTION, PRODUCT_NAME } from "../brand";
-import { Copyright } from "../components/Copyright";
-import { AuthTeamVisual } from "../components/AuthTeamVisual";
+import { WelcomePanel } from "../components/WelcomePanel";
 import "./auth-pages.css";
 
 /**
@@ -118,46 +110,17 @@ export function AuthPage({ register = false }: { register?: boolean }) {
         </Link>
       </header>
       <main className="auth-business-layout">
-        <aside className="auth-business-story" aria-label="О сервисе">
-          <div className="auth-business-story-copy">
-            <span className="auth-story-kicker">
-              ДЕЛОВОЕ ОБЩЕНИЕ. ЕДИНОЕ ПРОСТРАНСТВО.
-            </span>
-            <h2>
-              В одной команде.
-              <br />
-              На одной волне.
-            </h2>
-            <p className="auth-story-description">
-              Обсуждайте проекты с коллегами, проводите видеовстречи и
-              продолжайте работу в командных чатах.
-            </p>
-            <ul className="auth-story-features">
-              <li>
-                <Video size={16} aria-hidden="true" /> Видеовстречи
-              </li>
-              <li>
-                <MessageSquare size={16} aria-hidden="true" /> Чаты команды
-              </li>
-              <li>
-                <Play size={16} aria-hidden="true" /> Записи и материалы
-              </li>
-            </ul>
-          </div>
-          <AuthTeamVisual />
-        </aside>
+        <WelcomePanel />
         <section
           className={`auth-card ${register ? "register-card" : ""}`}
           id="auth-form"
           tabIndex={-1}
           aria-labelledby="auth-heading-title"
         >
-          <p className="auth-tagline">
-            {register ? "СОЗДАНИЕ УЧЁТНОЙ ЗАПИСИ" : "ВАШЕ РАБОЧЕЕ ПРОСТРАНСТВО"}
-          </p>
+          <p className="auth-tagline">ШАГ 2 ИЗ 2 · ПРОФИЛЬ</p>
           <div className="auth-heading">
             <h1 id="auth-heading-title">
-              {register ? "Создайте аккаунт" : `Вход в ${PRODUCT_NAME}`}
+              {register ? "Рады знакомству" : "С возвращением"}
             </h1>
             <p>
               {register
@@ -165,6 +128,20 @@ export function AuthPage({ register = false }: { register?: boolean }) {
                 : "Войдите, чтобы продолжить работу с командой."}
             </p>
           </div>
+          <nav className="reference-auth-tabs" aria-label="Вход и регистрация">
+            <Link
+              aria-current={!register ? "page" : undefined}
+              to={`/login${nextQuery}`}
+            >
+              Войти
+            </Link>
+            <Link
+              aria-current={register ? "page" : undefined}
+              to={`/register${nextQuery}`}
+            >
+              Создать аккаунт
+            </Link>
+          </nav>
           <ErrorNotice>
             {error ||
               (!register && auth.expired
@@ -290,7 +267,6 @@ export function AuthPage({ register = false }: { register?: boolean }) {
       </main>
       <footer className="auth-footer">
         <span>{PRODUCT_DESCRIPTION}</span>
-        <Copyright />
       </footer>
     </div>
   );
@@ -334,9 +310,6 @@ export function RegistrationSuccess() {
           </Link>
         </div>
       </main>
-      <footer className="auth-footer">
-        <Copyright />
-      </footer>
     </div>
   );
 }

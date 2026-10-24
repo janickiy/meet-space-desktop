@@ -121,6 +121,6 @@
 .emoji-picker-trigger:focus-visible,
 .emoji-picker-close:focus-visible,
 .emoji-picker-option:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

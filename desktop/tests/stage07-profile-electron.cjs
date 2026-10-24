@@ -105,7 +105,7 @@ const lsof = pids => {
       scope: 'Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance' };
     if (config.visible) { window.show(); jankObserver = await observeRendererJank(window.webContents); }
     else report.jank = { status: 'NOT_MEASURED', reason: 'Hidden window RAF is throttled; use --visible in a dedicated display' };
-    await field('#desktop-server-origin', config.alpha.origin); await field('#desktop-server-label', 'QA disposable server');
+    await field('#desktop-server-origin', config.alpha.origin);
     await click('.desktop-server-form button[type=submit]');
     await until(() => execute('!!document.querySelector("#email")'), 'login screen');
     await field('#email', config.alpha.email); await field('#password', PASSWORD); await click('#auth-form button[type=submit]');

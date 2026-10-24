@@ -271,11 +271,11 @@
   color: var(--text);
 }
 .chat-message-focused {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus);
   outline-offset: -2px;
 }
 .chat-message-focused:focus {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus);
 }
 .chat-message header {
   display: flex;
@@ -450,8 +450,7 @@ button.text-link {
   flex-shrink: 0;
 }
 .chat-compose-row:focus-within {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  border-color: var(--border-strong);
 }
 .chat-compose-field {
   grid-column: 1 / -1;
@@ -700,7 +699,7 @@ a {
   outline-offset: 4px;
 }
 :focus-visible {
-  outline: 3px solid var(--focus);
+  outline: 2px solid var(--focus);
 }
 h1,
 h2,
@@ -750,8 +749,8 @@ textarea {
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: var(--border-strong);
+  box-shadow: none;
 }
 input::placeholder,
 textarea::placeholder {
@@ -1201,13 +1200,13 @@ textarea:disabled {
   place-items: center;
 }
 .field-hint {
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-xs);
   line-height: 1.7;
   color: #7a8ca8;
 }
 .password-hint {
   margin: -12px 0 23px;
-  font-size: calc(10px * var(--text-scale));
+  font-size: var(--text-xs);
 }
 .recovery {
   text-align: right;
@@ -1446,20 +1445,6 @@ textarea:disabled {
   padding: 36px 38px 45px;
   flex: 1;
   min-width: 0;
-}
-.workspace-footer {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  margin: 0 38px;
-  padding: 20px 0;
-  border-top: 1px solid #eef2f8;
-  font-size: calc(10px * var(--text-scale));
-  color: #a0aec2;
-}
-.workspace-footer > span:first-child {
-  color: #7385a0;
-  font-weight: 600;
 }
 .page-heading {
   display: flex;
@@ -1703,7 +1688,7 @@ textarea:disabled {
 .search-field input {
   border: 0;
   background: none;
-  font-size: calc(11px * var(--text-scale));
+  font-size: var(--text-sm);
   padding: 10px;
   box-shadow: none;
 }
@@ -1740,8 +1725,9 @@ textarea:disabled {
   overflow-y: auto;
 }
 .modal > h2 {
-  font-size: calc(20px * var(--text-scale));
-  margin: 0 32px 29px 0;
+  font-size: calc(22px * var(--text-scale));
+  line-height: 1.35;
+  margin: 0 40px 24px 0;
 }
 .modal-close {
   position: absolute;
@@ -1845,8 +1831,7 @@ textarea:disabled {
   color: var(--text);
 }
 .copy-link input:focus {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
+  outline: none;
 }
 .copy-link .button {
   padding: 9px 11px;
@@ -2182,9 +2167,6 @@ textarea:disabled {
   .workspace-top {
     padding: 0 25px;
   }
-  .workspace-footer {
-    margin: 0 25px;
-  }
   .conference-grid {
     grid-template-columns: 1fr;
   }
@@ -2354,10 +2336,6 @@ textarea:disabled {
   }
   .workspace-main {
     padding: 25px 20px 30px;
-  }
-  .workspace-footer {
-    margin: 0 20px;
-    font-size: calc(9px * var(--text-scale));
   }
   .page-heading h1 {
     font-size: calc(23px * var(--text-scale));

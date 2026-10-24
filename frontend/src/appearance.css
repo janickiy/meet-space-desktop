@@ -18,9 +18,6 @@ select {
 .workspace-top {
   height: auto;
 }
-.workspace-footer {
-  flex-wrap: wrap;
-}
 
 /* Эти общие поверхности ещё использовались старой вёрсткой с фиксированной палитрой. */
 .content-card,

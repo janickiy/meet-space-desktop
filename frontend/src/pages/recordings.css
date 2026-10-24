@@ -93,8 +93,7 @@
   outline: 0;
 }
 .recordings-search:focus-within {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  border-color: var(--border-strong);
 }
 .recordings-conference-selector {
   display: grid;

@@ -750,7 +750,7 @@
   box-shadow: none;
 }
 .room-participant-search:has(input:focus-visible) {
-  outline: 2px solid var(--focus);
+  border-color: var(--border-strong);
   outline-offset: 2px;
 }
 .room-participant-list {
@@ -1231,7 +1231,7 @@
   --line: #354153;
   --primary: #c6d9b4;
   --primary-soft: #34443d;
-  --focus: #c6d9b4;
+  --focus: #d4d9e2;
   color: var(--text);
   background: var(--surface);
   border-color: var(--border);

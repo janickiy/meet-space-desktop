@@ -7,6 +7,7 @@ import { useConferencePageData } from "../hooks/conference/useConferencePageData
 import { useConferenceCommands } from "../hooks/conference/useConferenceCommands";
 import { useConferenceRoomControls } from "../hooks/conference/useConferenceRoomControls";
 import "./conference.css";
+import "./call-reference.css";
 
 /**
  * Координирует жизненный цикл страницы встречи и выбирает активное или обзорное представление.

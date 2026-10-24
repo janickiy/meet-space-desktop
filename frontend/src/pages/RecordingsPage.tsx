@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
+  ArrowUpRight,
   Clapperboard,
   FileArchive,
   Info,
@@ -155,8 +156,13 @@ export function RecordingCard({
         )}
       </div>
       <div className="recordings-row-actions">
-        <Link to={path} className="button button-primary recordings-watch">
-          <Play size={15} aria-hidden="true" /> Смотреть
+        <span className="recordings-row-type">{modeLabel}</span>
+        <Link
+          to={path}
+          className="icon-button recordings-watch"
+          aria-label={`Смотреть запись: ${conference.title}`}
+        >
+          <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
         <RecordingActions
           title={conference.title}
@@ -285,56 +291,44 @@ export function RecordingsPage() {
       <section className="page-heading recordings-heading">
         <div>
           <h1>Записи встреч</h1>
-          <p>Записи и материалы выбранной встречи.</p>
         </div>
-        <CollectionViewToggle
-          value={layout}
-          onChange={setLayout}
-          label="Вид записей"
-        />
+        {selected && records.isSuccess && (
+          <span className="recordings-count">
+            {readable.length}
+            {records.hasNextPage ? "+" : ""} записей встречи
+          </span>
+        )}
       </section>
       <section className="recordings-selection" aria-label="Выбор встречи">
-        <div
-          className="recordings-meeting-views"
-          role="group"
+        <select
+          className="recordings-meeting-view"
           aria-label="Список встреч"
+          value={meetingView}
+          onChange={(event) => {
+            setMeetingView(event.target.value as "past" | "active");
+            setParams({});
+            setSearch("");
+            setPeriod("all");
+          }}
         >
-          {(
-            [
-              ["past", "Завершённые встречи"],
-              ["active", "В эфире"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={meetingView === value}
-              onClick={() => {
-                setMeetingView(value);
-                setParams({});
-                setSearch("");
-                setPeriod("all");
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          <option value="past">Завершённые встречи</option>
+          <option value="active">В эфире</option>
+        </select>
         <label className="recordings-search-field">
-          <span>Поиск по загруженным встречам</span>
+          <span className="sr-only">Поиск по загруженным встречам</span>
           <span className="recordings-search">
             <Search size={17} aria-hidden="true" />
             <input
               type="search"
               aria-label="Поиск по загруженным встречам"
-              placeholder="Название встречи"
+              placeholder="Найти встречу"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </span>
         </label>
         <label className="recordings-conference-selector" htmlFor={selectionId}>
-          <span>Встреча</span>
+          <span className="sr-only">Встреча</span>
           <select
             aria-label="Встреча"
             id={selectionId}
@@ -356,6 +350,11 @@ export function RecordingsPage() {
             ))}
           </select>
         </label>
+        <CollectionViewToggle
+          value={layout}
+          onChange={setLayout}
+          label="Вид записей"
+        />
         {conferences.hasNextPage && (
           <Button
             variant="outline"
@@ -370,12 +369,12 @@ export function RecordingsPage() {
             В загруженных встречах совпадений нет.
           </p>
         )}
-        {
+        {conferences.hasNextPage && (
           <p className="recordings-selection-note">
-            Поиск выполняется по загруженным встречам. Записи загружаются только
-            для выбранной встречи.
+            Не нашли нужную встречу? Загрузите ещё встречи, чтобы расширить
+            поиск.
           </p>
-        }
+        )}
         {conferences.isError && (
           <div className="recordings-error">
             <ErrorNotice>Не удалось загрузить список встреч.</ErrorNotice>

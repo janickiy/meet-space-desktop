@@ -6,8 +6,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   CalendarDays,
-  DoorOpen,
-  Info,
+  CalendarClock,
+  Link2,
+  Users,
+  ShieldCheck,
   Mail,
   Video,
 } from "lucide-react";
@@ -18,7 +20,7 @@ import { Button, CopyLink, ErrorNotice, Modal, SuccessMark } from "./ui";
 import { ScheduleFields } from "./ScheduleFields";
 import { localSchedule, toLocalInput } from "../collaboration";
 import { PRODUCT_NAME } from "../brand";
-import { ConferenceInviteContent } from "./ConferenceInvitations";
+import { ConferenceInvitationDialog } from "./ConferenceInvitations";
 import "./meeting-modals.css";
 
 /**
@@ -42,32 +44,15 @@ export function ShareConference({
    */ () => void;
 }) {
   const [inviting, setInviting] = useState(false);
-  const [invitationBusy, setInvitationBusy] = useState(false);
   const link = inviteLink(conference.inviteCode);
   if (inviting)
     return (
-      <Modal
-        key="invite"
-        title="Пригласить участников"
-        className="meeting-design-modal"
-        onClose={() => {
-          if (!invitationBusy) onClose();
-        }}
-      >
-        <ConferenceInviteContent
-          conference={conference}
-          canInvite
-          onBusyChange={setInvitationBusy}
-        />
-        <Button
-          variant="secondary"
-          disabled={invitationBusy}
-          className="full-width"
-          onClick={() => setInviting(false)}
-        >
-          Назад
-        </Button>
-      </Modal>
+      <ConferenceInvitationDialog
+        conference={conference}
+        canInvite
+        onClose={onClose}
+        onBack={() => setInviting(false)}
+      />
     );
   return (
     <Modal
@@ -215,78 +200,144 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
     );
   return (
     <Modal
-      title="Новая встреча"
+      title={planned ? "Запланировать встречу" : "Новая встреча"}
       onClose={close}
-      className="meeting-design-modal meeting-create-modal"
+      className="meeting-design-modal meeting-create-modal meeting-reference-editor"
     >
-      <form onSubmit={submit} noValidate>
-        <label className="field" htmlFor="conference-title">
-          Название встречи
-          <input
-            id="conference-title"
-            data-autofocus
-            placeholder="Например, обсуждение проекта"
-            value={title}
-            maxLength={200}
-            onChange={(event) => setTitle(event.target.value)}
-            disabled={mutation.isPending}
-          />
-        </label>
-        <div className="meeting-create-options">
-          <label className="meeting-option-row">
-            <span className="meeting-option-icon">
-              <CalendarDays size={21} aria-hidden="true" />
-            </span>
-            <span className="meeting-option-copy">
-              <strong>Запланировать встречу</strong>
-              <small>Выберите дату и время заранее</small>
-            </span>
-            <input
-              className="meeting-switch"
-              type="checkbox"
-              checked={planned}
-              onChange={(event) => setPlanned(event.target.checked)}
-              disabled={mutation.isPending}
-            />
-          </label>
-          {planned && (
-            <ScheduleFields
-              value={scheduledAt}
-              onChange={setScheduledAt}
-              duration={duration}
-              onDuration={setDuration}
-              disabled={mutation.isPending}
-            />
+      <header className="meeting-editor-header">
+        <span className="meeting-editor-emblem">
+          {planned ? (
+            <CalendarClock size={25} aria-hidden="true" />
+          ) : (
+            <Video size={25} aria-hidden="true" />
           )}
-          <label className="meeting-option-row">
-            <span className="meeting-option-icon">
-              <DoorOpen size={21} aria-hidden="true" />
-            </span>
-            <span className="meeting-option-copy">
-              <strong>Зал ожидания</strong>
-              <small>Для участников без допуска</small>
-            </span>
-            <input
-              className="meeting-switch"
-              type="checkbox"
-              checked={waitingRoom}
-              onChange={(event) => setWaitingRoom(event.target.checked)}
-              disabled={mutation.isPending}
-            />
-          </label>
-          <p className="field-hint meeting-waiting-policy">
-            Участники с действующей ссылкой-приглашением входят без ожидания.
+        </span>
+        <div>
+          <h3>{planned ? "Запланировать встречу" : "Новая встреча"}</h3>
+          <p>
+            {planned
+              ? "Выберите время и подготовьте разговор с командой."
+              : "Соберите команду для быстрого разговора."}
           </p>
         </div>
-        <p className="meeting-inline-note">
-          <Info size={18} aria-hidden="true" />
-          <span>
-            Встречу запускает организатор. Запись можно включить после начала
-            встречи.
+      </header>
+      <form onSubmit={submit} noValidate>
+        <div className="meeting-editor-body">
+          <div className="meeting-editor-main">
+            <label
+              className="field meeting-editor-title"
+              htmlFor="conference-title"
+            >
+              Название встречи
+              <input
+                id="conference-title"
+                data-autofocus
+                placeholder="Например, планы на неделю"
+                value={title}
+                maxLength={200}
+                onChange={(event) => setTitle(event.target.value)}
+                disabled={mutation.isPending}
+              />
+            </label>
+            <section
+              className="meeting-editor-section"
+              aria-label="Дата и время встречи"
+            >
+              <label className="meeting-option-row meeting-editor-planned">
+                <span className="meeting-option-icon">
+                  <CalendarDays size={18} aria-hidden="true" />
+                </span>
+                <span className="meeting-option-copy">
+                  <strong>Дата и время</strong>
+                  <small>
+                    {planned
+                      ? "Встреча по расписанию"
+                      : "Выберите время заранее"}
+                  </small>
+                </span>
+                <input
+                  className="meeting-switch"
+                  type="checkbox"
+                  aria-label="Запланировать встречу"
+                  checked={planned}
+                  onChange={(event) => setPlanned(event.target.checked)}
+                  disabled={mutation.isPending}
+                />
+              </label>
+              {planned && (
+                <ScheduleFields
+                  value={scheduledAt}
+                  onChange={setScheduledAt}
+                  duration={duration}
+                  onDuration={setDuration}
+                  disabled={mutation.isPending}
+                  layout="editor"
+                />
+              )}
+            </section>
+            <div className="meeting-editor-preparation">
+              <h4>Всё для вашей встречи</h4>
+              <p>
+                После создания вы сможете пригласить участников и поделиться
+                ссылкой. Камеру и микрофон можно настроить перед входом.
+              </p>
+            </div>
+            <ErrorNotice error={mutation.error}>
+              {validation || null}
+            </ErrorNotice>
+          </div>
+          <aside
+            className="meeting-editor-side"
+            aria-label="Участники и параметры встречи"
+          >
+            <h4>
+              <Users size={17} aria-hidden="true" />
+              Участники и доступ
+            </h4>
+            <div className="meeting-editor-access">
+              <span>Пригласить команду</span>
+              <p>
+                <Link2 size={16} aria-hidden="true" />
+                По ссылке на встречу
+              </p>
+              <small>Ссылка появится после создания.</small>
+            </div>
+            <div className="meeting-editor-options">
+              <label className="meeting-option-row">
+                <span className="meeting-option-icon">
+                  <ShieldCheck size={18} aria-hidden="true" />
+                </span>
+                <span className="meeting-option-copy">
+                  <strong>Зал ожидания</strong>
+                  <small>Впускайте гостей во встречу</small>
+                </span>
+                <input
+                  className="meeting-switch"
+                  type="checkbox"
+                  checked={waitingRoom}
+                  onChange={(event) => setWaitingRoom(event.target.checked)}
+                  disabled={mutation.isPending}
+                />
+              </label>
+              <p className="field-hint meeting-waiting-policy">
+                Участники с действующей ссылкой-приглашением входят без
+                ожидания.
+              </p>
+              <div className="meeting-editor-recording">
+                <Video size={18} aria-hidden="true" />
+                <span>
+                  <strong>Запись встречи</strong>
+                  <small>Можно включить после начала</small>
+                </span>
+              </div>
+            </div>
+          </aside>
+        </div>
+        <footer className="meeting-dialog-footer meeting-editor-footer">
+          <span className="meeting-editor-footer-note">
+            <Link2 size={14} aria-hidden="true" />
+            Ссылка появится после создания
           </span>
-        </p>
-        <ErrorNotice error={mutation.error}>{validation || null}</ErrorNotice>
-        <footer className="meeting-dialog-footer">
           <Button
             type="button"
             variant="secondary"
@@ -296,7 +347,12 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
             Отмена
           </Button>
           <Button type="submit" busy={mutation.isPending}>
-            Создать встречу <ArrowRight size={18} aria-hidden="true" />
+            {planned ? (
+              <CalendarClock size={17} aria-hidden="true" />
+            ) : (
+              <ArrowRight size={17} aria-hidden="true" />
+            )}
+            Создать встречу
           </Button>
         </footer>
       </form>

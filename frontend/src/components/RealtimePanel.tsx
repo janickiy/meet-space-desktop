@@ -21,6 +21,7 @@ import {
 import type { useRealtime } from "../realtime";
 import { useMedia } from "../useMedia";
 import { Button, ErrorNotice } from "./ui";
+import { ConferenceControlButton } from "./conference/ConferenceControlButton";
 import type { Participant } from "../types";
 import { useAuth } from "../auth";
 import { useAccountSettings } from "./AccountSettingsContext";
@@ -332,6 +333,7 @@ export function RealtimePanel({
   reconnectTarget,
   controlsTarget,
   endControls,
+  compactControls = false,
 }: {
   conferenceId: string;
   membership: Participant;
@@ -342,6 +344,7 @@ export function RealtimePanel({
   reconnectTarget?: HTMLElement | null;
   controlsTarget?: HTMLElement | null;
   endControls?: ReactNode;
+  compactControls?: boolean;
 }) {
   const { user } = useAuth();
   const openSettings = useAccountSettings();
@@ -514,6 +517,22 @@ export function RealtimePanel({
   );
   const renderControls = (children: ReactNode) =>
     controlsTarget ? createPortal(children, controlsTarget) : children;
+  const deviceControlBusy =
+    connectionProblem || media.view.controlBusy || (media.running && busy);
+  const toggleDevice = (source: "microphone" | "camera") => {
+    if (media.running) {
+      if (source === "microphone")
+        void media.microphone(!media.view.microphoneEnabled);
+      else void media.camera(!media.view.cameraEnabled);
+    } else {
+      // A click enables only the requested device; the other device stays off.
+      media.start(true, {
+        ...preferences,
+        microphoneEnabled: source === "microphone",
+        cameraEnabled: source === "camera",
+      });
+    }
+  };
   return (
     <section
       className="content-card realtime-panel"
@@ -604,158 +623,270 @@ export function RealtimePanel({
           {media.view.status}
         </p>
         {media.view.error && <ErrorNotice>{media.view.error}</ErrorNotice>}
+        {compactControls && !media.running && live.state && online && (
+          <div className="room-media-connection">
+            <span>Камера и микрофон выключены</span>
+            <Button
+              variant="secondary"
+              onClick={() => media.start(false, preferences)}
+            >
+              {media.view.error
+                ? "Повторить подключение"
+                : "Подключить звук встречи"}
+            </Button>
+          </div>
+        )}
         {renderControls(
-          <div
-            className="meeting-actions conference-control-bar"
-            aria-label="Управление медиасвязью"
-          >
-            {!media.running && (
-              <>
-                <Button
-                  disabled={!live.state || !online}
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: media.start().
-                     */ () => media.start(true, preferences)
-                  }
-                >
-                  <Video size={17} />
-                  {media.view.error
-                    ? "Подключить медиасвязь снова"
-                    : hasSelection
-                      ? "Подключить с выбранными устройствами"
-                      : "Включить камеру и микрофон"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={!live.state || !online}
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: media.start(false).
-                     */ () => media.start(false)
-                  }
-                >
-                  Подключиться без камеры и микрофона
-                </Button>
-              </>
-            )}
-            {media.running && (
-              <>
-                <Button
-                  variant="secondary"
-                  disabled={busy || membership.microphoneBlocked}
-                  aria-pressed={media.view.microphoneEnabled}
-                  aria-label={
-                    media.view.microphoneEnabled
-                      ? "Выключить микрофон"
-                      : "Включить микрофон"
-                  }
-                  aria-keyshortcuts={shortcutsEnabled ? "M" : undefined}
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: void media.microphone(!media.view.microphoneEnabled).
-                     */ () =>
-                      void media.microphone(!media.view.microphoneEnabled)
-                  }
-                >
+          compactControls ? (
+            <div
+              className="meeting-actions conference-control-bar"
+              aria-label="Управление медиасвязью"
+            >
+              <ConferenceControlButton
+                className="conference-room-control-media room-microphone-control"
+                disabled={deviceControlBusy || membership.microphoneBlocked}
+                aria-pressed={media.view.microphoneEnabled}
+                aria-label={
+                  media.view.microphoneEnabled
+                    ? "Выключить микрофон"
+                    : "Включить микрофон"
+                }
+                aria-keyshortcuts={
+                  shortcutsEnabled && media.running ? "M" : undefined
+                }
+                onClick={() => toggleDevice("microphone")}
+                icon={
                   <span
-                    className={`media-tile-microphone media-control-microphone ${localAudioLevel > 0 ? "media-microphone-speaking" : ""}`}
+                      className={`media-tile-microphone media-control-microphone ${localAudioLevel > 0 ? "media-microphone-speaking" : ""}`}
                     style={
                       { "--audio-level": localAudioLevel } as CSSProperties
                     }
                     data-audio-level={localAudioLevel}
-                    aria-hidden="true"
                   >
                     {media.view.microphoneEnabled ? (
-                      <Mic size={17} />
+                      <Mic size={24} />
                     ) : (
-                      <MicOff size={17} />
+                      <MicOff size={24} />
                     )}
                   </span>
-                  Микрофон
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={busy || membership.cameraBlocked}
-                  aria-pressed={media.view.cameraEnabled}
-                  aria-label={
-                    media.view.cameraEnabled
-                      ? "Выключить камеру"
-                      : "Включить камеру"
-                  }
-                  aria-keyshortcuts={shortcutsEnabled ? "V" : undefined}
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: void media.camera(!media.view.cameraEnabled).
-                     */ () => void media.camera(!media.view.cameraEnabled)
-                  }
-                >
-                  {media.view.cameraEnabled ? (
-                    <Video size={17} />
+                }
+                label="Микрофон"
+              />
+              <ConferenceControlButton
+                className="conference-room-control-media room-camera-control"
+                disabled={deviceControlBusy || membership.cameraBlocked}
+                aria-pressed={media.view.cameraEnabled}
+                aria-label={
+                  media.view.cameraEnabled
+                    ? "Выключить камеру"
+                    : "Включить камеру"
+                }
+                aria-keyshortcuts={
+                  shortcutsEnabled && media.running ? "V" : undefined
+                }
+                onClick={() => toggleDevice("camera")}
+                icon={
+                  media.view.cameraEnabled ? (
+                    <Video size={24} />
                   ) : (
-                    <VideoOff size={17} />
-                  )}
-                  Камера
-                </Button>
+                    <VideoOff size={24} />
+                  )
+                }
+                label="Камера"
+              />
+              <ConferenceControlButton
+                className="room-screen-control"
+                aria-pressed={media.view.screenSharing}
+                aria-label={
+                  media.view.screenSharing
+                    ? "Остановить демонстрацию"
+                    : "Показать экран"
+                }
+                title={
+                  !media.running
+                    ? "Сначала подключите звук встречи или включите устройство"
+                    : undefined
+                }
+                disabled={
+                  !media.view.screenSharing &&
+                  (busy ||
+                    !media.running ||
+                    membership.screenBlocked ||
+                    membership.cameraBlocked)
+                }
+                onClick={() =>
+                  void (media.view.screenSharing
+                    ? media.stopScreen()
+                    : media.startScreen())
+                }
+                icon={<MonitorUp size={24} />}
+                label="Экран"
+              />
+              {controls}
+              {openSettings && (
+                <ConferenceControlButton
+                  className="room-settings-control"
+                  aria-haspopup="dialog"
+                  onClick={(event) => openSettings(event.currentTarget)}
+                  icon={<Settings size={24} />}
+                  label="Настройки"
+                />
+              )}
+              {endControls}
+            </div>
+          ) : (
+            <div
+              className="meeting-actions conference-control-bar"
+              aria-label="Управление медиасвязью"
+            >
+              {!media.running && (
+                <>
+                  <Button
+                    disabled={!live.state || !online}
+                    onClick={
+                      /**
+                       * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                       *
+                       *
+                       * @returns вычисленное значение: media.start().
+                       */ () => media.start(true, preferences)
+                    }
+                  >
+                    <Video size={17} />
+                    {media.view.error
+                      ? "Подключить медиасвязь снова"
+                      : hasSelection
+                        ? "Подключить с выбранными устройствами"
+                        : "Включить камеру и микрофон"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={!live.state || !online}
+                    onClick={
+                      /**
+                       * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                       *
+                       *
+                       * @returns вычисленное значение: media.start(false).
+                       */ () => media.start(false)
+                    }
+                  >
+                    Подключиться без камеры и микрофона
+                  </Button>
+                </>
+              )}
+              {media.running && (
+                <>
+                  <Button
+                    variant="secondary"
+                    disabled={busy || membership.microphoneBlocked}
+                    aria-pressed={media.view.microphoneEnabled}
+                    aria-label={
+                      media.view.microphoneEnabled
+                        ? "Выключить микрофон"
+                        : "Включить микрофон"
+                    }
+                    aria-keyshortcuts={shortcutsEnabled ? "M" : undefined}
+                    onClick={
+                      /**
+                       * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                       *
+                       *
+                       * @returns вычисленное значение: void media.microphone(!media.view.microphoneEnabled).
+                       */ () =>
+                        void media.microphone(!media.view.microphoneEnabled)
+                    }
+                  >
+                    <span
+                      className={`media-tile-microphone media-control-microphone ${localAudioLevel > 0 ? "media-microphone-speaking" : ""}`}
+                      style={
+                        { "--audio-level": localAudioLevel } as CSSProperties
+                      }
+                      data-audio-level={localAudioLevel}
+                      aria-hidden="true"
+                    >
+                      {media.view.microphoneEnabled ? (
+                        <Mic size={17} />
+                      ) : (
+                        <MicOff size={17} />
+                      )}
+                    </span>
+                    Микрофон
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={busy || membership.cameraBlocked}
+                    aria-pressed={media.view.cameraEnabled}
+                    aria-label={
+                      media.view.cameraEnabled
+                        ? "Выключить камеру"
+                        : "Включить камеру"
+                    }
+                    aria-keyshortcuts={shortcutsEnabled ? "V" : undefined}
+                    onClick={
+                      /**
+                       * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                       *
+                       *
+                       * @returns вычисленное значение: void media.camera(!media.view.cameraEnabled).
+                       */ () => void media.camera(!media.view.cameraEnabled)
+                    }
+                  >
+                    {media.view.cameraEnabled ? (
+                      <Video size={17} />
+                    ) : (
+                      <VideoOff size={17} />
+                    )}
+                    Камера
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="room-screen-control"
+                    aria-pressed={media.view.screenSharing}
+                    aria-label={
+                      media.view.screenSharing
+                        ? "Остановить демонстрацию"
+                        : "Показать экран"
+                    }
+                    disabled={
+                      !media.view.screenSharing &&
+                      (busy ||
+                        membership.screenBlocked ||
+                        membership.cameraBlocked)
+                    }
+                    onClick={
+                      /**
+                       * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                       *
+                       *
+                       * @returns вычисленное значение: void (media.view.screenSharing ? media.stopScreen() : media.startScreen()).
+                       */ () =>
+                        void (media.view.screenSharing
+                          ? media.stopScreen()
+                          : media.startScreen())
+                    }
+                  >
+                    <MonitorUp size={17} />
+                    {media.view.screenSharing ? "Остановить экран" : "Экран"}
+                  </Button>
+                </>
+              )}
+              {openSettings && (
                 <Button
                   variant="secondary"
-                  className="room-screen-control"
-                  aria-pressed={media.view.screenSharing}
-                  aria-label={
-                    media.view.screenSharing
-                      ? "Остановить демонстрацию"
-                      : "Показать экран"
-                  }
-                  disabled={
-                    !media.view.screenSharing &&
-                    (busy ||
-                      membership.screenBlocked ||
-                      membership.cameraBlocked)
-                  }
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: void (media.view.screenSharing ? media.stopScreen() : media.startScreen()).
-                     */ () =>
-                      void (media.view.screenSharing
-                        ? media.stopScreen()
-                        : media.startScreen())
-                  }
+                  className="room-settings-control"
+                  aria-haspopup="dialog"
+                  onClick={(event) => openSettings(event.currentTarget)}
                 >
-                  <MonitorUp size={17} />
-                  {media.view.screenSharing ? "Остановить экран" : "Экран"}
+                  <Settings size={20} aria-hidden="true" />
+                  Настройки
                 </Button>
-              </>
-            )}
-            {openSettings && (
-              <Button
-                variant="secondary"
-                className="room-settings-control"
-                aria-haspopup="dialog"
-                onClick={(event) => openSettings(event.currentTarget)}
-              >
-                <Settings size={20} aria-hidden="true" />
-                Настройки
-              </Button>
-            )}
-            {controls}
-            {!reconnectTarget && reconnectButton}
-            {endControls}
-          </div>,
+              )}
+              {controls}
+              {!reconnectTarget && reconnectButton}
+              {endControls}
+            </div>
+          ),
         )}
         {(membership.microphoneBlocked ||
           membership.cameraBlocked ||
