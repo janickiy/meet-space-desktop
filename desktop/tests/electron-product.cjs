@@ -152,7 +152,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
       await clickText("Приложение"); await visible("Запускать MeetSpace при входе в систему");
       const startup = await execute(`(async()=>{
         const [runtime,preferences]=await Promise.all([window.meetspaceDesktop.getRuntimeInfo(),window.meetspaceDesktop.getNativePreferences()]);
-        const label=[...document.querySelectorAll('.desktop-native-toggle')].find(element=>element.textContent.trim()==='Запускать MeetSpace при входе в систему');
+        const label=[...document.querySelectorAll('.desktop-native-toggle')].find(element=>element.querySelector('.preference-title')?.textContent.trim()==='Запускать MeetSpace при входе в систему');
         const checkbox=label?.querySelector('input[type=checkbox]');
         return {platform:runtime.platform,supported:preferences.startupSupported,reason:preferences.startupReason,enabled:preferences.startAtLogin,checked:checkbox?.checked,disabled:checkbox?.disabled};
       })()`);

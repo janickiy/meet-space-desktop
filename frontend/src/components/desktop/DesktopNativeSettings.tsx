@@ -71,13 +71,15 @@ export function DesktopNativeSettings() {
       className="content-card desktop-native-settings"
       aria-labelledby="desktop-native-heading"
     >
-      <h2 id="desktop-native-heading">Приложение</h2>
-      <p className="field-hint">Настройки MeetSpace на этом компьютере.</p>
+      <div className="account-settings-section-heading">
+        <h2 id="desktop-native-heading">Приложение</h2>
+        <p>Настройки MeetSpace на этом компьютере.</p>
+      </div>
       <ErrorNotice error={error} />
       {!settings && !error && <Loading />}
       {settings && (
         <>
-          <label className="desktop-native-toggle">
+          <label className="desktop-native-toggle preference-option">
             <input
               type="checkbox"
               checked={settings.closeToTray}
@@ -86,21 +88,25 @@ export function DesktopNativeSettings() {
                 void update({ closeToTray: event.target.checked })
               }
             />
-            <span>При закрытии окна сворачивать в трей</span>
+            <span className="preference-copy">
+              <span className="preference-title">
+                При закрытии окна сворачивать в трей
+              </span>
+              <span className="field-hint">
+                {trayAvailable && settings.closeToTray
+                  ? "Звонок и получение сообщений продолжатся. Для полного закрытия выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже."
+                  : "Закрытие окна завершает приложение. Для полного закрытия также можно нажать кнопку ниже."}
+              </span>
+              {!trayAvailable && (
+                <span className="field-hint" role="status">
+                  {trayStatus === "checking"
+                    ? "Проверяем доступность системного трея. Пока проверка не завершена, закрытие окна завершает приложение."
+                    : "Системный трей недоступен в текущем сеансе."}
+                </span>
+              )}
+            </span>
           </label>
-          <p className="field-hint">
-            {trayAvailable && settings.closeToTray
-              ? "Звонок и получение сообщений продолжатся. Для полного закрытия выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже."
-              : "Закрытие окна завершает приложение. Для полного закрытия также можно нажать кнопку ниже."}
-          </p>
-          {!trayAvailable && (
-            <p role="status">
-              {trayStatus === "checking"
-                ? "Проверяем доступность системного трея. Пока проверка не завершена, закрытие окна завершает приложение."
-                : "Системный трей недоступен в текущем сеансе."}
-            </p>
-          )}
-          <label className="desktop-native-toggle">
+          <label className="desktop-native-toggle preference-option">
             <input
               type="checkbox"
               checked={settings.nativeNotifications}
@@ -109,16 +115,20 @@ export function DesktopNativeSettings() {
                 void update({ nativeNotifications: event.target.checked })
               }
             />
-            <span>Системные уведомления</span>
+            <span className="preference-copy">
+              <span className="preference-title">Системные уведомления</span>
+              <span className="field-hint">
+                Учитываются настройки уведомлений аккаунта. Разрешение и режим
+                «Не беспокоить» управляются системой.
+              </span>
+              {!settings.notificationsSupported && (
+                <span className="field-hint" role="status">
+                  Системные уведомления недоступны в этой среде.
+                </span>
+              )}
+            </span>
           </label>
-          <p className="field-hint">
-            Учитываются настройки уведомлений аккаунта. Разрешение и режим «Не
-            беспокоить» управляются системой.
-          </p>
-          {!settings.notificationsSupported && (
-            <p role="status">Системные уведомления недоступны в этой среде.</p>
-          )}
-          <label className="desktop-native-toggle">
+          <label className="desktop-native-toggle preference-option">
             <input
               type="checkbox"
               checked={settings.startAtLogin}
@@ -127,19 +137,23 @@ export function DesktopNativeSettings() {
                 void update({ startAtLogin: event.target.checked })
               }
             />
-            <span>Запускать MeetSpace при входе в систему</span>
+            <span className="preference-copy">
+              <span className="preference-title">
+                Запускать MeetSpace при входе в систему
+              </span>
+              {!settings.startupSupported && (
+                <span className="field-hint">
+                  {settings.startupReason === "conflict"
+                    ? "Автозапуск уже настроен другим способом. Измените существующую настройку автозапуска в системе."
+                    : runtime?.platform === "linux"
+                      ? "Автозапуск можно включить в установленном приложении Linux, если он доступен в текущем сеансе. Пока открывайте MeetSpace через меню приложений."
+                      : runtime?.platform === "win32"
+                        ? "Автозапуск можно включить в установленном приложении Windows."
+                        : "Автозапуск в этой среде пока недоступен."}
+                </span>
+              )}
+            </span>
           </label>
-          {!settings.startupSupported && (
-            <p className="field-hint">
-              {settings.startupReason === "conflict"
-                ? "Автозапуск уже настроен другим способом. Измените существующую настройку автозапуска в системе."
-                : runtime?.platform === "linux"
-                  ? "Автозапуск можно включить в установленном приложении Linux, если он доступен в текущем сеансе. Пока открывайте MeetSpace через меню приложений."
-                  : runtime?.platform === "win32"
-                    ? "Автозапуск можно включить в установленном приложении Windows."
-                    : "Автозапуск в этой среде пока недоступен."}
-            </p>
-          )}
           <div className="desktop-native-exit">
             <Button
               variant="outline"
