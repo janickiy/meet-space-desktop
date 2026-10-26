@@ -52,7 +52,7 @@ module.exports = {
     createStartMenuShortcut: true,
     runAfterFinish: false,
     deleteAppDataOnUninstall: false,
-    shortcutName: "MeetSpace Test",
+    shortcutName: "MeetSpace",
     installerIcon: "resources/icon.ico",
     uninstallerIcon: "resources/icon.ico",
     uninstallDisplayName: "MeetSpace Test",

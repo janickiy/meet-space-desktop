@@ -4,7 +4,8 @@ Unsigned development build for internal Windows testing.
 This installer is not a signed production release and does not include an
 automatic update channel. Windows may show an unknown publisher warning.
 
-The executable, installer and shortcuts identify the application as MeetSpace Test.
+Windows desktop and Start menu shortcuts are named MeetSpace.
+Package metadata identifies this unsigned test build as MeetSpace Test.
 
 Application source licensing has not been specified by its owner. No third-party
 software license is granted for MeetSpace application source by this test build.
