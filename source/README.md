@@ -2,22 +2,22 @@
 
 Готовые пакеты Windows и Linux опубликованы через Git LFS. Linux: `source/linux/<версия>/<DEB|RPM|AppImage>/<пакет>`; Windows: `source/windows/<версия>/<пакет>`.
 
-## Последние сборки 0.1.9 beta
+## Последние сборки 0.1.10 beta
 
-Выпуск от 26 октября 2026 года включает обновлённую вёрстку по макету: чаты, настройки, встречи, календарь, папки, записи и модальные окна. Сохранены рабочие действия, выбор устройств и настройка громкости. В выпуск также вошли ранее подготовленные выбор своего TLS-сертификата или Let's Encrypt, автоматический выбор latest для готовых Docker-образов и исправления звука уведомлений.
+Выпуск от 26 октября 2026 года включает обновлённую вёрстку чатов, встреч и библиотеки записей по макетам. Пакеты Windows и Linux используют одни и те же проверенные исходники интерфейса.
 
-Все восемь пакетов собраны из одного чистого commit [ab82c66e47b8](https://github.com/janickiy/meet-space-desktop/commit/ab82c66e47b81cc319295ffa4c405ab99811d12f). SHA-256 457 входных файлов: `a569c4ca1c2cfe87e694eb0a69bad681bd590150dd5efc8ee163241218202911`. Отчёты содержат `sourceDirty: false`; все входные файлы сверены с commit.
+Все восемь пакетов собраны из одного чистого commit [f8088e773047](https://github.com/janickiy/meet-space-desktop/commit/f8088e77304771288ada94d9ebac2c1414a0af3c). SHA-256 460 входных файлов: `857f3e16a82f5b10597e15d8d84caf9265547ca7e008be379ff518b69dd7ee67`. Отчёты содержат `sourceDirty: false`; все входные файлы сверены с commit.
 
 | Пакет | x64 | ARM64 |
 |---|---|---|
-| Windows — EXE | [x64](windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-x64-test-setup.exe) | [ARM64](windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-arm64-test-setup.exe) |
-| Ubuntu/Debian — DEB | [x64](linux/0.1.9-beta/DEB/MeetSpace-0.1.9-beta-linux-amd64-test.deb) | [ARM64](linux/0.1.9-beta/DEB/MeetSpace-0.1.9-beta-linux-arm64-test.deb) |
-| Fedora — RPM | [x64](linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-aarch64-test.rpm) |
-| Linux — AppImage | [x64](linux/0.1.9-beta/AppImage/MeetSpace-0.1.9-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.1.9-beta/AppImage/MeetSpace-0.1.9-beta-linux-arm64-test.AppImage) |
+| Windows — EXE | [x64](windows/0.1.10-beta/MeetSpace-0.1.10-beta-win-x64-test-setup.exe) | [ARM64](windows/0.1.10-beta/MeetSpace-0.1.10-beta-win-arm64-test-setup.exe) |
+| Ubuntu/Debian — DEB | [x64](linux/0.1.10-beta/DEB/MeetSpace-0.1.10-beta-linux-amd64-test.deb) | [ARM64](linux/0.1.10-beta/DEB/MeetSpace-0.1.10-beta-linux-arm64-test.deb) |
+| Fedora — RPM | [x64](linux/0.1.10-beta/RPM/MeetSpace-0.1.10-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.1.10-beta/RPM/MeetSpace-0.1.10-beta-linux-aarch64-test.rpm) |
+| Linux — AppImage | [x64](linux/0.1.10-beta/AppImage/MeetSpace-0.1.10-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.1.10-beta/AppImage/MeetSpace-0.1.10-beta-linux-arm64-test.AppImage) |
 
 ## Последние сборки каждой версии
 
-В каталоге **58 пакетов**: восемь новых `0.1.9-beta` и 50 ранее опубликованных. Предыдущие версии и сопроводительные файлы сохранены без изменения байтов. Для каждой комбинации ОС, версии, формата и архитектуры хранится последняя опубликованная сборка.
+В каталоге **66 пакетов**: восемь новых `0.1.10-beta` и 58 ранее опубликованных. Предыдущие версии и сопроводительные файлы сохранены без изменения байтов. Для каждой комбинации ОС, версии, формата и архитектуры хранится последняя опубликованная сборка.
 
 Контрольные суммы — в [SHA256SUMS](SHA256SUMS), проверка запускается из `source/`. [catalog.json](catalog.json) содержит пакеты и метаданные их проверок.
 
@@ -65,6 +65,12 @@
 | Linux | 0.1.9-beta | DEB / x64 | [MeetSpace-0.1.9-beta-linux-amd64-test.deb](linux/0.1.9-beta/DEB/MeetSpace-0.1.9-beta-linux-amd64-test.deb) |
 | Linux | 0.1.9-beta | RPM / arm64 | [MeetSpace-0.1.9-beta-linux-aarch64-test.rpm](linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-aarch64-test.rpm) |
 | Linux | 0.1.9-beta | RPM / x64 | [MeetSpace-0.1.9-beta-linux-x86_64-test.rpm](linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-x86_64-test.rpm) |
+| Linux | 0.1.10-beta | AppImage / arm64 | [MeetSpace-0.1.10-beta-linux-arm64-test.AppImage](linux/0.1.10-beta/AppImage/MeetSpace-0.1.10-beta-linux-arm64-test.AppImage) |
+| Linux | 0.1.10-beta | AppImage / x64 | [MeetSpace-0.1.10-beta-linux-x86_64-test.AppImage](linux/0.1.10-beta/AppImage/MeetSpace-0.1.10-beta-linux-x86_64-test.AppImage) |
+| Linux | 0.1.10-beta | DEB / arm64 | [MeetSpace-0.1.10-beta-linux-arm64-test.deb](linux/0.1.10-beta/DEB/MeetSpace-0.1.10-beta-linux-arm64-test.deb) |
+| Linux | 0.1.10-beta | DEB / x64 | [MeetSpace-0.1.10-beta-linux-amd64-test.deb](linux/0.1.10-beta/DEB/MeetSpace-0.1.10-beta-linux-amd64-test.deb) |
+| Linux | 0.1.10-beta | RPM / arm64 | [MeetSpace-0.1.10-beta-linux-aarch64-test.rpm](linux/0.1.10-beta/RPM/MeetSpace-0.1.10-beta-linux-aarch64-test.rpm) |
+| Linux | 0.1.10-beta | RPM / x64 | [MeetSpace-0.1.10-beta-linux-x86_64-test.rpm](linux/0.1.10-beta/RPM/MeetSpace-0.1.10-beta-linux-x86_64-test.rpm) |
 | Windows | 0.1.0-beta | NSIS / arm64 | [MeetSpace-0.1.0-beta-win-arm64-test-setup.exe](windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe) |
 | Windows | 0.1.0-beta | NSIS / x64 | [MeetSpace-0.1.0-beta-win-x64-test-setup.exe](windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-x64-test-setup.exe) |
 | Windows | 0.1.1-beta | NSIS / arm64 | [MeetSpace-0.1.1-beta-win-arm64-test-setup.exe](windows/0.1.1-beta/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe) |
@@ -81,11 +87,13 @@
 | Windows | 0.1.6-beta | NSIS / x64 | [MeetSpace-0.1.6-beta-win-x64-test-setup.exe](windows/0.1.6-beta/MeetSpace-0.1.6-beta-win-x64-test-setup.exe) |
 | Windows | 0.1.9-beta | NSIS / arm64 | [MeetSpace-0.1.9-beta-win-arm64-test-setup.exe](windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-arm64-test-setup.exe) |
 | Windows | 0.1.9-beta | NSIS / x64 | [MeetSpace-0.1.9-beta-win-x64-test-setup.exe](windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-x64-test-setup.exe) |
+| Windows | 0.1.10-beta | NSIS / arm64 | [MeetSpace-0.1.10-beta-win-arm64-test-setup.exe](windows/0.1.10-beta/MeetSpace-0.1.10-beta-win-arm64-test-setup.exe) |
+| Windows | 0.1.10-beta | NSIS / x64 | [MeetSpace-0.1.10-beta-win-x64-test-setup.exe](windows/0.1.10-beta/MeetSpace-0.1.10-beta-win-x64-test-setup.exe) |
 
 ## Область проверки
 
-Пакеты тестовые, без цифровой подписи приложения; автоматическое обновление отключено. Встроенный SSH-установщик отдельно подписан доверенным ключом. Windows x64/ARM64 прошли проверку встроенного NSIS/PE/ASAR payload. Linux-пакеты прошли проверку метаданных, ELF/GLIBC, ASAR, install hooks и контрольных сумм. ARM64 собран в Ubuntu UTM, x64 — процессом Linux x64 в Docker с эмуляцией на Mac ARM64.
+Пакеты тестовые, без цифровой подписи приложения; автоматическое обновление отключено. Встроенный SSH-установщик отдельно подписан доверенным ключом. Установщики Windows x64/ARM64 прошли статические проверки встроенного NSIS/PE/ASAR payload. Для Linux проверены метаданные, ELF/GLIBC, ASAR, install hooks и контрольные суммы. Эти проверки содержимого не подтверждают нативный запуск каждой ОС.
 
-Проверки приложения: 307 unit-проверок успешно, 1 пропущена; 39 проверок жизненного цикла медиа успешно. Интерфейс проверен на локальных тестовых данных в светлой и тёмной темах, при увеличенном шрифте и разных размерах окна. ARM64 AppImage установлен и запущен в Ubuntu UTM с включённой песочницей и сохранением профиля. Это не заменяет полную приёмку на каждой ОС: нативный запуск Windows, реальные SFU/SMTP и каждый Linux-дистрибутив в этом выпуске повторно не проверялись.
+Успешно пройдены 28 модульных проверок и проверок безопасности. Подготовлены 132 снимка общего интерфейса на локальных тестовых данных. Проверки общего интерфейса не являются нативной приёмкой установщиков. Нативная проверка выполнена только на Ubuntu ARM64 в UTM после установки этого выпуска. Нативный запуск Windows, другие Linux-дистрибутивы, реальные SFU/SMTP и рабочие звонки в этом выпуске не подтверждены этими проверками.
 
 Рабочие результаты сборки остаются в `desktop/artifacts/`; в `source/` размещены только проверенные пакеты, отчёты и контрольные суммы.
