@@ -1,0 +1,41 @@
+{
+  "repository": "https://github.com/janickiy/meet-space-android",
+  "commit": "bb806e0b75ec720a695347b27d5d22d98a15b9a8",
+  "sourceDirectory": "installer/v1",
+  "copiedAt": "2026-10-24",
+  "files": {
+    "runner.py": {
+      "sha256": "ec3b34bacf0dad71873708d691263704d0e5dad0ccbddb9f6b037a151d9161d0",
+      "bytes": 116163
+    },
+    "trust-root.pem": {
+      "sha256": "9f16201125cd17dc9fb90a7579e78589c76ecbfdb1ee80df3428ee34d6b90dfc",
+      "bytes": 625
+    },
+    "release.json": {
+      "sha256": "dcf4bec8ed31e652de981d2fbb85c719d9d18b5a3469c7d8f3537e88591966e1",
+      "bytes": 5915
+    },
+    "release.sig": {
+      "sha256": "39a62d74a7c051d7ad8c674ca09e60723dd217d5a3ddbf98ef063f90054bd2d9",
+      "bytes": 384
+    },
+    "docker.asc": {
+      "sha256": "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570",
+      "bytes": 3817
+    }
+  },
+  "modified": false,
+  "privateKeyIncluded": false,
+  "legacyBundles": [
+    {
+      "releaseSha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
+      "directory": "legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a"
+    },
+    {
+      "releaseSha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "directory": "legacy/e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "provenance": "history/provenance-e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c.json"
+    }
+  ]
+}

@@ -230,6 +230,7 @@ export function DirectCallMedia({
                 name={`${peer.displayName} · экран`}
                 screen
                 sinkId={preferences.audioOutputId}
+                volume={preferences.outputVolume}
                 covered={preferences.hideParticipantVideo}
                 reconnecting={connectionProblem}
               />
@@ -244,6 +245,7 @@ export function DirectCallMedia({
                   !preferences.hideParticipantVideo
                 }
                 sinkId={preferences.audioOutputId}
+                volume={preferences.outputVolume}
                 microphoneEnabled={
                   peerPresence?.microphoneEnabled ??
                   stream.kinds.includes("audio")

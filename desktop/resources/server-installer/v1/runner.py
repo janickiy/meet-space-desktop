@@ -191,6 +191,8 @@ def verify_bundle(source, pem, raw, signature, docker_key):
         fail("RELEASE_INVALID")
     if manifest.get("profile") not in ("source-v1", "integration-v1"):
         fail("RELEASE_INVALID")
+    if manifest.get("tlsPolicy") not in (None, "certificate-choice-v1"):
+        fail("RELEASE_INVALID")
     for image in [*manifest.get("baseImages", {}).values(), *manifest.get("images", {}).values()]:
         if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9/_.:-]*@sha256:[a-f0-9]{64}", image):
             fail("RELEASE_INVALID")
@@ -379,6 +381,9 @@ def plan_latest(options, recipe):
         lock = previous.get("sourceLock")
         images = previous.get("imageLock")
         if image_mode(options) != image_mode(previous["options"]):
+            fail("EXISTING_INSTALLATION")
+        if (tls_mode(options) != tls_mode(previous["options"]) or
+                options.get("certificateSha256") != previous["options"].get("certificateSha256")):
             fail("EXISTING_INSTALLATION")
         profile = plan_resource_profile(previous)
     else:
@@ -710,7 +715,7 @@ def plan_resource_profile(plan):
 
 def validate_options(options, manifest):
     if (not isinstance(options, dict) or not {"domain", "publicIpv4"}.issubset(options)
-            or set(options) - {"domain", "publicIpv4", "acmeEmail", "smtp", "imageMode", "imageRelease"}):
+            or set(options) - {"domain", "publicIpv4", "acmeEmail", "smtp", "imageMode", "imageRelease", "tlsMode", "certificateSha256"}):
         fail("INVALID_REQUEST")
     domain = options["domain"]
     if not isinstance(domain, str) or len(domain) > 253 or domain != domain.lower() or not re.fullmatch(r"[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?", domain):
@@ -733,6 +738,17 @@ def validate_options(options, manifest):
     if not isinstance(email, str) or (email and (len(email) > 254 or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}", email))):
         fail("INVALID_EMAIL")
     normalized = {"domain": domain, "publicIpv4": str(ip), "acmeEmail": email}
+    if ("tlsMode" in options or "certificateSha256" in options) and manifest.get("tlsPolicy") != "certificate-choice-v1":
+        fail("INVALID_TLS")
+    mode_tls = tls_mode(options)
+    if mode_tls == "custom":
+        if email or not isinstance(options.get("certificateSha256"), str) or not re.fullmatch(r"[a-f0-9]{64}", options["certificateSha256"]):
+            fail("INVALID_TLS")
+        normalized["certificateSha256"] = options["certificateSha256"]
+    elif "certificateSha256" in options:
+        fail("INVALID_TLS")
+    if "tlsMode" in options:
+        normalized["tlsMode"] = mode_tls
     mode = image_mode(options)
     if "imageMode" in options:
         normalized["imageMode"] = mode
@@ -744,6 +760,81 @@ def validate_options(options, manifest):
     if "smtp" in options:
         normalized["smtp"] = validate_smtp(options["smtp"])
     return normalized
+
+
+def tls_mode(options):
+    mode = options.get("tlsMode", "letsencrypt")
+    if not isinstance(mode, str) or mode not in ("letsencrypt", "custom"):
+        fail("INVALID_TLS")
+    return mode
+
+
+def validate_tls_certificate(value, options):
+    """Validate private apply input without returning or journalling PEM bytes."""
+    if tls_mode(options) != "custom":
+        if value is not None:
+            fail("INVALID_TLS")
+        return None
+    if not isinstance(value, dict) or set(value) != {"fullchain", "privateKey"}:
+        fail("CERTIFICATE_REQUIRED")
+    data = {}
+    for name, limit in (("fullchain", 65536), ("privateKey", 16384)):
+        text = value[name]
+        if not isinstance(text, str) or "\x00" in text:
+            fail("CERTIFICATE_INVALID")
+        try:
+            raw = text.encode("utf-8", errors="strict")
+        except UnicodeError:
+            fail("CERTIFICATE_INVALID")
+        if not 1 <= len(raw) <= limit:
+            fail("CERTIFICATE_INVALID")
+        data[name] = raw
+    if digest(data["fullchain"]) != options.get("certificateSha256"):
+        fail("CERTIFICATE_CHANGED")
+    pattern = rb"-----BEGIN CERTIFICATE-----\r?\n[A-Za-z0-9+/=\r\n]+-----END CERTIFICATE-----"
+    certificates = re.findall(pattern, data["fullchain"])
+    if (not 1 <= len(certificates) <= 16 or
+            re.sub(pattern, b"", data["fullchain"]).strip()):
+        fail("CERTIFICATE_INVALID")
+    if not re.fullmatch(rb"\s*-----BEGIN (PRIVATE KEY|RSA PRIVATE KEY|EC PRIVATE KEY)-----\r?\n[A-Za-z0-9+/=\r\n]+-----END \1-----\s*", data["privateKey"]):
+        fail("CERTIFICATE_INVALID")
+    # The directory is private and temporary; OpenSSL never receives key bytes in argv.
+    with tempfile.TemporaryDirectory(prefix="meetspace-tls-verify-") as temporary:
+        folder = pathlib.Path(temporary)
+        os.chmod(folder, 0o700)
+        for name, raw in (("leaf.pem", certificates[0]), ("chain.pem", b"\n".join(certificates[1:])), ("key.pem", data["privateKey"])):
+            target = folder / name
+            descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(raw)
+        leaf = str(folder / "leaf.pem")
+        run(["openssl", "x509", "-in", leaf, "-noout", "-checkhost", options["domain"]], code="CERTIFICATE_DOMAIN")
+        run(["openssl", "x509", "-in", leaf, "-noout", "-checkend", "3600"], code="CERTIFICATE_EXPIRED")
+        key_public = run(["openssl", "pkey", "-in", str(folder / "key.pem"), "-passin", "pass:", "-pubout", "-outform", "DER"], capture=True, code="CERTIFICATE_INVALID")
+        certificate_public = run(["openssl", "x509", "-in", leaf, "-pubkey", "-noout"], capture=True, code="CERTIFICATE_INVALID")
+        certificate_public = run(["openssl", "pkey", "-pubin", "-outform", "DER"], data=certificate_public, capture=True, code="CERTIFICATE_INVALID")
+        if key_public != certificate_public:
+            fail("CERTIFICATE_KEY_MISMATCH")
+        verify = ["openssl", "verify", "-purpose", "sslserver", "-verify_hostname", options["domain"]]
+        if len(certificates) > 1:
+            verify += ["-untrusted", str(folder / "chain.pem")]
+        run([*verify, leaf], code="CERTIFICATE_UNTRUSTED")
+    return data
+
+
+def stored_tls_certificate(directory, options):
+    data = {}
+    for name, filename, limit in (("fullchain", "fullchain.pem", 65536), ("privateKey", "privkey.pem", 16384)):
+        target = directory / "custom-tls" / filename
+        no_symlink(target)
+        try:
+            info = target.stat()
+            if not stat.S_ISREG(info.st_mode) or info.st_mode & 0o077 or not 1 <= info.st_size <= limit:
+                fail("CERTIFICATE_INVALID")
+            data[name] = target.read_bytes().decode("utf-8", errors="strict")
+        except (OSError, UnicodeError):
+            fail("CERTIFICATE_REQUIRED")
+    return validate_tls_certificate(data, options)
 
 
 def validate_smtp(options):
@@ -1003,6 +1094,9 @@ def create_plan(options, manifest, *, issued_at=None, source_lock=None, image_lo
     marker = managed_marker()
     free = disk_free()
     previous = read_json(job_directory(marker["jobId"]) / "plan.json") if marker else None
+    if previous and (tls_mode(options) != tls_mode(previous["options"]) or
+                     options.get("certificateSha256") != previous["options"].get("certificateSha256")):
+        fail("EXISTING_INSTALLATION")
     if legacy_plan:
         resource_profile = "standard"
     elif resource_profile is None:
@@ -1056,6 +1150,10 @@ def create_plan(options, manifest, *, issued_at=None, source_lock=None, image_lo
         plan["warnings"].append("compact-test-resources")
     if manifest.get("backendTag"):
         plan["warnings"].remove("no-upstream-release-tag")
+    if tls_mode(options) == "custom":
+        plan["actions"][plan["actions"].index("acme-https-wss")] = "custom-https-wss"
+        plan["warnings"].remove("turn-restarts-on-certificate-renewal")
+        plan["warnings"].append("custom-certificate-renewal-manual")
     plan["hash"] = digest(canonical(plan))
     return plan
 
@@ -1129,7 +1227,7 @@ def start_unit(value):
          "/usr/bin/python3", str(ROOT / "installer" / "v1" / "runner.py"), "worker", value], code="WORKER_START")
 
 
-def initialize_layout(value, plan, manifest, bundle, smtp_password=None):
+def initialize_layout(value, plan, manifest, bundle, smtp_password=None, tls_certificate=None):
     # Publish the complete journal and bundle together. An interrupted preparation must
     # not turn the final root into an unknown installation that status/resume cannot read.
     no_symlink(ROOT.parent)
@@ -1142,6 +1240,11 @@ def initialize_layout(value, plan, manifest, bundle, smtp_password=None):
             write_atomic(prepared / "installer" / "v1" / name, data)
         if "smtp" in plan["options"]:
             write_atomic(prepared / "config" / "smtp.env", smtp_environment(plan["options"]["smtp"], smtp_password))
+        if tls_mode(plan["options"]) == "custom":
+            if tls_certificate is None:
+                fail("CERTIFICATE_REQUIRED")
+            for name, filename in (("fullchain", "fullchain.pem"), ("privateKey", "privkey.pem")):
+                write_atomic(directory / "custom-tls" / filename, tls_certificate[name], 0o600)
         write_atomic(directory / "plan.json", canonical(plan))
         if "sourceLock" in plan:
             write_atomic(directory / "source-lock.json", canonical(plan["sourceLock"]))
@@ -1152,6 +1255,8 @@ def initialize_layout(value, plan, manifest, bundle, smtp_password=None):
         # File writes fsync their direct parent. Persist every newly created directory
         # entry as well before making the complete tree visible at its final location.
         folders = [directory, prepared / "jobs", prepared / "installer" / "v1", prepared / "installer", prepared]
+        if tls_mode(plan["options"]) == "custom":
+            folders.insert(0, directory / "custom-tls")
         if "smtp" in plan["options"]:
             folders.insert(0, prepared / "config")
         for folder in folders:
@@ -1182,6 +1287,10 @@ def apply(request, manifest, bundle):
     recipe = manifest
     manifest = manifest_for_plan(recipe, plan)
     value = job_id(request.get("jobId"))
+    # Reject mismatched/expired/untrusted private input before creating host state
+    # or starting a detached worker. Only its public SHA-256 is bound into the plan.
+    options = validate_options(plan.get("options"), manifest)
+    tls_certificate = validate_tls_certificate(request.get("tlsCertificate"), options)
     # Creation of the lock is itself an approved apply action; plan never creates it.
     with lock_file(pathlib.Path("/run/meetspace-installer-control.lock")):
         marker = managed_marker()
@@ -1199,7 +1308,7 @@ def apply(request, manifest, bundle):
                             image_lock=plan.get("imageLock"), resource_profile=plan_resource_profile(plan), legacy_plan="resourceProfile" not in plan)
         if fresh["hash"] != plan["hash"]:
             fail("PLAN_CHANGED")
-        if request.get("acceptAcmeTerms") is not True:
+        if tls_mode(fresh["options"]) == "letsencrypt" and request.get("acceptAcmeTerms") is not True:
             fail("ACME_TERMS_REQUIRED")
         if docker_install_required(fresh["docker"]) and request.get("confirmDockerInstall") is not True:
             fail("DOCKER_CONFIRMATION_REQUIRED")
@@ -1208,7 +1317,7 @@ def apply(request, manifest, bundle):
             validate_smtp_password(smtp_password)
         elif smtp_password not in (None, ""):
             fail("INVALID_SMTP")
-        initialize_layout(value, plan, manifest, bundle, smtp_password)
+        initialize_layout(value, plan, manifest, bundle, smtp_password, tls_certificate)
         directory = job_directory(value)
         try:
             start_unit(value)
@@ -1239,6 +1348,8 @@ def control(action, request, manifest):
             if request.get("confirmedPlanHash") != plan["hash"]:
                 fail("CONFIRMATION_REQUIRED")
             validate_options(plan["options"], manifest)
+            if tls_mode(plan["options"]) == "custom":
+                stored_tls_certificate(directory, plan["options"])
             facts = platform_facts()
             same_platform(plan, facts)
             limits = RESOURCE_PROFILES[plan_resource_profile(plan)]
@@ -1493,6 +1604,8 @@ class Worker:
         build_time = build_timestamp_utc(self.manifest.get("builtAt"))
         images = read_json(self.images_file) if self.images_file.exists() else {}
         for service, reference in self.manifest["images"].items():
+            if service == "certbot" and tls_mode(self.options) == "custom":
+                continue
             self.check_cancel()
             started = time.monotonic()
             if service in images:
@@ -1585,14 +1698,15 @@ class Worker:
             write_atomic(self.images_file, canonical(images))
             self.image_timing(service, "load", started)
         # ACME tooling is pinned by the signed Android recipe, separate from server images.
-        reference = self.manifest["images"]["certbot"]
-        if "certbot" not in images:
-            self.check_build_space()
-            run(["docker", "pull", "--platform", lock["platform"], reference], timeout=900, code="IMAGE_PULL_FAILED")
-        details = self.image_details(reference)
-        if "certbot" in images and images["certbot"] != details["Id"]:
-            fail("IMAGE_CHANGED")
-        images["certbot"] = details["Id"]
+        if tls_mode(self.options) == "letsencrypt":
+            reference = self.manifest["images"]["certbot"]
+            if "certbot" not in images:
+                self.check_build_space()
+                run(["docker", "pull", "--platform", lock["platform"], reference], timeout=900, code="IMAGE_PULL_FAILED")
+            details = self.image_details(reference)
+            if "certbot" in images and images["certbot"] != details["Id"]:
+                fail("IMAGE_CHANGED")
+            images["certbot"] = details["Id"]
         write_atomic(self.images_file, canonical(images))
         write_atomic(self.directory / "prebuilt-receipt.json", canonical({"imageLock": lock,
             "manifestSha256": file_digest(destination / "release" / "release.json"), "images": images}))
@@ -1859,6 +1973,8 @@ server {
         run(["openssl", "x509", "-in", str(ROOT / "tls" / "fullchain.pem"), "-noout", "-checkend", "3600"], code="CERTIFICATE_INVALID")
 
     def phase_https(self):
+        if tls_mode(self.options) == "custom":
+            return self.phase_custom_https()
         self.write_nginx(tls=False)
         self.compose("up", "-d", "--no-build", "--no-deps", "proxy")
         self.compose("exec", "-T", "proxy", "nginx", "-t", code="PROXY_FAILED")
@@ -1879,6 +1995,33 @@ server {
             write_atomic(target, content.encode(), 0o644)
         run(["systemctl", "daemon-reload"])
         run(["systemctl", "enable", "--now", "meetspace-tls-renew.timer"])
+
+    def phase_custom_https(self):
+        data = stored_tls_certificate(self.directory, self.options)
+        # A custom installation never inherits or starts an ACME renewal service.
+        for name in ("meetspace-tls-renew.service", "meetspace-tls-renew.timer"):
+            target = pathlib.Path("/etc/systemd/system") / name
+            if target.exists() or target.is_symlink():
+                fail("SYSTEMD_UNIT_CONFLICT")
+        backup = self.directory / "tls-before-custom"
+        for name in ("fullchain.pem", "privkey.pem"):
+            target = ROOT / "tls" / name
+            no_symlink(target)
+            if target.exists():
+                info = target.stat()
+                if not stat.S_ISREG(info.st_mode) or info.st_size > 65536:
+                    fail("CERTIFICATE_INVALID")
+                previous = backup / name
+                if not previous.exists():
+                    write_atomic(previous, target.read_bytes(), 0o600)
+        for name, source in (("fullchain.pem", "fullchain"), ("privkey.pem", "privateKey")):
+            target = ROOT / "tls" / name
+            write_atomic(target, data[source], 0o644 if source == "fullchain" else 0o640)
+            os.chown(target, 0, 1000)
+        self.write_nginx(tls=True)
+        self.compose("up", "-d", "--no-build", "--no-deps", "proxy")
+        self.compose("exec", "-T", "proxy", "nginx", "-t", code="PROXY_FAILED")
+        self.compose("exec", "-T", "proxy", "nginx", "-s", "reload", code="PROXY_FAILED")
 
     def phase_services(self):
         self.compose("up", "-d", "--no-build", "--no-deps", "media-worker")
@@ -1943,7 +2086,9 @@ server {
                     "images": images, "verifiedAt": int(time.time()), "profile": self.manifest["profile"],
                     "checks": ["service-health", "image-ids", "private-ports", "https-system-trust", "api-version", "frontend-version", "wss-unauthenticated-denied", "turn-tls", "turn-auth", "turn-private-peer-denied"],
                     "externalCloudFirewallVerified": False, "mediaEndToEndVerified": False,
-                    "publicCaIssuance": self.manifest["profile"] == "source-v1"}
+                    "publicCaIssuance": tls_mode(self.options) == "letsencrypt" and self.manifest["profile"] == "source-v1"}
+        if tls_mode(self.options) == "custom":
+            evidence.update(tlsMode="custom", certificateSha256=self.options["certificateSha256"])
         if "imageLock" in self.plan:
             evidence["imageLock"] = self.plan["imageLock"]
         write_atomic(self.directory / "evidence.json", canonical(evidence))
@@ -2031,6 +2176,8 @@ def turn_readiness(shared_secret, domain):
 
 def renew(value, manifest):
     worker = Worker(value, manifest)
+    if tls_mode(worker.options) != "letsencrypt":
+        fail("CUSTOM_CERTIFICATE_MANUAL_RENEWAL")
     if status(value)["state"] != "completed":
         fail("INSTALLATION_INCOMPLETE")
     with lock_file(ROOT / "worker.lock"):
@@ -2047,7 +2194,7 @@ def main(action, request):
     if os.geteuid() != 0:
         fail("ROOT_REQUIRED")
     os.umask(0o077)
-    if action != "apply" and isinstance(request, dict) and "smtpPassword" in request:
+    if action != "apply" and isinstance(request, dict) and ("smtpPassword" in request or "tlsCertificate" in request):
         fail("INVALID_REQUEST")
     manifest, bundle = load_bundle()
     if action == "plan":

@@ -114,8 +114,10 @@ export function PasswordInput(props: InputHTMLAttributes<HTMLInputElement>) {
       <button
         type="button"
         className="eye-toggle"
+        disabled={props.disabled}
         aria-label={visible ? "Скрыть пароль" : "Показать пароль"}
         aria-pressed={visible}
+        aria-controls={props.id}
         onClick={
           /**
            * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.

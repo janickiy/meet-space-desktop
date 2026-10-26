@@ -1,35 +1,55 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   CalendarDays,
   CalendarClock,
   Clock,
-  Link2,
   ShieldCheck,
   UserRound,
   Users,
   Video,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../auth";
-import { inviteLink } from "../utils";
+import { api } from "../api";
+import { inviteCode, inviteLink } from "../utils";
 import type { Conference } from "../types";
-import { Button, CopyLink, Modal, StatusBadge } from "./ui";
+import { Button, Modal, StatusBadge } from "./ui";
 import { ConferenceChatActions } from "./ConferenceChatActions";
 import { EditSchedule } from "./ConferenceModals";
+import { MeetingInvitationCard } from "./MeetingInvitationCard";
 import "./meeting-modals.css";
 
 /** Сведения из доступной пользователю записи сервера, без демонстрационных участников. */
 export function MeetingDetailsModal({
   conference,
   onClose,
+  onEdit,
+  onCancel,
 }: {
   conference: Conference;
   onClose: () => void;
+  onEdit?: () => void;
+  onCancel?: () => void;
 }) {
   const { user } = useAuth();
   const [editing, setEditing] = useState(false);
   const past = ["finished", "cancelled"].includes(conference.status);
+  const listedCode =
+    inviteCode(conference.inviteCode || "") ||
+    inviteCode(conference.inviteUrl || "");
+  const details = useQuery({
+    queryKey: ["conference", user?.id, conference.id],
+    queryFn: ({ signal }) => api.conference(conference.id, signal),
+    enabled: !!user && !past && !listedCode && !editing,
+    retry: false,
+  });
+  const code =
+    listedCode ||
+    inviteCode(details.data?.item.inviteCode || "") ||
+    inviteCode(details.data?.item.inviteUrl || "");
   const active = conference.status === "active";
   const owner = user?.id === conference.ownerId;
   const date = conference.startedAt || conference.scheduledAt;
@@ -42,7 +62,7 @@ export function MeetingDetailsModal({
   return (
     <Modal
       title={conference.title}
-      className={`meeting-reference-info ${active ? "meeting-reference-info-active" : ""}`}
+      className={`meeting-reference-info ${active ? "meeting-reference-info-active" : past ? "meeting-reference-info-past" : ""}`}
       onClose={onClose}
     >
       <header className="meeting-info-header">
@@ -125,16 +145,29 @@ export function MeetingDetailsModal({
             </div>
           </div>
         </dl>
-        {!past && (
-          <section className="meeting-info-invitation">
-            <h4>
-              <Link2 size={16} aria-hidden="true" />
-              Ссылка-приглашение
-            </h4>
-            <CopyLink value={inviteLink(conference.inviteCode)} />
-            <p>Поделитесь ссылкой с теми, кого хотите пригласить.</p>
-          </section>
-        )}
+        {!past &&
+          (code ? (
+            <MeetingInvitationCard link={inviteLink(code)} />
+          ) : (
+            <section
+              className="meeting-info-invitation-status"
+              aria-live="polite"
+            >
+              <p>
+                {details.isFetching
+                  ? "Загружаем ссылку-приглашение…"
+                  : "Ссылка-приглашение пока недоступна."}
+              </p>
+              {!details.isFetching && (
+                <Button
+                  variant="secondary"
+                  onClick={() => void details.refetch()}
+                >
+                  Повторить
+                </Button>
+              )}
+            </section>
+          ))}
         {conference.waitingRoomEnabled && (
           <p className="meeting-info-policy">
             <ShieldCheck size={17} aria-hidden="true" />
@@ -148,23 +181,43 @@ export function MeetingDetailsModal({
           {owner &&
             (conference.status === "created" ||
               conference.status === "scheduled") && (
-              <Button variant="secondary" onClick={() => setEditing(true)}>
+              <Button
+                variant="secondary"
+                onClick={() => (onEdit ? onEdit() : setEditing(true))}
+              >
                 <Pencil size={15} aria-hidden="true" />
                 Изменить расписание
               </Button>
             )}
+          {owner &&
+            onCancel &&
+            ["created", "scheduled"].includes(conference.status) && (
+              <button
+                type="button"
+                className="icon-button meeting-info-cancel-action"
+                aria-label="Отменить встречу"
+                onClick={onCancel}
+              >
+                <Trash2 size={17} aria-hidden="true" />
+              </button>
+            )}
           <ConferenceChatActions conference={conference} />
         </div>
-        <Button variant="secondary" onClick={onClose}>
-          Закрыть
-        </Button>
-        <Link
-          className="button button-primary"
-          to={past ? `/history/${conference.id}` : `/meetings/${conference.id}`}
-          onClick={onClose}
-        >
-          {past ? "Материалы встречи" : "Открыть встречу"}
-        </Link>
+        <div className="meeting-info-navigation-actions">
+          <Button variant="secondary" onClick={onClose}>
+            Закрыть
+          </Button>
+          <Link
+            className="button button-primary"
+            to={
+              past ? `/history/${conference.id}` : `/meetings/${conference.id}`
+            }
+            onClick={onClose}
+          >
+            {!past && <Video size={18} aria-hidden="true" />}
+            {past ? "Материалы встречи" : "Открыть встречу"}
+          </Link>
+        </div>
       </footer>
     </Modal>
   );

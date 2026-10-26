@@ -11,6 +11,7 @@ import { isDesktopBuild } from "../platform/build";
 import { WorkspaceSearch } from "./WorkspaceSearch";
 import { usePersonalRealtime } from "../personalRealtime";
 import "../pages/personal.css";
+import "./workspace-help.css";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
@@ -314,6 +315,7 @@ export function Layout() {
               ))}
               <NavLink
                 to="/folders"
+                end
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   isActive ? "nav-item nav-active" : "nav-item"
@@ -503,20 +505,20 @@ export function Layout() {
                 </dd>
               </div>
             </dl>
-            <div className="workspace-help-brand">
+            <section className="workspace-help-brand" aria-label="О продукте">
               <img
                 src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
-                width="32"
-                height="32"
+                width="38"
+                height="38"
                 alt=""
               />
               <div>
                 <strong>{PRODUCT_NAME}</strong>
                 <p>
-                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.6-beta"}
+                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.9-beta"}
                 </p>
               </div>
-            </div>
+            </section>
           </Modal>
         )}
       </DirectCallsProvider>

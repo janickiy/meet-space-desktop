@@ -222,6 +222,64 @@
   min-height: 44px;
   font-size: var(--text-sm);
 }
+:root
+  .desktop-foundation:not(.desktop-foundation-installing)
+  > .desktop-foundation-card.desktop-storage-gate
+  > * {
+  width: min(100%, 460px);
+}
+.desktop-storage-gate .reference-connection-card {
+  gap: 13px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.desktop-storage-gate .reference-connection-card > svg {
+  flex-shrink: 0;
+}
+.desktop-storage-gate .reference-connection-card > div {
+  min-width: 0;
+}
+.desktop-foundation .desktop-storage-gate .desktop-storage-notice {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px 10px;
+  padding: 18px;
+  margin-bottom: 0;
+  border-color: var(--border);
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--text);
+}
+.desktop-storage-gate .desktop-storage-notice > svg {
+  margin-top: 2px;
+  color: var(--primary);
+}
+.desktop-storage-gate .desktop-storage-notice > strong {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+.desktop-storage-gate .desktop-storage-notice > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.desktop-storage-gate > .field-hint {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+.desktop-storage-gate .desktop-server-actions {
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+.desktop-storage-gate .desktop-server-actions > .button {
+  flex: 0 1 auto;
+  width: 100%;
+  min-height: 46px;
+}
 :root[data-theme="dark"] .desktop-welcome {
   background: #202e47;
   color: #e4ebfa;

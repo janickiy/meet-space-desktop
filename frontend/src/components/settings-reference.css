@@ -1,0 +1,473 @@
+/* Settings use the same panel geometry as the supplied desktop reference. */
+.workspace-main:has(> .reference-settings-page) {
+  padding-top: 16px;
+}
+.reference-settings-page .account-current-identity {
+  padding: 18px 21px;
+  gap: 12px;
+  border-radius: 11px;
+}
+.reference-settings-page .account-current-identity > div > span {
+  font-size: calc(10px * var(--text-scale));
+  margin-top: 3px;
+  line-height: 1.7;
+}
+.account-current-avatar,
+.settings-profile-avatar,
+.settings-preview-avatar {
+  background: #e4ebff;
+  color: #7794d6;
+}
+.reference-settings-page .account-dialog-tabs button {
+  gap: 12px;
+  line-height: 1.5;
+}
+.reference-settings-page .account-dialog-tabs button[aria-selected="true"] {
+  box-shadow: none;
+}
+.reference-settings-page .account-dialog-panel {
+  width: 100%;
+  justify-self: start;
+  border-radius: 12px;
+  min-width: 0;
+}
+.reference-settings-version img {
+  opacity: 0.7;
+}
+.settings-reference-heading,
+.account-dialog-panel .account-settings-section-heading,
+.account-dialog-panel .profile-section-heading {
+  display: block;
+  padding: 0 0 25px;
+  margin: 0 0 25px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-reference-heading h2,
+.account-dialog-panel .account-settings-section-heading h2,
+.account-dialog-panel .profile-section-heading h2 {
+  margin: 0;
+  font-size: calc(17px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.25px;
+}
+.settings-reference-heading p,
+.account-dialog-panel .account-settings-section-heading p,
+.account-dialog-panel .profile-section-heading p {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.6;
+}
+.account-dialog-panel .reference-devices {
+  display: block;
+  min-width: 0;
+}
+.settings-device-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 26px;
+}
+.settings-preview-column,
+.settings-device-inputs {
+  min-width: 0;
+}
+.account-dialog-panel .settings-camera-preview {
+  min-height: 237px;
+  height: 237px;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #e8edfa, #f4f5fc);
+  color: #626d86;
+}
+.settings-camera-preview:not(.has-stream) video {
+  visibility: hidden;
+}
+.account-dialog-panel .settings-camera-preview.has-stream {
+  background: #171f31;
+}
+.settings-camera-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-size: calc(9px * var(--text-scale));
+}
+.settings-preview-avatar,
+.settings-profile-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 67px;
+  height: 67px;
+  border-radius: 50%;
+  font-size: calc(23px * var(--text-scale));
+  font-weight: 600;
+}
+.settings-camera-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  background: #ffffff99;
+}
+.settings-camera-control {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  font: inherit;
+  font-size: calc(9px * var(--text-scale));
+  padding: 6px 8px;
+  cursor: pointer;
+  opacity: 1;
+}
+.settings-camera-preview:hover .settings-camera-control,
+.settings-camera-control:focus-visible {
+  opacity: 1;
+}
+.settings-device-caption {
+  font-size: calc(9px * var(--text-scale));
+  color: var(--muted);
+  margin: 11px 0 0;
+  line-height: 1.7;
+}
+.settings-device-inputs {
+  display: grid;
+  gap: 16px;
+}
+.settings-device-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  margin: 0;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.5;
+}
+.settings-device-field > span {
+  font-weight: 600;
+}
+.account-dialog-panel .settings-device-field .device-select {
+  min-height: 41px;
+  height: 41px;
+  padding: 10px 12px;
+  border-radius: 7px;
+  border-color: var(--border);
+  font-size: inherit;
+  line-height: 1.5;
+}
+.settings-volume output {
+  float: right;
+  color: var(--muted);
+  font-weight: 400;
+}
+.settings-volume input[type="range"] {
+  width: 100%;
+  min-height: 0;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.settings-speaker-test {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.account-dialog-panel .reference-devices .device-test {
+  min-height: 41px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+  padding: 10px 17px;
+}
+.settings-device-toggles {
+  margin-top: 23px;
+}
+.account-dialog-panel .reference-devices .device-toggle-row {
+  min-height: 0;
+  padding: 20px 0;
+  gap: 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 600;
+}
+.account-dialog-panel .reference-devices .device-toggle-row small {
+  font-size: calc(10px * var(--text-scale));
+  font-weight: 400;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+.account-dialog-panel .reference-devices .device-toggle-row:last-child {
+  border-bottom: 0;
+}
+.account-dialog-panel .reference-devices .device-switch {
+  width: 34px;
+  height: 20px;
+  padding: 3px;
+}
+.account-dialog-panel .reference-devices .device-switch::after {
+  width: 14px;
+  height: 14px;
+}
+.account-dialog-panel
+  .reference-devices
+  .device-toggle-row
+  input:checked
+  + .device-switch::after {
+  transform: translateX(14px);
+}
+.settings-device-more {
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+  font-size: calc(11px * var(--text-scale));
+}
+.settings-device-more > summary {
+  padding: 18px 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+.settings-device-more section {
+  padding: 18px 0 22px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-device-more h3 {
+  font-size: calc(12px * var(--text-scale));
+  margin: 0 0 12px;
+}
+.settings-microphone-test header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.settings-ringtone .device-select-row {
+  margin-top: 14px;
+}
+.settings-profile-intro {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 29px;
+}
+.settings-profile-intro > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.settings-profile-intro strong {
+  display: block;
+  font-size: calc(14px * var(--text-scale));
+  margin-bottom: 7px;
+}
+.settings-profile-intro > div > span {
+  font-size: calc(10px * var(--text-scale));
+  color: var(--muted);
+}
+.account-dialog-panel .reference-profile-form .field {
+  gap: 9px;
+  margin: 0;
+  font-size: calc(11px * var(--text-scale));
+}
+.account-dialog-panel .reference-profile-form input {
+  min-height: 41px;
+  height: 41px;
+  font-size: calc(11px * var(--text-scale));
+}
+.account-dialog-panel .reference-profile-form .field-hint {
+  font-size: calc(9px * var(--text-scale));
+}
+.account-dialog-panel .reference-profile-form .profile-save-row {
+  justify-content: flex-end;
+}
+.account-dialog-panel .appearance-theme-block legend {
+  font-size: calc(11px * var(--text-scale));
+  margin-bottom: 15px;
+}
+.account-dialog-panel .appearance-theme-option {
+  border-width: 1px;
+  border-radius: 8px;
+  padding: 7px;
+  gap: 0 8px;
+}
+.account-dialog-panel .appearance-theme-selected {
+  border-width: 2px;
+  padding: 6px;
+  background: transparent;
+}
+.account-dialog-panel .appearance-theme-preview {
+  height: 108px;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 5px;
+}
+.account-dialog-panel .appearance-theme-name {
+  padding: 11px 7px 6px;
+  font-size: calc(11px * var(--text-scale));
+}
+.account-dialog-panel .field.appearance-text-size {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 20px 0;
+  margin: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+}
+.account-dialog-panel .field.appearance-text-size select {
+  flex: 0 1 190px;
+  width: 190px;
+  max-width: 100%;
+  margin: 0;
+  font-size: inherit;
+}
+.account-dialog-panel .appearance-theme-preview .settings-theme-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 28%;
+  padding: 8px 4px;
+  border-radius: 3px;
+  background: #fff;
+}
+.settings-theme-sidebar i {
+  display: block;
+  height: 4px;
+  background: #e7eaf3;
+  border-radius: 2px;
+}
+.settings-theme-sidebar i:first-child {
+  background: #bdccff;
+}
+.account-dialog-panel .appearance-theme-preview .settings-theme-content {
+  flex: 1;
+  padding-top: 4px;
+  background: transparent;
+}
+.settings-theme-content b {
+  display: block;
+  height: 5px;
+  width: 55%;
+  background: #b5bfd1;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+.settings-theme-content i {
+  display: block;
+  height: 25px;
+  background: #fff;
+  border-radius: 3px;
+  margin-bottom: 5px;
+}
+.account-dialog-panel .appearance-preview-dark .settings-theme-sidebar,
+.appearance-preview-dark .settings-theme-content i {
+  background: #293245;
+}
+.appearance-preview-dark .settings-theme-sidebar i {
+  background: #4c5870;
+}
+.appearance-preview-dark .settings-theme-sidebar i:first-child {
+  background: #7e9cff;
+}
+.account-dialog-panel .preference-option {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+}
+.account-dialog-panel .preference-option .field-hint {
+  font-size: calc(10px * var(--text-scale));
+  margin-top: 2px;
+}
+.account-dialog-panel .preference-option input {
+  width: 34px;
+  height: 20px;
+  margin-top: 3px;
+}
+.account-dialog-panel .preference-option input::after {
+  width: 14px;
+  height: 14px;
+}
+.account-dialog-panel .preference-option input:checked::after {
+  transform: translateX(14px);
+}
+[data-theme="dark"] .account-dialog-panel .settings-camera-preview {
+  background: linear-gradient(135deg, #26334f, #222a3e);
+  color: #b4bed2;
+}
+[data-theme="dark"] .settings-camera-status {
+  background: #182033aa;
+}
+[data-theme="dark"]
+  :is(
+    .account-current-avatar,
+    .settings-preview-avatar,
+    .settings-profile-avatar
+  ) {
+  background: #293b65;
+  color: #a8bdff;
+}
+@media (max-width: 1180px) and (min-width: 768px) {
+  .reference-settings-page .account-dialog-tabs button {
+    font-size: calc(11px * var(--text-scale));
+    gap: 9px;
+    padding: 12px 10px;
+  }
+}
+@media (max-width: 950px) {
+  .settings-device-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .account-dialog-panel .settings-camera-preview {
+    min-height: 160px;
+    height: 200px;
+  }
+  .settings-camera-control {
+    opacity: 1;
+  }
+}
+@media (max-width: 1180px) and (min-width: 768px) {
+  [data-large-text="true"] .reference-settings-page .account-dialog-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  [data-large-text="true"] .reference-settings-page .account-dialog-tabs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  [data-large-text="true"]
+    .reference-settings-page
+    .account-dialog-tabs
+    button {
+    flex: 0 1 auto;
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
+  [data-large-text="true"] .reference-settings-version {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-camera-control {
+    transition: none;
+  }
+}

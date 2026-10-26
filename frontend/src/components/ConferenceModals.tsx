@@ -16,11 +16,12 @@ import {
 import { api } from "../api";
 import type { Conference } from "../types";
 import { inviteCode, inviteLink } from "../utils";
-import { Button, CopyLink, ErrorNotice, Modal, SuccessMark } from "./ui";
+import { Button, ErrorNotice, Modal, SuccessMark } from "./ui";
 import { ScheduleFields } from "./ScheduleFields";
 import { localSchedule, toLocalInput } from "../collaboration";
 import { PRODUCT_NAME } from "../brand";
 import { ConferenceInvitationDialog } from "./ConferenceInvitations";
+import { MeetingInvitationCard } from "./MeetingInvitationCard";
 import "./meeting-modals.css";
 
 /**
@@ -61,31 +62,30 @@ export function ShareConference({
       onClose={onClose}
       className="meeting-design-modal meeting-share-modal"
     >
-      <div className="share-content">
+      <header className="meeting-created-header">
         <SuccessMark />
-        <h3>{conference.title}</h3>
-        <p className="share-subtitle">Пригласите коллег и начните разговор.</p>
-        <label className="field">Ссылка-приглашение</label>
-        <CopyLink value={link} />
-        <p className="field-hint">
-          По ссылке можно присоединиться без аккаунта.
-        </p>
-        <Link
-          className="button button-primary full-width"
-          to={`/conferences/${conference.id}`}
-        >
-          <Video size={19} />
-          Открыть встречу
-        </Link>
-        <Button
-          variant="secondary"
-          className="full-width"
-          onClick={() => setInviting(true)}
-        >
-          <Mail size={19} />
+        <div>
+          <h3>Встреча создана</h3>
+          <p>Пригласите коллег и начните разговор.</p>
+        </div>
+      </header>
+      <div className="meeting-created-body">
+        <h3 className="meeting-created-title">{conference.title}</h3>
+        <MeetingInvitationCard link={link} />
+      </div>
+      <footer className="meeting-created-footer">
+        <Button variant="secondary" onClick={() => setInviting(true)}>
+          <Mail size={18} aria-hidden="true" />
           Пригласить участников
         </Button>
-      </div>
+        <Link
+          className="button button-primary"
+          to={`/conferences/${conference.id}`}
+        >
+          <Video size={18} aria-hidden="true" />
+          Открыть встречу
+        </Link>
+      </footer>
     </Modal>
   );
 }
@@ -275,13 +275,6 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
                 />
               )}
             </section>
-            <div className="meeting-editor-preparation">
-              <h4>Всё для вашей встречи</h4>
-              <p>
-                После создания вы сможете пригласить участников и поделиться
-                ссылкой. Камеру и микрофон можно настроить перед входом.
-              </p>
-            </div>
             <ErrorNotice error={mutation.error}>
               {validation || null}
             </ErrorNotice>

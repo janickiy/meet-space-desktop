@@ -5,13 +5,33 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { Bell, Check } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  CalendarClock,
+  Check,
+  CircleAlert,
+  FileText,
+  MessageCircle,
+  Video,
+} from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { formatDate } from "../utils";
 import { notificationLink } from "../intelligence";
 import type { Notification } from "../types";
 import { Button, ErrorNotice, Loading, Modal } from "./ui";
+import "./notification-modal.css";
+
+function notificationIcon(item: Notification) {
+  if (item.type === "chat.message") return MessageCircle;
+  if (item.type.endsWith(".failed")) return CircleAlert;
+  if (/recording|transcript|summary/.test(item.type)) return FileText;
+  if (["conference.soon", "conference.rescheduled"].includes(item.type))
+    return CalendarClock;
+  if (item.type === "conference.invited") return Video;
+  return Bell;
+}
 
 /**
  * notificationLabel переводит тип и нагрузку уведомления в понятную подпись для списка.
@@ -128,8 +148,11 @@ export function NotificationBell() {
   return (
     <>
       <button
+        type="button"
         className="icon-button notification-bell"
         aria-label="Уведомления"
+        aria-haspopup="dialog"
+        aria-expanded={open}
         aria-describedby={unread > 0 ? unreadDescriptionId : undefined}
         onClick={
           /**
@@ -140,138 +163,155 @@ export function NotificationBell() {
            */ () => setOpen(true)
         }
       >
-        <Bell size={21} aria-hidden="true" />
+        <span className="notification-bell-glyph" aria-hidden="true">
+          <Bell size={22} strokeWidth={1.8} />
+          {unread > 0 && <span className="notification-dot" />}
+        </span>
         {unread > 0 && (
-          <>
-            <span className="notification-dot" aria-hidden="true" />
-            <span id={unreadDescriptionId} className="sr-only">
-              {unread} непрочитанных уведомлений
-            </span>
-          </>
+          <span id={unreadDescriptionId} className="sr-only">
+            {unread} непрочитанных уведомлений
+          </span>
         )}
       </button>
       {open && (
         <Modal
           title="Уведомления"
-          className="notification-modal"
-          onClose={
-            /**
-             * onClose обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-             *
-             *
-             * @returns вычисленное значение: setOpen(false).
-             */ () => setOpen(false)
-          }
-          wide
+          className="notification-modal notification-center"
+          onClose={() => setOpen(false)}
         >
-          <ErrorNotice error={query.error || read.error} />
-          {query.isPending ? (
-            <Loading />
-          ) : (
-            <>
-              {!rows.length && !query.isError && (
-                <p className="empty-state compact-empty">
-                  Пока нет уведомлений. Здесь появятся сообщения, ответы,
-                  приглашения и готовые записи.
-                </p>
-              )}
-              <div className="notification-list">
-                {rows.map(
-                  /**
-                   * Обработчик rows.map преобразует один элемент набора в представление или данные следующего шага.
-                   *
-                   * @args
-                   *   - item — элемент списка, который обрабатывает текущий шаг.
-                   *
-                   * @returns преобразованное значение текущего элемента для результирующего набора.
-                   */ (item) => (
-                    <article
-                      key={item.id}
-                      className={`notification-row ${item.readAt ? "" : "notification-unread"}`}
-                    >
-                      <div>
-                        <strong>{notificationLabel(item)}</strong>
-                        <p className="field-hint">
-                          {formatDate(item.createdAt)}
-                        </p>
-                        {(item.payload.conferenceId ||
-                          item.payload.conversationId) && (
-                          <Link
-                            to={notificationLink(item)}
-                            onClick={
-                              /**
-                               * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                               *
-                               *
-                               * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
-                               */ () => {
-                                if (!item.readAt) read.mutate(item.id);
-                                setOpen(false);
-                              }
-                            }
-                          >
-                            {item.payload.conversationId
-                              ? "Открыть чат"
-                              : item.type === "chat.message"
-                                ? "Открыть комментарий"
-                                : "Открыть встречу"}
-                          </Link>
-                        )}
-                      </div>
-                      {!item.readAt && (
-                        <Button
-                          variant="outline"
-                          busy={read.isPending && read.variables === item.id}
-                          onClick={
-                            /**
-                             * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                             *
-                             *
-                             * @returns вычисленное значение: read.mutate(item.id).
-                             */ () => read.mutate(item.id)
-                          }
-                          aria-label={`Прочитано: ${notificationLabel(item)}`}
-                        >
-                          <Check size={17} />
-                        </Button>
-                      )}
-                    </article>
-                  ),
+          <header className="notification-center-header">
+            <div className="notification-center-heading">
+              <div className="notification-center-title">
+                <h3>Уведомления</h3>
+                {unread > 0 && (
+                  <span className="notification-center-count">
+                    Новых: {unread}
+                  </span>
                 )}
               </div>
-              {query.hasNextPage && (
-                <Button
-                  variant="outline"
-                  busy={query.isFetchingNextPage}
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: void query.fetchNextPage().
-                     */ () => void query.fetchNextPage()
-                  }
-                >
-                  Ещё уведомления
-                </Button>
-              )}
-              {query.isError && (
-                <Button
-                  variant="outline"
-                  onClick={
-                    /**
-                     * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-                     *
-                     *
-                     * @returns вычисленное значение: void query.refetch().
-                     */ () => void query.refetch()
-                  }
-                >
-                  Попробовать снова
-                </Button>
-              )}
-            </>
-          )}
+            </div>
+          </header>
+          <div className="notification-center-content">
+            <ErrorNotice error={query.error || read.error} />
+            {query.isPending ? (
+              <Loading />
+            ) : (
+              <>
+                {!rows.length && !query.isError && (
+                  <div className="notification-center-empty">
+                    <span aria-hidden="true">
+                      <Bell size={30} />
+                    </span>
+                    <h4>Пока нет уведомлений</h4>
+                    <p>
+                      Здесь появятся приглашения на встречи, новые сообщения и
+                      готовые записи.
+                    </p>
+                  </div>
+                )}
+                {!!rows.length && (
+                  <ul
+                    className="notification-center-list"
+                    aria-label="Последние уведомления"
+                  >
+                    {rows.map((item) => {
+                      const Icon = notificationIcon(item);
+                      return (
+                        <li key={item.id}>
+                          <article
+                            className={`notification-center-item ${item.readAt ? "is-read" : "is-unread"}`}
+                          >
+                            <span
+                              className="notification-center-item-icon"
+                              aria-hidden="true"
+                            >
+                              <Icon size={20} />
+                            </span>
+                            <div className="notification-center-item-copy">
+                              <div className="notification-center-item-title">
+                                <h4>{notificationLabel(item)}</h4>
+                                {!item.readAt && (
+                                  <span
+                                    className="notification-center-unread-dot"
+                                    role="img"
+                                    aria-label="Непрочитанное"
+                                  />
+                                )}
+                              </div>
+                              <time dateTime={item.createdAt}>
+                                {formatDate(item.createdAt)}
+                              </time>
+                              {(item.payload.conferenceId ||
+                                item.payload.conversationId) && (
+                                <Link
+                                  className="notification-center-destination"
+                                  to={notificationLink(item)}
+                                  onClick={() => {
+                                    if (!item.readAt) read.mutate(item.id);
+                                    setOpen(false);
+                                  }}
+                                >
+                                  {item.payload.conversationId
+                                    ? "Открыть чат"
+                                    : item.type === "chat.message"
+                                      ? "Открыть комментарий"
+                                      : "Открыть встречу"}
+                                  <ArrowRight size={16} aria-hidden="true" />
+                                </Link>
+                              )}
+                            </div>
+                            {!item.readAt && (
+                              <Button
+                                className="notification-center-read"
+                                variant="outline"
+                                busy={
+                                  read.isPending && read.variables === item.id
+                                }
+                                disabled={read.isPending}
+                                onClick={() => read.mutate(item.id)}
+                                title="Отметить как прочитанное"
+                                aria-label={`Отметить как прочитанное: ${notificationLabel(item)}`}
+                              >
+                                <Check size={18} aria-hidden="true" />
+                              </Button>
+                            )}
+                          </article>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {query.hasNextPage && (
+                  <Button
+                    className="notification-center-more"
+                    variant="outline"
+                    busy={query.isFetchingNextPage}
+                    onClick={() => void query.fetchNextPage()}
+                  >
+                    Ещё уведомления
+                  </Button>
+                )}
+                {query.isError && (
+                  <Button
+                    className="notification-center-more"
+                    variant="outline"
+                    busy={query.isFetching}
+                    onClick={() => void query.refetch()}
+                  >
+                    Попробовать снова
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+          <footer className="notification-center-footer">
+            <Link to="/notifications" onClick={() => setOpen(false)}>
+              Все уведомления <ArrowRight size={16} aria-hidden="true" />
+            </Link>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Закрыть
+            </Button>
+          </footer>
         </Modal>
       )}
     </>

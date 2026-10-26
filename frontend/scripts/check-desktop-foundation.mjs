@@ -202,20 +202,120 @@ await test("web session persistence and logout remain available", async () => {
   assert.equal(sessionStorage.getItem(api.SESSION_KEY), null);
 });
 
-await test("desktop notification sound never allocates browser audio or a second player", async () => {
-  const module = await compileModule("src/notificationSound.ts", true);
-  const originalAudio = globalThis.Audio;
+await test("desktop sound plays only native-authorized notices on the selected output and cleans up", async () => {
+  const module = await compileModule(
+    "src/notificationSound.ts",
+    true,
+    'export { setDesktopServer } from "./platform/urls"; export { saveDevicePreferences, readDevicePreferences } from "./prejoinDevices";',
+  );
+  const stores = installBrowserStores();
+  const listeners = new Set();
+  globalThis.window = Object.assign(new EventTarget(), stores, {
+    meetspaceDesktop: bridge({
+      onTransportEvent: (fn) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      },
+    }),
+  });
+  const profileId = "a".repeat(32),
+    userId = "fixture-user";
+  module.setDesktopServer({ id: profileId, origin: "https://fixture.invalid" });
+  const emit = (id, extra = {}) => {
+    for (const fn of listeners)
+      fn({ kind: "notification-sound", profileId, userId, id, ...extra });
+  };
+  const originalAudio = globalThis.Audio,
+    originalNow = Date.now;
+  let time = 10000,
+    unblock;
+  Date.now = () => time;
+  const players = [];
   globalThis.Audio = class {
+    plays = 0;
+    pauses = 0;
+    loads = 0;
+    routes = [];
     constructor() {
-      throw new Error("Duplicate desktop sound");
+      players.push(this);
+    }
+    async setSinkId(id) {
+      this.routes.push(id);
+      if (id === "slow-headset")
+        await new Promise((resolve) => {
+          unblock = resolve;
+        });
+    }
+    async play() {
+      this.plays++;
+    }
+    pause() {
+      this.pauses++;
+    }
+    removeAttribute() {}
+    load() {
+      this.loads++;
     }
   };
+  const settleSound = () => new Promise((resolve) => setImmediate(resolve));
+  const prefs = (value) =>
+    module.saveDevicePreferences(userId, {
+      ...module.readDevicePreferences(userId),
+      ...value,
+    });
+  let sound;
   try {
-    const sound = module.createNotificationSound("fixture-user");
-    assert.doesNotThrow(() => sound.notify("fixture-event"));
-    assert.doesNotThrow(() => sound.dispose());
-    assert.doesNotThrow(() => sound.notify("after-disposal"));
+    prefs({ notificationOutputId: "headset" });
+    sound = module.createNotificationSound(userId);
+    sound.notify("raw-sse");
+    emit("foreign-user", { userId: "other-user" });
+    emit("foreign-server", { profileId: "b".repeat(32) });
+    await settleSound();
+    assert.equal(players[0].plays, 0);
+    emit("native-notice");
+    emit("native-notice");
+    emit("burst");
+    await settleSound();
+    assert.equal(players[0].plays, 1);
+    assert.deepEqual(players[0].routes, ["headset"]);
+    time += 2000;
+    prefs({ notificationSounds: false });
+    emit("muted");
+    await settleSound();
+    assert.equal(players[0].plays, 1);
+    prefs({ notificationSounds: true, notificationOutputId: "" });
+    emit("system-output");
+    await settleSound();
+    assert.equal(players[0].plays, 2);
+    assert.deepEqual(players[0].routes, ["headset", ""]);
+    time += 2000;
+    prefs({ notificationOutputId: "slow-headset" });
+    emit("pending");
+    await settleSound();
+    assert.equal(typeof unblock, "function");
+    sound.dispose();
+    unblock();
+    await settleSound();
+    assert.equal(
+      players[0].plays,
+      2,
+      "disposal cancels a pending output change",
+    );
+    assert.equal(listeners.size, 0);
+    assert.equal(players[0].loads, 1);
+    sound = module.createNotificationSound(userId);
+    module.setDesktopServer({
+      id: "b".repeat(32),
+      origin: "https://other.invalid",
+    });
+    time += 2000;
+    emit("stale-server");
+    await settleSound();
+    assert.equal(players[1].plays, 0);
   } finally {
+    sound?.dispose();
+    unblock?.();
+    Date.now = originalNow;
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }

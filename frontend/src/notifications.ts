@@ -172,6 +172,7 @@ export function useNotificationStream(userId?: string) {
                 });
                 const notice = event.data.notification;
                 if (
+                  !isDesktopBuild &&
                   event.type === "notification.created" &&
                   !notice?.readAt &&
                   Date.parse(notice?.createdAt || "") >= mountedAt - 5000

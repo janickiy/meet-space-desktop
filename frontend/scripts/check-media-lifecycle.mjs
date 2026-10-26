@@ -690,6 +690,7 @@ await test("desktop device preferences and one-time capture intent cannot cross 
   const changed = {
     ...preferences.readDevicePreferences("same-user"),
     cameraEnabled: false,
+    outputVolume: 37,
   };
   preferences.saveDevicePreferences("same-user", changed);
   preferences.queueMediaEntry("same-conference");
@@ -699,6 +700,10 @@ await test("desktop device preferences and one-time capture intent cannot cross 
     true,
   );
   assert.equal(preferences.consumeMediaEntry("same-conference"), false);
+  assert.equal(
+    preferences.readDevicePreferences("same-user").outputVolume,
+    100,
+  );
   preferences.setDesktopServer({
     id: "alpha",
     origin: "https://alpha.invalid",
@@ -707,6 +712,26 @@ await test("desktop device preferences and one-time capture intent cannot cross 
     preferences.readDevicePreferences("same-user").cameraEnabled,
     false,
   );
+  assert.equal(preferences.readDevicePreferences("same-user").outputVolume, 37);
+  assert.equal(
+    preferences.readDevicePreferences("another-user").outputVolume,
+    100,
+  );
+  for (const [stored, expected] of [
+    [undefined, 100],
+    [-5, 0],
+    [140, 100],
+    ["37", 100],
+  ]) {
+    preferences.saveDevicePreferences("same-user", {
+      ...changed,
+      outputVolume: stored,
+    });
+    assert.equal(
+      preferences.readDevicePreferences("same-user").outputVolume,
+      expected,
+    );
+  }
   assert.equal(preferences.consumeMediaEntry("same-conference"), true);
   assert.equal(preferences.consumeMediaEntry("same-conference"), false);
 });
@@ -1646,6 +1671,51 @@ await test("speaker test never reports a selected headset as tested when only th
   assert.ok(await done);
   assert.equal(players[0].plays, 0);
   assert.deepEqual(players[0].routes, ["headset", ""]);
+});
+
+await test("speaker test plays the selected output at the chosen volume", async () => {
+  let player;
+  let playbackStarted;
+  const started = new Promise((resolve) => {
+    playbackStarted = resolve;
+  });
+  class AudioFixture {
+    constructor() {
+      this.routes = [];
+      this.plays = 0;
+      player = this;
+    }
+    async setSinkId(id) {
+      this.routes.push(id);
+    }
+    async play() {
+      this.plays++;
+      playbackStarted();
+    }
+    pause() {}
+    removeAttribute() {}
+    load() {}
+  }
+  globalThis.Audio = AudioFixture;
+  const { playDeviceTone } = await compile("src/deviceSound.ts");
+  let finished = 0;
+  const stop = playDeviceTone(
+    "headset",
+    (error) => {
+      assert.equal(error, undefined);
+      finished++;
+    },
+    0.37,
+  );
+  try {
+    await started;
+    assert.deepEqual(player.routes, ["headset"]);
+    assert.equal(player.volume, 0.37);
+    assert.equal(player.plays, 1);
+  } finally {
+    stop();
+  }
+  assert.equal(finished, 1);
 });
 
 await test("reused notification player applies system output after clearing a saved headset", async () => {

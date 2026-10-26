@@ -28,6 +28,8 @@ export interface NativeNotificationOptions {
   isFocused(): boolean;
   navigate(route: string): void;
   onUnread?(count: number): void;
+  /** App-owned audio uses the selected output; suppress the OS tone to avoid duplicates. */
+  onSound?(identity: NativeNotificationIdentity, noticeId: string): void;
   clock?(): number;
 }
 type Category = keyof NativeNotificationPreferences;
@@ -337,7 +339,7 @@ export class NativeNotifications {
       const handle = this.options.create({
         title: "MeetSpace",
         body: notice.body,
-        silent: !soundEnabled,
+        silent: !!this.options.onSound || !soundEnabled,
       });
       const entry = { notice, handle, generation };
       this.visible.set(notice.id, entry);
@@ -359,7 +361,10 @@ export class NativeNotifications {
       handle.on("close", forget);
       handle.on("failed", forget);
       handle.show();
-      if (soundEnabled) this.lastSoundAt = now;
+      if (soundEnabled) {
+        this.lastSoundAt = now;
+        this.options.onSound?.({ ...this.identity }, notice.id);
+      }
     } catch {
       this.close(
         notice.id,

@@ -1,4 +1,6 @@
 import { isDesktopBuild } from "./platform/build";
+import { desktopBridge } from "./platform/desktop";
+import { desktopServerID } from "./platform/urls";
 import toneURL from "./assets/device-tone.wav";
 import { routeAudioOutput } from "./mediaDevices";
 import {
@@ -8,25 +10,27 @@ import {
 
 /** One reusable player per account stream; no microphone or browser push permission. */
 export function createNotificationSound(userId: string) {
-  // The native broker owns desktop delivery and its one OS sound. The bell stays shared.
-  if (isDesktopBuild) return { notify(_id: string) {}, dispose() {} };
+  const profileId = isDesktopBuild ? desktopServerID() : null;
+  const currentAccount = () =>
+    !isDesktopBuild || (!!profileId && desktopServerID() === profileId);
   const audio = new Audio(toneURL);
   audio.preload = "auto";
   audio.volume = 0.35;
   let disposed = false;
   let unlocked = false;
   let priming: Promise<void> | undefined;
-  let lastPlayedAt = 0;
+  let lastPlayedAt = -Infinity;
   let playbackRevision = 0;
   let soundPreferences = readDevicePreferences(userId);
   const seen = new Set<string>();
-  const claimKey = `meet.notification-sound.v1:${userId}`;
+  const claimKey = `meet.notification-sound.v1:${profileId ? `${profileId}:` : ""}${userId}`;
 
   // A muted, user-initiated play unlocks this same element when the browser
   // requires interaction. Old notifications are never queued for a later click.
   const prime = () => {
     if (
       disposed ||
+      !currentAccount() ||
       unlocked ||
       priming ||
       !readDevicePreferences(userId).notificationSounds
@@ -85,7 +89,13 @@ export function createNotificationSound(userId: string) {
   };
   const play = async (id: string) => {
     const preferences = readDevicePreferences(userId);
-    if (disposed || !preferences.notificationSounds || !claim(id)) return;
+    if (
+      disposed ||
+      !currentAccount() ||
+      !preferences.notificationSounds ||
+      !claim(id)
+    )
+      return;
     // Coalesce bursts into one soft signal; all notices remain in the feed.
     if (Date.now() - lastPlayedAt < 1000) return;
     lastPlayedAt = Date.now();
@@ -97,6 +107,7 @@ export function createNotificationSound(userId: string) {
       const current = readDevicePreferences(userId);
       return (
         !disposed &&
+        currentAccount() &&
         revision === playbackRevision &&
         current.notificationSounds &&
         current.notificationOutputId === sinkId
@@ -117,17 +128,31 @@ export function createNotificationSound(userId: string) {
     audio.currentTime = 0;
     await audio.play().catch(() => {});
   };
+  const notify = (id: string) => {
+    if (!id || id.length > 128 || disposed) return;
+    // Serializing claims prevents the same SSE event ringing in several tabs.
+    const pending = navigator.locks
+      ? navigator.locks.request(claimKey, () => play(id))
+      : play(id);
+    void pending.catch(() => {});
+  };
+  // Only the native broker may authorize desktop audio. The renderer SSE also
+  // carries muted/read/active-chat events and must never ring independently.
+  const unsubscribeNative = isDesktopBuild
+    ? desktopBridge().onTransportEvent((event) => {
+        if (
+          event.kind === "notification-sound" &&
+          event.profileId === profileId &&
+          event.userId === userId
+        )
+          notify(event.id);
+      })
+    : undefined;
   return {
-    notify(id: string) {
-      if (!id || id.length > 128 || disposed) return;
-      // Serializing claims prevents the same SSE event ringing in several tabs.
-      const pending = navigator.locks
-        ? navigator.locks.request(claimKey, () => play(id))
-        : play(id);
-      void pending.catch(() => {});
-    },
+    notify: isDesktopBuild ? (_id: string) => {} : notify,
     dispose() {
       disposed = true;
+      unsubscribeNative?.();
       window.removeEventListener("pointerdown", prime);
       window.removeEventListener("keydown", prime);
       unsubscribe();

@@ -5,6 +5,46 @@
   "copiedAt": "2026-10-24",
   "files": {
     "runner.py": {
+      "sha256": "63b33f867941b1b4841b6a3b3fcf54e3bfd12790c2c89f685436516c3100e282",
+      "bytes": 124574
+    },
+    "trust-root.pem": {
+      "sha256": "9f16201125cd17dc9fb90a7579e78589c76ecbfdb1ee80df3428ee34d6b90dfc",
+      "bytes": 625
+    },
+    "release.json": {
+      "sha256": "6fc1997fec50097e127b13acbe040b3196398ffc4e9df3c6706d112521a2c968",
+      "bytes": 5951
+    },
+    "release.sig": {
+      "sha256": "804be26a1bb5b9f044d0a1923b5d268d2823db83f38827f350fa6a8f2adebe61",
+      "bytes": 384
+    },
+    "docker.asc": {
+      "sha256": "1500c1f56fa9e26b9b8f42452a553675796ade0807cdce11975eb98170b3a570",
+      "bytes": 3817
+    }
+  },
+  "modified": true,
+  "privateKeyIncluded": false,
+  "legacyBundles": [
+    {
+      "releaseSha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
+      "directory": "legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a"
+    },
+    {
+      "releaseSha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "directory": "legacy/e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
+      "provenance": "history/provenance-e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c.json"
+    },
+    {
+      "releaseSha256": "dcf4bec8ed31e652de981d2fbb85c719d9d18b5a3469c7d8f3537e88591966e1",
+      "directory": "legacy/dcf4bec8ed31e652de981d2fbb85c719d9d18b5a3469c7d8f3537e88591966e1",
+      "provenance": "history/provenance-dcf4bec8ed31e652de981d2fbb85c719d9d18b5a3469c7d8f3537e88591966e1.json"
+    }
+  ],
+  "upstreamFiles": {
+    "runner.py": {
       "sha256": "ec3b34bacf0dad71873708d691263704d0e5dad0ccbddb9f6b037a151d9161d0",
       "bytes": 116163
     },
@@ -25,17 +65,9 @@
       "bytes": 3817
     }
   },
-  "modified": false,
-  "privateKeyIncluded": false,
-  "legacyBundles": [
-    {
-      "releaseSha256": "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a",
-      "directory": "legacy/f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a"
-    },
-    {
-      "releaseSha256": "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
-      "directory": "legacy/e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c",
-      "provenance": "history/provenance-e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c.json"
-    }
+  "updatedAt": "2026-10-25",
+  "extensionPolicy": "certificate-choice-v1",
+  "modifications": [
+    "Desktop certificate-choice-v1: explicit TLS mode and SHA-256-bound custom fullchain/private-key apply input; system-trusted validation, private detached recovery, no ACME side effects for custom certificates."
   ]
 }

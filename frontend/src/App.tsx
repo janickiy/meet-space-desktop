@@ -88,12 +88,6 @@ const SettingsPage = lazy(() =>
 function SettingsRoute() {
   return (
     <section className="reference-settings-page">
-      <header className="page-heading">
-        <div>
-          <h1>Настройки</h1>
-          <p>Ваш профиль, устройства и личные предпочтения</p>
-        </div>
-      </header>
       <SettingsPage />
     </section>
   );

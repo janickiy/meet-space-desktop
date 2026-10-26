@@ -44,13 +44,50 @@ export function ConferenceRoomSidebar(props: ActiveConferenceViewProps) {
       hidden={!panelOpen}
     >
       <div className="room-panel-header">
-        <strong>
-          {stagePanel === "chat"
-            ? "Чат встречи"
-            : stagePanel === "participants"
-              ? "Участники встречи"
-              : "Субтитры"}
-        </strong>
+        <div
+          className="conference-stage-tabs"
+          role="tablist"
+          aria-label="Панель встречи"
+          onKeyDown={(event) => {
+            const index = panels.findIndex((panel) => panel === stagePanel);
+            let next = index;
+            if (event.key === "ArrowRight") next = (index + 1) % panels.length;
+            else if (event.key === "ArrowLeft")
+              next = (index - 1 + panels.length) % panels.length;
+            else if (event.key === "Home") next = 0;
+            else if (event.key === "End") next = panels.length - 1;
+            else return;
+            event.preventDefault();
+            setStagePanel(panels[next]);
+            document.getElementById(`meeting-tab-${panels[next]}`)?.focus();
+          }}
+        >
+          {panels.map((panel) => (
+            <button
+              type="button"
+              key={panel}
+              role="tab"
+              id={`meeting-tab-${panel}`}
+              aria-controls={`meeting-panel-${panel}`}
+              aria-selected={stagePanel === panel}
+              tabIndex={stagePanel === panel ? 0 : -1}
+              onClick={() => setStagePanel(panel)}
+            >
+              {panel === "chat" ? (
+                "Чат"
+              ) : panel === "participants" ? (
+                <>
+                  Участники{" "}
+                  <span className="room-panel-tab-count">
+                    {onlinePeople.length}
+                  </span>
+                </>
+              ) : (
+                "Субтитры"
+              )}
+            </button>
+          ))}
+        </div>
         <button
           className="icon-button"
           aria-label="Закрыть панель встречи"
@@ -59,45 +96,8 @@ export function ConferenceRoomSidebar(props: ActiveConferenceViewProps) {
             panelTrigger.current?.focus();
           }}
         >
-          <X size={18} />
+          <X size={14} />
         </button>
-      </div>
-      <div
-        className="conference-stage-tabs"
-        role="tablist"
-        aria-label="Панель встречи"
-        onKeyDown={(event) => {
-          const index = panels.findIndex((panel) => panel === stagePanel);
-          let next = index;
-          if (event.key === "ArrowRight") next = (index + 1) % panels.length;
-          else if (event.key === "ArrowLeft")
-            next = (index - 1 + panels.length) % panels.length;
-          else if (event.key === "Home") next = 0;
-          else if (event.key === "End") next = panels.length - 1;
-          else return;
-          event.preventDefault();
-          setStagePanel(panels[next]);
-          document.getElementById(`meeting-tab-${panels[next]}`)?.focus();
-        }}
-      >
-        {panels.map((panel) => (
-          <button
-            type="button"
-            key={panel}
-            role="tab"
-            id={`meeting-tab-${panel}`}
-            aria-controls={`meeting-panel-${panel}`}
-            aria-selected={stagePanel === panel}
-            tabIndex={stagePanel === panel ? 0 : -1}
-            onClick={() => setStagePanel(panel)}
-          >
-            {panel === "chat"
-              ? "Чат"
-              : panel === "participants"
-                ? `Участники (${onlinePeople.length})`
-                : "Субтитры"}
-          </button>
-        ))}
       </div>
       <div
         id="meeting-panel-chat"

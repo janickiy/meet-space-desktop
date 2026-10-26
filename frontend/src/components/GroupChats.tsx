@@ -77,8 +77,8 @@ export function ConversationAvatar({
     >
       {url ? (
         <img src={url} alt="" />
-      ) : group ? (
-        <Users size={large ? 32 : 20} />
+      ) : group && large ? (
+        <Users size={32} />
       ) : (
         initials(
           conversation.type === "direct"

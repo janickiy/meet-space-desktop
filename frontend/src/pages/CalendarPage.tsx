@@ -6,19 +6,14 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  Globe2,
-  Pencil,
   Plus,
-  Trash2,
-  UserRound,
-  Video,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { useConferences } from "../queries";
-import { Button, ErrorNotice, Modal, StatusBadge } from "../components/ui";
+import { Button, ErrorNotice, Modal } from "../components/ui";
 import { EditSchedule } from "../components/ConferenceModals";
+import { MeetingDetailsModal } from "../components/MeetingDetailsModal";
 import { MeetingSkeleton } from "../components/MeetingSkeleton";
 import { formatDate } from "../utils";
 import { toLocalInput } from "../collaboration";
@@ -28,6 +23,15 @@ import "./collections-redesign.css";
 
 type CalendarView = "week" | "month";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const weekdayNames = [
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+  "Воскресенье",
+];
 const hours = Array.from({ length: 24 }, (_, hour) => hour);
 
 /**
@@ -40,7 +44,7 @@ export function calendarDayKey(date: Date) {
 }
 
 /**
- * calendarRange считает локальные границы недели или шестинедельной сетки месяца.
+ * calendarRange считает локальные границы недели или полных недель выбранного месяца.
  * @args anchor — выбранная дата; view — неделя либо месяц.
  * @return Дни сетки и UTC-границы серверного запроса, учитывающие переходы часового пояса.
  */
@@ -50,8 +54,15 @@ export function calendarRange(anchor: Date, view: CalendarView) {
     anchor.getMonth(),
     view === "month" ? 1 : anchor.getDate(),
   );
-  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-  const count = view === "month" ? 42 : 7;
+  const firstWeekday = (start.getDay() + 6) % 7;
+  const daysInMonth = new Date(
+    anchor.getFullYear(),
+    anchor.getMonth() + 1,
+    0,
+  ).getDate();
+  start.setDate(start.getDate() - firstWeekday);
+  const count =
+    view === "month" ? Math.ceil((firstWeekday + daysInMonth) / 7) * 7 : 7;
   const days = Array.from(
     { length: count },
     (_, offset) =>
@@ -138,7 +149,6 @@ function CalendarMeetingDetails({
       onClose();
     },
   });
-  const past = meeting.status === "finished" || meeting.status === "cancelled";
   if (confirmCancel)
     return (
       <Modal
@@ -172,97 +182,12 @@ function CalendarMeetingDetails({
       </Modal>
     );
   return (
-    <Modal
-      title={meeting.title}
-      className="calendar-meeting-modal"
+    <MeetingDetailsModal
+      conference={meeting}
       onClose={onClose}
-    >
-      <span className="calendar-meeting-emblem" aria-hidden="true">
-        <Video size={28} />
-      </span>
-      <div className="calendar-meeting-status">
-        <StatusBadge status={meeting.status} />
-      </div>
-      <div className="calendar-meeting-content">
-        <dl className="calendar-meeting-facts">
-          <div>
-            <span className="calendar-fact-icon">
-              <CalendarDays size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Дата и время</dt>
-              <dd>{formatDate(meeting.scheduledAt!)}</dd>
-            </div>
-          </div>
-          <div>
-            <span className="calendar-fact-icon">
-              <Clock3 size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Длительность</dt>
-              <dd>
-                {meeting.plannedDurationMin
-                  ? `${meeting.plannedDurationMin} минут`
-                  : "Не указана"}
-              </dd>
-            </div>
-          </div>
-          <div>
-            <span className="calendar-fact-icon">
-              <UserRound size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Ваша роль</dt>
-              <dd>
-                {meeting.ownerId === user?.id ? "Организатор" : "Участник"}
-              </dd>
-            </div>
-          </div>
-          <div>
-            <span className="calendar-fact-icon">
-              <Globe2 size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Часовой пояс</dt>
-              <dd>{Intl.DateTimeFormat().resolvedOptions().timeZone}</dd>
-            </div>
-          </div>
-        </dl>
-        <p className="calendar-meeting-note">
-          Встреча начнётся, когда организатор запустит её. Ссылки и участники
-          доступны на странице встречи.
-        </p>
-      </div>
-      <footer className="calendar-meeting-footer">
-        {canChange && (
-          <div className="calendar-meeting-owner-actions">
-            <Button variant="secondary" onClick={() => onEdit(meeting)}>
-              <Pencil size={16} aria-hidden="true" /> Изменить
-            </Button>
-            <button
-              type="button"
-              className="icon-button calendar-cancel-action"
-              aria-label="Отменить встречу"
-              onClick={() => setConfirmCancel(true)}
-            >
-              <Trash2 size={17} aria-hidden="true" />
-            </button>
-          </div>
-        )}
-        <div className="calendar-meeting-primary-actions">
-          <Button variant="outline" onClick={onClose}>
-            Закрыть
-          </Button>
-          <Link
-            className="button button-primary"
-            to={past ? `/history/${meeting.id}` : `/meetings/${meeting.id}`}
-          >
-            <Video size={17} aria-hidden="true" />
-            {past ? "Открыть историю" : "Открыть встречу"}
-          </Link>
-        </div>
-      </footer>
-    </Modal>
+      onEdit={() => onEdit(meeting)}
+      onCancel={canChange ? () => setConfirmCancel(true) : undefined}
+    />
   );
 }
 
@@ -494,9 +419,12 @@ export function CalendarPage() {
                     className="calendar-month-grid"
                     aria-label={`Месяц ${label}`}
                   >
-                    {weekdays.map((day) => (
+                    {weekdays.map((day, index) => (
                       <div key={day} className="calendar-weekday">
-                        {day}
+                        <span className="calendar-weekday-full">
+                          {weekdayNames[index]}
+                        </span>
+                        <span className="calendar-weekday-short">{day}</span>
                       </div>
                     ))}
                     {range.days.map((date) => {
@@ -516,13 +444,12 @@ export function CalendarPage() {
                           aria-label={formatDate(date.toISOString())}
                         >
                           <div className="calendar-day-heading">
-                            <time dateTime={key}>{date.getDate()}</time>
                             <Link
-                              className="calendar-add-day"
+                              className="calendar-day-number"
                               aria-label={`Запланировать на ${date.toLocaleDateString("ru-RU")}`}
                               to={`/meetings/new?scheduled=1&returnTo=calendar&at=${encodeURIComponent(at)}`}
                             >
-                              <Plus size={14} aria-hidden="true" />
+                              <time dateTime={key}>{date.getDate()}</time>
                             </Link>
                           </div>
                           {(byDay.get(key) || []).map((meeting) => (

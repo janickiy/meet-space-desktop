@@ -15,6 +15,12 @@
 .meetings-reference-page .meetings-quick-actions {
   margin: 0 0 32px;
 }
+.meetings-reference-page .meetings-quick-primary::after {
+  width: 85px;
+  height: 85px;
+  right: -15px;
+  top: -25px;
+}
 .meetings-reference-page .meetings-quick-action {
   min-height: 100px;
   padding: 21px 18px;
@@ -250,8 +256,13 @@
   color: var(--muted);
   line-height: 1.5;
 }
+.meetings-reference-page .dashboard-meeting-meta svg {
+  width: 11px;
+  height: 11px;
+}
 .meetings-reference-page .dashboard-meeting-action {
   flex: none;
+  gap: 12px;
 }
 .meetings-reference-page .meeting-info-trigger {
   width: 28px;

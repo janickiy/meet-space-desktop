@@ -28,6 +28,7 @@
   font-size: calc(8px * var(--text-scale));
   color: var(--primary);
   background: var(--primary-soft);
+  margin-top: 2px;
 }
 .personal-header .personal-peer-button .personal-avatar:not(.group-avatar),
 .personal-thread.chat-panel
@@ -43,6 +44,7 @@
 .personal-thread.chat-panel .chat-message header {
   gap: 8px;
   margin: 0 0 6px;
+  line-height: 1.5;
 }
 .personal-thread.chat-panel .chat-message header strong {
   font-size: calc(10px * var(--text-scale));
@@ -58,7 +60,7 @@
 .personal-thread.chat-panel .chat-message-bubble {
   padding: 12px 14px;
   border-radius: 0 10px 10px 10px;
-  background: var(--surface-soft);
+  background: var(--canvas);
 }
 .personal-thread.chat-panel .chat-message-own .chat-message-bubble {
   border-radius: 10px 0 10px 10px;
@@ -134,6 +136,7 @@
   padding: 0 24px 13px;
   border: 0;
   background: var(--surface);
+  flex-shrink: 0;
 }
 .personal-thread.chat-panel .chat-compose-row {
   grid-template-columns: 30px 30px minmax(0, 1fr) 40px;
@@ -144,10 +147,12 @@
   border-radius: 10px;
 }
 .personal-thread.chat-panel .chat-compose-field textarea {
+  display: block;
   min-height: 25px;
   max-height: 140px;
   padding: 1px 0 3px;
   font-size: calc(12px * var(--text-scale));
+  line-height: 1.65;
 }
 .personal-thread.chat-panel .chat-compose-keyhint {
   display: none;

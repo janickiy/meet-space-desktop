@@ -168,19 +168,16 @@ function FolderList() {
                 >
                   <ArrowDown size={15} aria-hidden="true" />
                 </button>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Переименовать: ${folder.name}`}
-                  disabled={order.isPending}
-                  onClick={() => setManage({ mode: "rename", folder })}
-                >
-                  <Pencil size={15} aria-hidden="true" />
-                </button>
               </div>
               <ItemActions
                 label={`Действия с папкой: ${folder.name}`}
                 actions={[
+                  {
+                    label: "Переименовать",
+                    icon: <Pencil size={18} aria-hidden="true" />,
+                    run: () => setManage({ mode: "rename", folder }),
+                    disabled: order.isPending,
+                  },
                   {
                     label: "Удалить папку",
                     icon: <Trash2 size={18} aria-hidden="true" />,
@@ -387,20 +384,22 @@ function FolderDetail({ id }: { id: string }) {
                 </button>
               ))}
             </div>
-            <CollectionViewToggle
-              value={layout}
-              onChange={setLayout}
-              label="Вид содержимого папки"
-            />
-            <label className="folder-detail-search">
-              <Search size={18} aria-hidden="true" />
-              <input
-                aria-label="Поиск в папке"
-                value={text}
-                placeholder="Найти в папке"
-                onChange={(event) => setText(event.target.value)}
+            <div className="folder-detail-controls">
+              <label className="folder-detail-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  aria-label="Поиск в папке"
+                  value={text}
+                  placeholder="Найти в папке"
+                  onChange={(event) => setText(event.target.value)}
+                />
+              </label>
+              <CollectionViewToggle
+                value={layout}
+                onChange={setLayout}
+                label="Вид содержимого папки"
               />
-            </label>
+            </div>
           </div>
           <ErrorNotice error={entries.error || remove.error} />
           {entries.isError && !denied && (

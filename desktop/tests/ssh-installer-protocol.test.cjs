@@ -6,7 +6,7 @@ const crypto = require('node:crypto');
 const {
   InstallerBundle, InstallFailure, sha256, canonicalJson, jsonObject,
   parseInstallerReply, parseInstallStatus, assertTicketBinding,
-  installerBundleNames, installPhases, INSTALLER_COMMAND, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, RECOVERY_INSTALLER_RELEASE_SHA256S,
+  installerBundleNames, installPhases, INSTALLER_COMMAND, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256, RECOVERY_INSTALLER_RELEASE_SHA256S,
 } = require('../dist/ssh/protocol.js');
 
 const directory = path.join(__dirname, '../resources/server-installer/v1');
@@ -66,7 +66,7 @@ test('production bundle keeps pinned RSA trust, audited Android provenance and b
   for (const [name, data] of Object.entries(files())) {
     assert.equal(sha256(data), provenance.files[name].sha256);
     assert.equal(data.length, provenance.files[name].bytes);
-    assert.equal(data.includes(Buffer.from('PRIVATE KEY')), false);
+    assert.equal(/-----BEGIN (?:RSA |EC |ENCRYPTED )?PRIVATE KEY-----\r?\n[A-Za-z0-9+/=]{20}/.test(data.toString()), false);
   }
   assert.equal(InstallerBundle.fromDirectory(directory).manifest.profile, 'source-v1');
   assert.equal(bundle.manifest.prebuiltPolicy, 'github-prebuilt-v1');
@@ -75,8 +75,36 @@ test('production bundle keeps pinned RSA trust, audited Android provenance and b
   for (const hash of RECOVERY_INSTALLER_RELEASE_SHA256S) {
     const recovered = InstallerBundle.legacyRecovery(directory, hash);
     assert.equal(sha256(canonicalJson(recovered.manifest)), hash);
-    assert.equal(recovered.manifest.prebuiltPolicy, undefined);
+    assert.equal(recovered.manifest.prebuiltPolicy, hash === PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256 ? 'github-prebuilt-v1' : undefined);
+    assert.equal(recovered.manifest.tlsPolicy, undefined);
   }
+});
+
+test('certificate choice is bound to the signed recipe, plan fingerprint, expected options and declared action', () => {
+  assert.equal(bundle.manifest.tlsPolicy, 'certificate-choice-v1');
+  const base = fixture();
+  const selected = { ...options, tlsMode: 'custom', certificateSha256: '7'.repeat(64) };
+  const custom = signHash({ ...base, options: selected, actions: base.actions.map(action => action === 'acme-https-wss' ? 'custom-https-wss' : action) });
+  assert.deepEqual(bundle.parsePlan(custom, { now, expectedOptions: selected }).options, selected);
+  for (const changes of [{ tlsMode: null }, { tlsMode: 'other' }, { tlsMode: 'custom' }, { tlsMode: 'letsencrypt', certificateSha256: '7'.repeat(64) }, { ...selected, acmeEmail: 'user@example.com' }, { ...selected, certificateSha256: '../key' }, { ...selected, privateKey: 'not public' }]) {
+    failure(() => bundle.parsePlan(signHash({ ...custom, options: { ...options, ...changes } }), { now }), 'PLAN_INVALID');
+  }
+  failure(() => bundle.parsePlan(custom, { now, expectedOptions: { ...selected, certificateSha256: '8'.repeat(64) } }), 'PLAN_INVALID');
+  failure(() => bundle.parsePlan(custom, { now, expectedOptions: options }), 'PLAN_INVALID');
+  failure(() => bundle.parsePlan(signHash({ ...custom, actions: base.actions }), { now }), 'PLAN_INVALID');
+  const old = InstallerBundle.legacyRecovery(directory, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256);
+  const oldPlan = fixture({ selectedBundle: old });
+  failure(() => old.parsePlan(signHash({ ...oldPlan, options: selected, actions: custom.actions }), { now }), 'PLAN_INVALID');
+});
+
+test('previous prebuilt saved plans retain their exact original signed recipe and hash', () => {
+  const old = InstallerBundle.legacyRecovery(directory, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256);
+  const plan = fixture({ selectedBundle: old, imageMode: 'images', imageRelease: 'v1.2.3' });
+  const before = canonicalJson(plan);
+  const selected = InstallerBundle.forSavedPlan(directory, plan);
+  assert.equal(sha256(canonicalJson(selected.manifest)), PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256);
+  assert.equal(selected.parsePlan(plan, { now }).hash, plan.hash);
+  assert.equal(canonicalJson(plan), before);
 });
 
 test('saved recovery selects the exact signed legacy recipe without rewriting the plan', () => {

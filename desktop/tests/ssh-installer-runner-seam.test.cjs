@@ -72,3 +72,11 @@ test('bundled Python ready-image installer checks frozen releases, safe imports,
   assert.ifError(result.error);
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
+
+test('bundled Python installer validates custom certificate inputs, private recovery and ACME separation', () => {
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3',
+    ['-B', path.join(__dirname, 'ssh-installer-tls.py')],
+    { encoding: 'utf8', timeout: 30000 });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});

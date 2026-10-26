@@ -111,7 +111,7 @@ export function ConferenceInvitationDialog({
   );
 }
 
-function MeetingQrCode({ link }: { link: string }) {
+export function MeetingQrCode({ link }: { link: string }) {
   let qr;
   try {
     qr = qrCodePath(link);

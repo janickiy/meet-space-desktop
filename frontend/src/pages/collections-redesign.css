@@ -643,10 +643,24 @@
     display: none;
   }
 }
-@media (max-width: 1200px) {
-  .folders-page .folder-layout-grid,
+@media (max-width: 1180px) {
+  .folders-page .folder-layout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 950px) {
   .recordings-page .recordings-layout-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  .folders-page .folder-layout-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 700px) {
+  .recordings-page .recordings-layout-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (max-width: 767px) {
@@ -696,10 +710,6 @@
   }
   .dashboard-all .meeting-layout-grid .dashboard-meeting-action {
     grid-column: auto;
-  }
-  .folders-page .folder-layout-grid,
-  .recordings-page .recordings-layout-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
   .folders-page .folder-row {
     padding: 15px;
@@ -752,10 +762,13 @@
 }
 
 /* Collection layout from decs_maket. Data and actions remain server-backed. */
-.folders-page,
-.recordings-page {
+.folders-page {
   max-width: 1300px;
   margin-inline: auto;
+}
+.recordings-page {
+  max-width: none;
+  margin: 0;
 }
 .folders-heading h1,
 .recordings-heading h1,
@@ -773,24 +786,28 @@
 .recordings-page .collection-view-toggle {
   gap: 3px;
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 9px;
 }
 .folders-page .collection-view-toggle button,
 .recordings-page .collection-view-toggle button {
-  min-height: 31px;
-  padding: 7px 11px;
+  min-height: 32px;
+  padding: 6px 12px;
   font-size: calc(11px * var(--text-scale));
   gap: 7px;
   box-shadow: none;
 }
 .folders-page .collection-view-toggle svg,
 .recordings-page .collection-view-toggle svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .folders-page .folder-row {
   box-shadow: none;
   min-height: 85px;
+}
+.folders-page .folder-list.folder-collection > .folder-row {
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 .folders-page .folder-row:hover,
 .folders-page .folder-row:focus-within {
@@ -854,8 +871,18 @@
   padding: 9px 12px 9px 20px;
 }
 .folders-page .folder-collection.folder-layout-list .folder-row {
+  padding: 0;
+  gap: 0;
+}
+.folders-page .folder-collection.folder-layout-list .folder-link {
+  min-height: 85px;
   padding: 18px 22px;
   gap: 17px;
+}
+.folders-page .folder-collection.folder-layout-list .folder-card-footer {
+  padding: 16px 18px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 .folders-page .folder-collection.folder-layout-list .folder-item-copy strong {
   font-size: calc(12px * var(--text-scale));
@@ -879,7 +906,17 @@
   row-gap: 18px;
   margin-bottom: 23px;
 }
-.folders-page .folder-candidate-filters {
+.folders-page .folder-detail-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.folders-page .folder-detail-controls .collection-view-toggle {
+  flex-shrink: 0;
+}
+.folders-page .folder-toolbar .folder-candidate-filters {
   flex: 1;
   display: flex;
   border: 0;
@@ -887,9 +924,9 @@
   border-radius: 0;
   background: transparent;
   padding: 0;
-  gap: 26px;
+  gap: 21px;
 }
-.folders-page .folder-candidate-filters button {
+.folders-page .folder-toolbar .folder-candidate-filters button {
   background: transparent;
   border-radius: 0;
   padding: 10px 0 12px;
@@ -897,7 +934,7 @@
   font-size: calc(11px * var(--text-scale));
   box-shadow: none;
 }
-.folders-page .folder-candidate-filters button[aria-pressed="true"] {
+.folders-page .folder-toolbar .folder-candidate-filters button[aria-pressed="true"] {
   background: transparent;
   box-shadow: none;
 }
@@ -934,10 +971,17 @@
 .folders-page .folder-contents .folder-item-copy small {
   font-size: calc(10px * var(--text-scale));
 }
+.folders-page .folder-contents .personal-avatar {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
 .folders-page .folder-contents.folder-layout-grid .folder-row {
   position: relative;
   min-height: 180px;
   padding: 22px;
+  border-radius: 12px;
 }
 .folders-page .folder-contents.folder-layout-grid .folder-link {
   flex-direction: column;
@@ -955,6 +999,18 @@
 .folders-page .folder-item-section h2 {
   font-size: calc(13px * var(--text-scale));
 }
+.folders-page .folder-empty {
+  padding: 65px 20px;
+  border-radius: 12px;
+}
+.folders-page .folder-empty > svg {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
 .recordings-page {
   --recordings-control-height: max(38px, calc(22px * var(--text-scale) + 14px));
 }
@@ -971,10 +1027,9 @@
   border: 1px solid var(--border);
 }
 .recordings-page .recordings-selection {
-  grid-template-columns: minmax(180px, 1.15fr) minmax(150px, 0.75fr) minmax(
-      180px,
-      1fr
-    ) auto;
+  grid-template-columns:
+    minmax(180px, 1.15fr) minmax(150px, 0.75fr) minmax(180px, 1fr)
+    auto;
   gap: 12px;
   border: 0;
   padding: 0;
@@ -1006,17 +1061,30 @@
   box-shadow: none;
   padding: 0;
   gap: 0;
-  grid-template-columns: 190px minmax(0, 1fr) auto;
+  grid-template-columns: 148px minmax(0, 1fr) auto;
   border-radius: 11px;
+}
+.recordings-page .recordings-layout-list .recordings-row {
+  align-items: center;
+  gap: 22px;
+  padding: 12px 18px 12px 12px;
+}
+.recordings-page .recordings-layout-list .recordings-thumbnail,
+.recordings-page .recordings-layout-list .recordings-row-info,
+.recordings-page .recordings-layout-list .recordings-row-actions {
+  grid-column: auto;
 }
 .recordings-page .recordings-row:hover,
 .recordings-page .recordings-row:focus-within {
   background: var(--surface);
 }
 .recordings-page .recordings-row-info {
-  padding: 18px;
+  padding: 0;
 }
 .recordings-page .recordings-row-title {
+  display: block;
+  min-height: 0;
+  margin: 0 0 7px;
   font-size: calc(12px * var(--text-scale));
   font-weight: 600;
 }
@@ -1027,8 +1095,19 @@
 .recordings-page .recordings-row-actions {
   display: flex;
   align-items: center;
-  padding: 18px;
+  padding: 0;
   gap: 6px;
+}
+.recordings-page .recordings-layout-list .recordings-row-title {
+  margin-bottom: 5px;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.5;
+}
+.recordings-page .recordings-layout-list .recordings-row-actions {
+  gap: 7px;
+}
+.recordings-page .recordings-layout-list .recordings-row-type {
+  margin-right: 10px;
 }
 .recordings-page .recordings-row-type {
   margin-right: auto;
@@ -1037,6 +1116,7 @@
 }
 .recordings-page .recordings-watch,
 .recordings-page .recordings-menu-trigger {
+  flex: none;
   width: 30px;
   height: 30px;
   min-height: 30px;
@@ -1048,9 +1128,43 @@
   color: var(--muted);
 }
 .recordings-page .recordings-thumbnail {
-  border-radius: 10px 0 0 10px;
-  height: 100%;
-  min-height: 122px;
+  border-radius: 7px;
+  height: 88px;
+  min-height: 88px;
+}
+.recordings-page .recordings-thumbnail-play {
+  width: 39px;
+  height: 39px;
+}
+.recordings-page .recordings-thumbnail-play svg {
+  width: 16px;
+  height: 16px;
+}
+.recordings-page .recordings-thumbnail-duration {
+  right: 10px;
+  bottom: 10px;
+  padding: 3px 6px;
+  font-size: calc(9px * var(--text-scale));
+  border-radius: 4px;
+}
+.recordings-page .recordings-layout-list .recordings-thumbnail-play {
+  width: 30px;
+  height: 30px;
+}
+.recordings-page .recordings-layout-list .recordings-thumbnail-play svg {
+  width: 13px;
+  height: 13px;
+}
+.recordings-page .recordings-layout-list .recordings-thumbnail-duration {
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 5px;
+  font-size: calc(8px * var(--text-scale));
+}
+.recordings-page .recordings-layout-list .recordings-watch,
+.recordings-page .recordings-layout-list .recordings-menu-trigger {
+  color: var(--primary);
+  border: 1px solid var(--border);
 }
 .recordings-page .recordings-thumbnail-label {
   display: none;
@@ -1065,7 +1179,8 @@
   padding: 18px 18px 0;
 }
 .recordings-page .recordings-layout-grid .recordings-row-actions {
-  padding: 10px 12px 12px 18px;
+  padding: 0 18px 18px;
+  margin-top: 17px;
 }
 .recordings-page .recordings-layout-grid .recordings-watch {
   margin-right: 0;
@@ -1073,6 +1188,29 @@
 .recordings-page .recordings-retention,
 .recordings-page .recordings-history-link {
   font-size: calc(10px * var(--text-scale));
+}
+.recordings-page .recordings-library .recordings-empty,
+.recordings-page > .recordings-empty {
+  padding: 52px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.recordings-page .recordings-library .recordings-empty > svg,
+.recordings-page > .recordings-empty > svg {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+.recordings-page .recordings-empty h2 {
+  font-size: calc(17px * var(--text-scale));
+}
+.recordings-page .recordings-empty p {
+  font-size: calc(12px * var(--text-scale));
+  margin: 10px auto 20px;
 }
 .recording-detail-page .recording-detail-heading {
   margin-bottom: 24px;
@@ -1248,8 +1386,21 @@
   font-size: calc(10px * var(--text-scale));
   padding: 14px 8px;
 }
+.calendar-page .calendar-weekday-short {
+  display: none;
+}
+.calendar-page .calendar-grid-scroll {
+  border-radius: 11px;
+}
 .calendar-page .calendar-month-day {
   padding: 9px;
+}
+.calendar-page .calendar-outside-month,
+.calendar-page .calendar-month-day:hover {
+  background: var(--canvas);
+}
+.calendar-page .calendar-day-heading {
+  margin-bottom: 6px;
 }
 .calendar-page .calendar-day-heading time {
   width: 25px;
@@ -1260,17 +1411,27 @@
   font-size: calc(10px * var(--text-scale));
   font-weight: 400;
 }
-.calendar-page .calendar-add-day {
-  opacity: 0;
+.calendar-page .calendar-today .calendar-day-heading time {
+  min-width: 25px;
+  min-height: 25px;
 }
-.calendar-page .calendar-month-day:hover .calendar-add-day,
-.calendar-page .calendar-month-day:focus-within .calendar-add-day {
-  opacity: 1;
+.calendar-page .calendar-day-number {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.calendar-page .calendar-day-number:hover {
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 .calendar-page .calendar-event {
   padding: 6px;
   margin: 4px 0;
   min-height: 0;
+}
+.calendar-page .calendar-event:hover {
+  outline: 0;
+  filter: brightness(0.98);
 }
 .calendar-page .calendar-event strong {
   font-size: calc(11px * var(--text-scale));
@@ -1292,6 +1453,11 @@
   }
 }
 @media (max-width: 1180px) {
+  .recordings-page .recordings-layout-list .recordings-row {
+    grid-template-columns: 132px minmax(0, 1fr) auto;
+    gap: 18px;
+    padding-right: 14px;
+  }
   .recordings-page .recordings-selection {
     grid-template-columns: minmax(180px, 1fr) minmax(160px, 1fr);
   }
@@ -1306,6 +1472,13 @@
   }
   .folders-page .folder-toolbar .folder-detail-search {
     flex: 1;
+    max-width: 360px;
+  }
+  .folders-page .folder-detail-controls {
+    width: 100%;
+  }
+  .folders-page .folder-detail-controls .collection-view-toggle {
+    margin-left: auto;
   }
 }
 @media (max-width: 950px) {
@@ -1331,11 +1504,24 @@
     min-width: 630px;
     grid-template-columns: repeat(7, minmax(90px, 1fr));
   }
+  .calendar-page .calendar-weekday-full {
+    display: none;
+  }
+  .calendar-page .calendar-weekday-short {
+    display: inline;
+  }
 }
 @media (max-width: 767px) {
   .folders-page .folder-collection.folder-layout-list .folder-row {
+    padding: 0;
+    gap: 0;
+  }
+  .folders-page .folder-collection.folder-layout-list .folder-link {
     padding: 16px;
     gap: 12px;
+  }
+  .folders-page .folder-collection.folder-layout-list .folder-card-footer {
+    padding: 12px 10px;
   }
   .folders-page .folder-card-footer > span {
     display: none;
@@ -1350,8 +1536,7 @@
     align-items: stretch;
   }
   .folders-page .folder-toolbar .folder-detail-search {
-    flex: 1 1 100%;
-    width: 100%;
+    max-width: none;
   }
   .recordings-page .recordings-selection {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -1362,18 +1547,6 @@
   .recordings-page .recordings-selection .collection-view-toggle {
     grid-column: 1 / -1;
   }
-  .recordings-page .recordings-row {
-    grid-template-columns: 108px minmax(0, 1fr);
-  }
-  .recordings-page .recordings-row-actions {
-    padding: 0 12px 12px;
-  }
-  .recordings-page .recordings-row-info {
-    padding: 12px;
-  }
-  .recordings-page .recordings-thumbnail {
-    border-radius: 10px 0 0 0;
-  }
   .recording-detail-page .recording-detail-header-actions {
     flex-wrap: wrap;
   }
@@ -1383,5 +1556,46 @@
   .calendar-page .calendar-toolbar-zone {
     flex-basis: 100%;
     margin: 0;
+  }
+}
+@media (max-width: 700px) {
+  .recordings-page .recordings-layout-list .recordings-row {
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 10px 14px;
+    padding: 10px;
+  }
+  .recordings-page .recordings-layout-list .recordings-thumbnail {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    height: 100px;
+    min-height: 100px;
+  }
+  .recordings-page .recordings-layout-list .recordings-row-title {
+    font-size: calc(12px * var(--text-scale));
+  }
+  .recordings-page .recordings-layout-list .recordings-row-actions {
+    grid-column: 2;
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 560px) {
+  .folders-page .folder-collection.folder-layout-list .folder-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .folders-page .folder-collection.folder-layout-list .folder-card-footer {
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+  }
+  .folders-page
+    .folder-collection.folder-layout-list
+    .folder-card-footer
+    > span {
+    display: block;
+    margin-right: auto;
+  }
+  .folders-page .folder-toolbar .folder-detail-search {
+    flex-basis: 100%;
+    width: 100%;
   }
 }

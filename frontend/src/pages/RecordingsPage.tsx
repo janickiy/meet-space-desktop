@@ -137,17 +137,11 @@ export function RecordingCard({
         <p className="recordings-meta">
           <span>{recordingDate(record)}</span>
           <span aria-hidden="true">·</span>
-          <span>{modeLabel}</span>
-        </p>
-        <p className="recordings-meta">
-          {history && (
-            <span>
-              <Users size={13} aria-hidden="true" />
-              {history.participantCount} участников встречи
-            </span>
+          {history ? (
+            <span>{history.participantCount} участников встречи</span>
+          ) : (
+            <span>{formatRecordingSize(file?.sizeBytes)}</span>
           )}
-          {history && <span aria-hidden="true">·</span>}
-          <span>{formatRecordingSize(file?.sizeBytes)}</span>
         </p>
         {history?.owner.displayName && (
           <p className="recordings-row-owner">

@@ -99,15 +99,19 @@
   font-size: calc(12px * var(--text-scale));
 }
 .desktop-ssh-steps li > span {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 26px;
   height: 26px;
   flex-shrink: 0;
   border: 1px solid var(--border-strong);
   border-radius: 50%;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-variant-numeric: lining-nums tabular-nums;
+  line-height: 1;
+  text-align: center;
+  letter-spacing: 0;
   background: var(--surface);
 }
 .desktop-ssh-steps li > strong {
@@ -731,7 +735,6 @@
 }
 .desktop-ssh-recovery {
   padding-top: 20px;
-  border-top: 1px solid var(--border);
 }
 .desktop-ssh-installer .desktop-ssh-reset {
   justify-self: start;
@@ -1067,6 +1070,23 @@
   font-size: calc(13px * var(--text-scale));
   font-weight: 400;
 }
+.desktop-ssh-installer .password-input {
+  min-width: 0;
+}
+:root
+  .desktop-ssh-installer
+  .password-input
+  > input:is([type="password"], [type="text"]) {
+  padding-right: 52px;
+}
+.desktop-ssh-installer .eye-toggle {
+  color: var(--ssh-copy);
+  border-radius: 7px;
+}
+.desktop-ssh-installer .eye-toggle:hover:not(:disabled) {
+  color: var(--primary);
+  background: var(--ssh-subtle);
+}
 .desktop-ssh-installer :is(input, select, textarea) + label {
   margin-top: 11px;
 }
@@ -1180,21 +1200,14 @@
 .desktop-ssh-setup-form .desktop-ssh-setup-group > .field-hint {
   margin: 10px 0 0;
 }
-.desktop-ssh-setup-form .desktop-ssh-release-field {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px);
-  align-items: center;
-  gap: 10px 16px;
-  margin-top: 14px;
-}
 .desktop-ssh-setup-form .desktop-ssh-checkbox {
-  align-items: flex-start;
+  align-items: center;
   min-height: 0;
   padding: 0;
   margin: 0;
 }
 .desktop-ssh-setup-form .desktop-ssh-checkbox input {
-  margin-top: 3px;
+  margin: 0;
 }
 .desktop-ssh-setup-form .desktop-ssh-smtp-fields {
   margin-top: 16px;
@@ -1214,21 +1227,48 @@
   .desktop-ssh-setup-fields {
     grid-template-columns: minmax(0, 1fr);
   }
-  .desktop-ssh-setup-form .desktop-ssh-release-field {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
-  }
 }
-:root[data-large-text="true"] .desktop-ssh-setup-fields,
-:root[data-large-text="true"]
-  .desktop-ssh-setup-form
-  .desktop-ssh-release-field {
+:root[data-large-text="true"] .desktop-ssh-setup-fields {
   grid-template-columns: minmax(0, 1fr);
 }
 .desktop-ssh-source-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+.desktop-ssh-tls-files {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 16px;
+}
+.desktop-ssh-tls-files .desktop-ssh-tls-file-status {
+  min-height: 1.65em;
+  overflow-wrap: anywhere;
+}
+.desktop-ssh-tls-files .desktop-ssh-setup-fields > div > label {
+  flex: initial;
+}
+.desktop-ssh-installer .desktop-ssh-tls-files input[type="file"] {
+  min-height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: transparent;
+  font-size: 0;
+}
+.desktop-ssh-tls-files input[type="file"]::file-selector-button {
+  padding: 10px 14px;
+  margin: 0;
+  font-size: calc(13px * var(--text-scale));
+}
+.desktop-ssh-tls-files input[type="file"]:focus-visible::file-selector-button {
+  outline: 2px solid var(--border-strong);
+  outline-offset: -2px;
+}
+.desktop-ssh-tls-plan .desktop-ssh-tls-files {
+  margin-top: 0;
 }
 :root .desktop-ssh-installer .desktop-ssh-source-option {
   display: flex;
@@ -1332,12 +1372,31 @@
 .desktop-ssh-state-icon.is-success {
   background: #edf8f1;
   border: 1px solid #d2eadb;
-  color: #6b9f7b;
-  box-shadow: 0 0 0 12px #f5faf7;
-  transform: rotate(-6deg);
+  border-radius: 50%;
+  color: #2f8f65;
+  box-shadow: 0 0 0 6px #f5faf7;
 }
 .desktop-ssh-state-icon.is-success svg {
-  transform: rotate(6deg);
+  stroke-width: 2.2;
+}
+:root .desktop-ssh-installer[data-state="completed"] > .desktop-ssh-heading {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: 22px;
+  margin: 30px 0 28px;
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-state-icon {
+  margin: 0;
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-heading-kicker {
+  color: var(--success);
+  margin-bottom: 7px;
+}
+:root .desktop-ssh-installer[data-state="completed"] h1 {
+  font-size: calc(30px * var(--text-scale));
+  line-height: 1.22;
+  margin-bottom: 10px;
 }
 .desktop-ssh-result-address {
   padding: 20px 22px;
@@ -1370,6 +1429,44 @@
   line-height: 1.7;
   margin-top: 10px;
   color: var(--success);
+}
+.desktop-ssh-installer[data-state="completed"] .desktop-ssh-result-address {
+  padding: 22px 24px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  box-shadow: 0 5px 18px #34466f04;
+}
+.desktop-ssh-installer[data-state="completed"]
+  .desktop-ssh-result-address
+  > span {
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 9px;
+  margin-top: 14px;
+  background: var(--success-soft);
+  border-radius: 7px;
+}
+.desktop-ssh-installer[data-state="completed"]
+  .desktop-ssh-result-address
+  > span
+  svg {
+  flex-shrink: 0;
+}
+@container (max-width: 420px) {
+  :root .desktop-ssh-installer[data-state="completed"] > .desktop-ssh-heading {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    margin-top: 24px;
+  }
+  .desktop-ssh-installer[data-state="completed"] .desktop-ssh-result-address {
+    padding: 18px;
+  }
+}
+:root[data-large-text="true"]
+  .desktop-ssh-installer[data-state="completed"]
+  > .desktop-ssh-heading {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
 }
 .desktop-ssh-installer dl {
   padding: 9px 20px;
@@ -1758,7 +1855,7 @@
   padding: 0;
 }
 .desktop-ssh-new-install-confirmation .desktop-ssh-checkbox input {
-  margin-top: 3px;
+  margin: calc((1lh - 16px) / 2) 0 0;
 }
 @container (max-width: 420px) {
   .desktop-ssh-saved-entry,
@@ -1830,7 +1927,7 @@
   background: #2e493e;
   border-color: #46634f;
   color: #b4d7bd;
-  box-shadow: 0 0 0 12px #263b332c;
+  box-shadow: 0 0 0 6px #263b332c;
 }
 :root[data-theme="dark"] .desktop-ssh-phases li.is-complete > span {
   background: #2d453b;

@@ -17,8 +17,9 @@ import type {
   SshInstallerCredentials,
   SshInstallerImageMode,
   SshInstallerState,
+  SshInstallerTlsMode,
 } from "../../platform/desktop-contracts";
-import { Button, ErrorNotice, Loading } from "../ui";
+import { Button, ErrorNotice, Loading, PasswordInput } from "../ui";
 import { installedServerConnectionMessage } from "./installed-server-connection-message";
 import { DesktopInstallProgress } from "./DesktopInstallProgress";
 import { installPhaseLabel } from "./ssh-install-progress";
@@ -58,25 +59,25 @@ function failureMessage(cause: unknown): string {
 export function DesktopSshInstaller({
   onBack,
   onConnect,
-  canConnect,
-  onCheckStorage,
 }: {
   onBack: () => void;
   onConnect: (origin: string) => Promise<void>;
-  canConnect: boolean;
-  onCheckStorage: () => Promise<boolean>;
 }) {
   const [state, setState] = useState<SshInstallerState | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [storageRetryMessage, setStorageRetryMessage] = useState("");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("22");
   const [user, setUser] = useState("root");
   const [domain, setDomain] = useState("");
   const [imageMode, setImageMode] = useState<SshInstallerImageMode>("images");
-  const [imageRelease, setImageRelease] = useState("latest");
   const [acmeEmail, setAcmeEmail] = useState("");
+  const [tlsMode, setTlsMode] = useState<SshInstallerTlsMode>("letsencrypt");
+  const [tlsFiles, setTlsFiles] = useState({ fullchain: "", privateKey: "" });
+  const [tlsReading, setTlsReading] = useState({
+    fullchain: false,
+    privateKey: false,
+  });
   const [smtpEnabled, setSmtpEnabled] = useState(false);
   const [smtpHost, setSmtpHost] = useState("");
   const [smtpPort, setSmtpPort] = useState("587");
@@ -107,6 +108,90 @@ export function DesktopSshInstaller({
   const inFlight = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  // Certificate material is session-only and never part of the public plan or JSX.
+  const tlsMaterial = useRef({ fullchain: "", privateKey: "" });
+  const tlsReadGeneration = useRef({ fullchain: 0, privateKey: 0 });
+  const tlsModeRef = useRef<SshInstallerTlsMode>("letsencrypt");
+  const tlsFileInputs = useRef<
+    Partial<Record<"fullchain" | "privateKey", HTMLInputElement | null>>
+  >({});
+
+  const clearTlsCertificate = () => {
+    tlsReadGeneration.current.fullchain++;
+    tlsReadGeneration.current.privateKey++;
+    tlsMaterial.current = { fullchain: "", privateKey: "" };
+    for (const input of Object.values(tlsFileInputs.current))
+      if (input) input.value = "";
+    if (alive.current) {
+      setTlsFiles({ fullchain: "", privateKey: "" });
+      setTlsReading({ fullchain: false, privateKey: false });
+    }
+  };
+
+  const selectTlsMode = (mode: SshInstallerTlsMode) => {
+    clearTlsCertificate();
+    tlsModeRef.current = mode;
+    setTlsMode(mode);
+    setAcmeConsent(false);
+    setError("");
+  };
+
+  const readTlsFile = async (kind: "fullchain" | "privateKey", file?: File) => {
+    const generation = ++tlsReadGeneration.current[kind];
+    tlsMaterial.current[kind] = "";
+    setTlsFiles((previous) => ({ ...previous, [kind]: "" }));
+    setTlsReading((previous) => ({ ...previous, [kind]: false }));
+    if (!file) return;
+    const maximum = kind === "fullchain" ? 64 * 1024 : 16 * 1024;
+    if (!file.size || file.size > maximum) {
+      setError(
+        kind === "fullchain"
+          ? "Выберите PEM-сертификат размером до 64 КБ."
+          : "Выберите приватный PEM-ключ размером до 16 КБ.",
+      );
+      return;
+    }
+    const isCurrent = () =>
+      alive.current &&
+      tlsModeRef.current === "custom" &&
+      tlsReadGeneration.current[kind] === generation;
+    setTlsReading((previous) => ({ ...previous, [kind]: true }));
+    try {
+      const value = await file.text();
+      if (!isCurrent()) return;
+      if (
+        new TextEncoder().encode(value).length > maximum ||
+        value.includes("\0")
+      )
+        throw new Error("invalid file");
+      if (
+        kind === "fullchain"
+          ? !/^-----BEGIN CERTIFICATE-----\r?\n/.test(value)
+          : !/^-----BEGIN (RSA |EC )?PRIVATE KEY-----\r?\n/.test(value) ||
+            /ENCRYPTED|Proc-Type:/.test(value)
+      ) {
+        setError(
+          kind === "fullchain"
+            ? "Нужен сертификат с полной цепочкой в формате PEM."
+            : "Нужен соответствующий приватный PEM-ключ без пароля.",
+        );
+        return;
+      }
+      tlsMaterial.current[kind] = value;
+      setTlsFiles((previous) => ({ ...previous, [kind]: file.name }));
+      setError("");
+    } catch {
+      if (isCurrent())
+        setError(
+          "Не удалось прочитать файл сертификата или ключа. Выберите его ещё раз.",
+        );
+    } finally {
+      if (isCurrent())
+        setTlsReading((previous) => ({ ...previous, [kind]: false }));
+    }
+  };
+
+  const certificateInput = () => ({ ...tlsMaterial.current });
 
   const clearCredentials = () => {
     setPassword("");
@@ -121,8 +206,10 @@ export function DesktopSshInstaller({
     setUser("root");
     setDomain("");
     setImageMode("images");
-    setImageRelease("latest");
     setAcmeEmail("");
+    clearTlsCertificate();
+    tlsModeRef.current = "letsencrypt";
+    setTlsMode("letsencrypt");
     setSmtpEnabled(false);
     setSmtpHost("");
     setSmtpPort("587");
@@ -141,7 +228,6 @@ export function DesktopSshInstaller({
     setShowNewInstall(false);
     setNewInstallConfirmed(false);
     setLastStatusAt(null);
-    setStorageRetryMessage("");
     heading.current?.closest(".desktop-foundation-card")?.scrollTo({ top: 0 });
   };
 
@@ -159,8 +245,11 @@ export function DesktopSshInstaller({
       next.preflight?.domain;
     if (nextDomain) setDomain(nextDomain);
     if (next.plan) setImageMode(next.plan.imageMode ?? "source");
-    if (next.plan?.options.imageRelease)
-      setImageRelease(next.plan.options.imageRelease);
+    if (next.plan) {
+      tlsModeRef.current = next.plan.options.tlsMode ?? "letsencrypt";
+      setTlsMode(tlsModeRef.current);
+    }
+    if (next.ticket || next.status?.terminal) clearTlsCertificate();
     if (next.ticket || next.status?.terminal) setSmtpPassword("");
     if (next.hasCredentials || next.status?.terminal) clearCredentials();
   };
@@ -176,6 +265,7 @@ export function DesktopSshInstaller({
       });
     return () => {
       alive.current = false;
+      clearTlsCertificate();
       void desktopBridge()
         .sshInstaller("detach", {})
         .catch(() => {});
@@ -215,6 +305,7 @@ export function DesktopSshInstaller({
           clearCredentials();
         if (action === "apply" || action === "detach" || action === "forget")
           setSmtpPassword("");
+        if (action === "detach" || action === "forget") clearTlsCertificate();
         setBusy(false);
       }
     }
@@ -262,11 +353,12 @@ export function DesktopSshInstaller({
   const credentialReady =
     state?.hasCredentials ||
     (authKind === "password" ? password.length > 0 : privateKey.length >= 32);
-  const imageReleaseValid =
-    imageMode !== "images" ||
-    /^(?:latest|v[0-9]+\.[0-9]+\.[0-9]+(?:-[A-Za-z0-9.-]+)?)$/.test(
-      imageRelease.trim(),
-    );
+  const tlsFilesReady =
+    !tlsReading.fullchain &&
+    !tlsReading.privateKey &&
+    !!tlsFiles.fullchain &&
+    !!tlsFiles.privateKey;
+  const certificateReady = tlsMode !== "custom" || tlsFilesReady;
   const disabled = busy || !!state?.busy;
   const savedTicket = state?.ticket;
   const showSavedEntry = !!savedTicket && !savedJobOpened;
@@ -306,7 +398,7 @@ export function DesktopSshInstaller({
         kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
         title: "Начнём с установки.",
         description:
-          "Начните новую установку сервера или откройте сохранённое задание.",
+          "Начните новую установку сервера или проверьте состояние предыдущей.",
       }
     : completed
       ? {
@@ -382,9 +474,8 @@ export function DesktopSshInstaller({
       {authKind === "password" ? (
         <>
           <label htmlFor="desktop-ssh-password">Пароль SSH-пользователя</label>
-          <input
+          <PasswordInput
             id="desktop-ssh-password"
-            type="password"
             autoComplete="off"
             required
             maxLength={4096}
@@ -434,9 +525,8 @@ export function DesktopSshInstaller({
           <label htmlFor="desktop-ssh-passphrase">
             Парольная фраза ключа <span className="muted">(если задана)</span>
           </label>
-          <input
+          <PasswordInput
             id="desktop-ssh-passphrase"
-            type="password"
             autoComplete="off"
             maxLength={4096}
             value={passphrase}
@@ -449,6 +539,64 @@ export function DesktopSshInstaller({
         они удаляются из памяти приложения.
       </p>
     </fieldset>
+  );
+
+  const certificateFields = (
+    <div className="desktop-ssh-tls-files">
+      <div className="desktop-ssh-setup-fields">
+        {(
+          [
+            {
+              kind: "fullchain",
+              label: "Сертификат и полная цепочка",
+              hint: "PEM · до 64 КБ",
+              accept: ".pem,.crt,.cer",
+            },
+            {
+              kind: "privateKey",
+              label: "Приватный ключ без пароля",
+              hint: "PEM · до 16 КБ",
+              accept: ".pem,.key",
+            },
+          ] as const
+        ).map(({ kind, label, hint, accept }) => (
+          <div key={kind}>
+            <label htmlFor={`desktop-ssh-tls-${kind}`}>{label}</label>
+            <input
+              id={`desktop-ssh-tls-${kind}`}
+              type="file"
+              accept={accept}
+              disabled={disabled}
+              aria-describedby={`desktop-ssh-tls-${kind}-status`}
+              ref={(input) => {
+                tlsFileInputs.current[kind] = input;
+              }}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                void readTlsFile(kind, file);
+              }}
+            />
+            <p
+              id={`desktop-ssh-tls-${kind}-status`}
+              className="field-hint desktop-ssh-tls-file-status"
+              role="status"
+            >
+              {tlsReading[kind] ? "Читаем файл…" : tlsFiles[kind] || hint}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="field-hint">
+        Сертификат должен действовать для указанного домена и быть доверенным на
+        сервере и устройствах команды. Продление своего сертификата выполняется
+        вручную.
+      </p>
+      <p className="field-hint">
+        Ключ передаётся на сервер по SSH при запуске установки. В приложении он
+        не сохраняется.
+      </p>
+    </div>
   );
 
   return (
@@ -548,15 +696,16 @@ export function DesktopSshInstaller({
         <div className="desktop-ssh-saved-entry">
           <h2>Сохранённая установка</h2>
           <p>
-            Карточка сохранилась вместе с настройками приложения. Она не
-            означает, что установка сейчас выполняется на сервере.
+            В приложении сохранены адрес сервера и параметры предыдущей
+            установки. Её текущее состояние ещё не проверено.
           </p>
           <strong>{savedTicket.domain}</strong>
           <small>
             {savedTicket.user}@{savedTicket.host}:{savedTicket.port}
           </small>
           <p>
-            Откройте задание и подключитесь по SSH, чтобы узнать его состояние.
+            Откройте сохранённую установку и подключитесь к серверу, чтобы
+            узнать её состояние.
           </p>
           <div className="desktop-ssh-actions">
             <Button
@@ -586,9 +735,9 @@ export function DesktopSshInstaller({
             <div className="desktop-ssh-new-install-confirmation">
               <h3>Начать новую установку?</h3>
               <p>
-                Удалится только карточка задания на этом устройстве. Сервер
-                MeetSpace и его данные сохранятся; работа на сервере
-                продолжится.
+                Из приложения будут удалены сохранённые сведения о предыдущей
+                установке. Сервер MeetSpace и его данные сохранятся; работа на
+                сервере продолжится.
               </p>
               <label className="desktop-ssh-checkbox">
                 <input
@@ -600,7 +749,10 @@ export function DesktopSshInstaller({
                     setNewInstallConfirmed(event.target.checked)
                   }
                 />
-                <span>Удалить локальную карточку и начать с первого шага.</span>
+                <span>
+                  Удалить сохранённые сведения об установке и начать с первого
+                  шага.
+                </span>
               </label>
               <div className="desktop-ssh-actions">
                 <Button
@@ -818,7 +970,13 @@ export function DesktopSshInstaller({
               >
                 <legend>Адрес сервера</legend>
                 <div className="desktop-ssh-setup-fields">
-                  <div>
+                  <div
+                    className={
+                      tlsMode === "custom"
+                        ? "desktop-ssh-field-wide"
+                        : undefined
+                    }
+                  >
                     <label htmlFor="desktop-ssh-domain">Домен MeetSpace</label>
                     <input
                       id="desktop-ssh-domain"
@@ -831,24 +989,75 @@ export function DesktopSshInstaller({
                       onChange={(event) => setDomain(event.target.value)}
                     />
                   </div>
-                  <div>
-                    <label htmlFor="desktop-ssh-acme-email">
-                      Email для сертификата HTTPS{" "}
-                      <span className="muted">(необязательно)</span>
-                    </label>
-                    <input
-                      id="desktop-ssh-acme-email"
-                      type="email"
-                      maxLength={254}
-                      value={acmeEmail}
-                      autoComplete="email"
-                      onChange={(event) => setAcmeEmail(event.target.value)}
-                    />
-                  </div>
+                  {tlsMode === "letsencrypt" && (
+                    <div>
+                      <label htmlFor="desktop-ssh-acme-email">
+                        Email для сертификата HTTPS{" "}
+                        <span className="muted">(необязательно)</span>
+                      </label>
+                      <input
+                        id="desktop-ssh-acme-email"
+                        type="email"
+                        maxLength={254}
+                        value={acmeEmail}
+                        autoComplete="email"
+                        onChange={(event) => setAcmeEmail(event.target.value)}
+                      />
+                    </div>
+                  )}
                 </div>
-                <p className="field-hint">
-                  Для сертификата HTTPS нужны доступные порты 80 и 443.
-                </p>
+                {tlsMode === "letsencrypt" && (
+                  <p className="field-hint">
+                    Для сертификата HTTPS нужны доступные порты 80 и 443.
+                  </p>
+                )}
+              </fieldset>
+              <fieldset
+                className="desktop-ssh-tls desktop-ssh-setup-group"
+                disabled={disabled}
+              >
+                <legend>SSL-сертификат</legend>
+                <div
+                  className="desktop-ssh-source-options"
+                  role="radiogroup"
+                  aria-label="SSL-сертификат"
+                >
+                  {(
+                    [
+                      {
+                        mode: "letsencrypt",
+                        title: "Let’s Encrypt",
+                        description:
+                          "Бесплатный сертификат с автоматическим выпуском и продлением.",
+                      },
+                      {
+                        mode: "custom",
+                        title: "Свой сертификат",
+                        description:
+                          "Загрузить готовый сертификат с полной цепочкой и приватным ключом.",
+                      },
+                    ] as const
+                  ).map(({ mode, title, description }) => (
+                    <label
+                      key={mode}
+                      className="desktop-ssh-source-option"
+                      data-selected={tlsMode === mode}
+                    >
+                      <input
+                        type="radio"
+                        name="desktop-ssh-tls-mode"
+                        value={mode}
+                        checked={tlsMode === mode}
+                        onChange={() => selectTlsMode(mode)}
+                      />
+                      <span>
+                        <strong>{title}</strong>
+                        <small>{description}</small>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {tlsMode === "custom" && certificateFields}
               </fieldset>
               <fieldset
                 className="desktop-ssh-install-source desktop-ssh-setup-group"
@@ -895,30 +1104,12 @@ export function DesktopSshInstaller({
                     </label>
                   ))}
                 </div>
-                {imageMode === "images" && (
-                  <div className="desktop-ssh-release-field">
-                    <label htmlFor="desktop-ssh-image-release">
-                      Версия Docker-образов
-                    </label>
-                    <input
-                      id="desktop-ssh-image-release"
-                      required
-                      maxLength={64}
-                      pattern="latest|v[0-9]+[.][0-9]+[.][0-9]+(?:-(?:[A-Za-z0-9.]|-)+)?"
-                      value={imageRelease}
-                      placeholder="latest"
-                      autoComplete="off"
-                      spellCheck={false}
-                      aria-describedby="desktop-ssh-image-hint"
-                      onChange={(event) => setImageRelease(event.target.value)}
-                    />
-                  </div>
+                {imageMode === "source" && (
+                  <p className="field-hint">
+                    Установщик загрузит исходный код выбранного выпуска и
+                    соберёт Docker-образы на вашем сервере.
+                  </p>
                 )}
-                <p className="field-hint" id="desktop-ssh-image-hint">
-                  {imageMode === "images"
-                    ? "latest — последний готовый выпуск для архитектуры сервера, включая beta. Можно указать точную версию. Выпуск, размер и контрольные суммы покажем перед установкой."
-                    : "Установщик загрузит исходный код выбранного выпуска и соберёт Docker-образы на вашем сервере."}
-                </p>
               </fieldset>
               <fieldset
                 className="desktop-ssh-auth desktop-ssh-setup-group"
@@ -1039,7 +1230,7 @@ export function DesktopSshInstaller({
               <Button
                 type="submit"
                 busy={busy}
-                disabled={disabled || !credentialReady || !imageReleaseValid}
+                disabled={disabled || !credentialReady}
               >
                 Проверить готовность хоста
               </Button>
@@ -1083,7 +1274,7 @@ export function DesktopSshInstaller({
                     !state.preflight.ready ||
                     state.preflight.domain !== domain.trim().toLowerCase() ||
                     !credentialReady ||
-                    !imageReleaseValid ||
+                    !certificateReady ||
                     (smtpEnabled &&
                       (!smtpHost.trim() ||
                         !smtpFrom.trim() ||
@@ -1094,10 +1285,12 @@ export function DesktopSshInstaller({
                     void act("plan", {
                       options: {
                         domain: domain.trim(),
-                        acmeEmail: acmeEmail.trim(),
+                        acmeEmail:
+                          tlsMode === "letsencrypt" ? acmeEmail.trim() : "",
+                        tlsMode,
                         imageMode,
                         ...(imageMode === "images"
-                          ? { imageRelease: imageRelease.trim() }
+                          ? { imageRelease: "latest" }
                           : {}),
                         ...(smtpEnabled
                           ? {
@@ -1112,6 +1305,9 @@ export function DesktopSshInstaller({
                           : {}),
                       },
                       credentials: credentials(),
+                      ...(tlsMode === "custom"
+                        ? { tlsCertificate: certificateInput() }
+                        : {}),
                     })
                   }
                 >
@@ -1136,48 +1332,6 @@ export function DesktopSshInstaller({
                 </p>
               )}
               {status?.state !== "completed" && credentialsForm}
-              {!canConnect && status?.state === "completed" && (
-                <div className="desktop-storage-notice" role="status">
-                  <strong>
-                    Сервер установлен. Осталось подключить приложение.
-                  </strong>
-                  <p>
-                    На этом устройстве недоступно защищённое хранилище паролей.
-                    Разблокируйте его в системе, затем повторите проверку.
-                  </p>
-                  <Button
-                    variant="secondary"
-                    busy={busy}
-                    disabled={disabled}
-                    onClick={() => {
-                      if (inFlight.current) return;
-                      inFlight.current = true;
-                      setBusy(true);
-                      setStorageRetryMessage("");
-                      void onCheckStorage()
-                        .then((available) => {
-                          if (alive.current && !available)
-                            setStorageRetryMessage(
-                              "Хранилище пока недоступно. Проверьте, что системное хранилище паролей разблокировано.",
-                            );
-                        })
-                        .catch(() => {
-                          if (alive.current)
-                            setStorageRetryMessage(
-                              "Не удалось проверить хранилище. Повторите попытку.",
-                            );
-                        })
-                        .finally(() => {
-                          inFlight.current = false;
-                          if (alive.current) setBusy(false);
-                        });
-                    }}
-                  >
-                    Проверить хранилище
-                  </Button>
-                  {storageRetryMessage && <p>{storageRetryMessage}</p>}
-                </div>
-              )}
               {status?.errorCode && (
                 <ErrorNotice>
                   Установщик остановился на этапе «
@@ -1203,7 +1357,7 @@ export function DesktopSshInstaller({
                 {status?.state === "completed" && (
                   <Button
                     busy={busy}
-                    disabled={disabled || !canConnect}
+                    disabled={disabled}
                     onClick={() => {
                       if (inFlight.current) return;
                       inFlight.current = true;
@@ -1345,6 +1499,22 @@ export function DesktopSshInstaller({
                   <dd>{plan.options.publicIpv4}</dd>
                 </div>
                 <div>
+                  <dt>SSL-сертификат</dt>
+                  <dd>
+                    {plan.options.tlsMode === "custom"
+                      ? "Свой сертификат · ручное продление"
+                      : "Let’s Encrypt · автоматическое продление"}
+                  </dd>
+                </div>
+                {plan.options.tlsMode === "custom" && (
+                  <div>
+                    <dt>SHA-256 сертификата</dt>
+                    <dd>
+                      <code>{plan.options.certificateSha256}</code>
+                    </dd>
+                  </div>
+                )}
+                <div>
                   <dt>Версия MeetSpace</dt>
                   <dd>{plan.version}</dd>
                 </div>
@@ -1438,14 +1608,27 @@ export function DesktopSshInstaller({
               {!ticket && (
                 <>
                   {credentialsForm}
+                  {plan.options.tlsMode === "custom" && (
+                    <fieldset
+                      className="desktop-ssh-auth desktop-ssh-tls-plan"
+                      disabled={disabled}
+                    >
+                      <legend>Файлы своего сертификата</legend>
+                      {certificateFields}
+                      <p className="field-hint">
+                        Используйте те же файлы, по которым подготовлен план.
+                        Сертификат и соответствие ключа будут проверены
+                        повторно.
+                      </p>
+                    </fieldset>
+                  )}
                   {plan.options.smtp?.username && (
                     <div className="desktop-ssh-form">
                       <label htmlFor="desktop-smtp-password">
                         Пароль SMTP — {plan.options.smtp.username}
                       </label>
-                      <input
+                      <PasswordInput
                         id="desktop-smtp-password"
-                        type="password"
                         maxLength={4096}
                         value={smtpPassword}
                         disabled={disabled}
@@ -1455,8 +1638,8 @@ export function DesktopSshInstaller({
                         }
                       />
                       <p className="field-hint">
-                        Передаётся на сервер по SSH. В карточке задания и
-                        настройках приложения пароль не сохраняется.
+                        Передаётся на сервер по SSH. В приложении пароль не
+                        сохраняется.
                       </p>
                     </div>
                   )}
@@ -1486,35 +1669,41 @@ export function DesktopSshInstaller({
                       </span>
                     </label>
                   )}
-                  <label className="desktop-ssh-checkbox">
-                    <input
-                      id="desktop-ssh-acme-consent"
-                      type="checkbox"
-                      checked={acmeConsent}
-                      disabled={disabled}
-                      onChange={(event) => setAcmeConsent(event.target.checked)}
-                    />
-                    <span>
-                      Принимаю условия Let's Encrypt для выпуска сертификата
-                      HTTPS.
-                    </span>
-                  </label>
-                  <Button
-                    className="desktop-ssh-terms"
-                    variant="secondary"
-                    disabled={disabled}
-                    onClick={() => {
-                      void desktopBridge()
-                        .openExternal("https://letsencrypt.org/repository/")
-                        .catch(() =>
-                          setError(
-                            "Не удалось открыть условия. Их можно прочитать по адресу https://letsencrypt.org/repository/.",
-                          ),
-                        );
-                    }}
-                  >
-                    Прочитать условия Let's Encrypt
-                  </Button>
+                  {plan.options.tlsMode !== "custom" && (
+                    <>
+                      <label className="desktop-ssh-checkbox">
+                        <input
+                          id="desktop-ssh-acme-consent"
+                          type="checkbox"
+                          checked={acmeConsent}
+                          disabled={disabled}
+                          onChange={(event) =>
+                            setAcmeConsent(event.target.checked)
+                          }
+                        />
+                        <span>
+                          Принимаю условия Let's Encrypt для выпуска сертификата
+                          HTTPS.
+                        </span>
+                      </label>
+                      <Button
+                        className="desktop-ssh-terms"
+                        variant="secondary"
+                        disabled={disabled}
+                        onClick={() => {
+                          void desktopBridge()
+                            .openExternal("https://letsencrypt.org/repository/")
+                            .catch(() =>
+                              setError(
+                                "Не удалось открыть условия. Их можно прочитать по адресу https://letsencrypt.org/repository/.",
+                              ),
+                            );
+                        }}
+                      >
+                        Прочитать условия Let's Encrypt
+                      </Button>
+                    </>
+                  )}
                   <label className="desktop-ssh-checkbox">
                     <input
                       id="desktop-ssh-plan-consent"
@@ -1538,7 +1727,8 @@ export function DesktopSshInstaller({
                         expired ||
                         !credentialReady ||
                         !planConfirmed ||
-                        !acmeConsent ||
+                        (plan.options.tlsMode !== "custom" && !acmeConsent) ||
+                        (plan.options.tlsMode === "custom" && !tlsFilesReady) ||
                         (!!plan.options.smtp?.username && !smtpPassword) ||
                         (needsDockerConsent && !dockerConsent)
                       }
@@ -1549,6 +1739,9 @@ export function DesktopSshInstaller({
                           acceptAcmeTerms: acmeConsent,
                           credentials: credentials(),
                           smtpPassword,
+                          ...(plan.options.tlsMode === "custom"
+                            ? { tlsCertificate: certificateInput() }
+                            : {}),
                         })
                       }
                     >
@@ -1556,11 +1749,18 @@ export function DesktopSshInstaller({
                     </Button>
                     <Button
                       variant="secondary"
-                      disabled={disabled || !credentialReady}
+                      disabled={
+                        disabled ||
+                        !credentialReady ||
+                        (plan.options.tlsMode === "custom" && !tlsFilesReady)
+                      }
                       onClick={() =>
                         void act("plan", {
                           options: plan.options,
                           credentials: credentials(),
+                          ...(plan.options.tlsMode === "custom"
+                            ? { tlsCertificate: certificateInput() }
+                            : {}),
                         })
                       }
                     >
@@ -1575,9 +1775,7 @@ export function DesktopSshInstaller({
       )}
       {(ticket || identity?.trusted) && (
         <RecoveryContainer className="desktop-ssh-recovery">
-          {ticket && (
-            <summary>Управление локальной карточкой установки</summary>
-          )}
+          {ticket && <summary>Сохранённые сведения об установке</summary>}
           {ticket && (
             <label className="desktop-ssh-checkbox">
               <input
@@ -1588,9 +1786,10 @@ export function DesktopSshInstaller({
                 onChange={(event) => setForgetConfirmed(event.target.checked)}
               />
               <span>
-                Удалить локальную карточку задания. Удалённая установка не будет
-                остановлена или удалена. Для восстановления потребуется снова
-                подключиться к этому хосту и получить план.
+                Удалить из приложения сохранённые сведения об установке. Это не
+                остановит установку на сервере и не удалит MeetSpace или его
+                данные. Чтобы снова проверить её состояние, подключитесь к этому
+                серверу по SSH и подготовьте план установки.
               </span>
             </label>
           )}
@@ -1610,7 +1809,7 @@ export function DesktopSshInstaller({
               });
             }}
           >
-            {ticket ? "Удалить локальную карточку" : "Выбрать другой хост"}
+            {ticket ? "Удалить сохранённые сведения" : "Выбрать другой хост"}
           </Button>
         </RecoveryContainer>
       )}

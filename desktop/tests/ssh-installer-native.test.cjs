@@ -4,9 +4,10 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { SshInstallerController } = require('../dist/ssh/controller');
-const { InstallerBundle, canonicalJson, sha256, installPhases, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256 } = require('../dist/ssh/protocol');
+const { InstallerBundle, canonicalJson, sha256, installPhases, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256, RECOVERY_INSTALLER_RELEASE_SHA256S } = require('../dist/ssh/protocol');
 const { hostKeyFromBytes } = require('../dist/ssh/transport');
 const { SshError } = require('../dist/ssh/types');
+const { createCertificateFixture, hasOpenSSL } = require('./fixtures/tls.cjs');
 const bundleRoot = path.join(__dirname, '../resources/server-installer/v1');
 const manifest = InstallerBundle.fromDirectory(bundleRoot).manifest;
 const endpoint = { host: 'vps.example.com', port: 22, user: 'root' };
@@ -22,6 +23,7 @@ function planFixture(selectedOptions = options, recipe = InstallerBundle.fromDir
   const now = Math.floor(Date.now()/1000);
   const p = { schema: 1, installerVersion: '1.0.0', releaseVersion: manifest.version, commit: manifest.commit, backendTag: manifest.backendTag, releaseSha256: sha256(canonicalJson(manifest)), runnerSha256: manifest.runnerSha256, options, platform: { os:'ubuntu', osVersion:'24.04', arch:'arm64', cpus:4, memoryKiB:8*1048576 }, root:'/opt/meetspace', project:'meetspace', docker:{installed:false}, dockerPackages:manifest.dockerPackagesByUbuntu['24.04'].arm64, dnsAddresses:[selectedOptions.publicIpv4], existingJobId:null, existingPlanHash:null, issuedAt:now, expiresAt:now+900, actions:['install-docker','fetch-verified-source','build-and-pin-images','generate-secrets','private-volumes','backup-and-migrate','acme-https-wss','authenticated-turn','readiness'], resourceProfile:'standard' };
   p.options = selectedOptions;
+  if (selectedOptions.tlsMode === 'custom') p.actions[p.actions.indexOf('acme-https-wss')] = 'custom-https-wss';
   if (prebuilt) {
     p.sourceLock = sourceLock; p.recipeSha256 = sha256(canonicalJson(recipe));
     p.imageLock = { repository: 'janickiy/meet-space', version: sourceLock.version, commit: sourceLock.commit, platform: 'linux/arm64', url: 'https://github.com/janickiy/meet-space/releases/download/v1.2.3/meetspace-v1.2.3-linux-arm64.tar.gz', sha256: 'd'.repeat(64), indexSha256: 'e'.repeat(64), sizeBytes: 1048576 };
@@ -62,6 +64,70 @@ async function trusted(f) {
 const decodePayload = payload => JSON.parse(Buffer.from(/base64\.b64decode\('([A-Za-z0-9+/=]+)'\)/.exec(payload.toString())[1], 'base64'));
 const reply = result => JSON.stringify({ protocol: 'MSI1', ok: true, result });
 const remoteFailure = errorCode => JSON.stringify({ protocol: 'MSI1', ok: false, errorCode });
+
+test('custom certificate binds the plan, skips ACME consent and never persists private material locally', { skip: !hasOpenSSL }, async t => {
+  const generated = createCertificateFixture(t);
+  const tlsCertificate = { fullchain: generated.fullchain, privateKey: generated.privateKey };
+  const f = await fixture(t); await trusted(f);
+  const selected = { ...options, tlsMode: 'custom' };
+  const state = await f.controller.invoke('plan', { options: selected, tlsCertificate });
+  assert.equal(state.error, undefined);
+  assert.equal(state.plan.options.certificateSha256, sha256(tlsCertificate.fullchain));
+  assert.equal(state.plan.actions.includes('custom-https-wss'), true);
+  const planRequest = f.requests.find(item => item.action === 'plan').request;
+  assert.equal(planRequest.tlsCertificate, undefined);
+  assert.equal(JSON.stringify(planRequest).includes(tlsCertificate.privateKey), false);
+  assert.equal(JSON.stringify(state).includes(tlsCertificate.fullchain), false);
+  assert.equal(JSON.stringify(state).includes(tlsCertificate.privateKey), false);
+  const applied = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, confirmDockerInstall: true, acceptAcmeTerms: false, tlsCertificate });
+  assert.equal(applied.error, undefined);
+  const applyRequest = f.requests.find(item => item.action === 'apply').request;
+  assert.deepEqual(applyRequest.tlsCertificate, tlsCertificate);
+  assert.equal(applyRequest.acceptAcmeTerms, false);
+  const savedText = await fs.readFile(path.join(f.storageDir, 'ssh-install-ticket.json'), 'utf8');
+  assert.equal(savedText.includes(tlsCertificate.privateKey), false);
+  assert.equal(savedText.includes(tlsCertificate.fullchain), false);
+  const saved = JSON.parse(savedText);
+  await f.controller.invoke('detach');
+  const restored = new SshInstallerController({ storageDir: f.storageDir, bundleRoot, transport: f.transport });
+  t.after(() => restored.dispose()); await restored.load();
+  const resumed = await restored.invoke('resume', { credentials, confirmedPlanHash: saved.planHash });
+  assert.equal(resumed.error, undefined);
+  assert.equal(f.requests.at(-1).action, 'resume');
+  assert.equal(f.requests.at(-1).request.tlsCertificate, undefined);
+});
+
+test('custom certificate cannot be changed after plan confirmation or injected into other actions', { skip: !hasOpenSSL }, async t => {
+  const generated = createCertificateFixture(t);
+  const tlsCertificate = { fullchain: generated.fullchain, privateKey: generated.privateKey };
+  const f = await fixture(t); await trusted(f);
+  const state = await f.controller.invoke('plan', { options: { ...options, tlsMode: 'custom' }, tlsCertificate });
+  assert.equal(state.error, undefined);
+  for (const material of [undefined, { ...tlsCertificate, fullchain: tlsCertificate.fullchain + '\n' }, { ...tlsCertificate, privateKey: generated.read('rsa.key') }]) {
+    const result = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, confirmDockerInstall: true, tlsCertificate: material });
+    assert.equal(result.error.code, 'TLS_CERTIFICATE_INVALID');
+    assert.equal(result.ticket, undefined);
+  }
+  assert.equal(f.requests.some(item => item.action === 'apply'), false);
+  for (const action of ['status', 'resume', 'cancel', 'detach']) {
+    assert.equal((await f.controller.invoke(action, { tlsCertificate })).error.code, 'INPUT');
+  }
+});
+
+test('TLS options reject malformed selection and unexpected or mismatched certificate material', { skip: !hasOpenSSL }, async t => {
+  const generated = createCertificateFixture(t);
+  const tlsCertificate = { fullchain: generated.fullchain, privateKey: generated.privateKey };
+  for (const selected of [{ tlsMode: null }, { tlsMode: 'invalid' }, { certificateSha256: 'a'.repeat(64) }, { tlsMode: 'custom', certificateSha256: 'a'.repeat(64) }, { tlsMode: 'custom', acmeEmail: 'user@example.com' }]) {
+    const f = await fixture(t); await trusted(f);
+    const state = await f.controller.invoke('plan', { options: { ...options, ...selected }, ...(selected.tlsMode === 'custom' ? { tlsCertificate } : {}) });
+    assert.equal(state.error.code, 'INPUT');
+    assert.equal(f.requests.some(item => item.action === 'plan'), false);
+  }
+  const f = await fixture(t); await trusted(f);
+  const state = await f.controller.invoke('plan', { options, tlsCertificate });
+  assert.equal(state.error.code, 'INPUT');
+  assert.equal(f.requests.some(item => item.action === 'plan'), false);
+});
 
 test('planning without an IPv4 input derives it from a fresh authenticated preflight', async t => {
   const f = await fixture(t); await trusted(f);
@@ -172,7 +238,7 @@ test('older source job can be rediscovered after both newer recipes reject it wi
   assert.deepEqual(observed.map(item => item.recipeHash), [sha256(canonicalJson(manifest)), PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, LEGACY_INSTALLER_RELEASE_SHA256]);
 });
 
-test('explicit prebuilt selection sends only public options and preserves its frozen archive across apply and recovery', async t => {
+test('new prebuilt selection always requests latest and preserves its resolved archive across apply and recovery', async t => {
   const f = await fixture(t); await trusted(f);
   const selected = { ...options, imageMode: 'images', imageRelease: 'v1.2.3' };
   const state = await f.controller.invoke('plan', { options: selected });
@@ -180,11 +246,13 @@ test('explicit prebuilt selection sends only public options and preserves its fr
   assert.equal(state.plan.imageMode, 'images');
   assert.equal(state.plan.imageArchiveSha256, 'd'.repeat(64));
   assert.equal(state.plan.imageArchiveBytes, 1048576);
-  assert.deepEqual(f.requests.find(item => item.action === 'plan').request.options, selected);
+  assert.deepEqual(f.requests.find(item => item.action === 'plan').request.options, { ...selected, imageRelease: 'latest' });
+  assert.equal(state.plan.options.imageRelease, 'latest');
   const applied = await f.controller.invoke('apply', { confirmedPlanHash: state.plan.hash, confirmDockerInstall: true, acceptAcmeTerms: true });
   assert.equal(applied.error, undefined);
   const saved = JSON.parse(await fs.readFile(path.join(f.storageDir, 'ssh-install-ticket.json'), 'utf8'));
   assert.equal(saved.plan.options.imageMode, 'images');
+  assert.equal(saved.plan.options.imageRelease, 'latest');
   assert.equal(saved.plan.imageLock.version, 'v1.2.3');
   assert.equal(saved.plan.hash, state.plan.hash);
   await f.controller.invoke('detach');
@@ -197,6 +265,14 @@ test('explicit prebuilt selection sends only public options and preserves its fr
   assert.equal(f.requests.filter(item => item.action === 'plan').length, 1);
 });
 
+test('prebuilt planning without a version explicitly requests latest', async t => {
+  const f = await fixture(t); await trusted(f);
+  const state = await f.controller.invoke('plan', { options: { ...options, imageMode: 'images' } });
+  assert.equal(state.error, undefined);
+  assert.equal(f.requests.find(item => item.action === 'plan').request.options.imageRelease, 'latest');
+  assert.equal(state.plan.version, 'v1.2.3');
+});
+
 test('invalid image choices fail before plan dispatch and prebuilt failure never falls back to source', async t => {
   for (const selection of [{ imageMode: 'prebuilt' }, { imageMode: null }, { imageMode: 'images', imageRelease: '../latest' }, { imageMode: 'source', imageRelease: 'latest' }, { imageRelease: 'v1.2.3' }]) {
     const f = await fixture(t); await trusted(f);
@@ -205,10 +281,33 @@ test('invalid image choices fail before plan dispatch and prebuilt failure never
   }
   for (const code of ['PLAN_CHANGED', 'EXISTING_INSTALLATION', 'PREBUILT_UNAVAILABLE', 'PREBUILT_INVALID', 'PREBUILT_DOWNLOAD_FAILED']) {
     const f = await fixture(t); await trusted(f); let calls = 0;
-    f.transport.installer = async () => { calls++; return remoteFailure(code); };
+    f.transport.installer = async (...args) => { calls++; assert.equal(decodePayload(args[3]).request.options.imageMode, 'images'); return remoteFailure(code); };
     const state = await f.controller.invoke('plan', { options: { ...options, imageMode: 'images', imageRelease: 'latest' } });
-    assert.equal(state.error.code, code); assert.equal(calls, 1); assert.equal(state.ticket, undefined);
+    assert.equal(state.error.code, code); assert.equal(calls, ['PLAN_CHANGED', 'EXISTING_INSTALLATION'].includes(code) ? 2 : 1); assert.equal(state.ticket, undefined);
   }
+});
+
+test('read-only image recovery uses only the prior image recipe and preserves the existing plan and TLS mode', async t => {
+  const f = await fixture(t); await trusted(f);
+  const old = InstallerBundle.legacyRecovery(bundleRoot, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256);
+  const selected = { ...options, imageMode: 'images', imageRelease: 'latest' };
+  const plan = planFixture(selected, old.manifest);
+  plan.existingJobId = 'e0b0d6f0-14f6-4c58-a674-9c9665465a62'; plan.existingPlanHash = 'a'.repeat(64);
+  plan.hash = sha256(canonicalJson(Object.fromEntries(Object.entries(plan).filter(([key]) => key !== 'hash'))));
+  const observed = [];
+  f.transport.installer = async (...args) => {
+    const message = decodePayload(args[3]);
+    const hash = sha256(Buffer.from(message.bundle['release.json'], 'base64'));
+    observed.push(hash);
+    if (hash !== PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256) return remoteFailure('EXISTING_INSTALLATION');
+    assert.deepEqual(message.request.options, selected);
+    return reply(plan);
+  };
+  const state = await f.controller.invoke('plan', { options: { ...selected, tlsMode: 'letsencrypt' } });
+  assert.equal(state.error, undefined);
+  assert.deepEqual(observed, [sha256(canonicalJson(manifest)), PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256]);
+  assert.equal(state.ticket.planHash, plan.existingPlanHash);
+  assert.equal(state.plan.options.tlsMode, undefined);
 });
 
 test('legacy fallback rejects fresh installs and invalid or changed-option recovery plans', async t => {
@@ -245,7 +344,7 @@ test('a changed legacy plan is still rejected after the current recipe mismatch'
   const f = await fixture(t); await trusted(f); let calls = 0;
   f.transport.installer = async () => { calls++; return remoteFailure('PLAN_CHANGED'); };
   const state = await f.controller.invoke('plan', { options });
-  assert.equal(calls, 3); assert.equal(state.error.code, 'PLAN_CHANGED');
+  assert.equal(calls, 1 + RECOVERY_INSTALLER_RELEASE_SHA256S.length); assert.equal(state.error.code, 'PLAN_CHANGED');
   assert.equal(state.ticket, undefined); assert.equal(state.plan, undefined);
 });
 

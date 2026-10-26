@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Circle,
   CircleCheck,
+  LockKeyhole,
   Server,
   Users,
 } from "lucide-react";
@@ -189,22 +190,25 @@ export function DesktopSessionGate({
     );
   if (!profile)
     return (
-      <ServerSettings
-        state={state}
-        runtime={runtime}
-        onState={apply}
-        onConnected={connected}
-      />
+      <ServerSettings state={state} onState={apply} onConnected={connected} />
     );
   return (
     <ServerContext.Provider value={{ profile, open: () => setEditing(true) }}>
-      {children(`${profile.id}:${state.generation}`)}
+      {state.storageAvailable ? (
+        children(`${profile.id}:${state.generation}`)
+      ) : (
+        <DesktopStorageUnlock
+          profile={profile}
+          runtime={runtime}
+          onState={apply}
+          onSettings={() => setEditing(true)}
+        />
+      )}
       <DesktopScreenPicker key={`capture:${profile.id}:${state.generation}`} />
       {editing && (
         <Modal title="Подключение к серверу" onClose={() => setEditing(false)}>
           <ServerSettings
             state={state}
-            runtime={runtime}
             onState={apply}
             onConnected={connected}
             embedded
@@ -212,6 +216,102 @@ export function DesktopSessionGate({
         </Modal>
       )}
     </ServerContext.Provider>
+  );
+}
+
+/** A server address contains no credentials; account providers wait for OS encryption. */
+function DesktopStorageUnlock({
+  profile,
+  runtime,
+  onState,
+  onSettings,
+}: {
+  profile: DesktopServerProfile;
+  runtime: DesktopRuntimeInfo | null;
+  onState: (state: DesktopServerState) => void;
+  onSettings: () => void;
+}) {
+  useSystemTheme(true);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const active = useRef(true);
+  useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
+  async function checkStorage() {
+    if (busy) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const next = await desktopBridge().listServers();
+      if (!active.current) return;
+      onState(next);
+      if (!next.storageAvailable)
+        setMessage(
+          "Хранилище пока недоступно. Если вы уже разблокировали его, закройте MeetSpace через меню приложения и запустите снова. Подключение к серверу сохранено.",
+        );
+    } catch {
+      if (active.current)
+        setMessage("Не удалось проверить хранилище. Повторите попытку.");
+    } finally {
+      if (active.current) setBusy(false);
+    }
+  }
+  return (
+    <main className="page-center desktop-foundation">
+      <WelcomePanel />
+      <section
+        className="content-card desktop-foundation-card desktop-storage-gate"
+        aria-labelledby="desktop-storage-title"
+      >
+        <span className="desktop-foundation-label">ШАГ 2 ИЗ 2 · ВХОД</span>
+        <h1 id="desktop-storage-title">Подготовим безопасный вход</h1>
+        <p className="desktop-foundation-description">
+          Сервер подключён. Чтобы войти в аккаунт, разблокируйте хранилище
+          паролей на этом устройстве.
+        </p>
+        <div className="reference-connection-card">
+          <Server size={24} aria-hidden="true" />
+          <div>
+            <strong>Ваш сервер MeetSpace</strong>
+            <p>{profile.origin}</p>
+          </div>
+        </div>
+        <div className="desktop-storage-notice" role="status">
+          <LockKeyhole size={22} aria-hidden="true" />
+          <strong>Разблокируйте системное хранилище паролей</strong>
+          <p>
+            {runtime?.platform === "linux"
+              ? "В Ubuntu откройте «Пароли и ключи» и разблокируйте связку «Вход» (Login). Она может использовать отдельный пароль, который отличается от пароля входа в Ubuntu. В других средах Linux проверьте GNOME Keyring или KWallet."
+              : "Разблокируйте системное хранилище паролей, затем повторите проверку. Если оно уже разблокировано, перезапустите MeetSpace."}
+          </p>
+          <p>
+            Это локальная настройка устройства. Повторно устанавливать сервер не
+            нужно. Данные входа не будут сохраняться без защиты.
+          </p>
+        </div>
+        {message && (
+          <p className="field-hint" role="status">
+            {message}
+          </p>
+        )}
+        <div className="desktop-server-actions">
+          <Button
+            busy={busy}
+            disabled={busy}
+            onClick={() => void checkStorage()}
+          >
+            Проверить хранилище
+          </Button>
+          <Button variant="secondary" disabled={busy} onClick={onSettings}>
+            Выбрать другой сервер
+          </Button>
+        </div>
+      </section>
+    </main>
   );
 }
 
@@ -260,13 +360,11 @@ function connectionMessage(error: unknown): string {
 
 function ServerSettings({
   state,
-  runtime,
   onState,
   onConnected,
   embedded = false,
 }: {
   state: DesktopServerState;
-  runtime: DesktopRuntimeInfo | null;
   onState: (state: DesktopServerState) => void;
   onConnected: (state: DesktopServerState) => void;
   embedded?: boolean;
@@ -317,17 +415,10 @@ function ServerSettings({
     const connected = await desktopBridge().selectServer(profile.id);
     if (active.current) onConnected(connected);
   }
-  async function checkStorage() {
-    const next = await desktopBridge().listServers();
-    if (active.current) onState(next);
-    return next.storageAvailable;
-  }
   const content = installingServer ? (
     <DesktopSshInstaller
       onBack={() => setInstallingServer(false)}
       onConnect={(serverOrigin) => connectOrigin(serverOrigin)}
-      canConnect={state.storageAvailable}
-      onCheckStorage={checkStorage}
     />
   ) : showIntro ? (
     <div className="reference-onboarding-intro">
@@ -398,28 +489,6 @@ function ServerSettings({
             сервера.
           </p>
         </>
-      )}
-      {!state.storageAvailable && (
-        <div className="desktop-storage-notice" role="status">
-          <p>
-            {runtime?.platform === "linux"
-              ? "Разблокируйте системное хранилище паролей Linux, затем повторите проверку. Для входа требуется GNOME Keyring или KWallet."
-              : "Защищённое хранилище недоступно. Сохранение подключения и вход сейчас недоступны."}
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            busy={busy}
-            disabled={busy}
-            onClick={() =>
-              void run(async () => {
-                await checkStorage();
-              })
-            }
-          >
-            Проверить хранилище
-          </Button>
-        </div>
       )}
       {state.items.length > 0 && (
         <div className="desktop-server-list" aria-label="Сохранённые серверы">
@@ -497,7 +566,7 @@ function ServerSettings({
         <ErrorNotice>{error || null}</ErrorNotice>
         {probe && <p role="status">Сервер доступен · версия {probe.version}</p>}
         <div className="desktop-server-actions">
-          <Button type="submit" busy={busy} disabled={!state.storageAvailable}>
+          <Button type="submit" busy={busy}>
             Подключиться
           </Button>
           <Button

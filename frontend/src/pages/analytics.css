@@ -1,6 +1,11 @@
 .analytics-panel {
   min-width: 0;
 }
+.analytics-page {
+  max-width: 1450px;
+  margin: 0 auto;
+  min-width: 0;
+}
 .analytics-selector {
   margin-bottom: 24px;
   border: 0;
@@ -186,9 +191,69 @@ html[data-large-text="true"] .analytics-selector-fields {
 
 .analytics-selector {
   padding: 20px;
-  border: 0;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background: var(--surface);
+}
+.analytics-page .analytics-metrics {
+  gap: 18px;
+  margin: 22px 0;
+}
+.analytics-page .analytics-metrics > div {
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.analytics-page .analytics-metrics dt {
+  font-size: var(--text-xs);
+}
+.analytics-page .analytics-metrics dd {
+  font-size: calc(34px * var(--text-scale));
+  margin-top: 14px;
+}
+.analytics-page .analytics-chart-grid {
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  margin-bottom: 22px;
+}
+.analytics-page .analytics-chart-grid .content-card,
+.analytics-page .analytics-scroll {
+  padding: 26px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.analytics-page .analytics-timeline-chart {
+  height: 240px;
+}
+.analytics-page .analytics-empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 64px 24px;
+}
+.analytics-page .analytics-empty > svg {
+  color: var(--primary);
+}
+.analytics-page .analytics-empty p {
+  max-width: 420px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+@media (max-width: 1000px) {
+  .analytics-page .analytics-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .analytics-page .analytics-metrics {
+    gap: 12px;
+  }
+  .analytics-page .analytics-metrics > div,
+  .analytics-page .analytics-chart-grid .content-card,
+  .analytics-page .analytics-scroll {
+    padding: 18px;
+  }
 }
 .analytics-chart-card h3,
 .analytics-context h3 {

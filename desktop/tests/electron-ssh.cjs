@@ -31,9 +31,6 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
   try {
     window=await startApp({show:false,userDataDir:process.argv[2],rendererRoot:path.resolve(__dirname,'../../frontend/dist-desktop')});
     assert.ok(window);
-    // Exercise the narrow responsive layout rather than letting the production
-    // minimum window width silently enlarge the requested QA viewport.
-    window.setMinimumSize(0,0);
     ipcMain.removeHandler('meetspace:ssh:state');
     ipcMain.handle('meetspace:ssh:state',() => ({ok:true,value:state}));
     ipcMain.removeHandler('meetspace:ssh:action');
@@ -85,10 +82,16 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     const isDisabled=value=>execute(`([...document.querySelectorAll('button')].find(e=>e.textContent.trim()===${JSON.stringify(value)}))?.disabled`);
     await fs.mkdir(output,{recursive:true});
     const capture = async (name, {width=1280,height=800,theme='light',selector='.desktop-ssh-installer',largeText=false}={}) => {
-      // Display geometry notifications can restore the production minimum after
-      // startup; reset it for each deliberate narrow-layout capture.
-      window.setMinimumSize(0,0);
-      window.setContentSize(width,height);
+      // Native window restoration intentionally keeps desktop windows at least
+      // 900px wide, including asynchronous display-metrics callbacks. Use a real
+      // Chromium desktop viewport for narrower responsive-layout coverage while
+      // leaving native window policy untouched. Assertions below still inspect
+      // the renderer's actual dimensions and content overflow at each size.
+      window.setContentSize(Math.max(900,width),height);
+      window.webContents.enableDeviceEmulation({
+        screenPosition:'desktop',screenSize:{width,height},viewPosition:{x:0,y:0},
+        deviceScaleFactor:0,viewSize:{width,height},scale:1,
+      });
       await execute(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.dataset.largeText=${JSON.stringify(String(largeText))};document.documentElement.style.setProperty('--text-scale',${JSON.stringify(largeText ? '1.5' : '1')});document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'start'});void 0`);
       await execute('document.fonts.ready.then(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))');
       await new Promise(resolve=>setTimeout(resolve,250));
@@ -128,7 +131,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
           }
         }
       }
-      await fs.writeFile(path.join(output,`${name}.png`),(await window.webContents.capturePage()).toPNG());
+      await fs.writeFile(path.join(output,`${name}.png`),(await window.webContents.capturePage({x:0,y:0,width,height})).toPNG());
       screenshots.push({name,width,height,theme,textScale:largeText ? 1.5 : 1});
     };
     const progressSnapshot = () => execute(`(() => {
@@ -243,7 +246,8 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/03 \/ 05/);
     assert.equal(await execute(`!!document.getElementById('desktop-ssh-public-ip')`),false,'Step 03 asks for the domain, not a manually supplied IPv4');
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images','Ready Docker images are the default');
-    assert.equal(await execute(`document.getElementById('desktop-ssh-image-release').value`),'latest','Ready-image release defaults to latest');
+    assert.equal(await execute(`!!document.getElementById('desktop-ssh-image-release')`),false,'Ready-image mode has no version selector');
+    assert.doesNotMatch(await execute(`document.querySelector('.desktop-ssh-install-source').textContent`),/Версия Docker-образов|latest|Выпуск, размер и контрольные суммы/,'Ready-image mode has no removed version hints');
     assert.doesNotMatch(await execute(`document.querySelector('.reference-welcome-brand').textContent`),/WINDOWS|LINUX/i,'The logo has no platform caption');
     await capture('ssh-image-mode-1280-light',{selector:'.desktop-ssh-install-source'});
     await capture('ssh-image-mode-800-dark-large-text',{width:800,height:900,theme:'dark',largeText:true,selector:'.desktop-ssh-install-source'});
@@ -252,6 +256,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(await execute(`!!document.getElementById('desktop-ssh-image-release')`),false,'Source mode has no archive release selector');
     await click('input[name="desktop-ssh-image-mode"][value="images"]');
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images');
+    assert.equal(await execute(`!!document.getElementById('desktop-ssh-image-release')`),false,'Switching modes never restores a version selector');
     checks.push('Ready Docker images are selected by default; both native radio choices change the selected mode; logo platform caption is removed');
     await capture('ssh-trusted-1280-light');
     await capture('ssh-trusted-1366-light',{width:1366,height:768});
@@ -373,23 +378,21 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     const readyAction=await execute(`(()=>{const e=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Подключиться к MeetSpace');const r=e.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:innerHeight};})()`);
     assert.ok(readyAction.top>=0&&readyAction.bottom<=readyAction.height,'Completed connection action is visible without scrolling at reference size');
     checks.push('Reference completion screen includes 05/05, success icon, server address, collapsed completed timeline and a visible connect action; light/dark, narrow window and 150% text layouts captured');
-    // A local keyring outage must not turn a completed remote installation into
-    // a failed install. Retry follows the actual preload/parent refresh path.
+    // Saving a public server address needs no account credentials. A local
+    // keyring outage must not disable successful remote-install completion.
     let storageAvailable=false,storageRefreshes=0;
-    const serverState=()=>({items:[],selectedId:null,generation:0,storageAvailable});
+    let storedProfiles=[],selectedServerId=null,serverGeneration=0;
+    const serverState=()=>({items:storedProfiles,selectedId:selectedServerId,generation:serverGeneration,storageAvailable});
     ipcMain.removeHandler('meetspace:servers:list');
-    ipcMain.handle('meetspace:servers:list',event=>{assert.equal(event.sender,window.webContents);storageRefreshes++;storageAvailable=true;return {ok:true,value:serverState()};});
+    ipcMain.handle('meetspace:servers:list',event=>{assert.equal(event.sender,window.webContents);storageRefreshes++;return {ok:true,value:serverState()};});
     window.webContents.send('meetspace:transport',{kind:'servers',type:'changed',state:serverState()});
-    await visible('Проверить хранилище');
-    assert.equal(await isDisabled('Подключиться к MeetSpace'),true);
+    await new Promise(resolve=>setTimeout(resolve,80));
+    assert.equal(await isDisabled('Подключиться к MeetSpace'),false);
     await assertProgress(100,'completed');
+    assert.equal(await execute("!!document.querySelector('.desktop-ssh-installer .desktop-storage-notice')"),false);
     await capture('ssh-completed-storage-unavailable',{width:1440,height:1000});
-    await clickText('Проверить хранилище');
-    await until(async()=>!(await isDisabled('Подключиться к MeetSpace')),'Storage recovery enables connection without restarting installation');
-    assert.equal(storageRefreshes,1);assert.equal(calls.filter(c=>c.action==='apply').length,1);
-    await assertProgress(100,'completed');
-    assert.equal(await execute("!![...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Проверить хранилище')"),false);
-    checks.push('Completed installation with unavailable local storage retains 100%, disables connection and exposes explicit keyring retry; one native listServers refresh recovers it without duplicate apply');
+    assert.equal(storageRefreshes,0,'Completion does not unexpectedly probe the local keyring');
+    checks.push('Unavailable local keyring never masks successful completion or disables the action that saves the public server address');
     checks.push('Only confirmed completion reaches 100%; every installation stage is marked complete');
     // Exercise the actual preload rejection and the SSH wizard's onConnect
     // catch: a compatible transport must not become a fabricated DNS/TLS error.
@@ -426,16 +429,16 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await click('.desktop-ssh-close');await visible('Подключиться к серверу');await until(()=>Promise.resolve(calls.some(c=>c.action==='detach')),'Wizard unmount detaches native credentials');
     checks.push('No SSH credentials in localStorage; terminal status clears reentered password and leaving wizard calls native detach');
     state={...state,status:undefined,phase:'error',error:{code:'STATE_UNAVAILABLE',message:'Состояние задания недоступно.'},hasCredentials:false};
-    await clickText('Установить сервер по SSH');await openSaved();await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
-    assert.equal(await isDisabled('Удалить локальную карточку'),true);
+    await clickText('Установить сервер по SSH');await openSaved();await visible('Сохранённые сведения об установке');await click('details.desktop-ssh-recovery > summary');await visible('Удалить сохранённые сведения');
+    assert.equal(await isDisabled('Удалить сохранённые сведения'),true);
     await assertProgress(null,'unknown');
     await click('.desktop-ssh-close');await visible('Подключиться к серверу');
     state={...state,identity:{...state.identity,trusted:false,changed:true},error:{code:'TICKET_INVALID',message:'Ключ сохранённого задания изменился.'}};
-    await clickText('Установить сервер по SSH');await openSaved();await visible('Управление локальной карточкой установки');await click('details.desktop-ssh-recovery > summary');await visible('Удалить локальную карточку');
+    await clickText('Установить сервер по SSH');await openSaved();await visible('Сохранённые сведения об установке');await click('details.desktop-ssh-recovery > summary');await visible('Удалить сохранённые сведения');
     assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/02 \/ 05/,'Explicit saved entry still requires host-key trust if the key changed');
     assert.equal(await execute(`!!document.querySelector('.desktop-ssh-progress')`),false,'An untrusted saved host cannot expose remote progress controls');
-    assert.equal(await isDisabled('Удалить локальную карточку'),true);
-    await click('#desktop-ssh-forget-consent');await clickText('Удалить локальную карточку');
+    assert.equal(await isDisabled('Удалить сохранённые сведения'),true);
+    await click('#desktop-ssh-forget-consent');await clickText('Удалить сохранённые сведения');
     await until(()=>Promise.resolve(calls.filter(c=>c.action==='forget').length===2),'Explicit local recovery-card removal reaches native controller');
     assert.equal(calls.filter(c=>c.action==='apply').length,1);
     checks.push('STATE_UNAVAILABLE and changed/untrusted host both permit only explicit local ticket removal, without duplicate apply or remote deletion');
@@ -461,6 +464,53 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(calls.filter(c=>c.action==='apply').length,2,'Exactly one installation starts for each of the two explicitly tested modes');
     await captureRunning('ssh-progress-source-top-1366-light',{width:1366,height:768});
     checks.push('Explicit source selection sends imageMode=source without imageRelease, shows source checksum instead of archive metadata, and keeps source compilation labels for actual running status');
+    // The actual completed-install Connect action saves/selects the profile
+    // while locked, then waits before mounting any account provider or request.
+    statusReply='completed';
+    await clickText('Проверить состояние');await visible('Ваше пространство готово.');
+    assert.equal(await isDisabled('Подключиться к MeetSpace'),false);
+    const connectedProfile={id:'f'.repeat(32),origin:'https://meet.example.com',label:'meet.example.com',version:'v1.2.3',commit:'b'.repeat(40),lastCheckedAt:new Date().toISOString()};
+    let savedProfiles=0,selectedProfiles=0,authRequests=0;
+    ipcMain.removeHandler('meetspace:servers:probe');
+    ipcMain.handle('meetspace:servers:probe',(event,origin)=>{
+      assert.equal(event.sender,window.webContents);assert.equal(origin,connectedProfile.origin);
+      return {ok:true,value:{origin,version:'v1.2.3',commit:'b'.repeat(40),buildTime:'2026-10-26T00:00:00Z',apiVersion:1,authRequired:true}};
+    });
+    ipcMain.removeHandler('meetspace:servers:add');
+    ipcMain.handle('meetspace:servers:add',(event,input)=>{
+      assert.equal(event.sender,window.webContents);assert.deepEqual(input,{origin:connectedProfile.origin});
+      assert.equal(storageAvailable,false);storedProfiles=[connectedProfile];savedProfiles++;
+      return {ok:true,value:serverState()};
+    });
+    ipcMain.removeHandler('meetspace:servers:select');
+    ipcMain.handle('meetspace:servers:select',(event,id)=>{
+      assert.equal(event.sender,window.webContents);assert.equal(id,connectedProfile.id);
+      assert.equal(storageAvailable,false);selectedServerId=id;serverGeneration++;selectedProfiles++;
+      return {ok:true,value:serverState()};
+    });
+    ipcMain.removeHandler('meetspace:http');
+    ipcMain.handle('meetspace:http',(event,input)=>{
+      assert.equal(event.sender,window.webContents);
+      if(input.path.startsWith('/api/v1/auth/')) authRequests++;
+      assert.equal(storageAvailable,true,'Account requests cannot start before encrypted storage is ready');
+      return {ok:true,value:{status:401,headers:{'content-type':'application/json'},body:{error:'unauthorized'}}};
+    });
+    await clickText('Подключиться к MeetSpace');await visible('Подготовим безопасный вход');
+    assert.equal(savedProfiles,1);assert.equal(selectedProfiles,1);
+    assert.equal(authRequests,0);assert.equal(calls.filter(c=>c.action==='apply').length,2);
+    assert.match(await execute("document.querySelector('.desktop-storage-gate').textContent"),/https:\/\/meet\.example\.com/);
+    assert.equal(await execute("!!document.querySelector('#email, #password')"),false,'Account form cannot collect credentials before OS encryption is available');
+    await capture('ssh-connected-storage-locked-1440-light',{width:1440,height:1000,selector:'.desktop-storage-gate'});
+    await clickText('Проверить хранилище');await visible('Подключение к серверу сохранено.');
+    assert.equal(storageRefreshes,1);assert.equal(authRequests,0);
+    assert.match(await execute("document.querySelector('.desktop-storage-gate').textContent"),/запустите снова/,'A still-locked/cached backend explains the next recovery step');
+    storageAvailable=true;
+    await clickText('Проверить хранилище');await visible('С возвращением');
+    await until(()=>Promise.resolve(authRequests>0),'Normal account restoration starts only after storage recovery');
+    assert.equal(storageRefreshes,2);assert.equal(savedProfiles,1);assert.equal(selectedProfiles,1);
+    assert.equal(await execute("!!document.querySelector('.desktop-storage-gate')"),false);
+    assert.equal(calls.filter(c=>c.action==='apply').length,2,'Storage recovery never repeats remote installation');
+    checks.push('Completed Connect saves/selects the public server while keyring is locked; dedicated sign-in readiness panel blocks all account requests, preserves the server on failed retry, and starts normal authentication only after successful encrypted-store recovery');
     const report={ok:true,platform:process.platform,arch:process.arch,checks,screenshots,layoutChecks,remoteMode:'deterministic IPC fixture; no remote installation',actionSequence:calls.map(c=>c.action)};
     await fs.writeFile(path.join(output,'ssh-ui.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
     clearTimeout(watchdog);app.exit(0);

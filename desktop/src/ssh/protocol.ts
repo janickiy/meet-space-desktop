@@ -7,8 +7,9 @@ export type JsonObject = Record<string, unknown>;
 export type InstallerAction = "plan" | "apply" | "status" | "cancel" | "resume";
 export type InstallState = "running" | "cancel_requested" | "cancelled" | "needs_recovery" | "failed" | "completed";
 export type InstallImageMode = "images" | "source";
+export type InstallTlsMode = "letsencrypt" | "custom";
 export interface SmtpOptions { host: string; port: number; from: string; username: string; tlsMode: "starttls" | "tls" }
-export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string; smtp?: SmtpOptions; imageMode?: InstallImageMode; imageRelease?: string }
+export interface InstallOptions { domain: string; publicIpv4: string; acmeEmail?: string; smtp?: SmtpOptions; imageMode?: InstallImageMode; imageRelease?: string; tlsMode?: InstallTlsMode; certificateSha256?: string }
 export interface InstallEndpoint { host: string; port: number; user: string }
 export interface InstallPlan {
   json: string; hash: string; version: string; commit: string; options: InstallOptions;
@@ -38,7 +39,8 @@ export const INSTALLER_TRUST_ROOT_SHA256 = "9f16201125cd17dc9fb90a7579e78589c76e
 // Never derive a resource path from a server response or a saved ticket.
 export const LEGACY_INSTALLER_RELEASE_SHA256 = "f385643e8019e89cf38bea29c15477cde6baddbe74bcab0f94a18d696e5b637a";
 export const PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256 = "e241e081ae1458b349b3148e63ee736bba505c979fd1e71dccaf2b391a63e24c";
-export const RECOVERY_INSTALLER_RELEASE_SHA256S: readonly string[] = [PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, LEGACY_INSTALLER_RELEASE_SHA256];
+export const PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256 = "dcf4bec8ed31e652de981d2fbb85c719d9d18b5a3469c7d8f3537e88591966e1";
+export const RECOVERY_INSTALLER_RELEASE_SHA256S: readonly string[] = [PREVIOUS_SOURCE_INSTALLER_RELEASE_SHA256, LEGACY_INSTALLER_RELEASE_SHA256, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256];
 const HASH = /^[a-f0-9]{64}$/;
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
 const STATES: readonly string[] = ["running", "cancel_requested", "cancelled", "needs_recovery", "failed", "completed"];
@@ -158,6 +160,7 @@ export class InstallerBundle {
       requireValue(this.manifest.runnerSha256 === sha256(files["runner.py"]) && this.manifest.dockerKeySha256 === sha256(files["docker.asc"]));
       requireValue(this.manifest.sourcePolicy === undefined || this.manifest.sourcePolicy === "github-latest-stable-v1");
       requireValue(this.manifest.prebuiltPolicy === undefined || this.manifest.prebuiltPolicy === "github-prebuilt-v1");
+      requireValue(this.manifest.tlsPolicy === undefined || this.manifest.tlsPolicy === "certificate-choice-v1");
       this.files = Object.fromEntries(installerBundleNames.map(name => [name, Buffer.from(files[name])]));
       deepFreeze(this.manifest);
     } catch { throw new InstallFailure("RELEASE_INVALID"); }
@@ -224,9 +227,19 @@ export class InstallerBundle {
       requireValue(value.commit === release.commit && value.releaseVersion === release.version && value.runnerSha256 === release.runnerSha256);
       requireValue(value.root === "/opt/meetspace" && value.project === "meetspace");
       const optionsObject = object(value.options);
-      const optionKeys = ["domain", "publicIpv4", ...(optionsObject.acmeEmail === undefined ? [] : ["acmeEmail"]), ...(optionsObject.smtp === undefined ? [] : ["smtp"]), ...(optionsObject.imageMode === undefined ? [] : ["imageMode"]), ...(optionsObject.imageRelease === undefined ? [] : ["imageRelease"])];
+      const optionKeys = ["domain", "publicIpv4", ...(optionsObject.acmeEmail === undefined ? [] : ["acmeEmail"]), ...(optionsObject.smtp === undefined ? [] : ["smtp"]), ...(optionsObject.imageMode === undefined ? [] : ["imageMode"]), ...(optionsObject.imageRelease === undefined ? [] : ["imageRelease"]), ...(optionsObject.tlsMode === undefined ? [] : ["tlsMode"]), ...(optionsObject.certificateSha256 === undefined ? [] : ["certificateSha256"])];
       requireValue(sameKeys(optionsObject, optionKeys));
       const options: InstallOptions = { domain: string(optionsObject.domain), publicIpv4: string(optionsObject.publicIpv4), acmeEmail: optionalString(optionsObject.acmeEmail) ?? "" };
+      const tlsMode = optionsObject.tlsMode === undefined ? "letsencrypt" : optionsObject.tlsMode;
+      requireValue(tlsMode === "letsencrypt" || tlsMode === "custom");
+      if (optionsObject.tlsMode !== undefined) {
+        requireValue(this.manifest.tlsPolicy === "certificate-choice-v1");
+        options.tlsMode = tlsMode;
+      }
+      if (tlsMode === "custom") {
+        requireValue(this.manifest.tlsPolicy === "certificate-choice-v1" && HASH.test(string(optionsObject.certificateSha256)) && !options.acmeEmail);
+        options.certificateSha256 = optionsObject.certificateSha256 as string;
+      } else requireValue(optionsObject.certificateSha256 === undefined);
       if (optionsObject.smtp !== undefined) options.smtp = smtpOptions(optionsObject.smtp);
       const imageMode = optionsObject.imageMode === undefined ? "source" : string(optionsObject.imageMode);
       requireValue(imageMode === "source" || imageMode === "images");
@@ -243,6 +256,8 @@ export class InstallerBundle {
         requireValue(canonicalJson(options.smtp ?? null) === canonicalJson(validation.expectedOptions.smtp ?? null));
         requireValue(imageMode === (validation.expectedOptions.imageMode ?? "source"));
         requireValue((options.imageRelease ?? "latest") === (validation.expectedOptions.imageRelease ?? "latest"));
+        requireValue(tlsMode === (validation.expectedOptions.tlsMode ?? "letsencrypt"));
+        requireValue(options.certificateSha256 === validation.expectedOptions.certificateSha256);
       }
       const issuedAt = integer(value.issuedAt); const expiresAt = integer(value.expiresAt);
       requireValue(issuedAt > 0 && expiresAt === issuedAt + 900);
@@ -267,7 +282,7 @@ export class InstallerBundle {
       const dockerActions = installed ? [...(compose ? ["install-compose"] : []), ...(buildx ? ["install-buildx"] : [])] : ["install-docker"];
       if (!dockerActions.length) dockerActions.push("reuse-docker");
       if (imageMode === "images") requireValue(!buildx);
-      const actions = [...dockerActions, ...ACTIONS.map(action => imageMode === "images" && action === "build-and-pin-images" ? "download-verify-load-images" : action)];
+      const actions = [...dockerActions, ...ACTIONS.map(action => imageMode === "images" && action === "build-and-pin-images" ? "download-verify-load-images" : tlsMode === "custom" && action === "acme-https-wss" ? "custom-https-wss" : action)];
       requireValue(canonicalJson(value.actions) === canonicalJson(actions));
       const lock = value.sourceLock === undefined ? undefined : object(value.sourceLock);
       return {

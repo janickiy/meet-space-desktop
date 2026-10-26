@@ -1,6 +1,7 @@
 import { subscribeCaptureRelease } from "../platform/captureLifecycle";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, Play, Square, VideoOff } from "lucide-react";
+import { Mic, Play, Square, Video, VideoOff, Volume2 } from "lucide-react";
+import { initials } from "../utils";
 import { useAuth } from "../auth";
 import {
   availableDeviceId,
@@ -290,10 +291,14 @@ function SpeakerTest({
   sinkId,
   label,
   onPlaying,
+  volume = 100,
+  fullLabel = false,
 }: {
   sinkId: string;
   label: string;
   onPlaying?: (value: boolean) => void;
+  volume?: number;
+  fullLabel?: boolean;
 }) {
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState("");
@@ -314,15 +319,19 @@ function SpeakerTest({
     setError("");
     setPlaying(true);
     onPlaying?.(true);
-    cancel.current = playDeviceTone(sinkId, (reason) => {
-      cancel.current = null;
-      setPlaying(false);
-      onPlaying?.(false);
-      if (reason)
-        setError(
-          "Не удалось воспроизвести звук. Проверьте выбранный динамик и разрешения браузера.",
-        );
-    });
+    cancel.current = playDeviceTone(
+      sinkId,
+      (reason) => {
+        cancel.current = null;
+        setPlaying(false);
+        onPlaying?.(false);
+        if (reason)
+          setError(
+            "Не удалось воспроизвести звук. Проверьте выбранный динамик и разрешения браузера.",
+          );
+      },
+      volume / 100,
+    );
   }
   return (
     <>
@@ -332,8 +341,14 @@ function SpeakerTest({
         aria-label={playing ? `Остановить: ${label}` : `Проверить: ${label}`}
         onClick={test}
       >
-        {playing ? <Square size={16} /> : <Play size={16} />}{" "}
-        {playing ? "Остановить" : "Проверить"}
+        {playing ? (
+          <Square size={16} />
+        ) : fullLabel ? (
+          <Volume2 size={16} />
+        ) : (
+          <Play size={16} />
+        )}{" "}
+        {playing ? "Остановить" : fullLabel ? "Проверить звук" : "Проверить"}
       </button>
       {error && (
         <p className="device-error" role="alert">
@@ -344,20 +359,43 @@ function SpeakerTest({
   );
 }
 
-export function AudioSettings() {
+/** One settings surface keeps the preview and the selected devices side by side. */
+export function DeviceSettings() {
+  const { user } = useAuth();
   const settings = useSettings();
   const { preferences, devices, update, available, outputSupported } = settings;
+  const [cameraPreview, setCameraPreview] = useState(false);
   const [checking, setChecking] = useState(false);
   const [speakerPlaying, setSpeakerPlaying] = useState(false);
-  const preview = usePreview(
+  const camera = usePreview(
+    "video",
+    available && cameraPreview,
+    preferences.videoInputId,
+    true,
+    settings.refresh,
+  );
+  const microphone = usePreview(
     "audio",
     checking,
     preferences.audioInputId,
     preferences.noiseSuppression,
     settings.refresh,
   );
+  const video = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const element = video.current;
+    if (!element) return;
+    element.srcObject = camera.stream;
+    if (camera.stream) void element.play().catch(() => {});
+    return () => {
+      element.srcObject = null;
+    };
+  }, [camera.stream]);
   const noiseSupported =
     !!navigator.mediaDevices?.getSupportedConstraints?.().noiseSuppression;
+  const canChooseOutput = !!(
+    navigator.mediaDevices as MediaDevices & { selectAudioOutput?: unknown }
+  )?.selectAudioOutput;
   async function chooseOutput(field: "audioOutputId" | "notificationOutputId") {
     const media = navigator.mediaDevices as MediaDevices & {
       selectAudioOutput?: (options?: {
@@ -372,241 +410,259 @@ export function AudioSettings() {
       update({ [field]: chosen.deviceId });
       await settings.refresh();
     } catch {
-      /* Отмена выбора устройства в браузере сохраняет прежнее значение. */
+      /* Cancelling the system device picker preserves the current selection. */
     }
   }
-  const canChooseOutput = !!(
-    navigator.mediaDevices as MediaDevices & { selectAudioOutput?: unknown }
-  )?.selectAudioOutput;
   return (
-    <div className="device-settings" id="audio-settings">
-      <div className="account-settings-section-heading">
-        <h2>Аудио</h2>
-        <p>Подготовьте звук к следующей встрече</p>
-      </div>
+    <section
+      className="reference-devices"
+      id="audio-video"
+      aria-labelledby="devices-heading"
+    >
+      <header className="settings-reference-heading">
+        <h2 id="devices-heading">Камера и звук</h2>
+        <p>Подготовьте устройства перед следующей встречей.</p>
+      </header>
       {!available && (
-        <p role="status">
-          Разрешите доступ к устройствам в браузере. Настройки доступны через
-          HTTPS.
+        <p className="device-error" role="status">
+          Устройства недоступны. Проверьте разрешения системы и подключение.
         </p>
       )}
-      {settings.deviceError && <p role="alert">{settings.deviceError}</p>}
-      <section className="device-card" aria-labelledby="microphone-title">
-        <header>
-          <h2 id="microphone-title">Микрофон</h2>
-          <LevelMeter stream={preview.stream} label="Уровень микрофона" />
-        </header>
-        <div className="device-select-row">
-          <DeviceSelect
-            devices={devices}
-            kind="audioinput"
-            label="Микрофон"
-            value={preferences.audioInputId}
-            onChange={(id) => update({ audioInputId: id })}
-            disabled={!available}
-          />
+      {settings.deviceError && (
+        <p className="device-error" role="alert">
+          {settings.deviceError}
+        </p>
+      )}
+      <div className="settings-device-grid">
+        <div className="settings-preview-column" id="video-settings">
+          <div
+            className={`device-camera-preview settings-camera-preview ${camera.stream ? "has-stream" : ""}`}
+          >
+            <video
+              ref={video}
+              autoPlay
+              muted
+              playsInline
+              aria-label="Предпросмотр камеры"
+            />
+            {!camera.stream && (
+              <div className="settings-camera-placeholder">
+                <span className="settings-preview-avatar" aria-hidden="true">
+                  {initials(user?.displayName || user?.email || "Вы")}
+                </span>
+                <span>
+                  {camera.loading
+                    ? "Подключаем камеру…"
+                    : "Предпросмотр камеры"}
+                </span>
+                <span className="settings-camera-status">
+                  <VideoOff size={13} />
+                  Камера выключена
+                </span>
+              </div>
+            )}
+            <button
+              className="settings-camera-control"
+              type="button"
+              disabled={!available}
+              onClick={() => {
+                if (camera.error && cameraPreview) camera.retry();
+                else setCameraPreview(!cameraPreview);
+              }}
+              aria-label={
+                camera.stream
+                  ? "Выключить предпросмотр камеры"
+                  : "Включить предпросмотр камеры"
+              }
+            >
+              {camera.stream ? <VideoOff size={16} /> : <Video size={16} />}
+              {camera.stream
+                ? "Выключить"
+                : camera.error
+                  ? "Повторить"
+                  : "Включить"}
+            </button>
+          </div>
+          <p className="settings-device-caption">
+            Выбор устройств сохранится для следующих встреч.
+          </p>
+          {camera.error && (
+            <p className="device-error" role="alert">
+              {camera.error}
+            </p>
+          )}
+        </div>
+        <div className="settings-device-inputs" id="audio-settings">
+          <label className="settings-device-field">
+            <span>Камера</span>
+            <DeviceSelect
+              devices={devices}
+              kind="videoinput"
+              label="Камера"
+              value={preferences.videoInputId}
+              onChange={(id) => update({ videoInputId: id })}
+              disabled={!available}
+            />
+          </label>
+          <label className="settings-device-field">
+            <span>Микрофон</span>
+            <DeviceSelect
+              devices={devices}
+              kind="audioinput"
+              label="Микрофон"
+              value={preferences.audioInputId}
+              onChange={(id) => update({ audioInputId: id })}
+              disabled={!available}
+            />
+          </label>
+          <label className="settings-device-field">
+            <span>Динамики</span>
+            <DeviceSelect
+              devices={devices}
+              kind="audiooutput"
+              label="Динамики"
+              value={preferences.audioOutputId}
+              onChange={(id) => update({ audioOutputId: id })}
+              disabled={!outputSupported}
+            />
+          </label>
+          <label className="settings-device-field settings-volume">
+            <span>
+              Громкость <output>{preferences.outputVolume}%</output>
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={preferences.outputVolume}
+              onChange={(event) =>
+                update({ outputVolume: Number(event.target.value) })
+              }
+              aria-label="Громкость"
+            />
+          </label>
+          <div className="settings-speaker-test">
+            <SpeakerTest
+              sinkId={preferences.audioOutputId}
+              label="динамики"
+              fullLabel
+              volume={preferences.outputVolume}
+              onPlaying={setSpeakerPlaying}
+            />
+            {speakerPlaying && <LevelMeter label="Тестовый звук" playing />}
+          </div>
+          {canChooseOutput && (
+            <button
+              type="button"
+              className="device-output-picker"
+              onClick={() => void chooseOutput("audioOutputId")}
+            >
+              Выбрать другое устройство
+            </button>
+          )}
+          {!outputSupported && (
+            <p className="device-hint">
+              Устройство воспроизведения выбирается в настройках системы.
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="settings-device-toggles">
+        <Toggle
+          label="Подавление фонового шума"
+          hint={
+            noiseSupported
+              ? "Уменьшать посторонние звуки во время разговора"
+              : "Недоступно в этой среде"
+          }
+          checked={preferences.noiseSuppression}
+          disabled={!noiseSupported}
+          onChange={(noiseSuppression) => update({ noiseSuppression })}
+        />
+        <Toggle
+          label="Выключать микрофон при входе"
+          hint="Включите его, когда будете готовы говорить"
+          checked={!preferences.microphoneEnabled}
+          onChange={(muted) => update({ microphoneEnabled: !muted })}
+        />
+        <Toggle
+          label="Включать камеру при входе"
+          hint="Автоматически показывать видео участникам"
+          checked={preferences.cameraEnabled}
+          onChange={(cameraEnabled) => update({ cameraEnabled })}
+        />
+      </div>
+      <details className="settings-device-more">
+        <summary>Проверка микрофона и дополнительные настройки</summary>
+        <section
+          className="settings-microphone-test"
+          aria-labelledby="microphone-test-title"
+        >
+          <header>
+            <h3 id="microphone-test-title">Микрофон</h3>
+            <LevelMeter stream={microphone.stream} label="Уровень микрофона" />
+          </header>
           <button
             type="button"
             className="device-test"
             disabled={!available}
             onClick={() => {
-              if (preview.error) preview.retry();
+              if (microphone.error) microphone.retry();
               else setChecking(!checking);
             }}
-            aria-label={
-              checking && !preview.error
-                ? "Остановить проверку микрофона"
-                : "Проверить микрофон"
-            }
           >
-            {checking && !preview.error ? (
+            {checking && !microphone.error ? (
               <Square size={16} />
             ) : (
               <Mic size={16} />
             )}
-            {checking && !preview.error ? "Остановить" : "Проверить"}
+            {checking && !microphone.error
+              ? "Остановить проверку"
+              : "Проверить микрофон"}
           </button>
-        </div>
-        <p className="device-hint" role="status">
-          {preview.loading
-            ? "Ожидаем разрешение на доступ к микрофону…"
-            : preview.stream
-              ? "Говорите — индикатор показывает уровень вашего голоса."
-              : "Проверьте микрофон, чтобы увидеть уровень звука и названия устройств."}
-        </p>
-        {preview.error && (
-          <p className="device-error" role="alert">
-            {preview.error}
+          <p className="device-hint" role="status">
+            {microphone.loading
+              ? "Ожидаем разрешение на доступ к микрофону…"
+              : microphone.stream
+                ? "Говорите — индикатор показывает уровень вашего голоса."
+                : "Проверьте микрофон перед встречей."}
           </p>
-        )}
-        <Toggle
-          label="Подключаться с выключенным микрофоном"
-          checked={!preferences.microphoneEnabled}
-          onChange={(muted) => update({ microphoneEnabled: !muted })}
-        />
-        <Toggle
-          label="Шумоподавление"
-          checked={preferences.noiseSuppression}
-          disabled={!noiseSupported}
-          onChange={(noiseSuppression) => update({ noiseSuppression })}
-          hint={!noiseSupported ? "Недоступно в этом браузере" : undefined}
-        />
-      </section>
-      <section className="device-card" aria-labelledby="speaker-title">
-        <header>
-          <h2 id="speaker-title">Динамик</h2>
-          <LevelMeter label="Тестовый звук" playing={speakerPlaying} />
-        </header>
-        <div className="device-select-row">
-          <DeviceSelect
-            devices={devices}
-            kind="audiooutput"
-            label="Динамик"
-            value={preferences.audioOutputId}
-            onChange={(id) => update({ audioOutputId: id })}
-            disabled={!outputSupported}
-          />
-          <SpeakerTest
-            sinkId={preferences.audioOutputId}
-            label="динамик"
-            onPlaying={setSpeakerPlaying}
-          />
-        </div>
-        {canChooseOutput && (
-          <button
-            type="button"
-            className="device-output-picker"
-            onClick={() => void chooseOutput("audioOutputId")}
-          >
-            Выбрать другое устройство
-          </button>
-        )}
-        {!outputSupported && (
-          <p className="device-hint">
-            Динамик выбирается в настройках системы или браузера.
-          </p>
-        )}
-      </section>
-      <section className="device-card" aria-labelledby="ringtone-title">
-        <header>
-          <h2 id="ringtone-title">Звук приглашения</h2>
-        </header>
-        <p className="device-hint">
-          Уведомления о приглашениях и скором начале встречи.
-        </p>
-        <label className="device-output-label">Источник звука</label>
-        <div className="device-select-row">
-          <DeviceSelect
-            devices={devices}
-            kind="audiooutput"
-            label="Источник звука уведомлений"
-            value={preferences.notificationOutputId}
-            onChange={(id) => update({ notificationOutputId: id })}
-            disabled={!outputSupported}
-          />
-          <SpeakerTest
-            sinkId={preferences.notificationOutputId}
-            label="звук приглашения"
-          />
-        </div>
-        {canChooseOutput && (
-          <button
-            type="button"
-            className="device-output-picker"
-            onClick={() => void chooseOutput("notificationOutputId")}
-          >
-            Выбрать другое устройство
-          </button>
-        )}
-      </section>
-      <p className="device-saved-hint">
-        Настройки сохраняются автоматически в этом браузере.
-      </p>
-    </div>
-  );
-}
-
-export function VideoSettings() {
-  const settings = useSettings();
-  const { preferences, devices, update, available } = settings;
-  const preview = usePreview(
-    "video",
-    available,
-    preferences.videoInputId,
-    true,
-    settings.refresh,
-  );
-  const video = useRef<HTMLVideoElement>(null);
-  useEffect(() => {
-    const element = video.current;
-    if (!element) return;
-    element.srcObject = preview.stream;
-    if (preview.stream) void element.play().catch(() => {});
-    return () => {
-      element.srcObject = null;
-    };
-  }, [preview.stream]);
-  return (
-    <div className="device-settings" id="video-settings">
-      <section className="device-card" aria-labelledby="camera-title">
-        <header>
-          <div className="account-settings-section-heading">
-            <h2 id="camera-title">Видео</h2>
-            <p>Предпросмотр доступен только вам</p>
-          </div>
-        </header>
-        <div className="device-camera-preview">
-          <video
-            ref={video}
-            autoPlay
-            muted
-            playsInline
-            aria-label="Предпросмотр камеры"
-          />
-          {!preview.stream && (
-            <div className="device-camera-empty">
-              <VideoOff size={32} />
-              <span>
-                {preview.loading ? "Подключаем камеру…" : "Предпросмотр камеры"}
-              </span>
-            </div>
+          {microphone.error && (
+            <p className="device-error" role="alert">
+              {microphone.error}
+            </p>
           )}
-        </div>
-        {preview.error && (
-          <div className="device-error" role="alert">
-            {preview.error}
+        </section>
+        <section className="settings-ringtone" aria-labelledby="ringtone-title">
+          <h3 id="ringtone-title">Звук приглашения</h3>
+          <p className="device-hint">
+            Уведомления о сообщениях, приглашениях и скором начале встречи.
+          </p>
+          <div className="device-select-row">
+            <DeviceSelect
+              devices={devices}
+              kind="audiooutput"
+              label="Источник звука уведомлений"
+              value={preferences.notificationOutputId}
+              onChange={(id) => update({ notificationOutputId: id })}
+              disabled={!outputSupported}
+            />
+            <SpeakerTest
+              sinkId={preferences.notificationOutputId}
+              label="звук приглашения"
+            />
+          </div>
+          {canChooseOutput && (
             <button
               type="button"
-              className="device-test"
-              onClick={preview.retry}
+              className="device-output-picker"
+              onClick={() => void chooseOutput("notificationOutputId")}
             >
-              Повторить
+              Выбрать другое устройство
             </button>
-          </div>
-        )}
-        {!available && (
-          <p role="status">
-            Камера недоступна. Проверьте разрешения браузера и
-            HTTPS-подключение.
-          </p>
-        )}
-        {settings.deviceError && <p role="alert">{settings.deviceError}</p>}
-        <div className="device-camera-select">
-          <span>Камера</span>
-          <DeviceSelect
-            devices={devices}
-            kind="videoinput"
-            label="Камера"
-            value={preferences.videoInputId}
-            onChange={(id) => update({ videoInputId: id })}
-            disabled={!available}
-          />
-        </div>
-        <Toggle
-          label="Подключаться с выключенной камерой"
-          checked={!preferences.cameraEnabled}
-          onChange={(muted) => update({ cameraEnabled: !muted })}
-        />
+          )}
+        </section>
         <Toggle
           label="Видеть себя на звонке"
           hint="Ваше видео или аватар"
@@ -619,10 +675,7 @@ export function VideoSettings() {
           checked={preferences.hideParticipantVideo}
           onChange={(hideParticipantVideo) => update({ hideParticipantVideo })}
         />
-      </section>
-      <p className="device-saved-hint">
-        Настройки сохраняются автоматически в этом браузере.
-      </p>
-    </div>
+      </details>
+    </section>
   );
 }

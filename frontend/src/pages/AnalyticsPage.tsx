@@ -13,7 +13,7 @@ import "./analytics.css";
 export function AnalyticsPage() {
   const capabilities = useCapabilities();
   return (
-    <>
+    <div className="analytics-page">
       <section className="page-heading">
         <div>
           <h1>Аналитика</h1>
@@ -40,7 +40,7 @@ export function AnalyticsPage() {
           </Link>
         </section>
       )}
-    </>
+    </div>
   );
 }
 

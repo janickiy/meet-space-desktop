@@ -219,7 +219,7 @@
   align-content: center;
   justify-items: center;
   text-align: center;
-  padding: 24px;
+  padding: 32px 24px;
   height: 100%;
   color: var(--muted, #778499);
 }
@@ -229,17 +229,17 @@
   color: var(--primary);
   background: var(--primary-soft);
   border-radius: 16px;
-  margin-bottom: 8px;
+  margin-bottom: 24px;
 }
 .personal-placeholder h2 {
-  margin: 16px 0 8px;
+  margin: 0 0 12px;
   color: var(--text);
   font-size: calc(24px * var(--text-scale));
   letter-spacing: -0.025em;
 }
 .personal-placeholder p {
-  margin: 0;
-  line-height: 1.7;
+  margin: 0 0 24px;
+  line-height: 1.6;
   font-size: calc(14px * var(--text-scale));
   max-width: 420px;
 }
@@ -528,8 +528,9 @@
   padding: 12px 20px;
 }
 .personal-placeholder > small {
-  margin-top: 36px;
+  margin-top: 28px;
   font-size: calc(12px * var(--text-scale));
+  line-height: 1.6;
 }
 .personal-user-id {
   padding: 12px;
@@ -691,10 +692,10 @@
   display: flex;
 }
 
-/* Desktop reference: 282px conversation rail and a full-height message canvas. */
+/* Keep the white conversation panels inset in the workspace, as in decs_maket. */
 .workspace-main:has(> .personal-page) {
-  padding: 0;
-  background: var(--surface);
+  padding: 28px var(--workspace-gutter);
+  background: var(--canvas);
 }
 .personal-page {
   grid-template-columns: 282px minmax(0, 1fr);
@@ -747,7 +748,7 @@
   flex: 0 0 auto;
   min-height: 37px;
   padding: 10px 0 12px;
-  font-size: calc(10px * var(--text-scale));
+  font-size: calc(12px * var(--text-scale));
   font-weight: 500;
 }
 .personal-sidebar .personal-filters button[aria-pressed="true"] {
@@ -926,21 +927,33 @@
 }
 .personal-sidebar .messaging-empty h3 {
   font-size: calc(16px * var(--text-scale));
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--muted);
 }
 .personal-sidebar .messaging-empty p {
   font-size: calc(11px * var(--text-scale));
 }
 @media (min-width: 1600px) {
+  .workspace-main:has(> .personal-page) {
+    padding-block: 36px;
+  }
   .personal-page {
     grid-template-columns: 315px minmax(0, 1fr);
   }
 }
 @media (min-width: 768px) and (max-width: 1180px) {
+  .workspace-main:has(> .personal-page) {
+    padding-block: 25px;
+  }
   .personal-page {
     grid-template-columns: 244px minmax(0, 1fr);
   }
 }
 @media (min-width: 768px) and (max-width: 950px) {
+  .workspace-main:has(> .personal-page) {
+    padding-block: 24px;
+  }
   .personal-page {
     grid-template-columns: 220px minmax(0, 1fr);
   }

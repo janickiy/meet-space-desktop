@@ -26,7 +26,8 @@ import { formatDate, initials } from "../utils";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import { IntegrationsSettings } from "../components/IntegrationsSettings";
-import { AudioSettings, VideoSettings } from "../components/DeviceSettings";
+import { DeviceSettings } from "../components/DeviceSettings";
+import { serviceOrigin } from "../platform/urls";
 import { TEXT_SIZE_OPTIONS, useAppearance } from "../appearance";
 import type { TextSize } from "../appearance";
 import { isDesktopBuild } from "../platform/build";
@@ -34,6 +35,7 @@ import { DesktopConnectionSettings } from "../components/desktop/DesktopSessionG
 import "../components/account-settings-modal.css";
 import { DesktopNativeSettings } from "../components/desktop/DesktopNativeSettings";
 import "./history-notifications.css";
+import "../components/settings-reference.css";
 
 /** Показывает вкладки профиля, устройств, уведомлений и оформления внутри диалога аккаунта.
  * @return Содержимое настроек без интеграций и неподдерживаемого раздела безопасности.
@@ -179,7 +181,9 @@ export function SettingsPage() {
           </span>
           <div>
             <strong>{user.displayName || user.email}</strong>
-            <span>Активный аккаунт · {user.email}</span>
+            <span>
+              Активный аккаунт · {user.email} · {new URL(serviceOrigin()).host}
+            </span>
           </div>
           <Button
             variant="secondary"
@@ -238,7 +242,7 @@ export function SettingsPage() {
           />
           <span>
             {PRODUCT_NAME}
-            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.6-beta"}</small>
+            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.9-beta"}</small>
           </span>
         </div>
       </div>
@@ -277,12 +281,15 @@ export function SettingsPage() {
                   Так вас видят участники рабочего пространства.
                 </p>
               </div>
-              <span className="profile-initials" aria-hidden="true">
-                {(user?.displayName || user?.email || "?")
-                  .trim()
-                  .slice(0, 1)
-                  .toLocaleUpperCase("ru-RU")}
+            </div>
+            <div className="settings-profile-intro">
+              <span className="settings-profile-avatar" aria-hidden="true">
+                {initials(user?.displayName || user?.email || "Вы")}
               </span>
+              <div>
+                <strong>{user?.displayName || user?.email}</strong>
+                <span>Участник пространства MeetSpace</span>
+              </div>
             </div>
             <form
               className="reference-profile-form"
@@ -350,12 +357,7 @@ export function SettingsPage() {
           </section>
         )}
         {activeSection === "accounts" && !guest && <AccountManagement />}
-        {activeSection === "devices" && (
-          <div className="reference-devices">
-            <VideoSettings />
-            <AudioSettings />
-          </div>
-        )}
+        {activeSection === "devices" && <DeviceSettings />}
         {activeSection === "connection" && isDesktopBuild && (
           <DesktopConnectionSettings />
         )}
@@ -383,9 +385,16 @@ export function SettingsPage() {
                       className={`appearance-theme-preview appearance-preview-${theme}`}
                       aria-hidden="true"
                     >
-                      <span />
-                      <span />
-                      <span />
+                      <span className="settings-theme-sidebar">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                      <span className="settings-theme-content">
+                        <b />
+                        <i />
+                        <i />
+                      </span>
                     </span>
                     <span className="appearance-theme-name">
                       {theme === "light" ? (
@@ -406,11 +415,7 @@ export function SettingsPage() {
                 ))}
               </div>
             </fieldset>
-            <section
-              className="appearance-text-block"
-              aria-labelledby={`${prefix}-text-heading`}
-            >
-              <h2 id={`${prefix}-text-heading`}>Внешний вид</h2>
+            <section className="appearance-text-block">
               <label className="field appearance-text-size">
                 <span>Размер текста</span>
                 <select
@@ -434,8 +439,8 @@ export function SettingsPage() {
               </div>
             </section>
             <p className="field-hint">
-              Оформление применяется сразу и сохраняется для вашего аккаунта в
-              этом браузере.
+              Оформление применяется сразу и сохраняется для вашего аккаунта на
+              этом устройстве.
             </p>
             {appearance.persistenceError && (
               <p role="status">

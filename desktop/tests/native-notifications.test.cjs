@@ -380,3 +380,42 @@ test("supported recording/summary events route by validated IDs and categories",
   });
   assert.ok(f.shown.every((handle) => handle.closed));
 });
+
+test("app sound replaces the OS tone, is identity scoped and coalesces duplicate/burst delivery", () => {
+  const sounds = [];
+  const f = fixture({ onSound: (identity, id) => sounds.push({ ...identity, id }) });
+  const first = f.notice();
+  f.notifier.observe(first);
+  f.notifier.observe(first);
+  f.notifier.observe(f.notice());
+  assert.deepEqual(sounds, [{ profileId: profile, userId: user, id: first.id }]);
+  assert.ok(f.shown.every(handle => handle.options.silent), "never play both OS and app sound");
+  f.advance(1000);
+  f.notifier.observe(f.notice());
+  assert.equal(sounds.length, 2);
+  f.notifier.setContext({ route: "/app", soundEnabled: false });
+  f.advance(1000);
+  f.notifier.observe(f.notice());
+  assert.equal(f.shown.length, 4, "toast still arrives when sound is disabled");
+  assert.equal(sounds.length, 2);
+});
+
+test("app sound obeys active-chat, mute, category, stale-event and logout suppression", () => {
+  const sounds = [];
+  const f = fixture({ onSound: (_, id) => sounds.push(id) });
+  f.setFocused(true);
+  f.notifier.setContext({ route: `/personal/${conversation}`, soundEnabled: true });
+  f.notifier.observe(f.notice());
+  f.setFocused(false);
+  f.notifier.observeAccount(f.account("conversation.preferences.updated", {
+    userId: user, item: { id: conversation, notificationsEnabled: false },
+  }));
+  f.notifier.observe(f.notice());
+  f.notifier.setPreferences({ ...preferences, invitation: false });
+  f.notifier.observe(f.notice({ type: "conference.invited" }, { conferenceId: conference, conversationId: undefined }));
+  f.notifier.observe(f.notice({ createdAt: "2026-10-14T07:59:59Z" }));
+  f.notifier.setIdentity(null);
+  f.notifier.observe(f.notice());
+  assert.deepEqual(sounds, []);
+  assert.equal(f.shown.length, 0);
+});

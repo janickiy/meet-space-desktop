@@ -17,6 +17,7 @@ import {
   Paperclip,
   Pencil,
   Reply,
+  Send,
   SendHorizontal,
   Star,
   Trash2,
@@ -1143,7 +1144,12 @@ export function MessageThread({
                 aria-label={send.isError ? "Повторить отправку" : "Отправить"}
                 title={send.isError ? "Повторить отправку" : "Отправить"}
               >
-                {!send.isPending && <SendHorizontal size={19} />}
+                {!send.isPending &&
+                  (personal ? (
+                    <Send size={17} />
+                  ) : (
+                    <SendHorizontal size={19} />
+                  ))}
               </Button>
             </div>
             <p className="chat-compose-caption" aria-hidden="true">

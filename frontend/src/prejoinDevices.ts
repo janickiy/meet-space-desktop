@@ -5,6 +5,7 @@ export interface DevicePreferences {
   audioInputId: string;
   videoInputId: string;
   audioOutputId: string;
+  outputVolume: number;
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
   notificationOutputId: string;
@@ -32,6 +33,7 @@ const emptyPreferences: DevicePreferences = {
   audioInputId: "",
   videoInputId: "",
   audioOutputId: "",
+  outputVolume: 100,
   microphoneEnabled: true,
   cameraEnabled: true,
   notificationOutputId: "",
@@ -58,6 +60,11 @@ export function readDevicePreferences(userId: string): DevicePreferences {
       audioInputId: safeId(value.audioInputId),
       videoInputId: safeId(value.videoInputId),
       audioOutputId: safeId(value.audioOutputId),
+      outputVolume:
+        typeof value.outputVolume === "number" &&
+        Number.isFinite(value.outputVolume)
+          ? Math.min(100, Math.max(0, value.outputVolume))
+          : 100,
       microphoneEnabled: value.microphoneEnabled === true,
       cameraEnabled: value.cameraEnabled === true,
       notificationOutputId: safeId(value.notificationOutputId),

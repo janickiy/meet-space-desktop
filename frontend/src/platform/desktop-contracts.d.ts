@@ -78,6 +78,7 @@ export interface DesktopSocketRequest {
   token?: string | null;
 }
 export type DesktopTransportEvent =
+  | { kind: "notification-sound"; profileId: string; userId: string; id: string }
   | { kind: "update"; state: DesktopUpdateState }
   | { kind: "lifecycle"; type: "suspend" | "resume" | "quit" }
   | {
@@ -182,6 +183,7 @@ export type SshInstallerCredentials =
   | { kind: "password"; password: string }
   | { kind: "privateKey"; privateKey: string; passphrase?: string };
 export type SshInstallerImageMode = "images" | "source";
+export type SshInstallerTlsMode = "letsencrypt" | "custom";
 export interface SshInstallerState {
   busy: boolean;
   phase:
@@ -221,6 +223,8 @@ export interface SshInstallerState {
       domain: string;
       publicIpv4: string;
       acmeEmail?: string;
+      tlsMode?: SshInstallerTlsMode;
+      certificateSha256?: string;
       imageMode?: SshInstallerImageMode;
       imageRelease?: string;
       smtp?: {

@@ -1,0 +1,49 @@
+/* Help follows the reference dialog; shortcuts describe the real application. */
+.modal.workspace-help {
+  width: min(520px, calc(100vw - 32px));
+  padding: 26px;
+}
+.modal.workspace-help > h2 {
+  margin: 0 34px 23px 0;
+  line-height: 1.4;
+}
+.modal.workspace-help > p {
+  margin: 9px 0 19px;
+  font-size: var(--text-xs);
+  line-height: 1.8;
+}
+.modal.workspace-help dl {
+  margin: 0;
+}
+.modal.workspace-help dl > div {
+  padding: 14px 0;
+  align-items: center;
+  font-size: var(--text-xs);
+}
+.modal.workspace-help dd {
+  flex-shrink: 0;
+}
+.modal.workspace-help .workspace-help-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  padding: 17px 18px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+.workspace-help-brand > img {
+  flex-shrink: 0;
+}
+.workspace-help-brand strong {
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.4;
+}
+.modal.workspace-help .workspace-help-brand p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+}

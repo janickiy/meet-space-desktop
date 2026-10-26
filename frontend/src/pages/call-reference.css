@@ -46,6 +46,7 @@
   font-size: calc(10px * var(--text-scale));
   font-weight: 600;
   letter-spacing: 1.8px;
+  color: var(--primary);
 }
 .prejoin-reference-page .prejoin-heading p {
   font-size: calc(13px * var(--text-scale));
@@ -338,7 +339,7 @@
 .call-reference-room .conference-stage {
   padding: 4px 0 0;
   gap: 16px;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) 292px;
 }
 .call-reference-room.room-panel-closed .conference-stage {
   grid-template-columns: minmax(0, 1fr);
@@ -455,32 +456,53 @@
 .call-reference-room .room-participant-filmstrip li > div {
   font-size: calc(10px * var(--text-scale));
 }
-.call-reference-room .conference-stage-rail {
-  margin-bottom: 18px;
-  border-radius: 16px;
-  border-color: #354153;
+.conference-room-page.call-reference-room .conference-stage-rail {
+  height: auto;
+  margin-top: 4px;
+  margin-bottom: 28px;
+  border-radius: 16px 0 0 16px;
+  border: 0;
+  border-left: 1px solid #354153;
+  background: #1e2838;
 }
 .call-reference-room .room-panel-header {
-  padding: 12px 16px 7px;
-}
-.call-reference-room .room-panel-header strong {
-  font-size: calc(14px * var(--text-scale));
+  min-height: 59px;
+  padding: 0 18px;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
 }
 .call-reference-room .room-panel-header .icon-button {
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  padding: 6px;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin-left: auto;
 }
 .call-reference-room .conference-stage-tabs {
-  gap: 18px;
-  padding: 0 16px;
+  flex: 1;
+  min-width: 0;
+  gap: 12px;
+  padding: 0;
+  border: 0;
 }
 .call-reference-room .conference-stage-tabs button {
-  min-height: 43px;
+  min-height: 59px;
   font-size: calc(11px * var(--text-scale));
-  padding: 9px 0 12px;
+  padding: 20px 0 17px;
+  gap: 5px;
+  white-space: nowrap;
+}
+.call-reference-room .room-panel-tab-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding-inline: 3px;
+  border-radius: 5px;
+  background: #c1d3b514;
+  color: #c2d7b2;
+  font-size: calc(9px * var(--text-scale));
 }
 .call-reference-room .room-participant-identity strong {
   font-size: calc(11px * var(--text-scale));
@@ -762,6 +784,22 @@
   }
 }
 @media (max-width: 850px) {
+  .prejoin-reference-page .prejoin-heading h1 {
+    font-size: calc(24px * var(--text-scale));
+  }
+  .prejoin-reference-page .prejoin-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 25px;
+  }
+  .prejoin-reference-page .prejoin-video-frame {
+    aspect-ratio: 1.7;
+    max-height: 340px;
+  }
+  .prejoin-reference-page .prejoin-grid > .prejoin-settings {
+    width: 100%;
+    max-width: 500px;
+    margin-inline: auto;
+  }
   .conference-room-page.call-reference-room .room-footer {
     --room-control-width: 48px;
     --room-control-height: 47px;
@@ -787,15 +825,7 @@
   .prejoin-reference-page .prejoin-heading {
     margin: 24px 0;
   }
-  .prejoin-reference-page .prejoin-heading h1 {
-    font-size: calc(24px * var(--text-scale));
-  }
-  .prejoin-reference-page .prejoin-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
-  }
   .prejoin-reference-page .prejoin-video-frame {
-    aspect-ratio: 1.5;
     min-height: 260px;
   }
   .prejoin-reference-page .prejoin-settings .field input,

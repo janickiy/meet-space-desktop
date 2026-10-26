@@ -489,6 +489,10 @@ export async function startApp(
     isFocused: () => !!mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && mainWindow.isFocused(),
     navigate: (route) => { if (quitting) return; pendingRoute = route; nativeShell?.show(); flushRoute(); },
     onUnread: (count) => nativeShell?.setUnread(count),
+    onSound: (identity, id) => {
+      if (!quitting && mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
+        mainWindow.webContents.send("meetspace:transport", { kind: "notification-sound", ...identity, id });
+    },
   });
   const overrides = !app.isPackaged ? options.brokerOptions : undefined;
   broker = new MeetSpaceBroker({

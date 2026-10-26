@@ -1,6 +1,6 @@
 {
   "name": "meetspace-desktop",
-  "version": "0.1.6-beta",
+  "version": "0.1.9-beta",
   "private": true,
   "description": "MeetSpace desktop with the supplied Windows design — test build",
   "author": "MeetSpace",
@@ -49,7 +49,7 @@
     "verify:artifacts": "node scripts/verify-artifacts.mjs",
     "release": "node scripts/release.mjs",
     "pretest:ssh": "npm run build",
-    "test:ssh": "node tests/electron-ssh-runner.cjs",
+    "test:ssh": "node tests/electron-ssh-runner.cjs && node tests/electron-ssh-tls-runner.cjs",
     "pretest:platform": "npm run build",
     "test:platform": "node tests/platform-electron-runner.cjs"
   },

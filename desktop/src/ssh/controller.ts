@@ -4,7 +4,8 @@ import path from "node:path";
 import { isIP } from "node:net";
 import { atomicWrite } from "../session/vault";
 import { analyzePreflight } from "./preflight";
-import { InstallerBundle, InstallFailure, RECOVERY_INSTALLER_RELEASE_SHA256S, assertTicketBinding, canonicalJson, jsonObject, parseInstallerReply, parseInstallStatus, sha256, smtpOptions, validImageRelease, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
+import { validateTlsCertificate } from "./certificate";
+import { InstallerBundle, InstallFailure, PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256, RECOVERY_INSTALLER_RELEASE_SHA256S, assertTicketBinding, canonicalJson, jsonObject, parseInstallerReply, parseInstallStatus, sha256, smtpOptions, validImageRelease, type InstallOptions, type InstallPlan, type InstallTicket, type InstallerAction, type JsonObject } from "./protocol";
 import { Ssh2Transport, validateHostKey, type SshTransport } from "./transport";
 import { destroyCredentials, normalizeDomain, objectInput, ownCredentials, SshError, validateEndpoint, type OwnedCredentials, type SshAction, type SshEndpoint, type SshHostKey, type SshInstallerState } from "./types";
 
@@ -21,23 +22,37 @@ function safeError(error: unknown): { code: string; message: string } {
       TICKET_INVALID: "Задание не соответствует серверу или подтверждённому SSH-ключу.",
       INVALID_RESPONSE: "Ответ удалённого установщика не прошёл проверку.",
       RESPONSE_LIMIT: "Ответ удалённого установщика превысил допустимый размер.",
-      PREBUILT_UNAVAILABLE: "Готовые Docker-образы для выбранной версии и архитектуры недоступны. Выберите другую версию или сборку из исходного кода.",
+      PREBUILT_UNAVAILABLE: "Последние готовые Docker-образы для архитектуры сервера недоступны. Повторите попытку позже или выберите сборку из исходного кода.",
       PREBUILT_INVALID: "Пакет готовых образов не прошёл проверку. Установка остановлена.",
       PREBUILT_SECURITY: "Готовые образы не соответствуют требованиям безопасности. Установка остановлена.",
       PREBUILT_DOWNLOAD_FAILED: "Не удалось скачать готовые Docker-образы. Проверьте подключение сервера к GitHub и повторите попытку.",
-      INVALID_IMAGE_MODE: "Выберите готовые Docker-образы или сборку из исходного кода и проверьте версию.",
+      INVALID_IMAGE_MODE: "Выберите готовые Docker-образы или сборку из исходного кода.",
       EXISTING_INSTALLATION: "На сервере уже есть установка MeetSpace. Выберите её исходный способ установки и проверьте состояние задания.",
+      TLS_CERTIFICATE_INVALID: "Сертификат не прошёл проверку на сервере. Проверьте полную цепочку, домен, срок действия и соответствие приватного ключа.",
+      TLS_CERTIFICATE_REQUIRED: "Добавьте сертификат с полной цепочкой и соответствующий приватный ключ в формате PEM.",
+      CERTIFICATE_INVALID: "Сертификат не прошёл проверку на сервере. Проверьте полную цепочку, доверие, домен, срок действия и соответствие приватного ключа.",
+      CERTIFICATE_REQUIRED: "Добавьте сертификат с полной цепочкой и соответствующий приватный ключ в формате PEM.",
+      CERTIFICATE_DOMAIN: "Сертификат не подходит для указанного домена MeetSpace.",
+      CERTIFICATE_EXPIRED: "Срок действия сертификата истёк или заканчивается меньше чем через час. Выберите действующий сертификат.",
+      CERTIFICATE_KEY_MISMATCH: "Приватный ключ не соответствует выбранному сертификату.",
+      CERTIFICATE_UNTRUSTED: "Сервер не доверяет цепочке сертификата. Добавьте полную цепочку доверенного центра сертификации.",
+      CERTIFICATE_CHANGED: "Выбранный сертификат отличается от подтверждённого плана. Подготовьте новый план установки.",
+      INVALID_TLS: "Настройки сертификата не соответствуют плану. Проверьте выбранный способ HTTPS и подготовьте новый план.",
     };
     return { code: error.code, message: messages[error.code] ?? `Удалённый установщик сообщил: ${error.code}.` };
   }
   return { code: "INTERNAL", message: "Не удалось завершить действие SSH-установщика. Подключитесь снова и проверьте состояние задания." };
 }
-function installOptions(raw: unknown, verifiedIpv4: string): InstallOptions {
+function installOptions(raw: unknown, verifiedIpv4: string, certificateSha256?: string): InstallOptions {
   const value = objectInput(raw);
   const domain = normalizeDomain(value.domain);
   if (value.publicIpv4 !== undefined && (typeof value.publicIpv4 !== "string" || isIP(value.publicIpv4.trim()) !== 4 || value.publicIpv4.trim() !== verifiedIpv4)) throw new SshError("INPUT", "IPv4 не совпадает с проверенным SSH-адресом сервера. Повторите проверку хоста.");
   const acmeEmail = typeof value.acmeEmail === "string" ? value.acmeEmail.trim() : "";
   if (acmeEmail.length > 254 || (acmeEmail && !/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/.test(acmeEmail))) throw new SshError("INPUT", "Проверьте email для сертификата HTTPS.");
+  const tlsMode = value.tlsMode === undefined ? "letsencrypt" : value.tlsMode;
+  if (tlsMode !== "letsencrypt" && tlsMode !== "custom") throw new SshError("INPUT", "Выберите Let's Encrypt или свой сертификат HTTPS.");
+  if (tlsMode === "custom" ? (!certificateSha256 || acmeEmail || (value.certificateSha256 !== undefined && value.certificateSha256 !== certificateSha256)) : value.certificateSha256 !== undefined)
+    throw new SshError("INPUT", "Проверьте выбранный сертификат HTTPS и подготовьте новый план.");
   let smtp: InstallOptions["smtp"];
   if (value.smtp !== undefined) {
     try { smtp = smtpOptions(value.smtp); }
@@ -45,9 +60,11 @@ function installOptions(raw: unknown, verifiedIpv4: string): InstallOptions {
   }
   const imageMode = value.imageMode === undefined ? "source" : value.imageMode;
   if (imageMode !== "source" && imageMode !== "images") throw new SshError("INPUT", "Выберите способ установки MeetSpace.");
-  if (value.imageRelease !== undefined && (imageMode !== "images" || !validImageRelease(value.imageRelease))) throw new SshError("INPUT", "Выберите latest или укажите версию готовых образов, например v0.4.0.");
+  if (value.imageRelease !== undefined && (imageMode !== "images" || !validImageRelease(value.imageRelease))) throw new SshError("INPUT", "Проверьте способ установки MeetSpace.");
+  // New plans always resolve latest; saved plans retain their frozen image lock.
   return { domain, publicIpv4: verifiedIpv4, acmeEmail, ...(smtp ? { smtp } : {}),
-    ...(value.imageMode === undefined ? {} : { imageMode }), ...(value.imageRelease === undefined ? {} : { imageRelease: value.imageRelease as string }) };
+    ...(value.tlsMode === undefined ? {} : { tlsMode }), ...(certificateSha256 ? { certificateSha256 } : {}),
+    ...(value.imageMode === undefined ? {} : { imageMode }), ...(imageMode === "images" ? { imageRelease: "latest" } : {}) };
 }
 /** The renderer gets public state only; pins and recovery tickets are the only data written to disk. */
 export class SshInstallerController {
@@ -120,6 +137,7 @@ export class SshInstallerController {
     const action = actionInput as SshAction;
     let input: Record<string, unknown>;
     try { input = objectInput(raw); } catch { return failure("INPUT", "Некорректные параметры SSH."); }
+    if (!["plan", "apply"].includes(action) && input.tlsCertificate !== undefined) return failure("INPUT", "Файлы сертификата нужны только для подготовки плана и запуска установки.");
     if (action === "detach") return this.detach();
     if (this.current.busy) return failure("BUSY", "Дождитесь завершения текущей проверки.");
     const generation = ++this.generation;
@@ -161,7 +179,10 @@ export class SshInstallerController {
           if (generation !== this.generation) return this.state();
           this.current.preflight = analyzePreflight(domain, result, endpoint.host); this.current.phase = "preflight";
         } else if (action === "plan") {
-          const domain = normalizeDomain(objectInput(input.options).domain);
+          const requestedOptions = objectInput(input.options);
+          const domain = normalizeDomain(requestedOptions.domain);
+          if (requestedOptions.tlsMode !== "custom" && input.tlsCertificate !== undefined) throw new SshError("INPUT", "Для Let's Encrypt не требуется загружать сертификат.");
+          const certificate = requestedOptions.tlsMode === "custom" ? validateTlsCertificate(input.tlsCertificate, domain) : undefined;
           if (!this.current.preflight || this.current.preflight.domain !== domain || !this.current.preflight.ready || !this.current.preflight.publicIpv4) throw new SshError("PREFLIGHT_REQUIRED", "Сначала выполните проверку сервера и устраните блокирующие замечания.");
           if (this.ticket) throw new SshError("PENDING_JOB", "Сохранённое задание доступно через проверку состояния и продолжение. Для нового плана сначала удалите локальную карточку.");
           // Recheck authenticated host DNS immediately before freezing the plan.
@@ -172,26 +193,28 @@ export class SshInstallerController {
           const preflight = analyzePreflight(domain, checked, endpoint.host);
           this.current.preflight = preflight; this.current.phase = "preflight";
           if (!preflight.ready || !preflight.publicIpv4) throw new SshError("PREFLIGHT_REQUIRED", "Повторная проверка хоста обнаружила блокирующие замечания. Проверьте публичный SSH-адрес и результаты проверки.");
-          const options = installOptions(input.options, preflight.publicIpv4);
+          const options = installOptions(input.options, preflight.publicIpv4, certificate?.certificateSha256);
           let result: JsonObject, selectedBundle = this.bundle;
           try {
             result = await this.request("plan", { options }, endpoint, pin);
           } catch (error) {
             if (generation !== this.generation) return this.state();
             if (!(error instanceof InstallFailure) || !["PLAN_CHANGED", "EXISTING_INSTALLATION"].includes(error.code)) throw error;
-            // Source-only recovery never changes an explicitly selected images
-            // installation into a source build. Only fixed signed recipes may
-            // identify an existing job; they cannot create a fresh old install.
-            if (options.imageMode === "images") throw error;
-            const { imageMode: _mode, imageRelease: _release, ...legacyOptions } = options;
+            // Older recipes may identify an existing job, never create a new one.
+            // Image installs can use only the previous image-capable recipe;
+            // custom certificates cannot fall back to an ACME-only recipe.
+            if (options.tlsMode === "custom") throw error;
+            const { tlsMode: _tls, certificateSha256: _certificate, ...previousOptions } = options;
+            const { imageMode: _mode, imageRelease: _release, ...sourceOnlyOptions } = previousOptions;
             let recoveredResult: JsonObject | undefined, lastError: unknown = error;
             const currentHash = sha256(canonicalJson(this.bundle.manifest));
-            for (const recipeHash of RECOVERY_INSTALLER_RELEASE_SHA256S) {
+            const recoveryHashes = options.imageMode === "images" ? [PREVIOUS_PREBUILT_INSTALLER_RELEASE_SHA256] : RECOVERY_INSTALLER_RELEASE_SHA256S;
+            for (const recipeHash of recoveryHashes) {
               if (recipeHash === currentHash) continue;
               if (generation !== this.generation) return this.state();
               const candidate = InstallerBundle.legacyRecovery(this.options.bundleRoot, recipeHash);
               try {
-                const candidateResult = await this.request("plan", { options: legacyOptions }, endpoint, pin, candidate);
+                const candidateResult = await this.request("plan", { options: candidate.manifest.prebuiltPolicy ? previousOptions : sourceOnlyOptions }, endpoint, pin, candidate);
                 if (generation !== this.generation) return this.state();
                 const recovered = candidate.parsePlan(candidateResult, { expectedOptions: options });
                 if (!recovered.existingJobId || !recovered.existingPlanHash) throw new InstallFailure("PLAN_INVALID");
@@ -214,8 +237,11 @@ export class SshInstallerController {
           }
         } else if (action === "apply") {
           if (this.ticket) throw new SshError("PENDING_JOB", "Задание уже сохранено. Проверьте состояние и используйте продолжение вместо повторного запуска.");
-          if (!this.plan || input.confirmedPlanHash !== this.plan.hash || input.acceptAcmeTerms !== true || (this.plan.installDocker && input.confirmDockerInstall !== true)) throw new SshError("CONFIRMATION", "Подтвердите показанный план, условия ACME и необходимые изменения Docker.");
+          const customTls = this.plan?.options.tlsMode === "custom";
+          if (!this.plan || input.confirmedPlanHash !== this.plan.hash || (!customTls && input.acceptAcmeTerms !== true) || (this.plan.installDocker && input.confirmDockerInstall !== true)) throw new SshError("CONFIRMATION", "Подтвердите показанный план, необходимые изменения Docker и условия Let's Encrypt, если выбран автоматический выпуск.");
           this.bundle.parsePlan(jsonObject(this.plan.json));
+          if (!customTls && input.tlsCertificate !== undefined) throw new SshError("INPUT", "Для Let's Encrypt не требуется загружать сертификат.");
+          const tlsCertificate = customTls ? validateTlsCertificate(input.tlsCertificate, this.plan.options.domain, this.plan.options.certificateSha256) : undefined;
           const smtpPassword = input.smtpPassword ?? "";
           if (typeof smtpPassword !== "string" || Buffer.byteLength(smtpPassword) > 4096 || /[\r\n\x00]/.test(smtpPassword) ||
               (this.plan.options.smtp?.username ? !smtpPassword : Boolean(smtpPassword)))
@@ -225,7 +251,7 @@ export class SshInstallerController {
           assertTicketBinding(this.ticket, endpoint, pin.fingerprint);
           await this.saveTicket(); this.publishTicket();
           if (generation !== this.generation) return this.state(); // Persist before the remote mutation, so disconnects are recoverable.
-          const result = await this.request("apply", { plan: jsonObject(this.plan.json), jobId: this.ticket.jobId, confirmedPlanHash: this.plan.hash, confirmDockerInstall: input.confirmDockerInstall === true, acceptAcmeTerms: true, ...(this.plan.options.smtp ? { smtpPassword } : {}) }, endpoint, pin);
+          const result = await this.request("apply", { plan: jsonObject(this.plan.json), jobId: this.ticket.jobId, confirmedPlanHash: this.plan.hash, confirmDockerInstall: input.confirmDockerInstall === true, acceptAcmeTerms: !customTls, ...(tlsCertificate ? { tlsCertificate: { fullchain: tlsCertificate.fullchain, privateKey: tlsCertificate.privateKey } } : {}), ...(this.plan.options.smtp ? { smtpPassword } : {}) }, endpoint, pin);
           if (generation !== this.generation) return this.state();
           this.publishStatus(result);
         } else {

@@ -59,6 +59,7 @@ export const MediaTile = memo(function MediaTile({
   video = true,
   screen = false,
   sinkId = "",
+  volume = 100,
   microphoneEnabled = false,
   audioLevel = 0,
   role,
@@ -71,6 +72,7 @@ export const MediaTile = memo(function MediaTile({
   video?: boolean;
   screen?: boolean;
   sinkId?: string;
+  volume?: number;
   microphoneEnabled?: boolean;
   audioLevel?: number;
   role?: Participant["role"];
@@ -164,6 +166,12 @@ export const MediaTile = memo(function MediaTile({
     },
     [stream, video, local, sinkId],
   );
+  useEffect(() => {
+    if (element.current && !local)
+      element.current.volume = Number.isFinite(volume)
+        ? Math.min(100, Math.max(0, volume)) / 100
+        : 1;
+  }, [volume, local, stream, video]);
   return (
     <>
       <div
@@ -657,7 +665,7 @@ export function RealtimePanel({
                 onClick={() => toggleDevice("microphone")}
                 icon={
                   <span
-                      className={`media-tile-microphone media-control-microphone ${localAudioLevel > 0 ? "media-microphone-speaking" : ""}`}
+                    className={`media-tile-microphone media-control-microphone ${localAudioLevel > 0 ? "media-microphone-speaking" : ""}`}
                     style={
                       { "--audio-level": localAudioLevel } as CSSProperties
                     }
@@ -969,6 +977,7 @@ export function RealtimePanel({
                     remote.kinds.includes("video")
                   }
                   sinkId={preferences.audioOutputId}
+                  volume={preferences.outputVolume}
                   microphoneEnabled={
                     roster.find((person) => person.id === remote.participantId)
                       ?.microphoneEnabled ?? remote.kinds.includes("audio")

@@ -83,10 +83,10 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       }
       if(name==='calendar'){
         await click('.calendar-month-grid .calendar-event');
-        await until(()=>execute('!!document.querySelector(".calendar-meeting-modal .calendar-meeting-facts")'),'calendar meeting information dialog');
+        await until(()=>execute('!!document.querySelector(".meeting-reference-info .meeting-info-facts")'),'calendar meeting information dialog');
         await capture('calendar-meeting-'+theme);
-        await click('.calendar-meeting-modal button[aria-label="Закрыть окно"]');
-        await until(()=>execute('!document.querySelector(".calendar-meeting-modal")'),'calendar meeting dialog closes');
+        await click('.meeting-reference-info button[aria-label="Закрыть окно"]');
+        await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'calendar meeting dialog closes');
       }
       if(name==='recording'){
         const recordingLayout=await execute(`(()=>{const player=document.querySelector('.recording-detail-player')?.getBoundingClientRect();const about=document.querySelector('.recording-detail-sidebar')?.getBoundingClientRect();return {right:!!player&&!!about&&about.left>=player.right,actions:document.querySelector('.recording-detail-about-actions')?.innerText||'',nativePlayerPending:!!document.querySelector('.recording-detail-player .button')};})()`);
