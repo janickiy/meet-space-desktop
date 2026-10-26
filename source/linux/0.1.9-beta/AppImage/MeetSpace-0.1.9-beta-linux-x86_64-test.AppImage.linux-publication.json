@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceTreeSha256": "a569c4ca1c2cfe87e694eb0a69bad681bd590150dd5efc8ee163241218202911",
+  "arch": "x64",
+  "format": "AppImage",
+  "formats": [
+    "AppImage"
+  ],
+  "verifiedFormats": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "verifiedStaging": "/work/source/desktop/artifacts/.linux-staging-a569c4ca1c2cfe87e694eb0a69bad681bd590150dd5efc8ee163241218202911-x64-zZ8fOS",
+  "immutableDirectory": "/work/source/desktop/artifacts/linux/AppImage/0.1.9-beta/a569c4ca1c2cfe87e694eb0a69bad681bd590150dd5efc8ee163241218202911/x64",
+  "overwriteAllowed": false
+}

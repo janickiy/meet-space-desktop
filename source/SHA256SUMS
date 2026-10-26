@@ -34,6 +34,12 @@ c21c21aaa0832c0de0877c527aec3774551baf95703102aa9310215a6ae6a94f  linux/0.1.6-be
 4c6e5c1c0cfbc83537e7953a46e62037b8450ebbc9cdc944da041f3601a0c063  linux/0.1.6-beta/DEB/MeetSpace-0.1.6-beta-linux-arm64-test.deb
 4488cb0d08eea6ebf92f3fd0f96e7f92060e194b0ac3357ab5a74e3b21f18f5c  linux/0.1.6-beta/RPM/MeetSpace-0.1.6-beta-linux-aarch64-test.rpm
 86e945dd7056459bedf4050d6bed3b782b2c1ef15702d5db1fde2276b3e5b0af  linux/0.1.6-beta/RPM/MeetSpace-0.1.6-beta-linux-x86_64-test.rpm
+c1bf47095ac4bc7c7d41435ce718f1a15c419c663e1a492a24d22ac2d19ab059  linux/0.1.9-beta/AppImage/MeetSpace-0.1.9-beta-linux-arm64-test.AppImage
+f1ebc346178bef27d3ed03b5815655bac140110e9cb29015216c57791b3c28ab  linux/0.1.9-beta/AppImage/MeetSpace-0.1.9-beta-linux-x86_64-test.AppImage
+6b800fc4d5703edbd9a677a370a8c609d2e5d176cc7567f19e8d8758a7e8f591  linux/0.1.9-beta/DEB/MeetSpace-0.1.9-beta-linux-amd64-test.deb
+c3584c8f19201da1ed7ef1d75e2dd7d2c86b1f7cd4db55dc47428b2351d43617  linux/0.1.9-beta/DEB/MeetSpace-0.1.9-beta-linux-arm64-test.deb
+5e35166cccbec8a67c45858e491afbc186940bf178d854d2d425e91b1d7f9a52  linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-aarch64-test.rpm
+34a77141da753995feff5167bfbafa6bbd033b22df6bfae4544ef3d6864eef14  linux/0.1.9-beta/RPM/MeetSpace-0.1.9-beta-linux-x86_64-test.rpm
 e5bd349144c8970b72b229f2f74b147e6da2a81fa647c8615cf1781ea5539499  windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-arm64-test-setup.exe
 43ddd3a39d535090d20b7d5235ee196a9a04ddf8738f24bd20307dcd8d07a47d  windows/0.1.0-beta/MeetSpace-0.1.0-beta-win-x64-test-setup.exe
 70839b7749b2f058e9308b77878e9e03b830fa3d4918d4c57a8a9241c7fc43ac  windows/0.1.1-beta/MeetSpace-0.1.1-beta-win-arm64-test-setup.exe
@@ -48,3 +54,5 @@ a1fe5618763919250251112ae1690bc1a4174b9802bb3a5601010730d7df0d5a  windows/0.1.4-
 860df4c516466931f97c15b1b163239e78ae28d389a7e14f0efa4d221b443ac8  windows/0.1.5-beta/MeetSpace-0.1.5-beta-win-x64-test-setup.exe
 61cf14b0dee9409d064389d1c6228ef4582411e1be7c1ff9c1152f83d22a9924  windows/0.1.6-beta/MeetSpace-0.1.6-beta-win-arm64-test-setup.exe
 261562b6c8c21a88867106e3962465ea8a629e5e3690a9f5abac0ccd56416ba3  windows/0.1.6-beta/MeetSpace-0.1.6-beta-win-x64-test-setup.exe
+2204ff7cd414e1d9a382f2e66d9d243237008c51a06509fbe8cf06036a49a83e  windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-arm64-test-setup.exe
+0b78ba421ebe8ad2d7d50b9f0d127a5b2fbdc564489138a41529c189c8ce7ed7  windows/0.1.9-beta/MeetSpace-0.1.9-beta-win-x64-test-setup.exe
