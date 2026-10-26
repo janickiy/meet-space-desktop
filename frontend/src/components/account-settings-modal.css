@@ -322,7 +322,7 @@
 .account-dialog-panel .preference-option {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 40px;
-  align-items: start;
+  align-items: center;
   gap: 16px;
   min-height: 52px;
   padding: 12px 0;
@@ -338,11 +338,14 @@
   position: relative;
   width: 40px;
   height: 24px;
+  padding: 0;
   border: 0;
   border-radius: 24px;
   background: var(--border-strong);
-  margin: max(0px, calc((21px * var(--text-scale, 1) - 24px) / 2)) 0 0;
+  margin: 0;
+  justify-self: end;
   cursor: pointer;
+  transition: background-color 0.15s;
 }
 .account-dialog-panel .preference-copy {
   grid-column: 1;
@@ -364,6 +367,8 @@
   top: 3px;
   background: white;
   border-radius: 50%;
+  box-shadow: 0 1px 2px #14213d20;
+  transition: transform 0.15s;
 }
 .account-dialog-panel .preference-option input:checked {
   background: var(--primary);

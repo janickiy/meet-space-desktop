@@ -390,6 +390,7 @@
   background: #7e9cff;
 }
 .account-dialog-panel .preference-option {
+  grid-template-columns: minmax(0, 1fr) 34px;
   padding: 20px 0;
   border-bottom: 1px solid var(--border);
   font-size: calc(11px * var(--text-scale));
@@ -401,7 +402,6 @@
 .account-dialog-panel .preference-option input {
   width: 34px;
   height: 20px;
-  margin-top: 3px;
 }
 .account-dialog-panel .preference-option input::after {
   width: 14px;
