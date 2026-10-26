@@ -34,8 +34,8 @@
 .personal-thread.chat-panel
   .chat-message:not(.chat-message-own)
   .chat-message-avatar {
-  color: var(--primary);
-  background: var(--primary-soft);
+  color: #7794d6;
+  background: #e4ebff;
 }
 .personal-thread.chat-panel .chat-message-content {
   flex: 0 1 auto;
@@ -107,24 +107,46 @@
   background: transparent;
 }
 .personal-thread.chat-panel .chat-attachment {
-  min-width: min(280px, 100%);
-  padding: 10px;
+  min-width: 0;
+  padding: 9px;
+  gap: 10px;
+  margin: 8px 0 0;
   border: 0;
   background: var(--surface);
 }
 .personal-thread.chat-panel .chat-file-icon {
-  width: 26px;
-  height: 32px;
-  flex-basis: 26px;
+  width: 20px;
+  height: 20px;
+  flex-basis: 20px;
   background: transparent;
   color: var(--primary);
 }
 .personal-thread.chat-panel .chat-file-copy strong {
-  font-size: calc(12px * var(--text-scale));
+  font-size: calc(11px * var(--text-scale));
   font-weight: 500;
 }
 .personal-thread.chat-panel .chat-file-copy small {
+  font-size: calc(9px * var(--text-scale));
+}
+.personal-thread.chat-panel .chat-file-icon > svg {
+  width: 20px;
+  height: 20px;
+}
+.personal-thread.chat-panel .chat-message blockquote {
+  margin: 0 0 10px;
+  padding: 7px 10px;
+  background: var(--surface);
+  border-left: 2px solid var(--primary);
+  border-radius: 0 5px 5px 0;
+  line-height: 1.5;
+}
+.personal-thread.chat-panel .chat-message blockquote > strong {
   font-size: calc(10px * var(--text-scale));
+  margin-bottom: 3px;
+}
+.personal-thread.chat-panel .chat-message blockquote > span {
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
 }
 .personal-thread.chat-panel .chat-file-download {
   color: var(--primary);
@@ -139,8 +161,8 @@
   flex-shrink: 0;
 }
 .personal-thread.chat-panel .chat-compose-row {
-  grid-template-columns: 30px 30px minmax(0, 1fr) 40px;
-  grid-template-rows: auto 30px;
+  grid-template-columns: 30px 30px minmax(0, 1fr) 39px;
+  grid-template-rows: auto 31px;
   padding: 10px 12px 8px;
   gap: 4px;
   border-color: var(--border);
@@ -172,10 +194,10 @@
   color: var(--muted);
 }
 .personal-thread.chat-panel .chat-send-button.button {
-  width: 40px;
-  height: 30px;
-  min-width: 40px;
-  min-height: 30px;
+  width: 39px;
+  height: 31px;
+  min-width: 39px;
+  min-height: 31px;
   border-radius: 8px;
   background: var(--primary);
   box-shadow: 0 3px 8px color-mix(in srgb, var(--primary) 18%, transparent);

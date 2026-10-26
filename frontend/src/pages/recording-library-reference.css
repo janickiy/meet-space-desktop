@@ -1,0 +1,163 @@
+/* Flat library composition from decs_maket/recording-library.js and .css. */
+.recordings-reference-library .recordings-catalogue-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.recordings-reference-library
+  .recordings-catalogue-toolbar
+  > .recordings-search {
+  width: 360px;
+  max-width: 100%;
+}
+.recordings-reference-library .recordings-heading h1 {
+  font-size: calc(28px * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+}
+.recordings-reference-library .recordings-list {
+  margin: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.recordings-reference-library .recordings-list > .recordings-row {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+}
+.recordings-reference-library .recordings-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.recordings-reference-library .recordings-layout-grid .recordings-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow: hidden;
+}
+.recordings-reference-library .recordings-layout-grid .recordings-row-actions {
+  flex: 1;
+  align-items: flex-end;
+}
+.recordings-reference-library .recordings-layout-list {
+  display: grid;
+  gap: 12px;
+}
+.recordings-reference-library .recordings-thumbnail-placeholder {
+  background: #eeedf8;
+}
+.recordings-reference-library
+  .recordings-row:nth-child(3n + 2)
+  .recordings-thumbnail-placeholder {
+  background: #e8eeeb;
+}
+.recordings-reference-library
+  .recordings-row:nth-child(3n)
+  .recordings-thumbnail-placeholder {
+  background: #eeebf6;
+}
+.recordings-reference-library .recordings-thumbnail-play {
+  color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 6px 20px #252c3f18;
+}
+.recordings-reference-library .recordings-thumbnail-tiles {
+  transform: rotate(-8deg);
+  width: 48%;
+  gap: 6px;
+}
+.recordings-reference-library .recordings-thumbnail-tiles > i {
+  height: 48px;
+  background: #ffffff75;
+  border-radius: 4px;
+  color: #a6aceb;
+}
+.recordings-reference-library .recordings-row-owner {
+  margin-top: 5px;
+}
+.recordings-reference-library .recordings-list > .recordings-empty {
+  grid-column: 1 / -1;
+  padding: 52px 20px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+.recordings-reference-library .recordings-empty > svg {
+  width: 36px;
+  height: 36px;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.recordings-reference-library .recordings-empty h2 {
+  margin: 0;
+  font-size: calc(17px * var(--text-scale));
+}
+.recordings-reference-library .recordings-empty p {
+  font-size: calc(12px * var(--text-scale));
+  margin: 10px 0 20px;
+}
+.recordings-reference-library .recordings-empty .button {
+  min-height: 34px;
+  padding: 8px 13px;
+  font-size: calc(11px * var(--text-scale));
+}
+.recordings-reference-library .recordings-catalogue-footer {
+  margin-top: 23px;
+  display: flex;
+  justify-content: flex-end;
+}
+.recordings-reference-library .recordings-catalogue-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 0;
+  font-size: calc(11px * var(--text-scale));
+  color: var(--muted);
+  text-decoration: none;
+}
+.recordings-reference-library .recordings-catalogue-footer a:hover {
+  color: var(--primary);
+}
+.recordings-load-more {
+  margin-top: 20px;
+  text-align: center;
+}
+[data-theme="dark"]
+  .recordings-reference-library
+  .recordings-thumbnail-placeholder {
+  background: #313c55;
+}
+[data-theme="dark"]
+  .recordings-reference-library
+  .recordings-row:nth-child(3n + 2)
+  .recordings-thumbnail-placeholder {
+  background: #2b4540;
+}
+[data-theme="dark"]
+  .recordings-reference-library
+  .recordings-row:nth-child(3n)
+  .recordings-thumbnail-placeholder {
+  background: #423958;
+}
+@media (max-width: 1180px) {
+  .recordings-reference-library .recordings-layout-grid {
+    gap: 14px;
+  }
+}
+@media (max-width: 950px) {
+  .recordings-reference-library .recordings-layout-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .recordings-reference-library .recordings-layout-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .recordings-reference-library .recordings-catalogue-toolbar {
+    flex-wrap: wrap;
+  }
+}

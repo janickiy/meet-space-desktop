@@ -3,7 +3,7 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CircleHelp,
-  MessageCircle,
+  MessagesSquare,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
@@ -162,7 +162,7 @@ export function Layout() {
       ? [{ to: "/app", label: "Главная", Icon: Home, end: true }]
       : []),
     { to: "/conferences", label: "Встречи", Icon: Video },
-    { to: "/personal", label: "Чаты", Icon: MessageCircle },
+    { to: "/personal", label: "Чаты", Icon: MessagesSquare },
     { to: "/calendar", label: "Календарь", Icon: CalendarDays },
     { to: "/recordings", label: "Записи", Icon: CirclePlay },
     ...(capabilities.isSuccess &&
@@ -446,7 +446,7 @@ export function Layout() {
                 aria-label={`Чаты — быстрая навигация${personal.unread ? `, непрочитанных: ${personal.unread}` : ""}`}
               >
                 <span className="mobile-nav-message-icon">
-                  <MessageCircle size={20} aria-hidden="true" />
+                  <MessagesSquare size={20} aria-hidden="true" />
                   <UnreadMessageCount count={personal.unread} />
                 </span>
                 Чаты
@@ -515,7 +515,7 @@ export function Layout() {
               <div>
                 <strong>{PRODUCT_NAME}</strong>
                 <p>
-                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.9-beta"}
+                  Версия {import.meta.env.VITE_BUILD_VERSION || "0.1.10-beta"}
                 </p>
               </div>
             </section>

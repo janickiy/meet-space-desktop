@@ -18,7 +18,6 @@ import {
   Pencil,
   Reply,
   Send,
-  SendHorizontal,
   Star,
   Trash2,
   X,
@@ -80,6 +79,7 @@ export function ChatPanel({
       mayModerate={["owner", "co_host"].includes(membership.role)}
       readOnly={readOnly}
       readOnlyReason={readOnlyReason}
+      composerPlaceholder="Сообщение участникам…"
       focusMessageId={focusMessageId}
       onLatest={onLatest}
     />
@@ -680,9 +680,6 @@ export function MessageThread({
         <header>
           <strong>{personal ? "Вы" : user?.displayName || "Вы"}</strong>
           {!personal && <span className="chat-message-self">вы</span>}
-          <time dateTime={pending.createdAt}>
-            {chatTime(pending.createdAt)}
-          </time>
         </header>
         <div className="chat-message-bubble">
           {pending.replyName && (
@@ -699,6 +696,9 @@ export function MessageThread({
             </div>
           ))}
           <footer className="chat-message-meta">
+            <time dateTime={pending.createdAt}>
+              {chatTime(pending.createdAt)}
+            </time>
             <span role="status">
               {pending.state === "sending" ? "Отправляется…" : "Не отправлено"}
             </span>
@@ -710,7 +710,7 @@ export function MessageThread({
   if (accessDenied) return <ErrorNotice error={query.error || read.error} />;
   return (
     <section
-      className={`content-card chat-panel ${personal ? "personal-thread" : ""}`}
+      className={`content-card chat-panel ${personal ? "personal-thread" : "meeting-thread"}`}
       aria-label={personal ? "Личная переписка" : "Чат конференции"}
     >
       <div className="section-heading chat-panel-heading" hidden={personal}>
@@ -776,7 +776,7 @@ export function MessageThread({
             aria-live="polite"
           >
             {olderMessagesButton}
-            {!messages.length && !query.isError && (
+            {!messages.length && !pendingMessage && !query.isError && (
               <div className="messaging-empty">
                 <MessageCircle aria-hidden="true" />
                 <h3>
@@ -817,27 +817,6 @@ export function MessageThread({
                         </strong>
                         {own && !personal && (
                           <span className="chat-message-self">вы</span>
-                        )}
-                        {!personal && (
-                          <>
-                            <time
-                              dateTime={message.createdAt}
-                              title={formatDate(message.createdAt)}
-                            >
-                              {chatTime(message.createdAt)}
-                            </time>
-                            {message.version > 1 &&
-                              !message.deletedAt &&
-                              !message.call && (
-                                <span
-                                  className="chat-message-edited"
-                                  title="Сообщение изменено"
-                                >
-                                  <Pencil size={11} aria-hidden="true" />
-                                  <span className="sr-only">изменено</span>
-                                </span>
-                              )}
-                          </>
                         )}
                       </header>
                       <div className="chat-message-bubble">
@@ -926,28 +905,32 @@ export function MessageThread({
                               )}
                             </div>
                           ))}
-                        {personal && (
-                          <footer className="chat-personal-message-meta">
-                            {message.version > 1 &&
-                              !message.deletedAt &&
-                              !message.call && <span>изменено</span>}
-                            <time
-                              dateTime={message.createdAt}
-                              title={formatDate(message.createdAt)}
+                        <footer
+                          className={
+                            personal
+                              ? "chat-personal-message-meta"
+                              : "chat-message-meta"
+                          }
+                        >
+                          {message.version > 1 &&
+                            !message.deletedAt &&
+                            !message.call && <span>изменено</span>}
+                          <time
+                            dateTime={message.createdAt}
+                            title={formatDate(message.createdAt)}
+                          >
+                            {chatTime(message.createdAt)}
+                          </time>
+                          {own && !message.deletedAt && (
+                            <span
+                              className="chat-sent-status"
+                              title="Отправлено"
+                              aria-label="Отправлено"
                             >
-                              {chatTime(message.createdAt)}
-                            </time>
-                            {own && !message.deletedAt && (
-                              <span
-                                className="chat-sent-status"
-                                title="Отправлено"
-                                aria-label="Отправлено"
-                              >
-                                <Check size={13} aria-hidden="true" />
-                              </span>
-                            )}
-                          </footer>
-                        )}
+                              <Check size={13} aria-hidden="true" />
+                            </span>
+                          )}
+                        </footer>
                       </div>
                     </div>
                     {!message.deletedAt &&
@@ -1144,12 +1127,7 @@ export function MessageThread({
                 aria-label={send.isError ? "Повторить отправку" : "Отправить"}
                 title={send.isError ? "Повторить отправку" : "Отправить"}
               >
-                {!send.isPending &&
-                  (personal ? (
-                    <Send size={17} />
-                  ) : (
-                    <SendHorizontal size={19} />
-                  ))}
+                {!send.isPending && <Send size={17} />}
               </Button>
             </div>
             <p className="chat-compose-caption" aria-hidden="true">

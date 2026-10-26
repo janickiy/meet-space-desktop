@@ -779,8 +779,8 @@
 .personal-avatar,
 .personal-avatar:not(.group-avatar) {
   border-radius: 50%;
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: #e4ebff;
+  color: #7794d6;
   font-size: calc(10px * var(--text-scale));
 }
 .personal-conversation-row:nth-child(4n + 2)

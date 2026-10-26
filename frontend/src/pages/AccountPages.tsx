@@ -242,7 +242,7 @@ export function SettingsPage() {
           />
           <span>
             {PRODUCT_NAME}
-            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.9-beta"}</small>
+            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.10-beta"}</small>
           </span>
         </div>
       </div>

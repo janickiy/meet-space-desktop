@@ -8,7 +8,7 @@ assert.ok(path.isAbsolute(process.argv[2]));
 app.setPath('userData', process.argv[2]); app.setPath('sessionData', process.argv[2]);
 const { startApp } = require('../dist/main.js');
 const { createNodeHttpsTransport } = require('../dist/network/transport.js');
-const { createCertificates, PASSWORD, CONFERENCE } = require('./fixtures/https-fixture.cjs');
+const { createCertificates, PASSWORD, CONFERENCE, USER_A, USER_B } = require('./fixtures/https-fixture.cjs');
 const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fixtures/product-fixture.cjs');
 (async () => {
  let cert, fixture, window;
@@ -18,6 +18,15 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
  try {
   await fs.mkdir(output, {recursive:true});
   cert = await createCertificates(); fixture = await createProductFixture(cert);
+  const message = (n, own, text) => ({id:`aaaaaaaa-aaaa-4aaa-8aaa-${String(n).padStart(12,'0')}`,sequence:String(n),
+    senderId:own?USER_A:USER_B,senderName:own?'Product owner':'Product direct peer',text,attachments:[],
+    createdAt:new Date(Date.now()-600000+n*60000).toISOString(),version:1,deletedAt:null,important:false,replyTo:null});
+  fixture.product.controls.messages = [
+    message(1,false,'Product server message. Привет! Подготовил новую сборку. Покажу, что получилось с навигацией и сообщениями.'),
+    {...message(2,true,'Отлично! Добавил вопросы к обсуждению. Посмотрите перед встречей.'),attachments:[fixture.product.attachment]},
+    message(3,false,'Я тоже буду. Принесу обратную связь от пользователей — есть несколько интересных наблюдений.'),
+    message(4,false,'Здорово, до встречи на синке! 👋'),
+  ];
   window = await startApp({show:false,userDataDir:process.argv[2],rendererRoot:path.resolve(__dirname,'../../frontend/dist-desktop'),brokerOptions:{transport:createNodeHttpsTransport({ca:cert.ca,timeoutMs:3000}),createSocket:(url,protocols,options)=>new WebSocket(url,protocols,{...options,ca:cert.ca,rejectUnauthorized:true})}});
   window.setContentSize(1280,800);
   const execute=code=>window.webContents.executeJavaScript(code,true);
@@ -66,7 +75,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     await until(()=>execute(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`),'theme applied');
     await capture('settings-'+theme);
     await tab('Устройства');
-    await until(()=>execute('!!document.querySelector("#camera-title") && !!document.querySelector("#microphone-title")'),'camera and microphone share the devices section');
+    await until(()=>execute(`!!document.querySelector('#devices-heading') && !!document.querySelector('select[aria-label="Камера"]') && !!document.querySelector('select[aria-label="Микрофон"]')`),'camera and microphone share the devices section');
     await capture('devices-'+theme);
     for(const [name,url,ready] of pages){
       await route(url);await visible(ready);await capture(name+'-'+theme);
@@ -94,9 +103,20 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         assert.ok(recordingLayout.actions.includes('Скачать видеозапись')&&recordingLayout.actions.includes('Скопировать ссылку'),'Recording actions are in the information card');
         assert.equal(recordingLayout.nativePlayerPending,true,'Opening the page does not fetch private media before user action');
       }
+      if(['chat','group'].includes(name)){
+        const chat=await execute(`(()=>{const root=document.querySelector('.personal-thread');const messages=[...root.querySelectorAll('.chat-message')];const composer=root.querySelector('.chat-compose-row').getBoundingClientRect();const input=root.querySelector('textarea').getBoundingClientRect();const send=root.querySelector('.chat-send-button').getBoundingClientRect();return {headerTimes:root.querySelectorAll('.chat-message header time').length,bubbleTimes:root.querySelectorAll('.chat-message-bubble footer time').length,messages:messages.length,ownAvatarHidden:getComputedStyle(root.querySelector('.chat-message-own .chat-message-avatar')).display==='none',composerTwoRows:send.top>=input.bottom-1,sendInside:send.right<=composer.right,chatIcon:!!document.querySelector('.sidebar a[href="/personal"] svg.lucide-messages-square')};})()`);
+        assert.equal(chat.headerTimes,0,'Timestamps belong inside chat bubbles');assert.equal(chat.bubbleTimes,chat.messages,'Every confirmed bubble has its own timestamp');
+        assert.ok(chat.ownAvatarHidden&&chat.composerTwoRows&&chat.sendInside&&chat.chatIcon,'Reference message alignment, composer and navigation icon');
+      }
+      if(name==='recordings'){
+        assert.equal(await execute('document.querySelectorAll(".recordings-conference-selector,.recordings-meeting-view").length'),0,'Library has no obsolete meeting-selection toolbar');
+      }
     }
     for(const [width,height] of [[1280,800],[1920,1080]]){
       window.setContentSize(width,height);
+      for(const [name,url,ready] of pages.filter(([name])=>['chat','group','recordings'].includes(name))){
+        await route(url);await visible(ready);await capture(`${name}-${width}x${height}-${theme}`);
+      }
       await route('/conferences');await visible('Product scheduled meeting');
       await capture(`meetings-${width}x${height}-${theme}`);
       await click('.meetings-quick-primary');
@@ -137,7 +157,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   window.setMinimumSize(320,500);window.setContentSize(390,844);
   await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-mobile');
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-mobile');
-  await route('/app/settings');await visible('Настройки');await capture('settings-mobile');
+  await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
   await tab('Мой профиль');await visible('Мой профиль');await capture('profile-mobile');
   checks.push('onboarding introduction leads to server connection; settings render as a page with combined devices; meeting and calendar information dialogs close without mutation; recording information and native download actions sit beside the player');
   checks.push('shared routes render in both themes; 1280x800 and 1920x1080 workspace and meeting editors, 1280x800 onboarding/login and 150% settings/meetings; desktop/compact/mobile have no document or content-region horizontal overflow, clipped button content, out-of-viewport dialog or missing image');

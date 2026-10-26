@@ -53,7 +53,7 @@ async function createProductFixture(certificates) {
     }
     for (const item of [direct, group]) {
       if (route === `/conversations/${item.id}`) return reply({ item });
-      if (route === `/conversations/${item.id}/messages`) return reply({ items: [{ id: MESSAGE, sequence: "1", conversationId: item.id,
+      if (route === `/conversations/${item.id}/messages`) return reply({ items: controls.messages?.map(message => ({ ...message, conversationId: item.id })) || [{ id: MESSAGE, sequence: "1", conversationId: item.id,
         senderId: USER_B, senderName: "Product direct peer", text: "Product server message", attachments: [attachment],
         createdAt: now, updatedAt: now, editedAt: null, deletedAt: null, version: 1, important: false, replyTo: null }], nextCursor: null, unreadCount: 0 });
       if (route === `/conversations/${item.id}/read` || route === `/conversations/${item.id}/chat/read`) return reply({ item: { conversationId: item.id, unreadCount: 0, lastReadSequence: "1", lastReadMessageId: MESSAGE } });

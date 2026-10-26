@@ -7,18 +7,19 @@ const { pathToFileURL } = require('node:url');
 const WebSocket = require('ws');
 const { app, clipboard, ClipboardItem } = require('electron');
 assert.ok(path.isAbsolute(process.argv[2]), 'A fresh profile is required');
+const visualOnly = process.argv.includes('--visual-only');
 app.setPath('userData', process.argv[2]);
 app.setPath('sessionData', process.argv[2]);
 app.commandLine.appendSwitch('use-fake-device-for-media-stream');
 const { startApp } = require('../dist/main.js');
 const { createNodeHttpsTransport } = require('../dist/network/transport.js');
-const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE } = require('./fixtures/https-fixture.cjs');
+const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B, INVITE } = require('./fixtures/https-fixture.cjs');
 
 (async () => {
   let certificates, fixture, window;
   const captures = [], checks = [], blockedDestinations = [];
   const conferenceSockets = [], mediaJoins = [], observedSockets = new WeakSet();
-  const output = path.resolve(__dirname, '../artifacts/conference-invitation-fix');
+  const output = path.resolve(__dirname, visualOnly ? '../artifacts/conference-chat-reference' : '../artifacts/conference-invitation-fix');
   const invitationPosts = [], invitationQueries = [];
   let holdInvitation = false, pendingInvitation = null, clipboardSnapshot = null;
   const restoreClipboard = async () => {
@@ -63,7 +64,12 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
         if (holdInvitation) { pendingInvitation = complete; return true; }
         return complete();
       }
-      if ([`/conferences/${CONFERENCE}/recordings`, `/conferences/${CONFERENCE}/messages`].includes(route)) return reply({ items: [], nextCursor: null });
+      if (route === `/conferences/${CONFERENCE}/messages`) return reply({ items: [
+        { id:'aaaaaaaa-aaaa-4aaa-8aaa-000000000001',conferenceId:CONFERENCE,sequence:'1',senderId:USER_B,senderName:'Анна Кузнецова',text:'Коллеги, давайте начнём. Все успели посмотреть материалы к встрече?',createdAt:now,updatedAt:now,version:1,deletedAt:null,attachments:[] },
+        { id:'aaaaaaaa-aaaa-4aaa-8aaa-000000000002',conferenceId:CONFERENCE,sequence:'2',senderId:USER_A,senderName:'Call UI fixture 1',text:'Да, всё подготовил. Давайте обсудим основные изменения.',createdAt:now,updatedAt:now,version:1,deletedAt:null,attachments:[] },
+      ], nextCursor:null,unreadCount:0 });
+      if (route === `/conferences/${CONFERENCE}/chat/read`) return reply({ item: {conferenceId:CONFERENCE,unreadCount:0,lastReadSequence:'2',lastReadMessageId:'aaaaaaaa-aaaa-4aaa-8aaa-000000000002'} });
+      if (route === `/conferences/${CONFERENCE}/recordings`) return reply({ items: [], nextCursor: null });
       return false;
     } });
     const transport = createNodeHttpsTransport({ ca: certificates.ca, timeoutMs: 3000 });
@@ -309,7 +315,12 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
     assert.equal(await execute('document.querySelector(".conference-stage-rail").hidden'), true, 'Second participants click closes the same panel');
     const chatControl = '.conference-control-bar button[aria-keyshortcuts="C"]';
     await click(chatControl); await exists(`${chatControl}[aria-expanded=true]`);
-    await exists('#meeting-tab-chat[aria-selected=true]'); await capture('active-room-chat');
+    await exists('#meeting-tab-chat[aria-selected=true]'); await visible('Коллеги, давайте начнём.'); await capture('active-room-chat');
+    const chatGeometry=await execute(`(()=>{const root=document.querySelector('.meeting-thread');const bubble=root.querySelector('.chat-message-own .chat-message-bubble');const input=root.querySelector('textarea').getBoundingClientRect(),send=root.querySelector('.chat-send-button').getBoundingClientRect();return {times:root.querySelectorAll('.chat-message-bubble footer time').length,headerTimes:root.querySelectorAll('.chat-message header time').length,ownHeaderHidden:getComputedStyle(root.querySelector('.chat-message-own header')).display==='none',bubble:getComputedStyle(bubble).backgroundColor,ownBorder:getComputedStyle(root.querySelector('.chat-message-own')).borderLeftWidth,composerTwoRows:send.top>=input.bottom-1,tabs:[...document.querySelectorAll('.conference-stage-tabs button')].map(e=>e.textContent.trim())};})()`);
+    assert.equal(chatGeometry.times,2);assert.equal(chatGeometry.headerTimes,0);assert.equal(chatGeometry.ownHeaderHidden,true);
+    assert.equal(chatGeometry.bubble,'rgb(52, 72, 63)');assert.equal(chatGeometry.ownBorder,'0px');assert.equal(chatGeometry.composerTwoRows,true);
+    assert.ok(chatGeometry.tabs[0].startsWith('Участники'),'Participant tab precedes chat as in the reference');
+    assert.equal(await execute(`(()=>{const root=document.querySelector('.meeting-thread');const input=root.querySelector('textarea').getBoundingClientRect();return [...root.querySelectorAll('.chat-attachment-trigger,.emoji-picker-trigger')].every(e=>e.getBoundingClientRect().top>=input.bottom-1);})()`),true,'Attachment and emoji controls sit below the input without overlapping its placeholder');
     await click(chatControl); await exists(`${chatControl}[aria-expanded=false]`);
     assert.equal(await execute('document.querySelector(".conference-stage-rail").hidden'), true, 'Second chat click closes the same panel');
     await click('.room-settings-control'); await exists('[role=dialog]');
@@ -353,6 +364,9 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
       }
     };
     const assertNativeCopy = async (selector, expected) => {
+      // Geometry/media QA can run on a locked desktop. Native Clipboard API
+      // acceptance remains a separate explicit, focused-desktop run.
+      if (visualOnly) return;
       if (!clipboardSnapshot) {
         const items = await clipboard.read();
         clipboardSnapshot = await Promise.all(items.map(async item => new ClipboardItem(Object.fromEntries(await Promise.all(item.types.map(async type => [type, await item.getType(type)]))))));
@@ -381,7 +395,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
           if (theme === 'light' && textSize === '100' && width === 1440) {
             await checkDialogKeyboard();
             await assertNativeCopy('.call-share-modal .copy-link .button', expectedInviteLink);
-            await visible('Скопировано');
+            if (!visualOnly) await visible('Скопировано');
           }
           await click('.call-share-invite-button'); await exists('.call-invite-modal');
           await until(() => execute('document.activeElement===document.querySelector(".call-invite-modal input[inputmode=email]")'), 'Second invitation step focuses the recipient field');
@@ -389,7 +403,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
           if (theme === 'light' && textSize === '100' && width === 1440) {
             await checkDialogKeyboard();
             await assertNativeCopy('.call-invite-copy .button', invitationText);
-            await visible('Приглашение скопировано.');
+            if (!visualOnly) await visible('Приглашение скопировано.');
           }
           await click('.call-invite-back'); await exists('.call-share-modal');
           await until(() => execute('document.activeElement===document.querySelector(".call-share-invite-button")'), 'Back returns focus to the send-invitation action');
@@ -399,7 +413,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
     }
     await restoreClipboard();
     checks.push('Both invitation steps match reference modal widths in light/dark at 1440/1280/390 and 150% text; share QR is 200px on desktop or 156px in a single narrow column, and its SVG geometry encodes the real selected backend invite URL');
-    checks.push('Share link and readonly invitation text copy their exact production values through the native Clipboard API; original clipboard formats are restored; both steps trap Tab/Shift+Tab, move focus on next/back and restore the room invite action after Escape');
+    checks.push(`${visualOnly ? 'Native Clipboard API check skipped in visual-only mode; ' : 'Share link and readonly invitation text copy their exact production values through the native Clipboard API; original clipboard formats are restored; '}both steps trap Tab/Shift+Tab, move focus on next/back and restore the room invite action after Escape`);
 
     // Exercise the existing authorised form against only this disposable local
     // backend, including a held POST so busy guards can be observed reliably.
@@ -496,7 +510,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, INVITE 
     assert.deepEqual(await execute('window.__callUI.errors'), []);
     assert.ok(fixture.requests.some(request => request.method === 'POST' && request.path.endsWith('/join')), 'Join went through the production broker');
     const result = { ok: true, checks, captures, tracks: await trackCounts(), captureRequests: await execute('window.__callUI.requests'), mediaJoinRequests: mediaJoins.length,
-      invitations: { queries: invitationQueries, posts: invitationPosts, clipboard: 'Native copy verified; original clipboard formats restored' }, platform: process.platform, arch: process.arch,
+      invitations: { queries: invitationQueries, posts: invitationPosts, clipboard: visualOnly ? 'Not tested: visual-only run' : 'Native copy verified; original clipboard formats restored' }, platform: process.platform, arch: process.arch,
       captureSource: 'Chromium fake devices via production getUserMedia and permission policy',
       network: 'Disposable HTTPS/WebSocket loopback fixture only; broker rejects all other destinations',
       limitations: ['No SFU media transmission', 'No real camera/microphone or Windows/Linux runtime acceptance'] };

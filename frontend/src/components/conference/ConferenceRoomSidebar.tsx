@@ -35,8 +35,8 @@ export function ConferenceRoomSidebar(props: ActiveConferenceViewProps) {
     setConfirm,
   } = props.controls;
   const panels = captionsEnabled
-    ? (["chat", "participants", "captions"] as const)
-    : (["chat", "participants"] as const);
+    ? (["participants", "chat", "captions"] as const)
+    : (["participants", "chat"] as const);
   return (
     <aside
       className="conference-stage-rail"

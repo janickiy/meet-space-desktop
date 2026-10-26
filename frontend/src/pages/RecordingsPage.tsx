@@ -1,20 +1,17 @@
-import { useEffect, useId, useState } from "react";
-import { Link, useSearchParams } from "react-router";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { Link } from "react-router";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
-  CalendarDays,
+  ArrowLeft,
+  CirclePlay,
   ArrowUpRight,
-  Clapperboard,
   FileArchive,
-  Info,
   Play,
   Search,
   Users,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
-import { useConferences } from "../queries";
-import { formatDate } from "../utils";
 import type {
   Conference,
   ConferenceHistory,
@@ -38,7 +35,11 @@ import {
   type CollectionView,
 } from "./CollectionViewToggle";
 
-const pageSize = 20;
+import {
+  loadRecordingLibraryPage,
+  type RecordingLibraryCursor,
+} from "../recordingLibrary";
+import "./recording-library-reference.css";
 
 /** RecordingCard показывает одну реальную готовую запись выбранной встречи.
  * @args record — запись; conference — встреча; history — доступная историческая сводка.
@@ -53,6 +54,7 @@ export function RecordingCard({
   conference: Conference;
   history?: ConferenceHistory;
 }) {
+  const { user } = useAuth();
   const [brokenPreview, setBrokenPreview] = useState<string | null>(null);
   const preview = recordingPreviewFile(record);
   const file = recordingMediaFile(record);
@@ -135,10 +137,18 @@ export function RecordingCard({
           {conference.title}
         </Link>
         <p className="recordings-meta">
-          <span>{recordingDate(record)}</span>
+          <time
+            dateTime={record.startedAt || record.createdAt}
+            title={recordingDate(record)}
+          >
+            {new Date(record.startedAt || record.createdAt).toLocaleDateString(
+              "ru-RU",
+              { day: "numeric", month: "long", year: "numeric" },
+            )}
+          </time>
           <span aria-hidden="true">·</span>
           {history ? (
-            <span>{history.participantCount} участников встречи</span>
+            <span>{history.participantCount} участников</span>
           ) : (
             <span>{formatRecordingSize(file?.sizeBytes)}</span>
           )}
@@ -146,6 +156,7 @@ export function RecordingCard({
         {history?.owner.displayName && (
           <p className="recordings-row-owner">
             Организатор: {history.owner.displayName}
+            {history.owner.id === user?.id ? " (вы)" : ""}
           </p>
         )}
       </div>
@@ -178,361 +189,169 @@ export function RecordingCard({
   );
 }
 
-/** RecordingsPage открывает записи одной выбранной встречи без глобального каталога.
- * Список встреч читается курсором; файлы запрашиваются только для выбранной встречи,
- * поэтому страница не делает запрос материалов для каждой строки истории.
- * @return адаптивный выбор встречи, страницы её доступных записей и действия просмотра.
- */
+/** A flat catalogue using the same cards, toolbar and empty state as decs_maket. */
 export function RecordingsPage() {
   const { user } = useAuth();
-  const [params, setParams] = useSearchParams();
-  const conferenceId = params.get("conference") || "";
-  const [meetingView, setMeetingView] = useState<"past" | "active">("past");
-  const conferences = useConferences({ view: meetingView });
   const [search, setSearch] = useState("");
   const [layout, setLayout] = useState<CollectionView>("grid");
-  const [period, setPeriod] = useState("all");
-  const [sort, setSort] = useState("newest");
-  const selectionId = useId();
-  const loadedConferences = [
+  const library = useInfiniteQuery({
+    queryKey: ["recording-library", user?.id],
+    enabled: !!user,
+    initialPageParam: { pending: [] } as RecordingLibraryCursor,
+    queryFn: ({ pageParam, signal }) =>
+      loadRecordingLibraryPage(
+        {
+          conferences: (cursor, signal) =>
+            api.myConferences({ view: "past" }, cursor, signal),
+          recordings: (id, offset, signal) =>
+            api.recordings(id, signal, { limit: 20, offset }),
+          history: (id, signal) => api.history(id, signal),
+        },
+        pageParam,
+        signal,
+      ),
+    getNextPageParam: (page) => page.next,
+    retry: false,
+  });
+  const entries = [
     ...new Map(
-      (conferences.data?.pages.flatMap((page) => page.items) || []).map(
-        (item) => [item.id, item],
+      (library.data?.pages.flatMap((page) => page.entries) || []).map(
+        (entry) => [`${entry.conference.id}/${entry.record.uuid}`, entry],
       ),
     ).values(),
   ];
-  const visibleConferences = loadedConferences.filter((item) =>
-    item.title
-      .toLocaleLowerCase("ru-RU")
-      .includes(search.trim().toLocaleLowerCase("ru-RU")),
+  const ready = entries.filter(
+    ({ record }) => playableRecordings([record]).length,
   );
-  const firstConferenceId = loadedConferences[0]?.id;
-  useEffect(() => {
-    if (conferenceId || !firstConferenceId) return;
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-        next.set("conference", firstConferenceId);
-        return next;
-      },
-      { replace: true },
-    );
-  }, [conferenceId, firstConferenceId, setParams]);
-  const conference = useQuery({
-    queryKey: ["recording-conference", user?.id, conferenceId],
-    queryFn: ({ signal }) => api.conference(conferenceId, signal),
-    enabled: !!user && !!conferenceId,
-    retry: false,
-  });
-  const selected =
-    conference.data?.item.id === conferenceId
-      ? conference.data.item
-      : undefined;
-  const records = useInfiniteQuery({
-    queryKey: ["conference-recording-pages", user?.id, conferenceId],
-    enabled: !!user && !!selected && !conference.isError,
-    initialPageParam: 0,
-    queryFn: ({ pageParam, signal }) =>
-      api.recordings(conferenceId, signal, {
-        limit: pageSize,
-        offset: pageParam,
-      }),
-    getNextPageParam: (last, _pages, offset) =>
-      last.items.length === pageSize ? offset + pageSize : undefined,
-    retry: false,
-  });
-  const history = useQuery({
-    queryKey: ["recording-conference-history", user?.id, conferenceId],
-    queryFn: ({ signal }) => api.history(conferenceId, signal),
-    enabled:
-      !!user &&
-      !!selected &&
-      !conference.isError &&
-      ["finished", "cancelled"].includes(selected.status),
-    retry: false,
-  });
-  const readable = playableRecordings(
-    (records.data?.pages.flatMap((page) => page.items) || []).filter(
-      (record) => record.conferenceId === conferenceId,
-    ),
-  );
-  const cutoff =
-    period === "all" ? -Infinity : Date.now() - Number(period) * 86_400_000;
-  const visible = readable
-    .filter(
-      (record) =>
-        period === "all" ||
-        Date.parse(record.startedAt || record.createdAt) >= cutoff,
+  const countLabel = new Intl.PluralRules("ru-RU").select(ready.length);
+  const visible = ready
+    .filter((entry) =>
+      entry.conference.title
+        .toLocaleLowerCase("ru-RU")
+        .includes(search.trim().toLocaleLowerCase("ru-RU")),
     )
-    .sort((a, b) => {
-      const time =
-        (Date.parse(a.startedAt || a.createdAt) || 0) -
-        (Date.parse(b.startedAt || b.createdAt) || 0);
-      return sort === "oldest" ? time : -time;
-    });
-
-  /** chooseConference меняет контекст списка, сохраняя независимый серверный кеш.
-   * @args id — выбранный идентификатор доступной встречи.
-   */
-  function chooseConference(id: string) {
-    setParams({ conference: id });
-    setPeriod("all");
-    setSort("newest");
-  }
-
+    .sort(
+      (a, b) =>
+        Date.parse(b.record.startedAt || b.record.createdAt) -
+        Date.parse(a.record.startedAt || a.record.createdAt),
+    );
+  const failed = library.data?.pages.some((page) => page.failed.length);
   return (
-    <div className="recordings-page">
+    <div className="recordings-page recordings-reference-library">
       <section className="page-heading recordings-heading">
-        <div>
-          <h1>Записи встреч</h1>
-        </div>
-        {selected && records.isSuccess && (
+        <h1>Записи встреч</h1>
+        {library.isSuccess && (
           <span className="recordings-count">
-            {readable.length}
-            {records.hasNextPage ? "+" : ""} записей встречи
+            {ready.length}
+            {library.hasNextPage ? "+" : ""}{" "}
+            {countLabel === "one"
+              ? "запись"
+              : countLabel === "few"
+                ? "записи"
+                : "записей"}
           </span>
         )}
       </section>
-      <section className="recordings-selection" aria-label="Выбор встречи">
-        <select
-          className="recordings-meeting-view"
-          aria-label="Список встреч"
-          value={meetingView}
-          onChange={(event) => {
-            setMeetingView(event.target.value as "past" | "active");
-            setParams({});
-            setSearch("");
-            setPeriod("all");
-          }}
-        >
-          <option value="past">Завершённые встречи</option>
-          <option value="active">В эфире</option>
-        </select>
-        <label className="recordings-search-field">
-          <span className="sr-only">Поиск по загруженным встречам</span>
-          <span className="recordings-search">
-            <Search size={17} aria-hidden="true" />
-            <input
-              type="search"
-              aria-label="Поиск по загруженным встречам"
-              placeholder="Найти встречу"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </span>
-        </label>
-        <label className="recordings-conference-selector" htmlFor={selectionId}>
-          <span className="sr-only">Встреча</span>
-          <select
-            aria-label="Встреча"
-            id={selectionId}
-            value={conferenceId}
-            onChange={(event) => chooseConference(event.target.value)}
-            disabled={!conferenceId && !loadedConferences.length}
-          >
-            {!conferenceId && <option value="">Выберите встречу</option>}
-            {conferenceId &&
-              !visibleConferences.some((item) => item.id === conferenceId) && (
-                <option value={conferenceId}>
-                  {selected?.title || "Выбранная встреча"}
-                </option>
-              )}
-            {visibleConferences.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-          </select>
+      <section
+        className="recordings-catalogue-toolbar"
+        aria-label="Поиск и вид записей"
+      >
+        <label className="recordings-search">
+          <Search size={17} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Найти запись"
+            placeholder="Найти запись"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </label>
         <CollectionViewToggle
           value={layout}
           onChange={setLayout}
           label="Вид записей"
         />
-        {conferences.hasNextPage && (
-          <Button
-            variant="outline"
-            busy={conferences.isFetchingNextPage}
-            onClick={() => void conferences.fetchNextPage()}
-          >
-            Ещё встречи
-          </Button>
-        )}
-        {search && !visibleConferences.length && (
-          <p className="recordings-selection-note" role="status">
-            В загруженных встречах совпадений нет.
-          </p>
-        )}
-        {conferences.hasNextPage && (
-          <p className="recordings-selection-note">
-            Не нашли нужную встречу? Загрузите ещё встречи, чтобы расширить
-            поиск.
-          </p>
-        )}
-        {conferences.isError && (
-          <div className="recordings-error">
-            <ErrorNotice>Не удалось загрузить список встреч.</ErrorNotice>
-            <Button
-              variant="outline"
-              onClick={() => void conferences.refetch()}
-            >
-              Повторить загрузку встреч
-            </Button>
-          </div>
-        )}
       </section>
-      {!conferenceId && conferences.isPending && <Loading />}
-      {!conferenceId && conferences.isSuccess && !loadedConferences.length && (
-        <section className="recordings-empty">
-          <Clapperboard size={36} aria-hidden="true" />
-          <h2>
-            {meetingView === "past"
-              ? "Завершённых встреч пока нет"
-              : "Встреч в эфире пока нет"}
-          </h2>
-          <p>После встречи с записью здесь можно будет открыть её материалы.</p>
-          <Link className="text-link" to="/meetings">
-            Перейти к встречам
-          </Link>
-        </section>
+      {(library.isError || failed) && (
+        <div className="recordings-error">
+          <ErrorNotice>
+            {library.isError
+              ? "Не удалось загрузить записи."
+              : "Часть записей не удалось загрузить. Доступные записи показаны ниже."}
+          </ErrorNotice>
+          <Button variant="outline" onClick={() => void library.refetch()}>
+            Повторить загрузку записей
+          </Button>
+        </div>
       )}
-      {conferenceId && conference.isPending && <Loading />}
-      {conferenceId &&
-        (conference.isError || (conference.isSuccess && !selected)) && (
-          <section className="recordings-empty">
-            <h2>Встреча недоступна</h2>
-            <ErrorNotice>
-              Не удалось открыть выбранную встречу. Проверьте доступ или
-              выберите другую.
-            </ErrorNotice>
-            <Button variant="outline" onClick={() => void conference.refetch()}>
-              Повторить загрузку
-            </Button>
-          </section>
-        )}
-      {selected && !conference.isError && (
-        <section
-          className="recordings-library"
-          aria-labelledby="recordings-selected-title"
-        >
-          <div className="recordings-library-heading">
-            <div>
-              <h2 id="recordings-selected-title">{selected.title}</h2>
-              {history.data?.item.owner.displayName &&
-                !history.isError &&
-                history.data.item.conference.id === conferenceId && (
-                  <p className="recordings-library-context">
-                    {formatDate(selected.finishedAt || selected.createdAt)} ·
-                    Организатор {history.data.item.owner.displayName}
-                  </p>
-                )}
-            </div>
-            <div className="recordings-filters">
-              <label>
-                <CalendarDays size={16} aria-hidden="true" />
-                <select
-                  aria-label="Период записей"
-                  value={period}
-                  onChange={(event) => setPeriod(event.target.value)}
+      {library.isPending ? (
+        <Loading />
+      ) : (
+        <div className={`recordings-list recordings-layout-${layout}`}>
+          {visible.map(({ record, conference, history }) => (
+            <RecordingCard
+              key={`${conference.id}/${record.uuid}`}
+              record={record}
+              conference={conference}
+              history={history}
+            />
+          ))}
+          {!visible.length && !library.isError && !failed && (
+            <section className="recordings-empty">
+              <CirclePlay size={36} aria-hidden="true" />
+              <h2>
+                {library.hasNextPage
+                  ? "В загруженных записях ничего не найдено"
+                  : search.trim()
+                    ? "Записи не найдены"
+                    : "Записей пока нет"}
+              </h2>
+              <p>
+                {library.hasNextPage
+                  ? "Загрузите ещё записи, чтобы продолжить поиск."
+                  : search.trim()
+                    ? "Попробуйте другое название встречи."
+                    : "Здесь появятся доступные записи ваших встреч."}
+              </p>
+              {search.trim() ? (
+                <Button variant="secondary" onClick={() => setSearch("")}>
+                  Сбросить поиск
+                </Button>
+              ) : (
+                <Link
+                  className="button button-secondary"
+                  to="/conferences?view=past"
                 >
-                  <option value="all">Все время</option>
-                  <option value="7">Последние 7 дней</option>
-                  <option value="30">Последние 30 дней</option>
-                  <option value="90">Последние 90 дней</option>
-                </select>
-              </label>
-              <select
-                aria-label="Сортировка загруженных записей"
-                value={sort}
-                onChange={(event) => setSort(event.target.value)}
-              >
-                <option value="newest">Сначала новые</option>
-                <option value="oldest">Сначала старые</option>
-              </select>
-            </div>
-          </div>
-          {records.hasNextPage && (
-            <p className="recordings-selection-note">
-              Период и сортировка применяются к загруженным записям. Нажмите
-              «Ещё записи», чтобы расширить список.
+                  Завершённые встречи
+                </Link>
+              )}
+            </section>
+          )}
+        </div>
+      )}
+      {library.hasNextPage && (
+        <div className="recordings-load-more">
+          {!!visible.length && !!search.trim() && (
+            <p className="field-hint">
+              Поиск выполнен по загруженным записям. Загрузите ещё, чтобы
+              расширить список.
             </p>
           )}
-          {records.isError ? (
-            <div className="recordings-error">
-              <ErrorNotice>
-                Не удалось загрузить записи этой встречи. Проверьте доступ и
-                попробуйте ещё раз.
-              </ErrorNotice>
-              <Button variant="outline" onClick={() => void records.refetch()}>
-                Повторить загрузку записей
-              </Button>
-            </div>
-          ) : records.isPending ? (
-            <Loading />
-          ) : (
-            <>
-              <div className={`recordings-list recordings-layout-${layout}`}>
-                {visible.map((record) => (
-                  <RecordingCard
-                    key={record.uuid}
-                    record={record}
-                    conference={selected}
-                    history={
-                      history.isError ||
-                      history.data?.item.conference.id !== conferenceId
-                        ? undefined
-                        : history.data.item
-                    }
-                  />
-                ))}
-              </div>
-              {!visible.length && (
-                <div className="recordings-empty">
-                  <Clapperboard size={36} aria-hidden="true" />
-                  <h3>
-                    {records.hasNextPage
-                      ? "Среди загруженных записей совпадений нет"
-                      : period !== "all"
-                        ? "В выбранном периоде записей нет"
-                        : "Доступных записей пока нет"}
-                  </h3>
-                  <p>
-                    {records.hasNextPage
-                      ? "На этой странице записей для просмотра нет. Загрузите следующие записи."
-                      : "Выберите другую встречу или вернитесь сюда позже."}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
-          {records.hasNextPage && !records.isError && (
-            <div className="recordings-pagination">
-              <Button
-                variant="outline"
-                busy={records.isFetchingNextPage}
-                onClick={() => void records.fetchNextPage()}
-              >
-                Ещё записи
-              </Button>
-            </div>
-          )}
-          {["finished", "cancelled"].includes(selected.status) && (
-            <Link
-              className="recordings-history-link"
-              to={`/history/${encodeURIComponent(selected.id)}`}
-            >
-              Открыть историю встречи
-            </Link>
-          )}
-        </section>
+          <Button
+            variant="outline"
+            busy={library.isFetchingNextPage}
+            onClick={() => void library.fetchNextPage()}
+          >
+            Ещё записи
+          </Button>
+        </div>
       )}
-      <p className="recordings-retention">
-        <Info size={16} aria-hidden="true" />
-        <span>
-          Готовые записи доступны 7 дней после завершения записи. Ссылка на файл
-          временная; ссылка на страницу не открывает доступ посторонним.
-        </span>
-      </p>
+      <footer className="recordings-catalogue-footer">
+        <Link to="/conferences?view=past">
+          <ArrowLeft size={15} aria-hidden="true" />
+          Завершённые встречи
+        </Link>
+      </footer>
     </div>
   );
 }

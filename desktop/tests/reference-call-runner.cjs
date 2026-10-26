@@ -11,7 +11,7 @@ const { spawn } = require('node:child_process');
     delete env.MEETSPACE_DESKTOP_DEV;
     delete env.MEETSPACE_DEV_CSP_NONCE;
     await new Promise((resolve, reject) => {
-      const child = spawn(require('electron'), [path.join(__dirname, 'reference-call-electron.cjs'), profile], { env, stdio: 'inherit' });
+      const child = spawn(require('electron'), [path.join(__dirname, 'reference-call-electron.cjs'), profile, ...process.argv.slice(2)], { env, stdio: 'inherit' });
       const timer = setTimeout(() => { child.kill(); reject(new Error('Call UI QA exceeded 120 seconds')); }, 120000);
       child.once('error', error => { clearTimeout(timer); reject(error); });
       child.once('exit', (code, signal) => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error(`Call UI QA failed (${code ?? signal})`)); });
