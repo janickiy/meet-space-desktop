@@ -27,8 +27,8 @@ async function createProductFixture(certificates) {
     files: [{ uuid: FILE, fileType: "final_mp4", sizeBytes: 1024,
       url: "https://must-not-load.fixture.invalid/private.mp4?signature=fixture" }] };
   const attachment = { id: ATTACHMENT, filename: "Product private attachment.txt", mimeType: "text/plain", size: 40, status: "ready" };
-  const controls = { offline: false, capabilityError: false };
-  const fixture = await createFixture({ name: "product", certificates, ui: true, handleRequest: async ({ request, response, url, send }) => {
+  const controls = { offline: false, capabilityError: false, sentMessages: [] };
+  const fixture = await createFixture({ name: "product", certificates, ui: true, handleRequest: async ({ request, response, url, body, send }) => {
     const reply = (body, status = 200) => { send(response, status, { status: "success", ...body }); return true; };
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);
@@ -51,11 +51,22 @@ async function createProductFixture(certificates) {
       if (url.searchParams.has("search")) items = items.filter(item => (item.name || item.peer.displayName).toLowerCase().includes(url.searchParams.get("search").toLowerCase()));
       return reply({ items, nextCursor: null, unreadCount: 0 });
     }
+    if (/^\/(conversations|conferences)\/[^/]+\/messages$/.test(route) && request.method === "POST") {
+      const item = {
+        id: require("node:crypto").randomUUID(), clientRequestId: body.clientRequestId,
+        sequence: String(controls.sentMessages.length + 2), senderId: USER_A, senderName: "Product owner",
+        text: body.text, attachments: [], replyTo: body.replyTo ?? null,
+        ...(route.startsWith("/conversations/") ? { conversationId: route.split("/")[2] } : { conferenceId: CONFERENCE }),
+        createdAt: new Date().toISOString(), updatedAt: now, editedAt: null, deletedAt: null, version: 1, important: false,
+      };
+      controls.sentMessages.push({ route, body, item });
+      return reply({ item });
+    }
     for (const item of [direct, group]) {
       if (route === `/conversations/${item.id}`) return reply({ item });
-      if (route === `/conversations/${item.id}/messages`) return reply({ items: controls.messages?.map(message => ({ ...message, conversationId: item.id })) || [{ id: MESSAGE, sequence: "1", conversationId: item.id,
+      if (route === `/conversations/${item.id}/messages`) return reply({ items: [...(controls.messages?.map(message => ({ ...message, conversationId: item.id })) || [{ id: MESSAGE, sequence: "1", conversationId: item.id,
         senderId: USER_B, senderName: "Product direct peer", text: "Product server message", attachments: [attachment],
-        createdAt: now, updatedAt: now, editedAt: null, deletedAt: null, version: 1, important: false, replyTo: null }], nextCursor: null, unreadCount: 0 });
+        createdAt: now, updatedAt: now, editedAt: null, deletedAt: null, version: 1, important: false, replyTo: null }]), ...controls.sentMessages.filter(message => message.route === route).map(message => message.item)], nextCursor: null, unreadCount: 0 });
       if (route === `/conversations/${item.id}/read` || route === `/conversations/${item.id}/chat/read`) return reply({ item: { conversationId: item.id, unreadCount: 0, lastReadSequence: "1", lastReadMessageId: MESSAGE } });
       if (route === `/conversations/${item.id}/peer-presence`) return reply({ item: { conversationId: item.id, peerId: USER_B, online: false } });
       if (route === `/conversations/${item.id}/members`) return reply({ items: [{ id: USER_A, displayName: "Product owner", role: "owner", online: false }, { id: USER_B, displayName: "Product direct peer", role: "member", online: false }] });

@@ -94,6 +94,27 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     checks.push("existing direct/group list uses real type filter and navigation revokes pending recording media");
 
     await route(`/personal/${DIRECT}`); await visible("Product server message");
+    const sendDraft = async value => {
+      await execute(`(() => { const input = document.querySelector('.chat-composer textarea'); Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', {bubbles:true})); })()`);
+      await until(() => execute("!!document.querySelector('.chat-composer button[type=submit]:not(:disabled)')"), "Chat send enabled");
+      await click(".chat-composer button[type=submit]");
+    };
+    await sendDraft("Plain desktop message without reply");
+    await until(() => fixture.product.controls.sentMessages.length === 1, "Plain chat message reaches HTTPS API through the production IPC broker");
+    const plain = fixture.product.controls.sentMessages[0];
+    assert.equal(plain.route, `/conversations/${DIRECT}/messages`);
+    assert.equal(plain.body.text, "Plain desktop message without reply");
+    assert.equal(Object.hasOwn(plain.body, "replyTo"), false, "Absent reply is omitted just like the web JSON request");
+    assert.deepEqual(plain.body.attachmentIds, []);
+    await until(() => execute("document.querySelector('.chat-composer textarea').value === '' && !document.querySelector('.chat-message-pending')"), "Confirmed message clears draft and pending state");
+    await click(`[data-testid="chat-message-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"] .item-actions > button`);
+    await clickText("Ответить");
+    await until(() => execute("!!document.querySelector('.chat-reply')"), "Reply preview selected");
+    await sendDraft("Desktop reply with a quotation");
+    await until(() => fixture.product.controls.sentMessages.length === 2, "Quoted reply reaches HTTPS API");
+    assert.equal(fixture.product.controls.sentMessages[1].body.replyTo, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    await until(() => execute("document.querySelector('.chat-composer textarea').value === '' && !document.querySelector('.chat-reply')"), "Confirmed reply clears quotation");
+    checks.push("actual chat form sends plain text and quoted replies through the production preload/broker to HTTPS; successful delivery clears the draft");
     await click(`button[aria-label="Скачать файл: Product private attachment.txt"]`);
     await until(() => saves.length === 2, "Existing chat save action uses native path");
     assert.deepEqual(saves[1].asset, { kind: "attachment", scope: "conversation", scopeId: DIRECT, attachmentId: ATTACHMENT, filename: "Product private attachment.txt" });

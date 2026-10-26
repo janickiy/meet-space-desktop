@@ -24,7 +24,11 @@ export async function desktopRequest(
   signal?.throwIfAborted();
   const bridge = desktopBridge();
   const id = crypto.randomUUID();
-  const { file: _file, ...input } = request;
+  const { file: _file, body: json, ...input } = request;
+  // IPC preserves undefined object properties, while a web JSON request omits
+  // them. Normalize here before the native broker validates the JSON payload.
+  const jsonBody =
+    json === undefined ? undefined : JSON.parse(JSON.stringify(json));
   let aborted = false;
   let rejectAbort: (error: Error) => void = () => {};
   const abortedPromise = new Promise<never>((_resolve, reject) => {
@@ -49,7 +53,7 @@ export async function desktopRequest(
   signal?.addEventListener("abort", abort, { once: true });
   try {
     const response = await Promise.race([
-      bridge.http({ ...input, id, bytes }),
+      bridge.http({ ...input, id, bytes, body: jsonBody }),
       abortedPromise,
     ]);
     signal?.throwIfAborted();
