@@ -934,7 +934,10 @@
   font-size: calc(11px * var(--text-scale));
   box-shadow: none;
 }
-.folders-page .folder-toolbar .folder-candidate-filters button[aria-pressed="true"] {
+.folders-page
+  .folder-toolbar
+  .folder-candidate-filters
+  button[aria-pressed="true"] {
   background: transparent;
   box-shadow: none;
 }

@@ -6,6 +6,8 @@ const syncFs = require('node:fs');
 const path = require('node:path');
 const v8 = require('node:v8');
 const vm = require('node:vm');
+const os = require('node:os');
+const { monitorEventLoopDelay } = require('node:perf_hooks');
 const { execFileSync } = require('node:child_process');
 const { app, ipcMain, powerMonitor } = require('electron');
 const WebSocket = require('ws');
@@ -54,6 +56,8 @@ let socketsCreated = 0, socketsClosed = 0;
 const evidenceDir = config.evidenceDir ?? path.resolve(__dirname, '../artifacts');
 const report = { schemaVersion: 1, phase: config.phase, collectedAt: new Date().toISOString(),
   platform: process.platform, arch: process.arch, electron: process.versions.electron, chromium: process.versions.chrome,
+  node: process.versions.node, v8: process.versions.v8,
+  machine: { os: os.release(), cpu: os.cpus()[0]?.model, logicalCpuCount: os.cpus().length, memoryBytes: os.totalmem() },
   sourceTreeSha256: config.sourceTreeSha256,
   scope: 'Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events',
   windowsRuntimeTested: process.platform === 'win32', samples: [], checks: [], notMeasured: ['Windows HANDLE count', 'physical sleep/wake', 'camera/microphone/screen devices', 'physical-machine idle CPU'],
@@ -100,6 +104,9 @@ const lsof = pids => {
     const route = async value => { await sleep(180); window.webContents.send('meetspace:route', value); await until(() => execute(`location.pathname === ${JSON.stringify(value)}`), 'route'); };
     const bridge = (method, ...args) => execute(`window.meetspaceDesktop[${JSON.stringify(method)}](...${JSON.stringify(args)})`);
     const idleConnections = () => until(() => owned.broker.operations.size === 0 && owned.broker.sockets.size === 1 && owned.broker.streams.size === 1 && sockets.size === 1, 'one account WS and one notification SSE');
+    await visible('Начнём с подключения');
+    report.firstScreen = { harnessToWelcomeMs: performance.now() - profileStartedAt };
+    await execute("[...document.querySelectorAll('button')].find(item => item.textContent.trim() === 'Продолжить').click()");
     await visible('Подключиться к серверу');
     report.startup = { harnessToConnectScreenMs: performance.now() - profileStartedAt,
       scope: 'Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance' };
@@ -141,7 +148,22 @@ const lsof = pids => {
       finally { debug.removeListener('message', onChunk); syncFs.closeSync(handle); }
     };
     await sleep(2500); await snapshot('warmup'); await heaps('warmup');
+    const loopDelay = monitorEventLoopDelay({ resolution: 20 });
+    loopDelay.enable();
+    await debug.sendCommand('Profiler.enable');
+    await debug.sendCommand('Profiler.start');
     for (let i=1; i<=100; i++) { await chatCycle(); if (i%25===0) { await idleConnections(); await sleep(350); await snapshot(`chat-${i}`); } }
+    const { profile: cpuProfile } = await debug.sendCommand('Profiler.stop');
+    await debug.sendCommand('Profiler.disable');
+    loopDelay.disable();
+    report.mainEventLoopDelay = { unit: 'milliseconds', min: loopDelay.min / 1e6, max: loopDelay.max / 1e6,
+      mean: loopDelay.mean / 1e6, p50: loopDelay.percentile(50) / 1e6, p95: loopDelay.percentile(95) / 1e6,
+      scope: '100 instrumented chat cycles, including checkpoint GC and process observations; not an uninstrumented latency SLO' };
+    const cpuProfileName = `stage07-${config.phase}-renderer.cpuprofile`;
+    await fs.writeFile(path.join(evidenceDir, cpuProfileName), JSON.stringify(cpuProfile), { mode: 0o600 });
+    report.rendererCpuProfile = { file: cpuProfileName, samples: cpuProfile.samples?.length ?? 0,
+      scope: 'Production bundle sampling; supports hotspot inspection, not React component commit/recomposition counts' };
+    report.gpuFeatures = app.getGPUFeatureStatus();
     await sleep(2500); await snapshot('settled'); await heaps('settled');
     report.chatReconnects = { created: report.samples.at(-1).socketsCreated-report.samples[0].socketsCreated,
       closed: report.samples.at(-1).socketsClosed-report.samples[0].socketsClosed };

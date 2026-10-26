@@ -159,7 +159,9 @@ export function installPhaseLabel(
   if (phase === "resuming") return "Возобновление установки";
   const component = componentDetail(phase, imageMode);
   if (component) return component;
-  return phasesForMode(imageMode)[phaseIndex(phase)]?.title ?? "Этап уточняется";
+  return (
+    phasesForMode(imageMode)[phaseIndex(phase)]?.title ?? "Этап уточняется"
+  );
 }
 
 /** No timer or event count contributes to progress: only confirmed checkpoints. */

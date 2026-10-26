@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { displayCaptureMode } = require("../dist/platform/display-capture.js");
-const policy = options => displayCaptureMode({ platform: "linux", electronVersion: "44.7.1", chromiumVersion: "152.0.7977.149", ...options });
+const policy = options => displayCaptureMode({ platform: "linux", electronVersion: "44.9.3", chromiumVersion: "152.0.7977.167", ...options });
 
 test("canonical Wayland uses the pinned PipeWire path even for an Xwayland application window", () => {
   for (const ozonePlatform of [undefined, "wayland", "x11", "auto"])
@@ -28,6 +28,8 @@ test("Linux runtime upgrades require a deliberate backend predicate audit", () =
   const env = { XDG_SESSION_TYPE: "wayland", WAYLAND_DISPLAY: "wayland-0" };
   assert.equal(policy({ env, electronVersion: "45.0.0" }), "unavailable");
   assert.equal(policy({ env, chromiumVersion: "153.0.0.0" }), "unavailable");
+  assert.equal(policy({ env, electronVersion: "44.9.4" }), "unavailable");
+  assert.equal(policy({ env, chromiumVersion: "152.0.7977.149" }), "unavailable");
 });
 
 test("Windows and macOS selection policies are unaffected by Linux session evidence and runtime gate", () => {

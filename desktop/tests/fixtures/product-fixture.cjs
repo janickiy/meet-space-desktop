@@ -8,7 +8,7 @@ const FILE = "99999999-9999-4999-8999-999999999999";
 const MESSAGE = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const ATTACHMENT = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const now = new Date().toISOString();
-async function createProductFixture(certificates) {
+async function createProductFixture(certificates, { notificationHeartbeatMs = 0 } = {}) {
   const conference = {
     id: CONFERENCE, ownerId: USER_A, title: "Product scheduled meeting", inviteCode: "a".repeat(32), inviteUrl: "https://meeting.fixture.invalid/i/" + "a".repeat(32),
     status: "scheduled", createdAt: now, updatedAt: now, startedAt: null, finishedAt: null,
@@ -28,7 +28,7 @@ async function createProductFixture(certificates) {
       url: "https://must-not-load.fixture.invalid/private.mp4?signature=fixture" }] };
   const attachment = { id: ATTACHMENT, filename: "Product private attachment.txt", mimeType: "text/plain", size: 40, status: "ready" };
   const controls = { offline: false, capabilityError: false, sentMessages: [] };
-  const fixture = await createFixture({ name: "product", certificates, ui: true, handleRequest: async ({ request, response, url, body, send }) => {
+  const fixture = await createFixture({ name: "product", certificates, ui: true, notificationHeartbeatMs, handleRequest: async ({ request, response, url, body, send }) => {
     const reply = (body, status = 200) => { send(response, status, { status: "success", ...body }); return true; };
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);

@@ -30,8 +30,8 @@ const { createProductFixture } = require('./fixtures/product-fixture.cjs');
   let certificates, fixture, beta, preserveProfile = false;
   try {
     certificates = await createCertificates();
-    fixture = await createProductFixture(certificates);
-    beta = await createFixture({ name: 'profile-beta', certificates });
+    fixture = await createProductFixture(certificates, { notificationHeartbeatMs: 250 });
+    beta = await createFixture({ name: 'profile-beta', certificates, notificationHeartbeatMs: 250 });
     const caPath = path.join(directory, 'ca.pem');
     await fs.writeFile(caPath, certificates.ca);
     const configPath = path.join(directory, 'config.json');
@@ -41,7 +41,7 @@ const { createProductFixture } = require('./fixtures/product-fixture.cjs');
     delete env.MEETSPACE_DESKTOP_DEV; delete env.MEETSPACE_DEV_CSP_NONCE; delete env.ELECTRON_RUN_AS_NODE;
     await new Promise((resolve, reject) => {
       const child = spawn(executable, [path.join(__dirname, 'stage07-profile-electron.cjs'), configPath], { env, stdio: 'inherit' });
-      let expired = false, hardKill, reapDeadline;
+      let expired = false, hardKill, reapDeadline, childError;
       const clearTimers = () => { clearTimeout(timer); clearTimeout(hardKill); clearTimeout(reapDeadline); };
       const timer = setTimeout(() => {
         expired = true;
@@ -50,13 +50,18 @@ const { createProductFixture } = require('./fixtures/product-fixture.cjs');
         reapDeadline = setTimeout(() => {
           preserveProfile = true;
           clearTimers();
+          child.unref();
           reject(new Error('Stage07 profile child did not exit after timeout; private temporary profile preserved'));
         }, 10_000);
       }, 240_000);
-      child.once('error', error => { clearTimers(); preserveProfile = !!child.pid; reject(error); });
+      child.on('error', error => {
+        if (child.pid) { childError = error; return; }
+        clearTimers(); reject(error);
+      });
       child.once('exit', (code, signal) => {
         clearTimers();
         if (expired) reject(new Error(`Stage07 profile deadline exceeded; child exited ${code ?? signal}`));
+        else if (childError) reject(childError);
         else code === 0 ? resolve() : reject(new Error(`Stage07 profile exited ${code ?? signal}`));
       });
     });

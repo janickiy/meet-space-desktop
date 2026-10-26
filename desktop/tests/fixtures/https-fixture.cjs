@@ -42,7 +42,7 @@ async function createCertificates() {
   }
 }
 
-async function createFixture({ name, certificates, version = "1.0.0", malformedVersion = false, versionDelay = 0, ui = false, notifyOnConnect = false, handleRequest }) {
+async function createFixture({ name, certificates, version = "1.0.0", malformedVersion = false, versionDelay = 0, ui = false, notifyOnConnect = false, notificationHeartbeatMs = 0, handleRequest }) {
   const requests = [];
   const sessions = new Map();
   const tokens = new Map();
@@ -51,6 +51,7 @@ async function createFixture({ name, certificates, version = "1.0.0", malformedV
   const sockets = new Set();
   const networkSockets = new Set();
   const streams = new Set();
+  const heartbeatTimers = new Set();
   const heldRequests = new Set();
   const controls = { rejectTokenOnce: false, redirectNext: null, versionRedirect: null, holdConferences: false, failLogout: false, personalRevision: 1 };
   const users = [USER_A, USER_B].map((id, index) => ({
@@ -160,6 +161,16 @@ async function createFixture({ name, certificates, version = "1.0.0", malformedV
       response.writeHead(200, { "Content-Type": "text/event-stream", "Cache-Control": "no-store" });
       response.write(": connected\n\n");
       streams.add(response); response.once("close", () => streams.delete(response));
+      // Profiles compare steady connected states. Other fixtures deliberately stay
+      // quiet to exercise the client's idle timeout and reconnect behavior.
+      if (notificationHeartbeatMs > 0) {
+        const timer = setInterval(() => {
+          if (!response.destroyed && !response.writableEnded) response.write(": heartbeat\n\n");
+        }, notificationHeartbeatMs);
+        timer.unref();
+        heartbeatTimers.add(timer);
+        response.once("close", () => { clearInterval(timer); heartbeatTimers.delete(timer); });
+      }
       if (notifyOnConnect) response.write(`data: ${JSON.stringify({ id: `fixture-${name}-notification`, fixture: name })}\n\n`);
       return;
     }
@@ -213,6 +224,8 @@ async function createFixture({ name, certificates, version = "1.0.0", malformedV
     close: async () => {
       if (closed) return;
       closed = true;
+      for (const timer of heartbeatTimers) clearInterval(timer);
+      heartbeatTimers.clear();
       for (const stream of streams) stream.destroy();
       for (const socket of sockets) socket.terminate();
       for (const socket of networkSockets) socket.destroy();

@@ -1,6 +1,6 @@
 {
   "name": "meetspace-desktop",
-  "version": "0.1.11-beta",
+  "version": "0.1.12-beta",
   "private": true,
   "description": "MeetSpace desktop with the supplied Windows design — test build",
   "author": "MeetSpace",
@@ -57,7 +57,7 @@
     "@types/node": "26.6.3",
     "@types/ssh2": "1.15.6",
     "@types/ws": "8.18.2",
-    "electron": "44.7.1",
+    "electron": "44.9.3",
     "electron-builder": "26.17.0",
     "typescript": "7.0.2"
   },

@@ -78,7 +78,12 @@ export interface DesktopSocketRequest {
   token?: string | null;
 }
 export type DesktopTransportEvent =
-  | { kind: "notification-sound"; profileId: string; userId: string; id: string }
+  | {
+      kind: "notification-sound";
+      profileId: string;
+      userId: string;
+      id: string;
+    }
   | { kind: "update"; state: DesktopUpdateState }
   | { kind: "lifecycle"; type: "suspend" | "resume" | "quit" }
   | {

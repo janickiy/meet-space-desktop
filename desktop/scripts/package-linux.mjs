@@ -10,6 +10,7 @@ import {
 import path from "node:path";
 import { sourceInputs } from "./ci/source-inputs.mjs";
 import { artifactFilename, LINUX_PACKAGE_FORMATS, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
+import { prepareLinuxElectronReference } from "./prepare-linux-electron.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -181,6 +182,7 @@ async function main() {
       if (result.error || result.status !== 0)
         throw new Error(`Linux packaging command failed${result.status === null ? "" : ` (${result.status})`}`);
     };
+    await prepareLinuxElectronReference({ desktop, arch, environment });
     run([path.join(desktop, "scripts/build.mjs")]);
     const manifestPath = path.join(desktop, "dist/source-inputs.json");
     const manifestBytes = await readFile(manifestPath);

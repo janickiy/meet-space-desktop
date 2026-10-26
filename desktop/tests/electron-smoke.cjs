@@ -42,6 +42,24 @@ const { startApp } = require("../dist/main.js");
       webviewTag: false,
     }))
       assert.equal(preferences[name], value, name);
+    const waitForText = async (text) => {
+      const deadline = Date.now() + 15000;
+      while (Date.now() < deadline) {
+        if (await window.webContents.executeJavaScript(
+          `document.body.innerText.includes(${JSON.stringify(text)})`,
+        )) return;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      assert.fail(`Expected application screen: ${text}`);
+    };
+    await waitForText("Начнём с подключения");
+    await window.webContents.executeJavaScript(`
+      const continueButton = [...document.querySelectorAll('button')]
+        .find(button => button.textContent.trim() === 'Продолжить');
+      if (!continueButton) throw new Error('Welcome continue button is missing');
+      continueButton.click();
+    `);
+    await waitForText("Подключиться к серверу");
     const state = await window.webContents.executeJavaScript(`(async () => {
       const info = await window.meetspaceDesktop.getRuntimeInfo();
       const updates = await Promise.all(['getUpdateState', 'checkUpdates', 'downloadUpdate', 'cancelUpdate', 'installUpdate'].map(method => window.meetspaceDesktop[method]()));
@@ -64,7 +82,7 @@ const { startApp } = require("../dist/main.js");
       };
     })()`);
     assert.match(state.text, /MeetSpace/);
-    assert.match(state.text, /серверу/);
+    assert.match(state.text, /Подключиться к серверу/);
     assert.equal(state.hasNode, false);
     assert.equal(state.bridgeVersion, 6);
     assert.equal(state.info.capabilities.serverConnection, true);
@@ -169,6 +187,7 @@ const { startApp } = require("../dist/main.js");
         electron: process.versions.electron,
         checks: [
           "local renderer",
+          "fresh welcome transitions to server connection",
           "native application menu without default external links",
           "sandbox/Node isolation",
           "typed IPC",

@@ -1,0 +1,1907 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-10-26",
+  "applicationVersion": "0.1.11-beta",
+  "sourceCommit": "0edb3451cb90d402eb81979115373a3de7fddf8d",
+  "sourceDirty": true,
+  "finalSourceTreeSha256": "056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48",
+  "sourceInputCount": 464,
+  "releaseReadiness": "BLOCKED",
+  "scope": "Shared Windows/Linux Electron+React. macOS diagnostic runs and native Ubuntu ARM64 Xvfb. No production tests or publishing; ordinary UTM user installation preserved.",
+  "limitations": [
+    "No fresh native Windows target acceptance",
+    "No six Linux x64 target acceptances",
+    "No physical media/Wayland/PipeWire/multi-monitor acceptance",
+    "No native signed Windows update acceptance",
+    "Embedded Node 24.22.0/Undici 7.29.1 advisory risk remains; app exploit path not confirmed",
+    "Initial integration timeout not reproduced; root cause unconfirmed",
+    "No controlled comparable performance improvement claim"
+  ],
+  "fixes": [
+    "SEC-01 fail-closed serialized server-profile credential removal",
+    "Electron44.9.3/npm transitives and CI Node24.22.1",
+    "Exact audited Linux capture runtime gate",
+    "Lazy Linux Electron reference preparation with checksum/version/ELF checks",
+    "Opt-in profiler fixture SSE heartbeat",
+    "Smoke welcome navigation and bounded test-runner child supervision"
+  ],
+  "finalChecks": {
+    "desktopUnit": {
+      "tests": 330,
+      "passed": 329,
+      "failed": 0,
+      "skipped": 1,
+      "skip": "Linux GIO integration unavailable on macOS"
+    },
+    "desktopTypecheck": "PASS",
+    "frontendBuild": "PASS",
+    "frontendLint": "PASS",
+    "foundation": {
+      "passed": 30
+    },
+    "mediaUnit": {
+      "passed": 39
+    },
+    "assetsUnit": {
+      "passed": 9
+    },
+    "securityTargeted": {
+      "passed": 188,
+      "overlapsUnitSuite": true
+    },
+    "packagingTargeted": {
+      "passed": 33,
+      "overlapsUnitSuite": true
+    },
+    "runnerSupervision": {
+      "passed": 8,
+      "overlapsUnitSuite": true
+    }
+  },
+  "initialLocalCheckReceipts": [
+    {
+      "name": "build-after",
+      "cwd": "desktop",
+      "seconds": 1.1551592350006104,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "frontend-web-build",
+      "cwd": "frontend",
+      "seconds": 0.5248048305511475,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "frontend-lint-after",
+      "cwd": "frontend",
+      "seconds": 1.638227939605713,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "desktop-unit",
+      "cwd": "desktop",
+      "seconds": 1.2159459590911865,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "frontend-foundation",
+      "cwd": "frontend",
+      "seconds": 0.31172919273376465,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "frontend-media",
+      "cwd": "frontend",
+      "seconds": 0.25163698196411133,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "frontend-assets",
+      "cwd": "frontend",
+      "seconds": 0.19958996772766113,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-smoke",
+      "cwd": "desktop",
+      "seconds": 100.0081958770752,
+      "exitCode": "timeout",
+      "result": "FAIL"
+    },
+    {
+      "name": "electron-integration",
+      "cwd": "desktop",
+      "seconds": 33.90444588661194,
+      "exitCode": 1,
+      "result": "FAIL"
+    },
+    {
+      "name": "electron-ui",
+      "cwd": "desktop",
+      "seconds": 10.243628740310669,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-native",
+      "cwd": "desktop",
+      "seconds": 2.846007823944092,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-product",
+      "cwd": "desktop",
+      "seconds": 2.96152925491333,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-assets",
+      "cwd": "desktop",
+      "seconds": 39.19468021392822,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-ssh",
+      "cwd": "desktop",
+      "seconds": 17.21824812889099,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-ssh-tls",
+      "cwd": "desktop",
+      "seconds": 0.8250160217285156,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-media",
+      "cwd": "desktop",
+      "seconds": 1.57834792137146,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-sfu",
+      "cwd": "desktop",
+      "seconds": 9.554908990859985,
+      "exitCode": 0,
+      "result": "PASS"
+    },
+    {
+      "name": "electron-media-lifecycle",
+      "cwd": "desktop",
+      "seconds": 17.303332090377808,
+      "exitCode": 0,
+      "result": "PASS"
+    }
+  ],
+  "nativeAppImage": {
+    "result": "PASS",
+    "platform": "linux",
+    "arch": "arm64",
+    "sourceTreeSha256": "056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48",
+    "bytes": 119391532,
+    "sha256": "7f37edee9dac271920e1051a9eb598d3d61a1ec16c78671d3566f6de2c77556a",
+    "cleanInstall": {
+      "distExists": false,
+      "pathTxtExists": false,
+      "manualElectronRequire": false
+    },
+    "checks": {
+      "actualPackagedMainPreloadSandboxedReact": "PASS",
+      "embeddedUpdatesDisabled": "PASS",
+      "realOptInGioSecondInstanceOptOut": "PASS",
+      "actualQuitExitZero": "PASS"
+    },
+    "scope": "Actual installed package or original AppImage and sandboxed shared renderer, with a localhost test-only inspector. No ordinary-launch/visual/actual-login/physical-device acceptance.",
+    "actualExitCode": 0
+  },
+  "profiles": [
+    {
+      "result": "FAIL",
+      "phase": "baseline",
+      "platform": "darwin",
+      "arch": "arm64",
+      "electron": "44.7.1",
+      "chromium": "152.0.7977.149",
+      "sourceTreeSha256": "b3be2f0a314e8bcdc95ca43b1a099b60de8cbb621d1652b948e6d2ac8039e5d2",
+      "scope": "Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events",
+      "checks": [
+        "100 actual shared React personal chat open/close cycles after 10 warmup cycles"
+      ],
+      "notMeasured": [
+        "Windows HANDLE count",
+        "physical sleep/wake",
+        "camera/microphone/screen devices",
+        "physical-machine idle CPU"
+      ],
+      "firstScreen": {
+        "harnessToWelcomeMs": 540.838292
+      },
+      "startup": {
+        "harnessToConnectScreenMs": 546.971583,
+        "scope": "Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance"
+      },
+      "jank": {
+        "status": "NOT_MEASURED",
+        "reason": "Hidden window RAF is throttled; use --visible in a dedicated display"
+      },
+      "chatReconnects": {
+        "created": 0,
+        "closed": 0
+      },
+      "evidence": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-profile-baseline.json",
+      "samples": [
+        {
+          "label": "warmup",
+          "mainMemory": {
+            "rss": 210911232,
+            "heapTotal": 11796480,
+            "heapUsed": 9434756,
+            "external": 5694147,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871798,
+            "embedderHeapUsedSize": 3048168,
+            "totalSize": 5767168,
+            "usedSize": 5117288
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9424952,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-25",
+          "mainMemory": {
+            "rss": 501776384,
+            "heapTotal": 10485760,
+            "heapUsed": 9031744,
+            "external": 4526063,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871822,
+            "embedderHeapUsedSize": 3055344,
+            "totalSize": 6815744,
+            "usedSize": 5545540
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9031316,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-50",
+          "mainMemory": {
+            "rss": 501874688,
+            "heapTotal": 10485760,
+            "heapUsed": 9139272,
+            "external": 4527731,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871798,
+            "embedderHeapUsedSize": 3046624,
+            "totalSize": 6553600,
+            "usedSize": 5690508
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9138860,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-75",
+          "mainMemory": {
+            "rss": 501940224,
+            "heapTotal": 10485760,
+            "heapUsed": 9198532,
+            "external": 4528141,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871786,
+            "embedderHeapUsedSize": 2823840,
+            "totalSize": 6553600,
+            "usedSize": 5791684
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9198120,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-100",
+          "mainMemory": {
+            "rss": 500957184,
+            "heapTotal": 10485760,
+            "heapUsed": 9244208,
+            "external": 4593526,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871750,
+            "embedderHeapUsedSize": 2611640,
+            "totalSize": 6553600,
+            "usedSize": 5867612
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9243796,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "settled",
+          "mainMemory": {
+            "rss": 501039104,
+            "heapTotal": 10485760,
+            "heapUsed": 9279216,
+            "external": 4593896,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871822,
+            "embedderHeapUsedSize": 2986760,
+            "totalSize": 6815744,
+            "usedSize": 5872036
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9278804,
+          "electronProcessCount": 5
+        }
+      ]
+    },
+    {
+      "result": "PASS",
+      "phase": "after",
+      "platform": "darwin",
+      "arch": "arm64",
+      "electron": "44.9.3",
+      "chromium": "152.0.7977.167",
+      "node": "24.22.0",
+      "v8": "15.2.124.43-electron.0",
+      "machine": {
+        "os": "27.0.0",
+        "cpu": "Apple M5 Pro",
+        "logicalCpuCount": 18,
+        "memoryBytes": 51539607552
+      },
+      "sourceTreeSha256": "046039dc46e25b1e65ca7419d7c0a2caf7b9df7a3edb43b83f584a68a236dce2",
+      "scope": "Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events",
+      "checks": [
+        "100 actual shared React personal chat open/close cycles after 10 warmup cycles",
+        "Application-owned maps, sockets, streams, timers, tray, window and EventEmitter listeners return to warmup counts",
+        "100 additional typed IPC native WSS/SSE open/close cycles",
+        "Synthetic suspend/resume invalidates old connections and shared UI reconnects",
+        "Actual Chromium renderer crash releases native resources; reload restores auth and realtime",
+        "Server switch releases native connections and removes previous identity"
+      ],
+      "notMeasured": [
+        "Windows HANDLE count",
+        "physical sleep/wake",
+        "camera/microphone/screen devices",
+        "physical-machine idle CPU"
+      ],
+      "firstScreen": {
+        "harnessToWelcomeMs": 232.26383299999998
+      },
+      "startup": {
+        "harnessToConnectScreenMs": 292.451125,
+        "scope": "Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance"
+      },
+      "mainEventLoopDelay": {
+        "unit": "milliseconds",
+        "min": 19.021824,
+        "max": 77.266943,
+        "mean": 20.941345274633125,
+        "p50": 21.069823,
+        "p95": 21.217279,
+        "scope": "100 instrumented chat cycles, including checkpoint GC and process observations; not an uninstrumented latency SLO"
+      },
+      "jank": {
+        "status": "NOT_MEASURED",
+        "reason": "Hidden window RAF is throttled; use --visible in a dedicated display"
+      },
+      "chatReconnects": {
+        "created": 0,
+        "closed": 0
+      },
+      "evidence": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-profile-after.json",
+      "samples": [
+        {
+          "label": "warmup",
+          "mainMemory": {
+            "rss": 210403328,
+            "heapTotal": 12320768,
+            "heapUsed": 9379076,
+            "external": 5532429,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871800,
+            "embedderHeapUsedSize": 3063248,
+            "totalSize": 5767168,
+            "usedSize": 5100732
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9369264,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-25",
+          "mainMemory": {
+            "rss": 503136256,
+            "heapTotal": 9961472,
+            "heapUsed": 9016112,
+            "external": 4641645,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871788,
+            "embedderHeapUsedSize": 3032528,
+            "totalSize": 6291456,
+            "usedSize": 5653820
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9015684,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-50",
+          "mainMemory": {
+            "rss": 503676928,
+            "heapTotal": 9961472,
+            "heapUsed": 9116316,
+            "external": 4642019,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871788,
+            "embedderHeapUsedSize": 2834040,
+            "totalSize": 6553600,
+            "usedSize": 5827812
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9115904,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-75",
+          "mainMemory": {
+            "rss": 502661120,
+            "heapTotal": 10223616,
+            "heapUsed": 9218392,
+            "external": 4641645,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871788,
+            "embedderHeapUsedSize": 2828576,
+            "totalSize": 6815744,
+            "usedSize": 5970024
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9217980,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-100",
+          "mainMemory": {
+            "rss": 503840768,
+            "heapTotal": 10485760,
+            "heapUsed": 9264376,
+            "external": 4707181,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871788,
+            "embedderHeapUsedSize": 2852560,
+            "totalSize": 6815744,
+            "usedSize": 6068320
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9263964,
+          "electronProcessCount": 5
+        },
+        {
+          "label": "settled",
+          "mainMemory": {
+            "rss": 508788736,
+            "heapTotal": 11796480,
+            "heapUsed": 9869856,
+            "external": 4707181,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 871788,
+            "embedderHeapUsedSize": 2607080,
+            "totalSize": 6815744,
+            "usedSize": 6068320
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9869444,
+          "electronProcessCount": 5
+        }
+      ],
+      "idleCpu": {
+        "seconds": 5,
+        "processes": [
+          {
+            "type": "Browser",
+            "percentOneCore": 0.3064800000000023
+          },
+          {
+            "type": "GPU",
+            "percentOneCore": 0.0017800000000001148
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          },
+          {
+            "type": "Tab",
+            "percentOneCore": 0.9649400000000163
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          }
+        ]
+      }
+    },
+    {
+      "result": "PASS",
+      "phase": "after",
+      "platform": "linux",
+      "arch": "arm64",
+      "electron": "44.9.3",
+      "chromium": "152.0.7977.167",
+      "node": "24.22.0",
+      "v8": "15.2.124.43-electron.0",
+      "machine": {
+        "os": "6.8.0-147-generic",
+        "cpu": "unknown",
+        "logicalCpuCount": 4,
+        "memoryBytes": 8304300032
+      },
+      "sourceTreeSha256": "9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5",
+      "scope": "Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events",
+      "checks": [
+        "100 actual shared React personal chat open/close cycles after 10 warmup cycles",
+        "Application-owned maps, sockets, streams, timers, tray, window and EventEmitter listeners return to warmup counts",
+        "100 additional typed IPC native WSS/SSE open/close cycles",
+        "Synthetic suspend/resume invalidates old connections and shared UI reconnects",
+        "Actual Chromium renderer crash releases native resources; reload restores auth and realtime",
+        "Server switch releases native connections and removes previous identity"
+      ],
+      "notMeasured": [
+        "Windows HANDLE count",
+        "physical sleep/wake",
+        "camera/microphone/screen devices",
+        "physical-machine idle CPU"
+      ],
+      "firstScreen": {
+        "harnessToWelcomeMs": 221.102678
+      },
+      "startup": {
+        "harnessToConnectScreenMs": 224.04880899999998,
+        "scope": "Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance"
+      },
+      "mainEventLoopDelay": {
+        "unit": "milliseconds",
+        "min": 16.941056,
+        "max": 24.739839,
+        "mean": 20.727429790313998,
+        "p50": 20.152319,
+        "p95": 22.822911,
+        "scope": "100 instrumented chat cycles, including checkpoint GC and process observations; not an uninstrumented latency SLO"
+      },
+      "jank": {
+        "status": "MEASURED",
+        "startedAt": 105.70000000298023,
+        "frames": 3184,
+        "over50ms": 2,
+        "maxFrameMs": 150,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "visibility": "visible",
+        "elapsedMs": 53335.60000000149,
+        "scope": "Instrumented mapped renderer, including forced GC and heap capture; display/backend must be recorded separately; not physical smoothness acceptance"
+      },
+      "chatReconnects": {
+        "created": 0,
+        "closed": 0
+      },
+      "evidence": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-profile-after.json",
+      "samples": [
+        {
+          "label": "warmup",
+          "mainMemory": {
+            "rss": 196521984,
+            "heapTotal": 12845056,
+            "heapUsed": 9695412,
+            "external": 4652342,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872913,
+            "embedderHeapUsedSize": 3035904,
+            "totalSize": 6029312,
+            "usedSize": 5130460
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9685600,
+          "processTotals": {
+            "fdCount": 225,
+            "threads": 84,
+            "rssKiB": 657404
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-25",
+          "mainMemory": {
+            "rss": 204664832,
+            "heapTotal": 10747904,
+            "heapUsed": 9375368,
+            "external": 4641701,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2975392,
+            "totalSize": 6553600,
+            "usedSize": 5693268
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9374940,
+          "processTotals": {
+            "fdCount": 222,
+            "threads": 84,
+            "rssKiB": 684360
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-50",
+          "mainMemory": {
+            "rss": 204894208,
+            "heapTotal": 11010048,
+            "heapUsed": 9514908,
+            "external": 4641701,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2965632,
+            "totalSize": 7077888,
+            "usedSize": 5884896
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9514496,
+          "processTotals": {
+            "fdCount": 222,
+            "threads": 84,
+            "rssKiB": 685376
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-75",
+          "mainMemory": {
+            "rss": 203472896,
+            "heapTotal": 10747904,
+            "heapUsed": 9572856,
+            "external": 4708001,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2929416,
+            "totalSize": 7077888,
+            "usedSize": 6020188
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9572444,
+          "processTotals": {
+            "fdCount": 222,
+            "threads": 84,
+            "rssKiB": 685292
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-100",
+          "mainMemory": {
+            "rss": 204910592,
+            "heapTotal": 10747904,
+            "heapUsed": 9618936,
+            "external": 4707237,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 3015528,
+            "totalSize": 7077888,
+            "usedSize": 6119456
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9618524,
+          "processTotals": {
+            "fdCount": 222,
+            "threads": 84,
+            "rssKiB": 687800
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "settled",
+          "mainMemory": {
+            "rss": 207310848,
+            "heapTotal": 12615680,
+            "heapUsed": 10211676,
+            "external": 4707237,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2961520,
+            "totalSize": 7077888,
+            "usedSize": 6119444
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 10211264,
+          "processTotals": {
+            "fdCount": 222,
+            "threads": 83,
+            "rssKiB": 686808
+          },
+          "electronProcessCount": 5
+        }
+      ],
+      "idleCpu": {
+        "seconds": 5,
+        "processes": [
+          {
+            "type": "Browser",
+            "percentOneCore": 1.200000000000001
+          },
+          {
+            "type": "GPU",
+            "percentOneCore": 0
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          },
+          {
+            "type": "Tab",
+            "percentOneCore": 1.9999999999999927
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          }
+        ]
+      }
+    },
+    {
+      "result": "PASS",
+      "phase": "after",
+      "platform": "linux",
+      "arch": "arm64",
+      "electron": "44.9.3",
+      "chromium": "152.0.7977.167",
+      "node": "24.22.0",
+      "v8": "15.2.124.43-electron.0",
+      "machine": {
+        "os": "6.8.0-147-generic",
+        "cpu": "unknown",
+        "logicalCpuCount": 4,
+        "memoryBytes": 8304300032
+      },
+      "sourceTreeSha256": "056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48",
+      "scope": "Actual main/preload/shared React UI; parent-process disposable HTTPS/WSS/SSE fixture; synthetic power events",
+      "checks": [
+        "100 actual shared React personal chat open/close cycles after 10 warmup cycles",
+        "Application-owned maps, sockets, streams, timers, tray, window and EventEmitter listeners return to warmup counts",
+        "100 additional typed IPC native WSS/SSE open/close cycles",
+        "Synthetic suspend/resume invalidates old connections and shared UI reconnects",
+        "Actual Chromium renderer crash releases native resources; reload restores auth and realtime",
+        "Server switch releases native connections and removes previous identity"
+      ],
+      "notMeasured": [
+        "Windows HANDLE count",
+        "physical sleep/wake",
+        "camera/microphone/screen devices",
+        "physical-machine idle CPU"
+      ],
+      "firstScreen": {
+        "harnessToWelcomeMs": 199.17126
+      },
+      "startup": {
+        "harnessToConnectScreenMs": 201.91708500000001,
+        "scope": "Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance"
+      },
+      "mainEventLoopDelay": {
+        "unit": "milliseconds",
+        "min": 16.334848,
+        "max": 29.671423,
+        "mean": 21.291470559738134,
+        "p50": 20.168703,
+        "p95": 25.493503,
+        "scope": "100 instrumented chat cycles, including checkpoint GC and process observations; not an uninstrumented latency SLO"
+      },
+      "jank": {
+        "status": "MEASURED",
+        "startedAt": 101,
+        "frames": 3202,
+        "over50ms": 2,
+        "maxFrameMs": 133.40000000000055,
+        "longTasks": 0,
+        "longTaskMs": 0,
+        "visibility": "visible",
+        "elapsedMs": 53623.70000000298,
+        "scope": "Instrumented mapped renderer, including forced GC and heap capture; display/backend must be recorded separately; not physical smoothness acceptance"
+      },
+      "chatReconnects": {
+        "created": 0,
+        "closed": 0
+      },
+      "evidence": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-profile-after.json",
+      "samples": [
+        {
+          "label": "warmup",
+          "mainMemory": {
+            "rss": 196685824,
+            "heapTotal": 12582912,
+            "heapUsed": 9696460,
+            "external": 4652342,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872913,
+            "embedderHeapUsedSize": 3026848,
+            "totalSize": 6029312,
+            "usedSize": 5127972
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9686648,
+          "processTotals": {
+            "fdCount": 237,
+            "threads": 89,
+            "rssKiB": 654812
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-25",
+          "mainMemory": {
+            "rss": 204750848,
+            "heapTotal": 10747904,
+            "heapUsed": 9351876,
+            "external": 4641701,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2973696,
+            "totalSize": 6553600,
+            "usedSize": 5689840
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9351448,
+          "processTotals": {
+            "fdCount": 234,
+            "threads": 89,
+            "rssKiB": 681956
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-50",
+          "mainMemory": {
+            "rss": 204840960,
+            "heapTotal": 11272192,
+            "heapUsed": 9493688,
+            "external": 4641701,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2958184,
+            "totalSize": 7077888,
+            "usedSize": 5880836
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 236,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9493276,
+          "processTotals": {
+            "fdCount": 234,
+            "threads": 89,
+            "rssKiB": 682908
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-75",
+          "mainMemory": {
+            "rss": 203378688,
+            "heapTotal": 11272192,
+            "heapUsed": 9551356,
+            "external": 4708001,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2972352,
+            "totalSize": 7077888,
+            "usedSize": 6019276
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9550944,
+          "processTotals": {
+            "fdCount": 234,
+            "threads": 89,
+            "rssKiB": 682872
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "chat-100",
+          "mainMemory": {
+            "rss": 204787712,
+            "heapTotal": 11272192,
+            "heapUsed": 9613388,
+            "external": 4707237,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 3067704,
+            "totalSize": 7077888,
+            "usedSize": 6127312
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 9612976,
+          "processTotals": {
+            "fdCount": 234,
+            "threads": 89,
+            "rssKiB": 685280
+          },
+          "electronProcessCount": 5
+        },
+        {
+          "label": "settled",
+          "mainMemory": {
+            "rss": 207298560,
+            "heapTotal": 12615680,
+            "heapUsed": 10227364,
+            "external": 4707237,
+            "arrayBuffers": 0
+          },
+          "rendererHeap": {
+            "backingStorageSize": 872901,
+            "embedderHeapUsedSize": 2918464,
+            "totalSize": 7077888,
+            "usedSize": 6127276
+          },
+          "dom": {
+            "documents": 4,
+            "jsEventListeners": 237,
+            "nodes": 839
+          },
+          "mainUsedHeapBytes": 10226952,
+          "processTotals": {
+            "fdCount": 234,
+            "threads": 88,
+            "rssKiB": 684336
+          },
+          "electronProcessCount": 5
+        }
+      ],
+      "idleCpu": {
+        "seconds": 5,
+        "processes": [
+          {
+            "type": "Browser",
+            "percentOneCore": 0.8000000000000007
+          },
+          {
+            "type": "GPU",
+            "percentOneCore": 0
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          },
+          {
+            "type": "Tab",
+            "percentOneCore": 1.1999999999999922
+          },
+          {
+            "type": "Utility",
+            "percentOneCore": 0
+          }
+        ]
+      }
+    }
+  ],
+  "evidencePolicy": "Raw files remain local and git-ignored. This index includes hashes and allowlisted aggregate metrics, no heap strings, credential material or raw logs. Hashes are not a signed independent attestation.",
+  "rawEvidence": [
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/build-after.log",
+      "bytes": 7954,
+      "sha256": "6dc1cf8afa0d6f32d7ea325d69fde8d3b84d087a753ca5487562a224b4d79a66"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/build-baseline.log",
+      "bytes": 7954,
+      "sha256": "51dbd1af8b09a7e487c0fb585fe569e573e73eadbd3e31259f6f0bf7b8c13bb9"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/desktop-unit.log",
+      "bytes": 33380,
+      "sha256": "816e0171843a04cc07cb3e7cdcb506b889ba6573b5c47062eb3b0661fffd72cd"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-assets.log",
+      "bytes": 1662,
+      "sha256": "ab4acb0d2540849aa8729ce32c0a76e743da59e679d152436a4f3a3d276b995b"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-integration-after.log",
+      "bytes": 536,
+      "sha256": "e08acedee543505931b44fdc1ddda423d24f21e002d203b90e2a31a6762f38aa"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-integration-isolated.log",
+      "bytes": 536,
+      "sha256": "e08acedee543505931b44fdc1ddda423d24f21e002d203b90e2a31a6762f38aa"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-integration.log",
+      "bytes": 589,
+      "sha256": "8f3837168704aeb4efdce935ae43719bde795db2f4bf46e484f91e0f6cf3d130"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-media-lifecycle.log",
+      "bytes": 2871,
+      "sha256": "383b0e62d03df5a274616b071d32716b57414cc6ce0111e0c515495fef8f1a81"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-media.log",
+      "bytes": 1587,
+      "sha256": "68fef63b0209a7a040897444d4eeac701d9804e5b8bbdac5ebfc119baa3b6e4b"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-native.log",
+      "bytes": 417,
+      "sha256": "8aa2b48d69f3f961cb29a510edf80582f87dba73245529181ff897cb9c561eba"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-product.log",
+      "bytes": 1877,
+      "sha256": "dffdb47672513b03c393c9b839592857a73c350b20825b22e556b2be8be64af8"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-sfu.log",
+      "bytes": 1829,
+      "sha256": "ed4ba89079707657d493d52ae9ca01e1eaaa1090154dc9dc190e732efd91716e"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-smoke-after.log",
+      "bytes": 861,
+      "sha256": "f8979912fbe0e5711671d6c6502fe0d5261cd9524dfe82a4099ea4793e668451"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-smoke.log",
+      "bytes": 1641,
+      "sha256": "2db95dff104ce99f28339eac46e51b3cdc27f7f9aea5f7a8faa32d4848f8014c"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-ssh-tls.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-ssh.log",
+      "bytes": 35182,
+      "sha256": "622005f26e4bec4630e0f91b96684591e2353ebb4911914c951ab0b38b59c2e2"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/electron-ui.log",
+      "bytes": 973,
+      "sha256": "c075f98111c7c338ac56694b8be9349fb8c85281f200e6f0fa06a96346e65f7a"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/final-source-inputs.json",
+      "bytes": 82308,
+      "sha256": "3603c8070a8852a4a60da54a36666f401a64c3ebbd7ff6acec5ae599ca98e55b"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/final-typecheck.log",
+      "bytes": 59,
+      "sha256": "96c4245dff3ba1210de6815ee6ee2c484b9fc828e0801c9895fe0da290111887"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/final-unit.log",
+      "bytes": 35557,
+      "sha256": "d3be586cbd2c8cac1f790a408491038c5a499c930864086bc193e1eca3565d04"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-assets.log",
+      "bytes": 969,
+      "sha256": "52925ddd1e80c163c68ea465ccc567d23488da8c26170f8a131b3999ea15b012"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-foundation.log",
+      "bytes": 2894,
+      "sha256": "a0fe8601aa1db196f5560405d7bf18b1c6b88a12c976e179c9c68e0bfb823674"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-lint-after.log",
+      "bytes": 150,
+      "sha256": "013009f870588677749227a153a69693d24c8648649cfc9908e7c768496d1548"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-lint.log",
+      "bytes": 352,
+      "sha256": "1e105df0eb10cb659caee8927c26fff6a14014f8fefa205de086e50bd85db158"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-media.log",
+      "bytes": 4201,
+      "sha256": "2c72ee464aa7f9dc5f34a89e4829479e2cde12dec1416f2d36426ec5502ff70e"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/frontend-web-build.log",
+      "bytes": 7015,
+      "sha256": "0ef628fcad885a65a3fba6e7a2f3d135e3bf080251e13eb99889742e1a59a74d"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/integration-reaping-check.log",
+      "bytes": 240,
+      "sha256": "a009afba6aa88d800707aec2c012ae24b1874185b751dbcf409d2c9b61ea3654"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/local-checks.json",
+      "bytes": 6647,
+      "sha256": "957f6b14208c9eef2a21134faf1affbb1dda9a8f0c065cce2f3cff021d93b87b"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/cpu-profile-summary.json",
+      "bytes": 4484,
+      "sha256": "fe5187e4a1348a16bab1a2f512aeaa3bdfbc7542d7895add06db034d8ad47225"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/retained-heap-analysis.json",
+      "bytes": 7590,
+      "sha256": "828a7648c88cd12d52ac0929b44e490330e4c6762ff3dd1693e54497eec47b13"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "0c30e7613c70ef1083b33265395065e8b8a213b7bd2647aa2b4dca55febec832"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-after-renderer.cpuprofile",
+      "bytes": 553109,
+      "sha256": "b96def133fe921cba0b93d16dc67f7e2a382919103e4e9aac687ead9d1c9b96d"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-after-settled-main.heapsnapshot",
+      "bytes": 20087384,
+      "sha256": "0d29dbc5cbd730031975ef3f9574e2ab00bd0cc1bcb9c5a69cf3175cc3d76f06"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-after-settled-renderer.heapsnapshot",
+      "bytes": 12197932,
+      "sha256": "e18e65b70262f01286f3085baa9bbb83ba6e9dd4edb0c6ce079e31cc5c33c4d6"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-after-warmup-main.heapsnapshot",
+      "bytes": 17771246,
+      "sha256": "44422b14be086048040e1a883e299cf51eb95d6b74433b7d2586656d1f4ccb61"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-after-warmup-renderer.heapsnapshot",
+      "bytes": 11899261,
+      "sha256": "33bded0e9aa25f7db4f5cb9dce691f18ce3fcd65961e38632d0619f2acb170a8"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-after/stage07-profile-after.json",
+      "bytes": 30537,
+      "sha256": "2973d9c61758023270b6d065cc90fe00b9bd754c0f1f39992d1facf0f512f590"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline/runner-failure.json",
+      "bytes": 100,
+      "sha256": "598bef12510eb8765a14a7fa051093a1642cb686953383dad610dba92a83ab62"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline/source-inputs.json",
+      "bytes": 81774,
+      "sha256": "52eda56ee4a7e7a26f72a10810cb413064ba591bd45957ab6d9865482fde018d"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline/stage07-profile-baseline.json",
+      "bytes": 719,
+      "sha256": "7a0a2d5f3e6e13f03bb568d0424029df073d53e8bdc8e4e6e5775fc95e97fbb0"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/retained-heap-analysis.json",
+      "bytes": 7603,
+      "sha256": "e02348fa47b48760726a12f581c48b658a151522a83178ceccafb078f4e0efd1"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/runner-failure.json",
+      "bytes": 100,
+      "sha256": "598bef12510eb8765a14a7fa051093a1642cb686953383dad610dba92a83ab62"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "017de0e81dfa0f8c7334c244ab58ab46abcadfd208426119ab863835b09e7cea"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-baseline-settled-main.heapsnapshot",
+      "bytes": 17828673,
+      "sha256": "c5a884404d4bfd56d71e5a22bb62506795c29f64eaf1e0b265661534f669d0b2"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-baseline-settled-renderer.heapsnapshot",
+      "bytes": 12130601,
+      "sha256": "22ddb980c73a6cd604e73042ac14b07ab9f237ed99f26b9ef72b0da450c66623"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-baseline-warmup-main.heapsnapshot",
+      "bytes": 17676056,
+      "sha256": "e4321f041791118ab8e4cb6b681bf65ee6853b7b9cc9f81b450954287c125bb2"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-baseline-warmup-renderer.heapsnapshot",
+      "bytes": 11897648,
+      "sha256": "185836f1ec7342a10da9190694c01d696c9cd5ba3f62cda5ab50e8ffef89d17b"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2/stage07-profile-baseline.json",
+      "bytes": 28881,
+      "sha256": "403721603bf660f570c67fa1cf9259dae5f76b5ec89828a850686d73f5260c79"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline-v2.log",
+      "bytes": 3251,
+      "sha256": "3ea047e686993381f4be18f574361b21a2559722363fc9a23578016d051c7ea2"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/mac-baseline.log",
+      "bytes": 321,
+      "sha256": "0851d4552ba7600fb8d60f0726373f811b53aeda30112ea01da0f6563049d35a"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/backend-source-inputs.json",
+      "bytes": 49479,
+      "sha256": "1fb595eb3757e8bd1e2ac0988a681d9b4a0ddf1f6ed03e6d94d26a13f236443a"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/chat-100.heapsnapshot",
+      "bytes": 7605557,
+      "sha256": "c03289f5882435e23dfee68a91d2a67e40c72f974f8b99ee29fdcea562227a89"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/checkpoints.json",
+      "bytes": 15997,
+      "sha256": "d256e19ebb27d270b97a028c0cf2d2c099dd195435d5ab10b9a1619daba39cf0"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/fixture.json",
+      "bytes": 250,
+      "sha256": "b2a8940f3b4ae27a3ceb92b1ec6554fbae2325206d664f4a42eec36650376b2e"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/media-100.heapsnapshot",
+      "bytes": 7498903,
+      "sha256": "04393729a2fc6a2fa6839bd69b80c8db9c3761b83a2e01a57cf2d87b2094a3bc"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/result.json",
+      "bytes": 18387,
+      "sha256": "53ab989f786e1f207185198a1737faffc4c6fd22837440e3de509c370e27fa92"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/retained-heap-analysis.json",
+      "bytes": 10037,
+      "sha256": "01422d0a4add2454d886452040607406b591bc99e001eb320fc271028c3b57a4"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/settled.heapsnapshot",
+      "bytes": 7515617,
+      "sha256": "6c64968b8db95b8770d69f21f0d987639800851e71de4865fa5321f163fc46d5"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/source-files.json",
+      "bytes": 1073,
+      "sha256": "fcbe9729d553ed883c0fefede55ebb29f70664b8fc61ad6c1bfc4ad92b497b92"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/teardown.heapsnapshot",
+      "bytes": 7406117,
+      "sha256": "d1b0c0fad574dede16f0532c19b86d74c7ec40a8e1a31a964dcababb2d11c963"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-lifecycle/warmup-10.heapsnapshot",
+      "bytes": 7298807,
+      "sha256": "1a610890bdf8e2b31d871b11bbf51ffeb8f8a153684b7a3209c43785394fbdf9"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/media-unit-lifecycle.log",
+      "bytes": 4100,
+      "sha256": "163ecd57fac0fd9c84615a3348469b1d8d8a8f60ba312b3df4ac8ec7c6d2b1a6"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/native-lifecycle.json",
+      "bytes": 4106,
+      "sha256": "808f47749cfbede6be6f6edd21dd1c002d30fdff05b730e251a5d9b93597f0c3"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/native-lifecycle.log",
+      "bytes": 4106,
+      "sha256": "808f47749cfbede6be6f6edd21dd1c002d30fdff05b730e251a5d9b93597f0c3"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/profile-after.log",
+      "bytes": 3562,
+      "sha256": "46ada5b9d06a1df902423ecdbe2f6bc80ef9ab243d3bd65e7c5b7e5e6cfff735"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/profile-heartbeat-check.log",
+      "bytes": 123,
+      "sha256": "7493e3b11b5eb9cf0f24a9048234bc4d955100c8d2e5e9666840f6d5d19fcaa3"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/runner-supervision-after.log",
+      "bytes": 1020,
+      "sha256": "d10d9bef644f9daf853be5635183617c744def11455bae8efcdc4d951b87ff14"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/security/focused-tests.tap",
+      "bytes": 19649,
+      "sha256": "76220d2417cbe1530fbc2925db5fdcf6c14d312cc6fb1761becaa73aa0b60fc7"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/security/linux-package-reference-tests.tap",
+      "bytes": 9071,
+      "sha256": "ed62a8e1b4ebd74ac468915880bf97982ba03ddaa4f4134cd4854c7a12e1ef94"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/security/origin-canonicalization.json",
+      "bytes": 970,
+      "sha256": "dc9065af938d8b9e4c1fa58c84fa371862f78809b12c072161fd4f31d16ae2d7"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/2-direct.json",
+      "bytes": 4751,
+      "sha256": "704235cb9486f3e1966dfe43bd60ddef6782b4287ba54d373a5c98e80bcd144e"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/2-relay.json",
+      "bytes": 4751,
+      "sha256": "e949c3c841f13c589538517e1c0ac2c2128ce08825651b135b48410f2047a59c"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/backend-source-inputs.json",
+      "bytes": 49479,
+      "sha256": "1fb595eb3757e8bd1e2ac0988a681d9b4a0ddf1f6ed03e6d94d26a13f236443a"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/fixture.json",
+      "bytes": 346,
+      "sha256": "f95b7c54e139125132bdbe70278ad83222edaeaa50b4d38190a1943b6360b70f"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/result.json",
+      "bytes": 777,
+      "sha256": "ba255597353f1c41faf54e6868b8fac17986d6c17f1be952ea46e0fd81149718"
+    },
+    {
+      "path": "desktop/artifacts/desktop-audit-20261026/sfu/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "0c30e7613c70ef1083b33265395065e8b8a213b7bd2647aa2b4dca55febec832"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/after-policy-tests.tap",
+      "bytes": 524,
+      "sha256": "ed8667acbee43494a55c166857ac5699dcfb39d5b8f742f33bdd916e8757a749"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/after-runtime-versions.json",
+      "bytes": 661,
+      "sha256": "b57a0d4078c7302e04bda3b08ab78acf780c98edfbfdc0566f2a78bd3a971dc5"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/after-versions.json",
+      "bytes": 303,
+      "sha256": "a69bd6aa5b8076616e20fc45ff3d59d1ff57095ca7ab67a3535cbe786a114dc7"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/desktop-after-audit.json",
+      "bytes": 364,
+      "sha256": "46b704b43f473a4fb54dd6c900337e1bbcdb62c3b12cdc781d58235dedf8a073"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/desktop-audit.json",
+      "bytes": 6926,
+      "sha256": "6ce96c0b2ddb0f01196a69ffee4bb854133b31608acc690598a101f4def0873e"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/desktop-prod-audit.json",
+      "bytes": 364,
+      "sha256": "46b704b43f473a4fb54dd6c900337e1bbcdb62c3b12cdc781d58235dedf8a073"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/frontend-audit.json",
+      "bytes": 362,
+      "sha256": "13a0dc4f85e82bcb8cedb172180c50faafbc3f4b0e6f7b5248502c236303e454"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/license-inventory.json",
+      "bytes": 5238,
+      "sha256": "f986bad7cbbb486beb94b7b1d899fd1baf74090bac2f42ec8ff1644d5f0f030b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/license-tests.tap",
+      "bytes": 434,
+      "sha256": "c891ec5e8c895d66ee06404fab797aa2cf2350f7b6e7bbfbf4fa717a656ccb19"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/linux-final-source-inputs.json",
+      "bytes": 82308,
+      "sha256": "3603c8070a8852a4a60da54a36666f401a64c3ebbd7ff6acec5ae599ca98e55b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/linux-source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/lock-inventory.json",
+      "bytes": 12947,
+      "sha256": "5eff24ba98def8336644e58b110707a39e7b5423f318f54a1425138fe3144dc7"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/supply-chain/secret-scan.json",
+      "bytes": 14366,
+      "sha256": "89617d4f40b80d7361022cc6771e6f840028ebd5ebb0172fe620e0c962799ec4"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/evidence-sha256.json",
+      "bytes": 15387,
+      "sha256": "fc39e27e9f40e3872547b171a7e1c430e58973843a3ffed868d8218b112d0c78"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/source-inputs.json",
+      "bytes": 82308,
+      "sha256": "3603c8070a8852a4a60da54a36666f401a64c3ebbd7ff6acec5ae599ca98e55b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-after-renderer.cpuprofile",
+      "bytes": 558014,
+      "sha256": "4720f66239b7b11f827c572776bf351618fd62507df820f6feab938c4408fc07"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-after-settled-main.heapsnapshot",
+      "bytes": 20322456,
+      "sha256": "1c76ddaa9c8de3ebad4aa5dba989fed8595904c60a4b5cabcef60975c57b1d8b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-after-settled-renderer.heapsnapshot",
+      "bytes": 12198107,
+      "sha256": "36be05ee72089fe8f60c34e6202890bfa422118ed9b4f1d1209cf3268a9196d4"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-after-warmup-main.heapsnapshot",
+      "bytes": 17917364,
+      "sha256": "a7cf605cdeb68841c4ed0ea7e39c019ad924943dca313bc26267b813708a3dbc"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-after-warmup-renderer.heapsnapshot",
+      "bytes": 11893177,
+      "sha256": "ed0aa9e3e222b29a7144ed7f0429f08b9e7584e871b4711b86166e2495a07ff4"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after/stage07-profile-after.json",
+      "bytes": 43699,
+      "sha256": "e7c2923fa8bfb16b2c293fad4c2e64bb2ee65a0699c7b03bf647c672900dfb94"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/lifecycle-after.log",
+      "bytes": 9570,
+      "sha256": "ef12754fc097288092d72f7c62cd95ef8967293b829dd1fcd5b5107993ffe6d6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/original-appimage.json",
+      "bytes": 2439,
+      "sha256": "345a5477d535d08c282a6a2c60f8096ab8949ffd6e8266b1046fbf8df35faeec"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/original-appimage.log",
+      "bytes": 115,
+      "sha256": "6d320cf4f24f98dfff32e401e6ed857d2cc8883c6a3d44bcf920a98b2447b966"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/qa-session.log",
+      "bytes": 3875,
+      "sha256": "6be62e70cbaf97b72451edbbe6b278478ee81b91ed668c95ee3e018a626762cd"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/evidence-final/runtime-summary.json",
+      "bytes": 475,
+      "sha256": "d23d043fb7fa2f2f23033b1e24c7c2fed08abc105a4ec0c286d4df99b9cfd85c"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-build-status.json",
+      "bytes": 678,
+      "sha256": "2cb52fdee6b837a400de294aed45e8a5de2e2c41e442549a118bf43e7f30433c"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-build.log",
+      "bytes": 9638,
+      "sha256": "cbfc18a77c6da84595cb146341cd0880ee9e21b6d943c3cbb9c464f2542c5303"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-clean-install-observation.json",
+      "bytes": 86,
+      "sha256": "02221bd494ad4f836d33ab548c16d3c2c2adf674f18a9a73f31fc2793b112bd0"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-cleanup-verification.json",
+      "bytes": 1137,
+      "sha256": "cb484369d1459aa305a378472e966d528872f4e1baf29ad1566f6bfd1a724148"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-npm-ci.log",
+      "bytes": 1138,
+      "sha256": "cecd642fa150b1a2f237fb28b9b51339ca4693aa1ae3c23bde92eefccdbf7cf4"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/final-source-inputs.json",
+      "bytes": 82308,
+      "sha256": "3603c8070a8852a4a60da54a36666f401a64c3ebbd7ff6acec5ae599ca98e55b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/post-cleanup-verification.json",
+      "bytes": 835,
+      "sha256": "53840da17610afe248a0b84749f92b13efee9889b2398b04e1e683588bb30ee4"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/prior-harness-reap.json",
+      "bytes": 872,
+      "sha256": "122deb88fe66ff168f0507eb4b798bfcd746b4f9bf77bb8e6e36de1330373026"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/MeetSpace-0.1.11-beta-linux-arm64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "13450d29f72e68e2a12b5c8d523e2b19ecf2a71b23db8eb0fea78000234d1922"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/MeetSpace-0.1.11-beta-linux-arm64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "e2a043dbdd987f7f46e0b1a9ff296a52ee9c73abe4e2f3b391ab4dc99c397fa6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/linux-artifact-verification.json",
+      "bytes": 10749,
+      "sha256": "5b199e065e23eacae88c5dce8317c8909f1dad4c1f3596ee11058449d9c1b570"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/linux-packaging-build.json",
+      "bytes": 988,
+      "sha256": "dca00dd7819f69762a662adf6c5429c986c709a62d85acea7ccc746a6eef68b2"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/linux-publication.json",
+      "bytes": 653,
+      "sha256": "08dc4fca64227b9759ba2a371ebc5e6c0a7e714ca66e56f008a1febe610da52e"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/source/desktop/artifacts/linux/AppImage/0.1.11-beta/056f3f41ce5a6f3f6979187cc4775c7502bfe87dc78726a27b4193bf41f31d48/arm64/source-inputs.json",
+      "bytes": 82308,
+      "sha256": "3603c8070a8852a4a60da54a36666f401a64c3ebbd7ff6acec5ae599ca98e55b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/final/summary.json",
+      "bytes": 6017,
+      "sha256": "42d657362d9eb14be3bf7780edee1cfa0693895246be5e1c424c42281e4b3296"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/build-retry.log",
+      "bytes": 9638,
+      "sha256": "bb057b7fbfdf62f49e9a1bc7fb5ebed9bc6d64713957525d9512b9f748e6db32"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/build.log",
+      "bytes": 10516,
+      "sha256": "d8eef018fb2749f8ac5317eb7cb5795cdf2173774373567363480f09da884725"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/electron-init.log",
+      "bytes": 130,
+      "sha256": "5df79557c052fbd3ef7b36d702fbfe4c88503aa2a1aac64ead98a4d4dbb16469"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/lifecycle-after/runner-failure.json",
+      "bytes": 100,
+      "sha256": "598bef12510eb8765a14a7fa051093a1642cb686953383dad610dba92a83ab62"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/lifecycle-after/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/lifecycle-after/stage07-profile-after.json",
+      "bytes": 1118,
+      "sha256": "91c112e6f7df81b19268568909ef6ede2c63408df9cc04b5f14d932d9c31a759"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/lifecycle-after.log",
+      "bytes": 665,
+      "sha256": "f329af273e8b42de9cf33c2b5c85b728ab0eb41550739897cfd3f1626851869e"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/original-appimage.json",
+      "bytes": 2394,
+      "sha256": "caf40ea8f71f3e903343ab5f0c6c8727dd385f15c9d89e5804f3aa8d795ead89"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/original-appimage.log",
+      "bytes": 109,
+      "sha256": "875dedbb504b4fcf3f54f76f58938f51c668eb0d9a4bb1627fd4d048c1e4930c"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/qa-session.log",
+      "bytes": 20937,
+      "sha256": "46c24167875820b48bc8ed8acc613d8b270e7a6d75d2e5e18dc19ccd68e5476b"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence/runtime-summary.json",
+      "bytes": 316,
+      "sha256": "0c5e7dc7b6be4a71d7dfc5662cb0ce5efbfe8b03184a23e294981322324e6460"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/lifecycle-after/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/lifecycle-after.log",
+      "bytes": 482,
+      "sha256": "e4c224603262a8efc4921b648bf02b26381dc81881a461118463ef0878d8d654"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/original-appimage.json",
+      "bytes": 1354,
+      "sha256": "726ae8722f2e55d808b857dac69eea4ad9bf85724140fa074dc6f87e4580d732"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/original-appimage.log",
+      "bytes": 151,
+      "sha256": "e73c4fb7fcc6af88e7c4290334dd29b20dd591abf4cc8e53ce501f5295802fad"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/qa-session.log",
+      "bytes": 4161,
+      "sha256": "7da7582ac201d8f44ce8bb45b479f5ca6bd08423883909072a7be715cafeb619"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-private-session/runtime-summary.json",
+      "bytes": 378,
+      "sha256": "b388c4b8c6af2777db38cc1093f7067bf4f362a471cfcc0d4a16130fea9d13e8"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-after-renderer.cpuprofile",
+      "bytes": 543279,
+      "sha256": "d226c7c5547fbb4f9fb01448dda30381359d70be6909d1860926a0e526effe26"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-after-settled-main.heapsnapshot",
+      "bytes": 20295732,
+      "sha256": "1bb9ad3fe6472a4595a910a00a894fba41e8de24ec7082b6ad3c936e7ae33650"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-after-settled-renderer.heapsnapshot",
+      "bytes": 12163486,
+      "sha256": "ea9d57e8b6cd067899ce362e98bfe04db98bcdb59bff5b558e6e6ded3064b614"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-after-warmup-main.heapsnapshot",
+      "bytes": 17930243,
+      "sha256": "9e99b21eef0a0a4ce7383dbadd71bcf8cf9c82eefd587b454418d97eabf04024"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-after-warmup-renderer.heapsnapshot",
+      "bytes": 11897066,
+      "sha256": "1b3c6eaab1a2fb368d181f21da05749b4db5545df4c72607718f7c64baf4640c"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after/stage07-profile-after.json",
+      "bytes": 43736,
+      "sha256": "d680a14488d68b62d5d8aeb1f0b429e499c80b4dd369caaeaa630669159aec5c"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/lifecycle-after.log",
+      "bytes": 9732,
+      "sha256": "2fb92ad33841bb8e43b505d300a4c1d3d77922383feb06bf54b326bf2d8f9cff"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/original-appimage.json",
+      "bytes": 2442,
+      "sha256": "58ea4fa7652d296602ba7ce5528c13b412fb18c59bcae2acdac5ce41e11d899f"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/original-appimage.log",
+      "bytes": 126,
+      "sha256": "799a4cda3dc25f1bde56227ebba22198fa874e71c9c0baad3d0239d4f3eeb194"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/qa-session.log",
+      "bytes": 3875,
+      "sha256": "f723420ff80a40864aba29d6a9b9495c301ac1328e8dd5574bbef07ebf65fc5f"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/evidence-volatile-keyring/runtime-summary.json",
+      "bytes": 478,
+      "sha256": "3526e8965f6fc5b86960af1fd4d297ab44ff0aed294c927713e7044240dbc1e3"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/expected-source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/initial-build-status.json",
+      "bytes": 565,
+      "sha256": "66ca71f443a489e3712eb54536dae29474cee33f11fb82214cf10041b4ac5103"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/npm-ci.log",
+      "bytes": 1138,
+      "sha256": "585743772314f0c9a49a2f74fc52b9fd3d8adeace1e392a61c9c14d8fec5faf8"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/MeetSpace-0.1.11-beta-linux-arm64-test.AppImage.sha256",
+      "bytes": 114,
+      "sha256": "31b168ab4c01e29a6f155ac01b352435c957bc1985d8b33b4c06337e8ab06160"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/MeetSpace-0.1.11-beta-linux-arm64-test.AppImage.sha512",
+      "bytes": 178,
+      "sha256": "e41212aa91fd6921ab7f0c2bbc84a2f5df997ed7a674471632685f0bbbf5a8da"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/linux-artifact-verification.json",
+      "bytes": 10749,
+      "sha256": "c002abb6ac7a5eb3ccc17d4d22fcf235768f63dbf979dffb10ba33c2f148bf57"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/linux-packaging-build.json",
+      "bytes": 988,
+      "sha256": "440c7e1ea177e6dcdae71d4b0e72511e6b15e0376876203dafb3ff6829c50190"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/linux-publication.json",
+      "bytes": 653,
+      "sha256": "122a085ee43371471ac66d5f2499744c62f25923f654f6a61b785c7c8a4839fd"
+    },
+    {
+      "path": "desktop/artifacts/audit-20261026/linux-arm64/initial/source/desktop/artifacts/linux/AppImage/0.1.11-beta/9b373d498d09d74cb8b2a7b468f7415569c93c7e4ae23e4b48cb39233b89fef5/arm64/source-inputs.json",
+      "bytes": 81773,
+      "sha256": "323c41c2563507c1db12926bca9b1fdeafeee8fb00b9edaa9816f66781bedba6"
+    }
+  ]
+}

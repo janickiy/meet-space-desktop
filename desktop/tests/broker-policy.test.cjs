@@ -130,6 +130,69 @@ test("keyring retry never overwrites corrupt or unreadable encrypted sessions", 
   assert.deepEqual(await fs.readFile(filename), original);
 });
 
+test("removing a server with a locked vault cannot leave reusable credentials behind", async (t) => {
+  const storageDir = await temp(t), encryption = cipher(); let available = true;
+  encryption.isAvailable = () => available;
+  const first = await setup(t, { storageDir, cipher: encryption });
+  await first.login(); first.broker.dispose();
+  available = false;
+  const { broker } = await setup(t, { storageDir, cipher: encryption });
+  const id = broker.serversState().selectedId;
+  await assert.rejects(broker.removeServer(id), /secure_storage_unavailable/);
+  assert.equal(broker.serversState().selectedId, id);
+  assert.equal(broker.serversState().items.length, 1);
+  available = true;
+  await broker.listServers();
+  await broker.removeServer(id);
+  const restored = new CookieVault(storageDir, encryption); await restored.load();
+  assert.equal(restored.header(id, "/api/v1/auth/refresh"), "");
+  assert.deepEqual(restored.pending(id), []);
+  assert.equal(broker.serversState().items.length, 0);
+});
+
+test("failed credential erasure keeps the server profile and invalidates its active identity", async (t) => {
+  const encryption = cipher(), encrypt = encryption.encrypt;
+  const { broker, login, http } = await setup(t, { cipher: encryption });
+  const marker = await login(), id = broker.serversState().selectedId;
+  encryption.encrypt = () => { throw new Error("fixture write unavailable"); };
+  await assert.rejects(broker.removeServer(id), /secure_storage_unavailable/);
+  assert.equal(broker.serversState().selectedId, id);
+  assert.equal(broker.serversState().items.length, 1);
+  assert.equal(broker.serversState().storageAvailable, false);
+  await assert.rejects(http("/conferences", { method: "GET", token: marker }), /authentication_required/);
+  encryption.encrypt = encrypt;
+  await broker.listServers();
+  await broker.removeServer(id);
+  assert.equal(broker.serversState().items.length, 0);
+});
+
+test("server removal leaves no reusable session after overlapping logins", async (t) => {
+  let release, entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  const held = new Promise(resolve => { release = resolve; });
+  const encryption = cipher(); let logins = 0;
+  const { broker, login, storageDir, calls } = await setup(t, { cipher: encryption, handle: async (_request, resource) => {
+    if (resource === "/api/v1/auth/login" && ++logins === 1) { entered(); await held; }
+  } });
+  const id = broker.serversState().selectedId, first = login();
+  await started;
+  const removal = broker.removeServer(id), second = login();
+  const settled = Promise.allSettled([first, removal, second]);
+  release();
+  const results = await settled;
+  assert.equal(results[1].status, "fulfilled");
+  assert.equal(broker.serversState().selectedId, null);
+  assert.equal(broker.serversState().items.length, 0);
+  const restored = new CookieVault(storageDir, encryption); await restored.load();
+  assert.equal(restored.header(id, "/api/v1/auth/refresh"), "");
+  await broker.addServer({ origin: "https://test.invalid" });
+  await broker.selectServer(id);
+  const session = await broker.http({ id: randomUUID(), method: "POST", path: "/api/v1/auth/refresh", responseType: "json", body: {} });
+  // The fixture transport permits refresh; its request must carry no old cookie.
+  assert.match(session.body.accessToken, /^desktop-session:/);
+  assert.equal(calls.findLast(request => new URL(request.url).pathname === "/api/v1/auth/refresh").headers.Cookie, undefined);
+});
+
 test("IPC HTTP envelopes cannot inject headers, arbitrary URLs, oversized bodies or unbounded JSON nesting", async (t) => {
   const { broker, calls } = await setup(t); const count = calls.length;
   const basic = { id: "bad", method: "POST", path: "/api/v1/auth/login", responseType: "json" };

@@ -300,13 +300,19 @@ export class MeetSpaceBroker {
     });
   }
   removeServer(id: unknown): Promise<DesktopServerState> {
-    return this.ordered("profile", async () => {
+    return this.ordered("profile", () => this.ordered("auth", async () => {
       if (typeof id !== "string" || !this.profiles.items.some((item) => item.id === id)) throw new Error("server_not_found");
-      if (id === this.profiles.selectedId) { this.invalidateIdentity(); this.generation++; this.profiles.selectedId = null; }
+      // Erase persisted credentials before forgetting the deterministic server ID.
+      // Serialize with login/refresh so they cannot restore a removed profile's cookies.
+      this.demandStorage();
+      const selected = id === this.profiles.selectedId;
+      if (selected) this.invalidateIdentity();
+      try { await this.vault.remove(id); }
+      catch { this.storageReady = false; throw new Error("secure_storage_unavailable"); }
+      if (selected) { this.generation++; this.profiles.selectedId = null; }
       this.profiles.items = this.profiles.items.filter((item) => item.id !== id);
-      if (this.storageReady) await this.vault.remove(id);
       await this.profiles.save(); this.emit({ kind: "servers", type: "changed", state: this.serversState() }); return this.serversState();
-    });
+    }));
   }
   resetConnections(notify = false): void {
     this.epoch++;

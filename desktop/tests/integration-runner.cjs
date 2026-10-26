@@ -7,7 +7,7 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
 
 (async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "meetspace-electron-integration-"));
-  let certificates, alpha, beta;
+  let certificates, alpha, beta, preserveProfile = false;
   try {
     certificates = await createCertificates();
     alpha = await createFixture({ name: "alpha", certificates, notifyOnConnect: true });
@@ -25,12 +25,32 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
         const environment = { ...process.env };
         delete environment.MEETSPACE_DESKTOP_DEV;
         delete environment.MEETSPACE_DEV_CSP_NONCE;
+        delete environment.ELECTRON_RUN_AS_NODE;
         const child = spawn(require("electron"), [path.join(__dirname, "integration-electron.cjs"), configPath], { stdio: "inherit", env: environment });
-        const timeout = setTimeout(() => { child.kill(); reject(new Error(`Electron ${phase} phase exceeded 30 seconds`)); }, 30000);
-        child.once("error", (error) => { clearTimeout(timeout); reject(error); });
+        let expired = false, hardKill, reapDeadline, childError;
+        const clearTimers = () => { clearTimeout(timeout); clearTimeout(hardKill); clearTimeout(reapDeadline); };
+        const timeout = setTimeout(() => {
+          expired = true;
+          child.kill("SIGTERM");
+          hardKill = setTimeout(() => child.kill("SIGKILL"), 5000);
+          reapDeadline = setTimeout(() => {
+            preserveProfile = true;
+            clearTimers();
+            child.unref();
+            reject(new Error(`Electron ${phase} phase exceeded 30 seconds and did not exit; private temporary profile preserved`));
+          }, 10000);
+        }, 30000);
+        child.on("error", (error) => {
+          // A failed signal does not mean the running process has exited.
+          if (child.pid) { childError = error; return; }
+          clearTimers();
+          reject(error);
+        });
         child.once("exit", (code, signal) => {
-          clearTimeout(timeout);
-          code === 0 ? resolve() : reject(new Error(`Electron ${phase} phase failed (${code ?? signal})`));
+          clearTimers();
+          if (expired) reject(new Error(`Electron ${phase} phase exceeded 30 seconds; child exited ${code ?? signal}`));
+          else if (childError) reject(childError);
+          else code === 0 ? resolve() : reject(new Error(`Electron ${phase} phase failed (${code ?? signal})`));
         });
       });
     };
@@ -49,6 +69,6 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
     if (alpha) await alpha.close();
     if (beta) await beta.close();
     if (certificates) await certificates.close();
-    await fs.rm(directory, { recursive: true, force: true });
+    if (!preserveProfile) await fs.rm(directory, { recursive: true, force: true });
   }
 })().catch((error) => { console.error("Integration failed:", error.message); process.exitCode = 1; });

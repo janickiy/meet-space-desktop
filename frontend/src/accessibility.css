@@ -56,7 +56,13 @@
 .workspace-main:focus {
   outline: none;
 }
-:is(main, form, section, [role="dialog"], [role="tabpanel"])[tabindex="-1"]:focus {
+:is(
+    main,
+    form,
+    section,
+    [role="dialog"],
+    [role="tabpanel"]
+  )[tabindex="-1"]:focus {
   outline: none;
 }
 @media (max-width: 760px) {
