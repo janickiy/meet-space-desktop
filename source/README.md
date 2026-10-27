@@ -2,22 +2,22 @@
 
 Готовые пакеты Windows и Linux опубликованы через Git LFS. Linux: `source/linux/<версия>/<DEB|RPM|AppImage>/<пакет>`; Windows: `source/windows/<версия>/<пакет>`.
 
-## Последние сборки 0.1.12 beta
+## Последние сборки 0.1.14 beta
 
-Выпуск от 26 октября 2026 года включает исправления аудита безопасности, обновление Electron до 44.9.3, исправление отправки сообщений и единый стиль переключателей настроек. [Что изменилось и ограничения](../docs/releases/0.1.12-beta.md).
+Выпуск от 27 октября 2026 года: в меню завершённых встреч оставлены информация о чате и выход; панель настроек выровнена с карточкой аккаунта; ярлыки Windows называются MeetSpace. [Изменения и ограничения](../docs/releases/0.1.14-beta.md).
 
-Все восемь пакетов собраны из одного чистого commit [5e9bebf0b0c9](https://github.com/janickiy/meet-space-desktop/commit/5e9bebf0b0c91bb07410c7d1645bcd78d81d3446). SHA-256 464 входных файлов: `a7d6372d1c9e62f725c99481b23dcadd4445a1e6a79d4bbac2fcacf2bb198d2d`. Отчёты содержат `sourceDirty: false`; входные файлы сверены с commit.
+Все восемь пакетов собраны из одного чистого commit [7e2205cb1b18](https://github.com/janickiy/meet-space-desktop/commit/7e2205cb1b18a009a3d6030a389149e6bad6ab0f). SHA-256 464 входных файлов: `8049124fc0941c2f70dbca33e41a450eb11d05cd586f53258c0c334de3cdcaa7`. Исходники пакетов совпадают с commit, `sourceDirty: false`.
 
 | Пакет | x64 | ARM64 |
 |---|---|---|
-| Windows — EXE | [x64](windows/0.1.12-beta/MeetSpace-0.1.12-beta-win-x64-test-setup.exe) | [ARM64](windows/0.1.12-beta/MeetSpace-0.1.12-beta-win-arm64-test-setup.exe) |
-| Ubuntu/Debian — DEB | [x64](linux/0.1.12-beta/DEB/MeetSpace-0.1.12-beta-linux-amd64-test.deb) | [ARM64](linux/0.1.12-beta/DEB/MeetSpace-0.1.12-beta-linux-arm64-test.deb) |
-| Fedora — RPM | [x64](linux/0.1.12-beta/RPM/MeetSpace-0.1.12-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.1.12-beta/RPM/MeetSpace-0.1.12-beta-linux-aarch64-test.rpm) |
-| Linux — AppImage | [x64](linux/0.1.12-beta/AppImage/MeetSpace-0.1.12-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.1.12-beta/AppImage/MeetSpace-0.1.12-beta-linux-arm64-test.AppImage) |
+| Windows — EXE | [x64](windows/0.1.14-beta/MeetSpace-0.1.14-beta-win-x64-test-setup.exe) | [ARM64](windows/0.1.14-beta/MeetSpace-0.1.14-beta-win-arm64-test-setup.exe) |
+| Ubuntu/Debian — DEB | [x64](linux/0.1.14-beta/DEB/MeetSpace-0.1.14-beta-linux-amd64-test.deb) | [ARM64](linux/0.1.14-beta/DEB/MeetSpace-0.1.14-beta-linux-arm64-test.deb) |
+| Fedora — RPM | [x64](linux/0.1.14-beta/RPM/MeetSpace-0.1.14-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.1.14-beta/RPM/MeetSpace-0.1.14-beta-linux-aarch64-test.rpm) |
+| Linux — AppImage | [x64](linux/0.1.14-beta/AppImage/MeetSpace-0.1.14-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.1.14-beta/AppImage/MeetSpace-0.1.14-beta-linux-arm64-test.AppImage) |
 
 ## Последние сборки каждой версии
 
-В каталоге **74 пакета**: восемь новых `0.1.12-beta` и 66 ранее опубликованных. Предыдущие версии и сопроводительные файлы сохранены без изменения байтов. Для каждой комбинации ОС, версии, формата и архитектуры хранится последняя опубликованная сборка.
+В каталоге **82 пакета**: восемь новых `0.1.14-beta` и 74 ранее опубликованных. Предыдущие версии и сопроводительные файлы сохранены без изменения байтов. Для каждой комбинации ОС, версии, формата и архитектуры хранится последняя опубликованная сборка.
 
 Контрольные суммы — в [SHA256SUMS](SHA256SUMS), проверка запускается из `source/`. [catalog.json](catalog.json) содержит пакеты и метаданные их проверок.
 
@@ -107,3 +107,11 @@
 Ubuntu 24.04 ARM64 в UTM обновлена до 0.1.12-beta: подтверждены версия работающего приложения, происхождение сборки, сохранение профиля и закрепление ярлыка. Windows 11 ARM64 в UTM также обновлена: установщик завершился успешно, установлена версия 0.1.12-beta в пользовательский каталог, подтверждены ARM64 PE и совпадение ASAR с опубликованным пакетом; приложение запущено в обычной пользовательской сессии. Это не заменяет полную проверку всех ОС.
 
 Рабочие результаты сборки остаются в `desktop/artifacts/`; в `source/` размещены проверенные пакеты, отчёты и контрольные суммы. Предыдущие опубликованные пакеты сохранены.
+| Linux | 0.1.14-beta | AppImage / arm64 | [MeetSpace-0.1.14-beta-linux-arm64-test.AppImage](linux/0.1.14-beta/AppImage/MeetSpace-0.1.14-beta-linux-arm64-test.AppImage) |
+| Linux | 0.1.14-beta | AppImage / x64 | [MeetSpace-0.1.14-beta-linux-x86_64-test.AppImage](linux/0.1.14-beta/AppImage/MeetSpace-0.1.14-beta-linux-x86_64-test.AppImage) |
+| Linux | 0.1.14-beta | DEB / arm64 | [MeetSpace-0.1.14-beta-linux-arm64-test.deb](linux/0.1.14-beta/DEB/MeetSpace-0.1.14-beta-linux-arm64-test.deb) |
+| Linux | 0.1.14-beta | DEB / x64 | [MeetSpace-0.1.14-beta-linux-amd64-test.deb](linux/0.1.14-beta/DEB/MeetSpace-0.1.14-beta-linux-amd64-test.deb) |
+| Linux | 0.1.14-beta | RPM / arm64 | [MeetSpace-0.1.14-beta-linux-aarch64-test.rpm](linux/0.1.14-beta/RPM/MeetSpace-0.1.14-beta-linux-aarch64-test.rpm) |
+| Linux | 0.1.14-beta | RPM / x64 | [MeetSpace-0.1.14-beta-linux-x86_64-test.rpm](linux/0.1.14-beta/RPM/MeetSpace-0.1.14-beta-linux-x86_64-test.rpm) |
+| Windows | 0.1.14-beta | NSIS / arm64 | [MeetSpace-0.1.14-beta-win-arm64-test-setup.exe](windows/0.1.14-beta/MeetSpace-0.1.14-beta-win-arm64-test-setup.exe) |
+| Windows | 0.1.14-beta | NSIS / x64 | [MeetSpace-0.1.14-beta-win-x64-test-setup.exe](windows/0.1.14-beta/MeetSpace-0.1.14-beta-win-x64-test-setup.exe) |
