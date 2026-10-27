@@ -1,0 +1,30 @@
+{
+  "version": "0.1.14-beta",
+  "sourceCommit": "7e2205cb1b18a009a3d6030a389149e6bad6ab0f",
+  "sourceTreeSha256": "8049124fc0941c2f70dbca33e41a450eb11d05cd586f53258c0c334de3cdcaa7",
+  "unitTests": {
+    "passed": 329,
+    "failed": 0,
+    "skipped": 1
+  },
+  "utm": {
+    "windows": {
+      "arch": "arm64",
+      "installedVersion": "0.1.14.0",
+      "installerSHA256": "b1149a11610b8f9136c648d9bcfc040654dd72d31280d0f67eb86535af0ab58e",
+      "installedAsarSHA256": "96f5e70003da224d4687e161a04b10985c20dca15978825b0d2a40e2a1af014d",
+      "installerExitCode": 0,
+      "runningAsSystem": false,
+      "shortcuts": "MeetSpace on desktop and Start menu"
+    },
+    "ubuntu": {
+      "arch": "arm64",
+      "installedVersion": "0.1.14-beta",
+      "appImageSHA256": "a8992ff746f3870a2a957522ef3d1399186206a557102eafd9aa47e94978ed4b",
+      "profilePreserved": true,
+      "dockPinned": true,
+      "apparmorUsernsRestriction": "1"
+    }
+  },
+  "limitations": "Unsigned beta. ARM64 installed in UTM; x64 packages statically verified, not newly installed on x64 OS. Full production acceptance not claimed."
+}
