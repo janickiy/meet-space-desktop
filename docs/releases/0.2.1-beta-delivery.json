@@ -1,0 +1,126 @@
+{
+  "version": "0.2.1-beta",
+  "checkedAt": "2026-10-27T15:20:56.752058+00:00",
+  "sourceCommit": "13090664cc76d81a743e0d542080d117179b9eff",
+  "sourceTreeSha256": "42922a6212216798d17ac4e22e27fac3ddd9c1813e494f60532c42bc31bccad9",
+  "packageCommit": "019c19d39aff49efcf39d872051ee601a07b3717",
+  "tests": {
+    "desktopUnit": {
+      "passed": 330,
+      "failed": 0,
+      "skipped": 1
+    },
+    "frontendFormatting": "PASS",
+    "typescript": "PASS",
+    "electronProduct": "PASS",
+    "runtimePlatform": "darwin/arm64",
+    "chatDeliveryWorkflow": [
+      "centered send icon",
+      "separate failed messages without error banner",
+      "session outbox survives navigation and stays separated by chat/account/server",
+      "retry retains request ID",
+      "lost response does not duplicate delivery",
+      "logout clears session outbox"
+    ],
+    "productChecks": [
+      "real login keeps protected recording return route; ready server file UUID displays without remote media or auto download",
+      "actual React save reports confirmed result; playback progress/cancel and late IPC result cannot attach a stale player",
+      "existing direct/group list uses real type filter and navigation revokes pending recording media",
+      "actual chat form sends plain text and quoted replies through the production preload/broker to HTTPS; successful delivery clears the draft",
+      "centered send icon; offline sends remain as separate messages with warning icons and no banner; chat navigation preserves the session outbox; explicit per-message retry preserves request IDs and avoids duplicate delivery after a lost response",
+      "existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch",
+      "existing personal folder list/detail combines authorized chat and meeting entries",
+      "existing meetings/calendar/history render server entries and send calendar range/history filters",
+      "server disabled analytics is absent in navigation and deep route fails closed without analytics request",
+      "profile avatar preview, explicit upload, 512px JPEG normalization, sidebar refresh, navigation persistence, deletion and unsafe-file rejection through the actual native broker",
+      "settings page keeps accessible tabs, profile logout and native settings, with combined devices and appearance sections",
+      "actual settings shows disabled Stage06 updates and never claims a release is current or offers install",
+      "update UI uses typed IPC and live states for explicit download/cancel/install, warns of ending calls and blocks install after signature error (installer seam)",
+      "existing recordings catalog renders the server ready artifact with UUID-backed actions",
+      "actual shared layout supplies current authenticated route and sound preference to native notification context",
+      "offline server failure stays an error with editable server settings instead of invented empty/offline meetings"
+    ]
+  },
+  "publication": {
+    "githubRelease": "https://github.com/janickiy/meet-space-desktop/releases/tag/0.2.1-beta",
+    "downloadPage": "https://meet-space.janickiy.com/download",
+    "landingRelease": "landing-20261027T151921Z-desktop-021",
+    "previousLandingRelease": "landing-20261027T151824Z-docs-meta",
+    "fullPublicDownloads": 8,
+    "landingPublicFilesVerified": 20,
+    "androidVersionPreserved": "0.3.12-beta",
+    "packages": [
+      {
+        "platform": "Windows",
+        "format": "NSIS",
+        "arch": "x64",
+        "path": "windows/0.2.1-beta/MeetSpace-0.2.1-beta-win-x64-test-setup.exe",
+        "bytes": 122278007,
+        "sha256": "38f3710bb393290a86fc42f75636d5669c89f26b5b311ea9324756f5a26502a9"
+      },
+      {
+        "platform": "Linux",
+        "format": "DEB",
+        "arch": "x64",
+        "path": "linux/0.2.1-beta/DEB/MeetSpace-0.2.1-beta-linux-amd64-test.deb",
+        "bytes": 100716488,
+        "sha256": "4f5309f4f2974427290cba265ec60865e71e560c72ea6df4e6bdc68f765331ba"
+      },
+      {
+        "platform": "Linux",
+        "format": "RPM",
+        "arch": "x64",
+        "path": "linux/0.2.1-beta/RPM/MeetSpace-0.2.1-beta-linux-x86_64-test.rpm",
+        "bytes": 90290717,
+        "sha256": "e9c0ef842b6207ae17b375b62728ae8f85b5b8fe8024e5913e769e78470c7b79"
+      },
+      {
+        "platform": "Linux",
+        "format": "AppImage",
+        "arch": "x64",
+        "path": "linux/0.2.1-beta/AppImage/MeetSpace-0.2.1-beta-linux-x86_64-test.AppImage",
+        "bytes": 127372758,
+        "sha256": "bd9180a11ba465a573d588e608e7b84aa02a83563bcdf7db0a3ad29416039e8e"
+      },
+      {
+        "platform": "Windows",
+        "format": "NSIS",
+        "arch": "arm64",
+        "path": "windows/0.2.1-beta/MeetSpace-0.2.1-beta-win-arm64-test-setup.exe",
+        "bytes": 116819245,
+        "sha256": "1d7eed80a5d3ea42623ae3fd5e1db70dde9e38506a8f2f377f29a6e711f52560"
+      },
+      {
+        "platform": "Linux",
+        "format": "DEB",
+        "arch": "arm64",
+        "path": "linux/0.2.1-beta/DEB/MeetSpace-0.2.1-beta-linux-arm64-test.deb",
+        "bytes": 95780812,
+        "sha256": "33c800e3d03527e26750b428b78090457dde0773f57f6a51ee7e8884ebd8a77f"
+      },
+      {
+        "platform": "Linux",
+        "format": "RPM",
+        "arch": "arm64",
+        "path": "linux/0.2.1-beta/RPM/MeetSpace-0.2.1-beta-linux-aarch64-test.rpm",
+        "bytes": 85912773,
+        "sha256": "93b6ba786075708abd46027df0aee95682f8ec90bd85764aed718f1155e608e0"
+      },
+      {
+        "platform": "Linux",
+        "format": "AppImage",
+        "arch": "arm64",
+        "path": "linux/0.2.1-beta/AppImage/MeetSpace-0.2.1-beta-linux-arm64-test.AppImage",
+        "bytes": 119387342,
+        "sha256": "f01259f08fbd50e2305f0c85d04cff0aa490bb8401d694d7d0ee72b6f7701453"
+      }
+    ]
+  },
+  "limits": [
+    "Unsigned internal beta packages; automatic updates disabled",
+    "Windows packages verified statically; Windows runtime acceptance not performed for this release",
+    "Linux ARM64 packages built natively in Ubuntu UTM; Linux x64 packages built with emulation and verified statically",
+    "No MeetSpace applications were installed or updated in user UTM VMs as part of this publication",
+    "Pending chat outbox is retained during the current app session and is not persisted across app restarts"
+  ]
+}
