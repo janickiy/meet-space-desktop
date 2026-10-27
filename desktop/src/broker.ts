@@ -412,6 +412,7 @@ export class MeetSpaceBroker {
     } else if (request.contentType !== undefined) throw new Error("invalid_request");
     else if (request.body !== undefined) body = jsonBody(request.body);
     if ((request.method === "GET" && body) || (request.responseType === "binary" && !binaryPath("GET", pathname))) throw new Error("invalid_request");
+    if (request.method === "PUT" && pathname === AUTH + "me/avatar" && (!request.bytes?.length || request.bytes.length > 2 * 1024 * 1024 || !["image/png", "image/jpeg"].includes(request.contentType ?? ""))) throw new Error("invalid_request");
     const operation = this.begin(request.id);
     if (pathname !== AUTH + "logout") void this.flushRevocations(profile.id);
     try {

@@ -28,10 +28,23 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
       url: "https://must-not-load.fixture.invalid/private.mp4?signature=fixture" }] };
   const attachment = { id: ATTACHMENT, filename: "Product private attachment.txt", mimeType: "text/plain", size: 40, status: "ready" };
   const controls = { offline: false, capabilityError: false, sentMessages: [] };
-  const fixture = await createFixture({ name: "product", certificates, ui: true, notificationHeartbeatMs, handleRequest: async ({ request, response, url, body, send }) => {
+  const fixture = await createFixture({ name: "product", certificates, ui: true, notificationHeartbeatMs, handleRequest: async ({ request, response, url, body, user, send }) => {
     const reply = (body, status = 200) => { send(response, status, { status: "success", ...body }); return true; };
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);
+    if (route === "/auth/me/avatar") {
+      if (request.method === "PUT") {
+        controls.avatar = Buffer.from(body);
+        controls.avatarUploads = (controls.avatarUploads || 0) + 1;
+        user.avatarVersion = "fixture-avatar-" + controls.avatarUploads;
+      } else { controls.avatar = null; user.avatarVersion = null; }
+      return reply({ user });
+    }
+    if (/^\/users\/[^/]+\/avatar\/content$/.test(route)) {
+      if (!controls.avatar) return reply({ status: "failed" }, 404);
+      response.writeHead(200, { "content-type": "image/jpeg", "cache-control": "private, no-store" });
+      response.end(controls.avatar); return true;
+    }
     if (route === "/notifications/preferences") return reply({ invitation: true, reminder: true, recording: true, summary: true });
     if (route === "/capabilities" && controls.capabilityError) return reply({ status: "failed", message: "fixture capability unavailable" }, 503);
     if (route === "/me/conferences") return reply({ items: [url.searchParams.get("view") === "past" ? finished : conference], nextCursor: null });

@@ -94,7 +94,7 @@ async function createFixture({ name, certificates, version = "1.0.0", malformedV
     try {
       const chunks = [];
       for await (const chunk of request) chunks.push(chunk);
-      if (chunks.length) body = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      if (chunks.length) body = /^image\//.test(request.headers["content-type"] || "") ? Buffer.concat(chunks) : JSON.parse(Buffer.concat(chunks).toString("utf8"));
     } catch { return failure(response, 400); }
     if (request.headers.origin || request.headers["sec-fetch-site"]) return failure(response, 403);
     if (["/version", "/version.json"].includes(url.pathname)) {

@@ -308,7 +308,7 @@ async function binaryRequest(
           method: options.method || "GET",
           file: options.body,
           contentType: options.body?.type,
-          responseType: "binary",
+          responseType: options.body ? "json" : "binary",
           token: usedToken,
         },
         options.signal,
@@ -1282,6 +1282,32 @@ export const api = {
       2 * 1024 * 1024,
       true,
     ),
+  userAvatar: (id: string, signal?: AbortSignal) =>
+    privateBlob(
+      `/users/${encodeURIComponent(id)}/avatar/content`,
+      signal,
+      256 * 1024,
+      true,
+    ),
+  putProfileAvatar: async (file: File, signal?: AbortSignal) => {
+    if (
+      !file.size ||
+      file.size > 2 * 1024 * 1024 ||
+      !["image/png", "image/jpeg"].includes(file.type)
+    )
+      throw new ApiError(400, "Выберите PNG или JPEG размером до 2 МБ.");
+    const response = await binaryRequest("/auth/me/avatar", {
+      method: "PUT",
+      body: file,
+      signal,
+    });
+    return response.json() as Promise<{ status: string; user: User }>;
+  },
+  deleteProfileAvatar: (signal?: AbortSignal) =>
+    request<{ status: string; user: User }>("/auth/me/avatar", {
+      method: "DELETE",
+      signal,
+    }),
   putGroupAvatar: async (id: string, file: File, signal?: AbortSignal) => {
     if (
       !file.size ||

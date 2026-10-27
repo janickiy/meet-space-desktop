@@ -7,6 +7,8 @@ const rules: Array<[string, RegExp]> = [];
 const allow = (methods: string, route: string) => rules.push([methods, new RegExp(`^/api/v1${route}$`)]);
 allow("POST", "/auth/(register|login|refresh|session|logout|accounts/list|accounts/switch)");
 allow("GET PATCH DELETE", "/auth/me");
+allow("PUT DELETE", "/auth/me/avatar");
+allow("GET", `/users/${ID}/avatar/content`);
 allow("GET", "/(capabilities|webrtc/config|users|me/conferences|search|admin/summary)");
 allow("GET POST", "/conferences");
 allow("GET", `/conferences/${ID}`);
@@ -84,7 +86,9 @@ export function publicOperation(method: string, pathname: string): boolean {
 }
 export const cookieOperation = (pathname: string) => pathname.startsWith("/api/v1/auth/");
 export const authResponse = (pathname: string) => /^\/api\/v1\/auth\/(login|refresh|session|accounts\/switch)$/.test(pathname) || /\/conference-invites\/[A-Za-z0-9_-]{32}\/guest$/.test(pathname);
-export const binaryPath = (method: string, pathname: string) => (method === "GET" && /^\/api\/v1\/conversations\/[^/]+\/(avatar\/content|attachments\/[^/]+\/content)$/.test(pathname)) ||
+export const binaryPath = (method: string, pathname: string) => (method === "GET" && new RegExp(`^/api/v1/users/${ID}/avatar/content$`).test(pathname)) ||
+  (method === "PUT" && pathname === "/api/v1/auth/me/avatar") ||
+  (method === "GET" && /^\/api\/v1\/conversations\/[^/]+\/(avatar\/content|attachments\/[^/]+\/content)$/.test(pathname)) ||
   (method === "PUT" && /^\/api\/v1\/(conferences|conversations)\/[^/]+\/(avatar|attachments\/[^/]+\/content)$/.test(pathname));
 
 export function normalizeServerOrigin(value: unknown): string {

@@ -364,3 +364,30 @@ test("Chromium native-only metadata filter removes Sec-Fetch while retaining mai
   controller.abort(); await rejected;
   listener(details, (result) => assert.deepEqual(result, { cancel: true }, "completed/cancelled requests cannot authorize new network traffic"));
 });
+
+test("profile avatar uses authenticated bounded image bytes and private photo responses", async t => {
+  const bytes = new Uint8Array([255, 216, 255, 217]);
+  const { http, login, calls } = await setup(t, { handle(request, resource) {
+    if (resource === '/api/v1/auth/me/avatar') return json(200, { user: { id: USER, avatarVersion: request.method === 'PUT' ? 'v1' : null } });
+    if (resource === `/api/v1/users/${USER}/avatar/content`) return { status: 200, headers: { 'content-type': 'image/jpeg' }, body: bytes };
+  } });
+  await assert.rejects(http('/auth/me/avatar', { method: 'PUT', bytes, contentType: 'image/jpeg' }), /authentication_required/);
+  const token = await login();
+  const uploaded = await http('/auth/me/avatar', { token, method: 'PUT', bytes, contentType: 'image/jpeg' });
+  assert.equal(uploaded.body.user.avatarVersion, 'v1');
+  const request = calls.find(call => call.method === 'PUT');
+  assert.deepEqual(request.body, bytes);
+  assert.match(request.headers.Authorization, /^Bearer /);
+  const photo = await http(`/users/${USER}/avatar/content`, { token, method: 'GET', responseType: 'binary' });
+  assert.deepEqual(photo.body, bytes);
+  const count = calls.length;
+  for (const extras of [ { body: {} }, { bytes: new Uint8Array(), contentType: 'image/jpeg' }, { bytes: new Uint8Array(2*1024*1024+1), contentType: 'image/jpeg' }, { bytes, contentType: 'image/svg+xml' } ]) {
+    await assert.rejects(http('/auth/me/avatar', { token, method: 'PUT', ...extras }), /invalid_request/);
+  }
+  assert.equal(calls.length, count, 'invalid images never leave the device');
+  const removed = await http('/auth/me/avatar', { token, method: 'DELETE' });
+  assert.equal(removed.body.user.avatarVersion, null);
+  for (const [method, resource] of [['POST','/auth/me/avatar'], ['PUT',`/users/${USER}/avatar/content`], ['GET','/users/not-an-id/avatar/content']]) {
+    assert.throws(() => validateApiPath(method, '/api/v1'+resource));
+  }
+});

@@ -20,9 +20,11 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth";
+import { UserAvatar } from "../components/UserAvatar";
+import { ProfileAvatarEditor } from "../components/ProfileAvatarEditor";
 import { AccountManagement } from "../components/AccountManagement";
 import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
-import { formatDate, initials } from "../utils";
+import { formatDate } from "../utils";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import { IntegrationsSettings } from "../components/IntegrationsSettings";
@@ -176,9 +178,12 @@ export function SettingsPage() {
           className="account-current-identity"
           aria-label="Текущий аккаунт"
         >
-          <span className="account-current-avatar" aria-hidden="true">
-            {initials(user.displayName || user.email)}
-          </span>
+          <UserAvatar
+            id={user.id}
+            name={user.displayName || user.email}
+            version={user.avatarVersion}
+            className="account-current-avatar"
+          />
           <div>
             <strong>{user.displayName || user.email}</strong>
             <span>
@@ -283,14 +288,18 @@ export function SettingsPage() {
               </div>
             </div>
             <div className="settings-profile-intro">
-              <span className="settings-profile-avatar" aria-hidden="true">
-                {initials(user?.displayName || user?.email || "Вы")}
-              </span>
+              <UserAvatar
+                id={user?.id}
+                name={user?.displayName || user?.email || "Вы"}
+                version={user?.avatarVersion}
+                className="settings-profile-avatar"
+              />
               <div>
                 <strong>{user?.displayName || user?.email}</strong>
                 <span>Участник пространства MeetSpace</span>
               </div>
             </div>
+            <ProfileAvatarEditor key={user?.id} />
             <form
               className="reference-profile-form"
               onSubmit={(event) => void saveProfile(event)}

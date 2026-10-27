@@ -30,7 +30,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../auth";
-import { initials } from "../utils";
+import { UserAvatar } from "./UserAvatar";
 import { Brand, Loading, Modal } from "./ui";
 import { NotificationBell } from "./NotificationBell";
 import { UnreadMessageCount } from "./UnreadMessageCount";
@@ -374,9 +374,11 @@ export function Layout() {
                   navigate("/app/settings#accounts");
                 }}
               >
-                <span className="avatar">
-                  {initials(user?.displayName || user?.email || "")}
-                </span>
+                <UserAvatar
+                  id={user?.id}
+                  name={user?.displayName || user?.email || ""}
+                  version={user?.avatarVersion}
+                />
                 <div>
                   <strong>{user?.displayName || "Мой аккаунт"}</strong>
                   <span>Мой аккаунт</span>
