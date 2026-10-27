@@ -269,3 +269,52 @@
     padding-bottom: 6px;
   }
 }
+
+/* Icon-only controls have no text baseline or label gap. */
+.chat-panel .chat-send-button.button {
+  display: grid;
+  place-items: center;
+  gap: 0;
+  padding: 0;
+  line-height: 1;
+}
+.chat-panel .chat-send-button.button > svg {
+  display: block;
+  margin: 0;
+  flex-shrink: 0;
+}
+.chat-message-delivery-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.chat-message-delivery-row > .chat-message-bubble {
+  min-width: 0;
+}
+.chat-delivery-failed {
+  order: -1;
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--danger, #d84b61);
+  cursor: pointer;
+}
+.chat-delivery-failed:hover:not(:disabled),
+.chat-delivery-failed:focus-visible {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.chat-delivery-failed > svg {
+  display: block;
+  margin: 0;
+}
+.chat-delivery-failed:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

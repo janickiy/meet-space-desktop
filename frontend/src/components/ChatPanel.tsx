@@ -11,6 +11,8 @@ import {
 } from "@tanstack/react-query";
 import {
   Check,
+  CircleAlert,
+  Clock3,
   Download,
   FileText,
   MessageCircle,
@@ -144,18 +146,40 @@ export function MessageThread({
   const composer = useRef<HTMLTextAreaElement>(null);
   const selection = useRef({ start: 0, end: 0 });
   const pendingCaret = useRef<number | null>(null);
-  const retryRequest = useRef<{ signature: string; id: string } | null>(null);
   const sendActive = useRef(false);
   const mounted = useRef(true);
   const downloadController = useRef<AbortController | null>(null);
-  const [pending, setPending] = useState<{
+  type PendingMessage = {
     clientRequestId: string;
     text: string;
     attachments: ChatAttachment[];
+    replyTo?: string;
     replyName?: string;
     createdAt: string;
     state: "sending" | "failed";
-  } | null>(null);
+  };
+  // Keep unsent messages across chat navigation, scoped to this account/server.
+  // QueryClient.clear() on logout/server switch removes this session-only queue.
+  const outboxKey = [
+    "chat-outbox",
+    serviceOrigin(),
+    user?.id,
+    historyKey,
+    scopeId,
+  ];
+  const { data: pending } = useQuery<PendingMessage[]>({
+    queryKey: outboxKey,
+    queryFn: () => [],
+    initialData: [],
+    enabled: false,
+    gcTime: Infinity,
+  });
+  const setPending = (
+    update: (current: PendingMessage[]) => PendingMessage[],
+  ) =>
+    client.setQueryData<PendingMessage[]>(outboxKey, (current) =>
+      current ? update(current) : undefined,
+    );
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -201,6 +225,13 @@ export function MessageThread({
     refetchInterval: 15000,
     retry: (failures, error) => !isAccessDenied(error) && failures < 3,
   });
+  // Keep loaded history visible when a background refresh loses the network.
+  const backgroundConnectionError =
+    !!query.data &&
+    !!query.error &&
+    (!(query.error instanceof ApiError) ||
+      query.error.status === 0 ||
+      query.error.status >= 500);
   const read = useQuery({
     queryKey: [readKey, scopeId, user?.id],
     queryFn: ({ signal }) => transport.chatRead(scopeId, signal),
@@ -233,13 +264,14 @@ export function MessageThread({
     setDeleting(null);
     setEditText("");
   }, [historyUnavailable]);
-  const confirmedPending =
-    !!pending &&
-    messages.some(
-      (message) =>
-        message.senderId === user?.id &&
-        message.clientRequestId === pending.clientRequestId,
-    );
+  const confirmedRequests = new Set(
+    messages
+      .filter((message) => message.senderId === user?.id)
+      .map((message) => message.clientRequestId),
+  );
+  const unconfirmed = pending.filter(
+    (message) => !confirmedRequests.has(message.clientRequestId),
+  );
   const latest = messages.at(-1)?.id;
 
   /** Обновляет историю и счётчик непрочитанных сообщений после изменения на сервере. */
@@ -257,14 +289,17 @@ export function MessageThread({
     }
   };
   const send = useMutation({
+    networkMode: "always",
+    retry: false,
     mutationFn: (body: {
       text: string;
       replyTo?: string;
       attachmentIds: string[];
       clientRequestId: string;
     }) => transport.sendMessage(scopeId, body),
-    onSuccess: ({ item }) => {
-      if (!mounted.current) return;
+    onSuccess: ({ item }, body) => {
+      // A result may finish after navigation; never recreate a cleared account queue.
+      if (!client.getQueryState(outboxKey)) return;
       client.setQueryData<InfiniteData<ChatPage>>(
         [historyKey, scopeId, user?.id],
         (current) =>
@@ -277,21 +312,25 @@ export function MessageThread({
               }
             : current,
       );
-      setPending(null);
-      newestVisible.current = true;
-      setText("");
-      setReply(null);
-      setAttachments([]);
-      setComposerGeneration((value) => value + 1);
-      selection.current = { start: 0, end: 0 };
-      retryRequest.current = null;
+      setPending((current) =>
+        current.filter(
+          (message) => message.clientRequestId !== body.clientRequestId,
+        ),
+      );
       invalidate();
-      if (focused) onLatest?.();
+      if (mounted.current) {
+        newestVisible.current = true;
+        if (focused) onLatest?.();
+      }
     },
-    onError: () => {
-      if (mounted.current)
+    onError: (_error, body) => {
+      if (client.getQueryState(outboxKey))
         setPending((current) =>
-          current ? { ...current, state: "failed" } : current,
+          current.map((message) =>
+            message.clientRequestId === body.clientRequestId
+              ? { ...message, state: "failed" }
+              : message,
+          ),
         );
     },
     onSettled: () => {
@@ -454,7 +493,7 @@ export function MessageThread({
     focused,
     focusRequest,
     personal,
-    pending?.clientRequestId,
+    pending.length,
   ]);
 
   useEffect(() => {
@@ -566,25 +605,42 @@ export function MessageThread({
       setValidation("Добавьте текст (до 4000 символов) или файл.");
       return;
     }
-    const body = {
+    const message: PendingMessage = {
+      clientRequestId: crypto.randomUUID(),
       text: text.trim(),
       replyTo: reply?.id,
-      attachmentIds: attachments.map((file) => file.id),
-    };
-    const signature = JSON.stringify(body);
-    if (retryRequest.current?.signature !== signature)
-      retryRequest.current = { signature, id: crypto.randomUUID() };
-    sendActive.current = true;
-    setPending({
-      clientRequestId: retryRequest.current.id,
-      text: body.text,
       attachments: [...attachments],
       replyName: reply?.senderName,
       createdAt: new Date().toISOString(),
       state: "sending",
-    });
+    };
+    setPending((current) => [...current, message]);
+    setText("");
+    setReply(null);
+    setAttachments([]);
+    setComposerGeneration((value) => value + 1);
+    selection.current = { start: 0, end: 0 };
+    deliver(message);
+  };
+
+  // A retry reuses the original request ID, even if the response was lost.
+  const deliver = (message: PendingMessage) => {
+    if (readOnly || sendActive.current || send.isPending) return;
+    sendActive.current = true;
     newestVisible.current = true;
-    send.mutate({ ...body, clientRequestId: retryRequest.current.id });
+    setPending((current) =>
+      current.map((item) =>
+        item.clientRequestId === message.clientRequestId
+          ? { ...item, state: "sending" }
+          : item,
+      ),
+    );
+    send.mutate({
+      clientRequestId: message.clientRequestId,
+      text: message.text,
+      replyTo: message.replyTo,
+      attachmentIds: message.attachments.map((file) => file.id),
+    });
   };
 
   /**
@@ -668,9 +724,11 @@ export function MessageThread({
       Предыдущие сообщения
     </Button>
   );
-  const pendingMessage = pending && !confirmedPending && (
+  const pendingMessages = unconfirmed.map((pending) => (
     <article
+      key={pending.clientRequestId}
       className="chat-message chat-message-own chat-message-pending"
+      data-delivery-state={pending.state}
       data-testid={`chat-pending-${pending.clientRequestId}`}
     >
       <span className="chat-message-avatar" aria-hidden="true">
@@ -681,32 +739,48 @@ export function MessageThread({
           <strong>{personal ? "Вы" : user?.displayName || "Вы"}</strong>
           {!personal && <span className="chat-message-self">вы</span>}
         </header>
-        <div className="chat-message-bubble">
-          {pending.replyName && (
-            <blockquote>Ответ: {pending.replyName}</blockquote>
+        <div className="chat-message-delivery-row">
+          <div className="chat-message-bubble">
+            {pending.replyName && (
+              <blockquote>Ответ: {pending.replyName}</blockquote>
+            )}
+            {pending.text && <p className="chat-text">{pending.text}</p>}
+            {pending.attachments.map((file) => (
+              <div className="chat-attachment" key={file.id}>
+                <span>
+                  <Paperclip size={15} />
+                  {file.filename}
+                  <small>{formatBytes(file.size)}</small>
+                </span>
+              </div>
+            ))}
+            <footer className="chat-message-meta">
+              <time dateTime={pending.createdAt}>
+                {chatTime(pending.createdAt)}
+              </time>
+              {pending.state === "sending" && (
+                <span role="status" aria-label="Отправляется">
+                  <Clock3 size={13} aria-hidden="true" />
+                </span>
+              )}
+            </footer>
+          </div>
+          {pending.state === "failed" && (
+            <button
+              type="button"
+              className="chat-delivery-failed"
+              aria-label="Сообщение не отправлено. Повторить отправку"
+              title="Не отправлено. Нажмите, чтобы повторить отправку"
+              disabled={readOnly || send.isPending}
+              onClick={() => deliver(pending)}
+            >
+              <CircleAlert size={18} aria-hidden="true" />
+            </button>
           )}
-          {pending.text && <p className="chat-text">{pending.text}</p>}
-          {pending.attachments.map((file) => (
-            <div className="chat-attachment" key={file.id}>
-              <span>
-                <Paperclip size={15} />
-                {file.filename}
-                <small>{formatBytes(file.size)}</small>
-              </span>
-            </div>
-          ))}
-          <footer className="chat-message-meta">
-            <time dateTime={pending.createdAt}>
-              {chatTime(pending.createdAt)}
-            </time>
-            <span role="status">
-              {pending.state === "sending" ? "Отправляется…" : "Не отправлено"}
-            </span>
-          </footer>
         </div>
       </div>
     </article>
-  );
+  ));
   if (accessDenied) return <ErrorNotice error={query.error || read.error} />;
   return (
     <section
@@ -746,9 +820,10 @@ export function MessageThread({
         )}
         <ErrorNotice
           error={
-            focused &&
-            query.error instanceof ApiError &&
-            query.error.status === 404
+            backgroundConnectionError ||
+            (focused &&
+              query.error instanceof ApiError &&
+              query.error.status === 404)
               ? null
               : query.error
           }
@@ -760,7 +835,7 @@ export function MessageThread({
               Сообщение больше недоступно. Вернитесь к последним сообщениям.
             </p>
           )}
-        {query.isError && (
+        {query.isError && !backgroundConnectionError && (
           <Button variant="outline" onClick={() => void query.refetch()}>
             Повторить загрузку чата
           </Button>
@@ -776,7 +851,7 @@ export function MessageThread({
             aria-live="polite"
           >
             {olderMessagesButton}
-            {!messages.length && !pendingMessage && !query.isError && (
+            {!messages.length && !pendingMessages.length && !query.isError && (
               <div className="messaging-empty">
                 <MessageCircle aria-hidden="true" />
                 <h3>
@@ -1015,7 +1090,7 @@ export function MessageThread({
                 </Fragment>
               );
             })}
-            {pendingMessage}
+            {pendingMessages}
             <span
               ref={lastMarker}
               className="chat-read-marker"
@@ -1066,7 +1141,7 @@ export function MessageThread({
                 className="chat-upload-details"
                 ref={setUploadDetailsTarget}
               />
-              <ErrorNotice error={send.error}>{validation || null}</ErrorNotice>
+              <ErrorNotice>{validation || null}</ErrorNotice>
             </div>
             <div className="chat-compose-row">
               <AttachmentUploader
@@ -1124,8 +1199,8 @@ export function MessageThread({
                 className="chat-send-button"
                 busy={send.isPending}
                 disabled={uploadBusy || (!text.trim() && !attachments.length)}
-                aria-label={send.isError ? "Повторить отправку" : "Отправить"}
-                title={send.isError ? "Повторить отправку" : "Отправить"}
+                aria-label="Отправить"
+                title="Отправить"
               >
                 {!send.isPending && <Send size={17} />}
               </Button>

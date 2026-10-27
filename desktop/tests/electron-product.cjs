@@ -41,7 +41,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     replace("meetspace:asset:cancel", id => { cancellations.push(id); });
     replace("meetspace:asset:close", id => { closes.push(id); });
     replace("meetspace:native:notification-context", input => { contexts.push(input); });
-    const execute = code => window.webContents.executeJavaScript(code, true);
+    const execute = async code => { try { return await window.webContents.executeJavaScript(code, true); } catch (error) { throw new Error(error.message + "\nRenderer check: " + code); } };
     const until = async (predicate, label, timeout = 8000) => {
       const end = Date.now() + timeout;
       while (Date.now() < end) { if (await predicate()) return; await new Promise(resolve => setTimeout(resolve, 35)); }
@@ -115,6 +115,38 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     assert.equal(fixture.product.controls.sentMessages[1].body.replyTo, "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
     await until(() => execute("document.querySelector('.chat-composer textarea').value === '' && !document.querySelector('.chat-reply')"), "Confirmed reply clears quotation");
     checks.push("actual chat form sends plain text and quoted replies through the production preload/broker to HTTPS; successful delivery clears the draft");
+    const sendIconGeometry = await execute(`(()=>{const button=document.querySelector('.chat-send-button');const a=button.getBoundingClientRect(),b=button.querySelector('svg').getBoundingClientRect();return {dx:Math.abs(a.x+a.width/2-b.x-b.width/2),dy:Math.abs(a.y+a.height/2-b.y-b.height/2)}})()`);
+    assert.ok(sendIconGeometry.dx < 1 && sendIconGeometry.dy < 1, 'Send icon is centered in its button on both axes');
+    fixture.product.controls.messageNetworkFailure = true;
+    await sendDraft('Offline draft one');
+    await until(()=>execute("document.querySelectorAll('.chat-delivery-failed').length===1"), 'Network failure is indicated next to the message');
+    assert.equal(await execute("document.querySelector('.chat-composer textarea').value"),'','Failed message stays in the thread, not the composer');
+    const failedOne=await execute("document.querySelector('.chat-message-pending').dataset.testid.replace('chat-pending-','')");
+    await sendDraft('Offline draft two');
+    await until(()=>execute("document.querySelectorAll('.chat-delivery-failed:not(:disabled)').length===2"), 'A second failed message does not replace the first');
+    const failedTwo=await execute("[...document.querySelectorAll('.chat-message-pending')].at(-1).dataset.testid.replace('chat-pending-','')");
+    assert.notEqual(failedOne,failedTwo);
+    assert.equal(await execute("document.querySelectorAll('.chat-panel .error-notice').length"),0,'No separate network-error banners');
+    assert.equal(await execute("document.querySelector('.chat-panel').innerText.includes('Не отправлено')"),false,'Only an icon marks the failed message');
+    await route(`/personal/${GROUP}`); await visible('Product group chat');
+    assert.equal(await execute("document.querySelectorAll('.chat-message-pending').length"),0,'Another chat never receives this outbox');
+    await route(`/personal/${DIRECT}`); await visible('Product direct peer');
+    await until(()=>execute("document.querySelectorAll('.chat-delivery-failed:not(:disabled)').length===2"),'Returning to the chat preserves both failed messages and retry IDs');
+    assert.equal(await execute(`!!document.querySelector('[data-testid="chat-pending-${failedOne}"]') && !!document.querySelector('[data-testid="chat-pending-${failedTwo}"]')`),true);
+    fixture.product.controls.messageNetworkFailure = false;
+    await click(`[data-testid="chat-pending-${failedOne}"] .chat-delivery-failed`);
+    await until(()=>execute("document.querySelectorAll('.chat-delivery-failed:not(:disabled)').length===1"),'One retry only removes the successfully delivered item');
+    assert.equal(fixture.product.controls.sentMessages.at(-1).body.clientRequestId,failedOne);
+    fixture.product.controls.loseMessageResponse = true;
+    await click(`[data-testid="chat-pending-${failedTwo}"] .chat-delivery-failed`);
+    await until(()=>execute(`!!document.querySelector('[data-testid="chat-pending-${failedTwo}"] .chat-delivery-failed:not(:disabled)')`),'A lost response keeps the delivery warning');
+    const deliveredCount=fixture.product.controls.sentMessages.length;
+    await click(`[data-testid="chat-pending-${failedTwo}"] .chat-delivery-failed`);
+    await until(()=>execute("!document.querySelector('.chat-message-pending')"),'Retry confirms delivery and removes the warning');
+    assert.equal(fixture.product.controls.sentMessages.length,deliveredCount,'A retry after a lost response creates no duplicate');
+    assert.equal(fixture.product.controls.sendAttempts.filter(attempt=>attempt.body.clientRequestId===failedTwo).length,3);
+    assert.equal(await execute("document.querySelectorAll('.chat-panel .error-notice').length"),0);
+    checks.push('centered send icon; offline sends remain as separate messages with warning icons and no banner; chat navigation preserves the session outbox; explicit per-message retry preserves request IDs and avoids duplicate delivery after a lost response');
     await click(`button[aria-label="Скачать файл: Product private attachment.txt"]`);
     await until(() => saves.length === 2, "Existing chat save action uses native path");
     assert.deepEqual(saves[1].asset, { kind: "attachment", scope: "conversation", scopeId: DIRECT, attachmentId: ATTACHMENT, filename: "Product private attachment.txt" });

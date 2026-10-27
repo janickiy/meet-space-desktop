@@ -65,6 +65,11 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
       return reply({ items, nextCursor: null, unreadCount: 0 });
     }
     if (/^\/(conversations|conferences)\/[^/]+\/messages$/.test(route) && request.method === "POST") {
+      controls.sendAttempts ||= [];
+      controls.sendAttempts.push({ route, body });
+      if (controls.messageNetworkFailure) { request.socket.destroy(); return true; }
+      const duplicate = controls.sentMessages.find(message => message.route === route && message.body.clientRequestId === body.clientRequestId);
+      if (duplicate) return reply({ item: duplicate.item });
       const item = {
         id: require("node:crypto").randomUUID(), clientRequestId: body.clientRequestId,
         sequence: String(controls.sentMessages.length + 2), senderId: USER_A, senderName: "Product owner",
@@ -73,6 +78,7 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
         createdAt: new Date().toISOString(), updatedAt: now, editedAt: null, deletedAt: null, version: 1, important: false,
       };
       controls.sentMessages.push({ route, body, item });
+      if (controls.loseMessageResponse) { controls.loseMessageResponse = false; request.socket.destroy(); return true; }
       return reply({ item });
     }
     for (const item of [direct, group]) {
