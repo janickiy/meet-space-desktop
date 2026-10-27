@@ -1,0 +1,15 @@
+{
+  "version": "0.1.14-beta",
+  "repository": "https://github.com/janickiy/meet-space-desktop",
+  "release": "https://github.com/janickiy/meet-space-desktop/releases/tag/0.1.14-beta",
+  "downloadPage": "https://meet-space.janickiy.com/download",
+  "packageCommit": "ed961b817166521f96dea8c53438de9766040491",
+  "sourceCommit": "7e2205cb1b18a009a3d6030a389149e6bad6ab0f",
+  "sourceTreeSha256": "8049124fc0941c2f70dbca33e41a450eb11d05cd586f53258c0c334de3cdcaa7",
+  "publicPackagesVerified": 8,
+  "verification": "Each public package downloaded in full; byte-size, SHA-256 and binary header matched. Twenty public landing HTML/JS/verification files matched the activated release manifest.",
+  "utmEvidence": "0.1.14-beta-utm.json",
+  "androidVersionPreserved": "0.3.12-beta",
+  "unsignedBeta": true,
+  "automaticUpdatesEnabled": false
+}
