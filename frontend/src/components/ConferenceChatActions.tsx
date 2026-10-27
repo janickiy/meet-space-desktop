@@ -151,10 +151,12 @@ function ConferenceChatMenu({
 }) {
   const { user } = useAuth();
   const client = useQueryClient();
+  const closed = ["finished", "cancelled"].includes(conference.status);
   const key = ["conference-chat-info", conference.id, user?.id];
   const info = useQuery({
     queryKey: key,
     queryFn: ({ signal }) => api.conferenceChatInfo(conference.id, signal),
+    enabled: !closed,
     retry: false,
   });
   const notifications = useMutation({
@@ -234,33 +236,42 @@ function ConferenceChatMenu({
         <Info size={19} aria-hidden="true" />
         Информация о чате
       </button>
-      <button role="menuitem" tabIndex={-1} type="button" onClick={onFolder}>
-        <FolderPlus size={19} aria-hidden="true" />
-        Добавить в папку
-      </button>
-      <button
-        role="menuitem"
-        tabIndex={-1}
-        type="button"
-        disabled={enabled === undefined || notifications.isPending}
-        onClick={() => notifications.mutate(!enabled)}
-      >
-        {enabled ? (
-          <BellOff size={19} aria-hidden="true" />
-        ) : (
-          <Bell size={19} aria-hidden="true" />
-        )}
-        {enabled ? "Выключить уведомления" : "Включить уведомления"}
-      </button>
-      <button
-        role="menuitem"
-        tabIndex={-1}
-        type="button"
-        onClick={() => onSelect("invite")}
-      >
-        <UserPlus size={19} aria-hidden="true" />
-        Добавить участников
-      </button>
+      {!closed && (
+        <>
+          <button
+            role="menuitem"
+            tabIndex={-1}
+            type="button"
+            onClick={onFolder}
+          >
+            <FolderPlus size={19} aria-hidden="true" />
+            Добавить в папку
+          </button>
+          <button
+            role="menuitem"
+            tabIndex={-1}
+            type="button"
+            disabled={enabled === undefined || notifications.isPending}
+            onClick={() => notifications.mutate(!enabled)}
+          >
+            {enabled ? (
+              <BellOff size={19} aria-hidden="true" />
+            ) : (
+              <Bell size={19} aria-hidden="true" />
+            )}
+            {enabled ? "Выключить уведомления" : "Включить уведомления"}
+          </button>
+          <button
+            role="menuitem"
+            tabIndex={-1}
+            type="button"
+            onClick={() => onSelect("invite")}
+          >
+            <UserPlus size={19} aria-hidden="true" />
+            Добавить участников
+          </button>
+        </>
+      )}
       <button
         role="menuitem"
         tabIndex={-1}
@@ -271,12 +282,12 @@ function ConferenceChatMenu({
         <LogOut size={19} aria-hidden="true" />
         Покинуть чат
       </button>
-      {info.isFetching && !info.data && (
+      {!closed && info.isFetching && !info.data && (
         <p className="field-hint" role="status">
           Загружаем настройки…
         </p>
       )}
-      <ErrorNotice error={notifications.error || info.error} />
+      {!closed && <ErrorNotice error={notifications.error || info.error} />}
     </div>
   );
 }

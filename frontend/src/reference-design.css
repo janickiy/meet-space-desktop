@@ -784,7 +784,6 @@ h4 {
   }
   .reference-settings-page .account-dialog-panel {
     padding: 37px;
-    max-width: 1040px;
   }
 }
 @media (min-width: 951px) and (max-width: 1180px) {
