@@ -1,0 +1,136 @@
+{
+  "version": "0.2.0-beta",
+  "checkedAt": "2026-10-27T11:53:35.410979+00:00",
+  "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+  "sourceTreeSha256": "c8972bb6e4f1ae0900ea7283b0f2d2292da4aaa3462eaf4792968b164859361e",
+  "packageCommit": "db404788dd5cbdaa1b69ed03c4529accf6f93df6",
+  "tests": {
+    "desktopUnit": {
+      "passed": 330,
+      "failed": 0,
+      "skipped": 1
+    },
+    "frontendFormatting": "PASS",
+    "typescript": "PASS",
+    "electronProductWithAvatarAPI": "PASS",
+    "avatarWorkflow": [
+      "local preview without upload",
+      "explicit authenticated upload",
+      "512x512 JPEG normalization",
+      "sidebar refresh",
+      "navigation persistence",
+      "remove photo",
+      "reject SVG"
+    ]
+  },
+  "utm": {
+    "ubuntu": {
+      "installedVersion": "0.2.0-beta",
+      "arch": "arm64",
+      "sha256": "13f96a19d1a6c48ede5367aa1ba159a360dc6491a5d20dc037a4cc4a06d029db",
+      "profilePreserved": true,
+      "dockPinned": true,
+      "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+      "sourceDirty": false,
+      "rendererSandbox": true,
+      "globalUsernsRestriction": "1",
+      "visualCheck": "Authenticated workspace and stored profile avatar display after update"
+    },
+    "windows": {
+      "installedVersion": "0.2.0.0",
+      "arch": "arm64",
+      "installerSHA256": "7a593a103270475776343e0551320aa8f3c383541fd3b02b7508ba012a987d62",
+      "appAsarSHA256": "fbc56c601d7d615cd5e28f1afaa642c0c74ca23a9dfc336c5f1d5e8eff6569e6",
+      "installerExitCode": 0,
+      "machine": "0xaa64",
+      "interactiveUser": true,
+      "runningProcesses": 5,
+      "existingUserProfileRetained": true,
+      "shortcutNames": [
+        "MeetSpace",
+        "MeetSpace"
+      ],
+      "obsoleteTestShortcutsRemoved": true,
+      "visualCheck": "Authenticated workspace and stored profile avatar display after UTM screen refresh"
+    }
+  },
+  "publication": {
+    "githubRelease": "https://github.com/janickiy/meet-space-desktop/releases/tag/0.2.0-beta",
+    "downloadPage": "https://meet-space.janickiy.com/download",
+    "landingRelease": "landing-20261027T114712Z-desktop-020",
+    "fullPublicDownloads": 8,
+    "landingPublicFilesVerified": 20,
+    "androidVersionPreserved": "0.3.12-beta",
+    "packages": [
+      {
+        "platform": "Windows",
+        "format": "NSIS",
+        "arch": "x64",
+        "path": "windows/0.2.0-beta/MeetSpace-0.2.0-beta-win-x64-test-setup.exe",
+        "bytes": 122276440,
+        "sha256": "550121f1e61be72bac9b4172a7eb0a913b90017157e6c30d05a96ff1682b5516"
+      },
+      {
+        "platform": "Linux",
+        "format": "DEB",
+        "arch": "x64",
+        "path": "linux/0.2.0-beta/DEB/MeetSpace-0.2.0-beta-linux-amd64-test.deb",
+        "bytes": 100716212,
+        "sha256": "d9923aaf3f525f6c74f968bdfb99b5ce8393f6db113aa86d8cccaa6d3b15cf81"
+      },
+      {
+        "platform": "Linux",
+        "format": "RPM",
+        "arch": "x64",
+        "path": "linux/0.2.0-beta/RPM/MeetSpace-0.2.0-beta-linux-x86_64-test.rpm",
+        "bytes": 90301913,
+        "sha256": "11f4ae29288af659fb5144c3d7b5c099cf46b6fe86425d8f131353bbafb24b5e"
+      },
+      {
+        "platform": "Linux",
+        "format": "AppImage",
+        "arch": "x64",
+        "path": "linux/0.2.0-beta/AppImage/MeetSpace-0.2.0-beta-linux-x86_64-test.AppImage",
+        "bytes": 127372540,
+        "sha256": "b3e0f05e1e63e99a4e0371bcc367c1f6cc8a65e25be1b482d94f628244a74b6a"
+      },
+      {
+        "platform": "Windows",
+        "format": "NSIS",
+        "arch": "arm64",
+        "path": "windows/0.2.0-beta/MeetSpace-0.2.0-beta-win-arm64-test-setup.exe",
+        "bytes": 116817761,
+        "sha256": "7a593a103270475776343e0551320aa8f3c383541fd3b02b7508ba012a987d62"
+      },
+      {
+        "platform": "Linux",
+        "format": "DEB",
+        "arch": "arm64",
+        "path": "linux/0.2.0-beta/DEB/MeetSpace-0.2.0-beta-linux-arm64-test.deb",
+        "bytes": 95780472,
+        "sha256": "30c5d9b157ea7943622c7c9d585f0c668e19342c14249de9d03212e7a6f736c8"
+      },
+      {
+        "platform": "Linux",
+        "format": "RPM",
+        "arch": "arm64",
+        "path": "linux/0.2.0-beta/RPM/MeetSpace-0.2.0-beta-linux-aarch64-test.rpm",
+        "bytes": 85942329,
+        "sha256": "cee4d984dd8a7a199d40b57b361cb1d82e058431e7f1c854d772b69a35289079"
+      },
+      {
+        "platform": "Linux",
+        "format": "AppImage",
+        "arch": "arm64",
+        "path": "linux/0.2.0-beta/AppImage/MeetSpace-0.2.0-beta-linux-arm64-test.AppImage",
+        "bytes": 119387477,
+        "sha256": "13f96a19d1a6c48ede5367aa1ba159a360dc6491a5d20dc037a4cc4a06d029db"
+      }
+    ]
+  },
+  "limits": [
+    "Unsigned internal beta packages; automatic updates disabled",
+    "x64 packages statically verified; runtime checks performed on ARM64 UTM",
+    "Avatar create/remove UI tested with disposable TLS fixture through the actual Electron broker; existing live account photo was preserved in UTM"
+  ]
+}
