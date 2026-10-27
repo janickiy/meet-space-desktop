@@ -1,0 +1,882 @@
+{
+  "schemaVersion": 1,
+  "result": "PASS",
+  "scope": "static artifact inspection; no installer, launcher or desktop runtime execution",
+  "releaseMode": "test",
+  "version": "0.2.0-beta",
+  "appId": "com.janickiy.meetspace.desktop.test",
+  "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+  "sourceDirty": false,
+  "sourceTreeSha256": "c8972bb6e4f1ae0900ea7283b0f2d2292da4aaa3462eaf4792968b164859361e",
+  "verifiedAt": "2026-10-27T11:26:28.093Z",
+  "verifierHost": {
+    "platform": "linux",
+    "arch": "x64",
+    "node": "v24.19.0",
+    "osRelease": "7.0.14-linuxkit"
+  },
+  "limitations": [
+    "unsigned internal test packages",
+    "updates disabled",
+    "static ELF GLIBC need records <=2.35 do not establish full distribution compatibility",
+    "package installation, login/autostart, protocol associations, AppImage FUSE and desktop acceptance require separate runtime evidence"
+  ],
+  "artifacts": [
+    {
+      "file": "MeetSpace-0.2.0-beta-linux-amd64-test.deb",
+      "format": "deb",
+      "arch": "x64",
+      "version": "0.2.0-beta",
+      "size": 100716212,
+      "sha256": "d9923aaf3f525f6c74f968bdfb99b5ce8393f6db113aa86d8cccaa6d3b15cf81",
+      "sha512": "tv3EDzBtyq+36hDtkK2xaNxIGrX1u9a8clyqk0sUPlPYyIdsp3oHYb7ezZIVdP+n8GHsDjY5kIYFyiLJkSQnNA==",
+      "sha512Hex": "b6fdc40f306dcaafb7ea10ed90adb168dc481ab5f5bbd6bc725caa934b143e53d8c8876ca77a0761bedecd921574ffa7f061ec0e3639908605ca22c991242734",
+      "metadata": {
+        "name": "meetspace-desktop-test",
+        "version": "0.2.0~beta",
+        "release": "1",
+        "arch": "amd64",
+        "dependencies": [
+          "libc6 (>= 2.35)",
+          "libgtk-3-0 | libgtk-3-0t64",
+          "libnotify4",
+          "libnss3",
+          "libnspr4",
+          "libxss1",
+          "libxtst6",
+          "libatspi2.0-0 | libatspi2.0-0t64",
+          "libuuid1",
+          "libsecret-1-0",
+          "libasound2t64 (>= 1.2.2) | libasound2 (>= 1.2.2)",
+          "libgbm1",
+          "libdrm2",
+          "libx11-6",
+          "libxcb1",
+          "libxcomposite1",
+          "libxdamage1",
+          "libxext6",
+          "libxfixes3",
+          "libxrandr2",
+          "libcups2 | libcups2t64",
+          "libglib2.0-0 | libglib2.0-0t64",
+          "libdbus-1-3",
+          "systemd",
+          "xdg-utils",
+          "ca-certificates"
+        ]
+      },
+      "archiveMetadata": {
+        "entries": 93,
+        "ownershipVerified": "root:root",
+        "sandboxMode": "4755"
+      },
+      "appAsarSha256": "e324d1de8e6bc061c4cd1c0c4dabc0bd33e2d7f3fc80a13531a8dab657e4a7ac",
+      "native": [
+        {
+          "file": "chrome-sandbox",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4f6dfd7325ddd55f94ddc0c487d22726d40ef099ded6475d5dffe236e277896",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "chrome_crashpad_handler",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.7",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4b5bdd06ab497169b49c4996e6e2604faa0dce574af1ba1119a065c5bcf836f",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libffmpeg.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7524ec42a70d58982841d5cf79d35924fbf7441dff6756ff4cf6797a545bcfed",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvk_swiftshader.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "9002fb11a11c5754331624e6a80e1ef719dbd210ed60c24f43b3cf82f59ecf23",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvulkan.so.1",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.4",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "fca03687772755d18885878031650d602283418b1e41d962571d3e398ab3f6b9",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "meetspace-test",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.11",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.18",
+            "GLIBC_2.2.5",
+            "GLIBC_2.23",
+            "GLIBC_2.25",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7",
+            "GLIBC_2.8",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7b7916ef94fa3380de130f8f1bff79fb339b9caafe134cd9dcb52d83b39ed299",
+          "origin": "exact pinned local Electron bytes"
+        }
+      ],
+      "provenance": {
+        "schemaVersion": 2,
+        "releaseMode": "test",
+        "appId": "com.janickiy.meetspace.desktop.test",
+        "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+        "sourceDirty": false,
+        "sourceTreeSha256": "c8972bb6e4f1ae0900ea7283b0f2d2292da4aaa3462eaf4792968b164859361e",
+        "buildVersion": "0.2.0-beta-test",
+        "buildTime": "2026-10-27T11:21:10Z",
+        "sourceDateEpoch": 1793100070,
+        "buildHostPlatform": "linux",
+        "buildHostArch": "x64",
+        "builderPatch": {
+          "package": "app-builder-lib",
+          "version": "26.17.0",
+          "patch": "serialize-nsis-language-includes-v1",
+          "sourceSha256": "12dd62260619425bd6bd981336db22ca2c04c62bc1219918ced7da053e3df455"
+        }
+      },
+      "desktopEntry": {
+        "Name": "MeetSpace Test",
+        "Exec": "/opt/meetspace-desktop-test/meetspace-test %u",
+        "Terminal": "false",
+        "Type": "Application",
+        "Icon": "meetspace-test",
+        "StartupWMClass": "com.janickiy.meetspace.desktop.test",
+        "StartupNotify": "true",
+        "X-MeetSpace-Build": "internal-test",
+        "Comment": "MeetSpace desktop — internal Linux test build",
+        "MimeType": "x-scheme-handler/meetspace;",
+        "Categories": "Network;VideoConference;"
+      },
+      "icons": [
+        {
+          "file": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "width": 512,
+          "height": 512,
+          "sha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa"
+        }
+      ],
+      "iconLinks": [],
+      "sourceIconSha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa",
+      "licenses": [
+        {
+          "file": "THIRD_PARTY_NOTICES.txt",
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
+        },
+        {
+          "file": "third-party-licenses.json",
+          "bytes": 7971,
+          "sha256": "b120a6f23b66bfb9e45813545979fdd65893af168da80461c14f967822bf8242"
+        },
+        {
+          "file": "APP-LICENSE.txt",
+          "bytes": 454,
+          "sha256": "9e9e44f6ffbc1b214599817272e341d7d18ea19182fc113ac0a61bfb641f07f7"
+        },
+        {
+          "file": "TEST-LICENSE.txt",
+          "bytes": 698,
+          "sha256": "ac5af2a793a4862f92b3145a324fb659b405a979a3a0a98e8c12cf8fdea6096f"
+        },
+        {
+          "file": "LICENSE.electron.txt",
+          "bytes": 1096,
+          "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+        },
+        {
+          "file": "LICENSES.chromium.html",
+          "bytes": 20115518,
+          "sha256": "3375e2a9bd7bc631738fde10be6548a76efe8cf5e4b8826b8140ba8b0c4d6353"
+        }
+      ],
+      "updateTrust": {
+        "enabled": false
+      },
+      "runtimePackages": [
+        "ws",
+        "ssh2",
+        "asn1",
+        "bcrypt-pbkdf",
+        "safer-buffer",
+        "tweetnacl"
+      ],
+      "appImageLauncherVerified": false
+    },
+    {
+      "file": "MeetSpace-0.2.0-beta-linux-x86_64-test.rpm",
+      "format": "rpm",
+      "arch": "x64",
+      "version": "0.2.0-beta",
+      "size": 90301913,
+      "sha256": "11f4ae29288af659fb5144c3d7b5c099cf46b6fe86425d8f131353bbafb24b5e",
+      "sha512": "IoGK4oFjJsFMKnZXruAMV5xqnMCajJ94DlRefU3XbECJ9WBtKyzFge26bU4ghpvjfvrSqDUjWiiogpXxpgYHUA==",
+      "sha512Hex": "22818ae2816326c14c2a7657aee00c579c6a9cc09a8c9f780e545e7d4dd76c4089f5606d2b2cc581edba6d4e20869be37efad2a835235a28a88295f1a6060750",
+      "metadata": {
+        "name": "meetspace-desktop-test",
+        "version": "0.2.0~beta",
+        "release": "1",
+        "arch": "x86_64",
+        "dependencies": [
+          "/bin/sh",
+          "/bin/sh",
+          "alsa-lib",
+          "at-spi2-core",
+          "ca-certificates",
+          "cups-libs",
+          "dbus-libs",
+          "glib2",
+          "glibc >= 2.35",
+          "gtk3",
+          "libX11",
+          "libXScrnSaver",
+          "libXcomposite",
+          "libXdamage",
+          "libXext",
+          "libXfixes",
+          "libXrandr",
+          "libXtst",
+          "libdrm",
+          "libnotify",
+          "libsecret",
+          "libuuid",
+          "libxcb",
+          "mesa-libgbm",
+          "nspr",
+          "nss",
+          "rpmlib(CompressedFileNames) <= 3.0.4-1",
+          "rpmlib(PayloadFilesHavePrefix) <= 4.0-1",
+          "rpmlib(PayloadIsXz) <= 5.2-1",
+          "rpmlib(TildeInVersions) <= 4.10.0-1",
+          "systemd",
+          "xdg-utils"
+        ]
+      },
+      "archiveMetadata": {
+        "entries": 91,
+        "ownershipVerified": "root:root",
+        "sandboxMode": "4755"
+      },
+      "appAsarSha256": "e324d1de8e6bc061c4cd1c0c4dabc0bd33e2d7f3fc80a13531a8dab657e4a7ac",
+      "native": [
+        {
+          "file": "chrome-sandbox",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4f6dfd7325ddd55f94ddc0c487d22726d40ef099ded6475d5dffe236e277896",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "chrome_crashpad_handler",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.7",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4b5bdd06ab497169b49c4996e6e2604faa0dce574af1ba1119a065c5bcf836f",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libffmpeg.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7524ec42a70d58982841d5cf79d35924fbf7441dff6756ff4cf6797a545bcfed",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvk_swiftshader.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "9002fb11a11c5754331624e6a80e1ef719dbd210ed60c24f43b3cf82f59ecf23",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvulkan.so.1",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.4",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "fca03687772755d18885878031650d602283418b1e41d962571d3e398ab3f6b9",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "meetspace-test",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.11",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.18",
+            "GLIBC_2.2.5",
+            "GLIBC_2.23",
+            "GLIBC_2.25",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7",
+            "GLIBC_2.8",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7b7916ef94fa3380de130f8f1bff79fb339b9caafe134cd9dcb52d83b39ed299",
+          "origin": "exact pinned local Electron bytes"
+        }
+      ],
+      "provenance": {
+        "schemaVersion": 2,
+        "releaseMode": "test",
+        "appId": "com.janickiy.meetspace.desktop.test",
+        "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+        "sourceDirty": false,
+        "sourceTreeSha256": "c8972bb6e4f1ae0900ea7283b0f2d2292da4aaa3462eaf4792968b164859361e",
+        "buildVersion": "0.2.0-beta-test",
+        "buildTime": "2026-10-27T11:21:10Z",
+        "sourceDateEpoch": 1793100070,
+        "buildHostPlatform": "linux",
+        "buildHostArch": "x64",
+        "builderPatch": {
+          "package": "app-builder-lib",
+          "version": "26.17.0",
+          "patch": "serialize-nsis-language-includes-v1",
+          "sourceSha256": "12dd62260619425bd6bd981336db22ca2c04c62bc1219918ced7da053e3df455"
+        }
+      },
+      "desktopEntry": {
+        "Name": "MeetSpace Test",
+        "Exec": "/opt/meetspace-desktop-test/meetspace-test %u",
+        "Terminal": "false",
+        "Type": "Application",
+        "Icon": "meetspace-test",
+        "StartupWMClass": "com.janickiy.meetspace.desktop.test",
+        "StartupNotify": "true",
+        "X-MeetSpace-Build": "internal-test",
+        "Comment": "MeetSpace desktop — internal Linux test build",
+        "MimeType": "x-scheme-handler/meetspace;",
+        "Categories": "Network;VideoConference;"
+      },
+      "icons": [
+        {
+          "file": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "width": 512,
+          "height": 512,
+          "sha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa"
+        }
+      ],
+      "iconLinks": [],
+      "sourceIconSha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa",
+      "licenses": [
+        {
+          "file": "THIRD_PARTY_NOTICES.txt",
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
+        },
+        {
+          "file": "third-party-licenses.json",
+          "bytes": 7971,
+          "sha256": "b120a6f23b66bfb9e45813545979fdd65893af168da80461c14f967822bf8242"
+        },
+        {
+          "file": "APP-LICENSE.txt",
+          "bytes": 454,
+          "sha256": "9e9e44f6ffbc1b214599817272e341d7d18ea19182fc113ac0a61bfb641f07f7"
+        },
+        {
+          "file": "TEST-LICENSE.txt",
+          "bytes": 698,
+          "sha256": "ac5af2a793a4862f92b3145a324fb659b405a979a3a0a98e8c12cf8fdea6096f"
+        },
+        {
+          "file": "LICENSE.electron.txt",
+          "bytes": 1096,
+          "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+        },
+        {
+          "file": "LICENSES.chromium.html",
+          "bytes": 20115518,
+          "sha256": "3375e2a9bd7bc631738fde10be6548a76efe8cf5e4b8826b8140ba8b0c4d6353"
+        }
+      ],
+      "updateTrust": {
+        "enabled": false
+      },
+      "runtimePackages": [
+        "ws",
+        "ssh2",
+        "asn1",
+        "bcrypt-pbkdf",
+        "safer-buffer",
+        "tweetnacl"
+      ],
+      "appImageLauncherVerified": false
+    },
+    {
+      "file": "MeetSpace-0.2.0-beta-linux-x86_64-test.AppImage",
+      "format": "AppImage",
+      "arch": "x64",
+      "version": "0.2.0-beta",
+      "size": 127372540,
+      "sha256": "b3e0f05e1e63e99a4e0371bcc367c1f6cc8a65e25be1b482d94f628244a74b6a",
+      "sha512": "nnLeuqJ7FnYy7ZpMDSg0Mh1bb/BVWPZyk6GOfzdWZJM8YvK2b6hvUNdmXi8EqMSdqLvNbDi1JO6Qtr/Ekwu1Ug==",
+      "sha512Hex": "9e72debaa27b167632ed9a4c0d2834321d5b6ff05558f67293a18e7f375664933c62f2b66fa86f50d7665e2f04a8c49da8bbcd6c38b524ee90b6bfc4930bb552",
+      "metadata": {
+        "format": "AppImage",
+        "squashfsOffset": 188392,
+        "fuseRuntimeRequirement": "NOT RUN: launch/FUSE/fallback must be tested on target desktop"
+      },
+      "outerElf": {
+        "machine": 62,
+        "glibcRequirements": [
+          "GLIBC_2.2.5",
+          "GLIBC_2.3",
+          "GLIBC_2.3.3"
+        ],
+        "glibcFloor": "2.35",
+        "embeddedUpdateInformation": false
+      },
+      "appAsarSha256": "e324d1de8e6bc061c4cd1c0c4dabc0bd33e2d7f3fc80a13531a8dab657e4a7ac",
+      "native": [
+        {
+          "file": "chrome-sandbox",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4f6dfd7325ddd55f94ddc0c487d22726d40ef099ded6475d5dffe236e277896",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "chrome_crashpad_handler",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.7",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "a4b5bdd06ab497169b49c4996e6e2604faa0dce574af1ba1119a065c5bcf836f",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libffmpeg.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7524ec42a70d58982841d5cf79d35924fbf7441dff6756ff4cf6797a545bcfed",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvk_swiftshader.so",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "9002fb11a11c5754331624e6a80e1ef719dbd210ed60c24f43b3cf82f59ecf23",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "libvulkan.so.1",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.14",
+            "GLIBC_2.16",
+            "GLIBC_2.2.5",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.4",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "fca03687772755d18885878031650d602283418b1e41d962571d3e398ab3f6b9",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "meetspace-test",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.10",
+            "GLIBC_2.11",
+            "GLIBC_2.12",
+            "GLIBC_2.14",
+            "GLIBC_2.15",
+            "GLIBC_2.16",
+            "GLIBC_2.17",
+            "GLIBC_2.18",
+            "GLIBC_2.2.5",
+            "GLIBC_2.23",
+            "GLIBC_2.25",
+            "GLIBC_2.3",
+            "GLIBC_2.3.2",
+            "GLIBC_2.3.3",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4",
+            "GLIBC_2.6",
+            "GLIBC_2.7",
+            "GLIBC_2.8",
+            "GLIBC_2.9"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "7b7916ef94fa3380de130f8f1bff79fb339b9caafe134cd9dcb52d83b39ed299",
+          "origin": "exact pinned local Electron bytes"
+        },
+        {
+          "file": "usr/lib/libXss.so.1",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "270fe6e4d430118793d01cac5c6081d0ea9e244cfcf510475bc779bef21b754a",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        },
+        {
+          "file": "usr/lib/libXtst.so.6",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "38f9ccb12d2c477aad85db6279afc334d9f250f613884c188ace7232b83e9b68",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        },
+        {
+          "file": "usr/lib/libappindicator.so.1",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "033b8803f20b98e8cd56fc8e75e3a71a552f75c0cff9bd0937f3ddd6ee5d2145",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        },
+        {
+          "file": "usr/lib/libgconf-2.so.4",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.3.4",
+            "GLIBC_2.4"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "ba977334112bb81f6457ee4aad833c6d5f1ff731c718073cd50777d613b23185",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        },
+        {
+          "file": "usr/lib/libindicator.so.7",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "3b61ae3424c4800975c1806245a2d286f6e1fc49cd9350913075c27a95f3c7a0",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        },
+        {
+          "file": "usr/lib/libnotify.so.4",
+          "machine": 62,
+          "glibcRequirements": [
+            "GLIBC_2.2.5",
+            "GLIBC_2.7"
+          ],
+          "glibcFloor": "2.35",
+          "embeddedUpdateInformation": false,
+          "sha256": "8f42294247a886c5a94b2a0ce1c0b65e953616d7efe8da664b3826cdeae47948",
+          "origin": "electron-builder AppImage support library; architecture/GLIBC/hash inspected"
+        }
+      ],
+      "provenance": {
+        "schemaVersion": 2,
+        "releaseMode": "test",
+        "appId": "com.janickiy.meetspace.desktop.test",
+        "sourceCommit": "4b84cee4923716792a04fc452bbe85df0df17095",
+        "sourceDirty": false,
+        "sourceTreeSha256": "c8972bb6e4f1ae0900ea7283b0f2d2292da4aaa3462eaf4792968b164859361e",
+        "buildVersion": "0.2.0-beta-test",
+        "buildTime": "2026-10-27T11:21:10Z",
+        "sourceDateEpoch": 1793100070,
+        "buildHostPlatform": "linux",
+        "buildHostArch": "x64",
+        "builderPatch": {
+          "package": "app-builder-lib",
+          "version": "26.17.0",
+          "patch": "serialize-nsis-language-includes-v1",
+          "sourceSha256": "12dd62260619425bd6bd981336db22ca2c04c62bc1219918ced7da053e3df455"
+        }
+      },
+      "desktopEntry": {
+        "Name": "MeetSpace Test",
+        "Exec": "AppRun %U",
+        "Terminal": "false",
+        "Type": "Application",
+        "Icon": "meetspace-test",
+        "StartupWMClass": "com.janickiy.meetspace.desktop.test",
+        "X-AppImage-Version": "0.2.0-beta",
+        "StartupNotify": "true",
+        "X-MeetSpace-Build": "internal-test",
+        "Comment": "MeetSpace desktop — internal Linux test build",
+        "MimeType": "x-scheme-handler/meetspace;",
+        "Categories": "Network;VideoConference;"
+      },
+      "icons": [
+        {
+          "file": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "width": 512,
+          "height": 512,
+          "sha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa"
+        }
+      ],
+      "iconLinks": [
+        {
+          "file": "meetspace-test.png",
+          "target": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "original": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "sha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa"
+        },
+        {
+          "file": ".DirIcon",
+          "target": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "original": "usr/share/icons/hicolor/512x512/apps/meetspace-test.png",
+          "sha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa"
+        }
+      ],
+      "sourceIconSha256": "1ba6531d79b46cb160af407af6e6aec5f349abd9d1a0da669fa728c214f1a5fa",
+      "licenses": [
+        {
+          "file": "THIRD_PARTY_NOTICES.txt",
+          "bytes": 131395,
+          "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
+        },
+        {
+          "file": "third-party-licenses.json",
+          "bytes": 7971,
+          "sha256": "b120a6f23b66bfb9e45813545979fdd65893af168da80461c14f967822bf8242"
+        },
+        {
+          "file": "APP-LICENSE.txt",
+          "bytes": 454,
+          "sha256": "9e9e44f6ffbc1b214599817272e341d7d18ea19182fc113ac0a61bfb641f07f7"
+        },
+        {
+          "file": "TEST-LICENSE.txt",
+          "bytes": 698,
+          "sha256": "ac5af2a793a4862f92b3145a324fb659b405a979a3a0a98e8c12cf8fdea6096f"
+        },
+        {
+          "file": "LICENSE.electron.txt",
+          "bytes": 1096,
+          "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+        },
+        {
+          "file": "LICENSES.chromium.html",
+          "bytes": 20115518,
+          "sha256": "3375e2a9bd7bc631738fde10be6548a76efe8cf5e4b8826b8140ba8b0c4d6353"
+        }
+      ],
+      "updateTrust": {
+        "enabled": false
+      },
+      "runtimePackages": [
+        "ws",
+        "ssh2",
+        "asn1",
+        "bcrypt-pbkdf",
+        "safer-buffer",
+        "tweetnacl"
+      ],
+      "appImageLauncherVerified": true
+    }
+  ]
+}
