@@ -115,6 +115,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
       },
     });
     window = await startApp({
+      mediaAccess: require('./fixtures/synthetic-media-access.cjs').syntheticMediaAccess,
       show: false,
       rendererRoot: config.rendererRoot,
       userDataDir: config.userDataDir,

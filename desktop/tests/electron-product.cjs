@@ -7,6 +7,7 @@ const path = require("node:path");
 const WebSocket = require("ws");
 const { app, ipcMain } = require("electron");
 assert.ok(process.argv[2] && path.isAbsolute(process.argv[2]));
+assert.ok(!process.argv[3] || path.isAbsolute(process.argv[3]), "Product UI evidence directory must be absolute");
 app.setPath("userData", process.argv[2]); app.setPath("sessionData", process.argv[2]);
 const { startApp } = require("../dist/main.js");
 const { createNodeHttpsTransport } = require("../dist/network/transport.js");
@@ -153,6 +154,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     assert.equal(fixture.requests.some(request => request.path.includes("/download")), false, "Renderer does not resolve signed download URLs");
     checks.push("existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch");
 
+    await require("./product-attachment-checks.cjs")({ execute, until, visible, click, route, fixture, saves, checks, sendDraft });
+
     await route("/folders"); await visible("Product personal folder");
     await click(`a[href="/folders/${FOLDER}"]`); await visible("Product direct peer"); await visible("Product scheduled meeting");
     checks.push("existing personal folder list/detail combines authorized chat and meeting entries");
@@ -200,7 +203,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     await visible('Для аватара подходят PNG, JPEG и WebP.');
     assert.equal(fixture.product.controls.avatarUploads,1,"unsupported files cannot upload");
     checks.push('profile avatar preview, explicit upload, 512px JPEG normalization, sidebar refresh, navigation persistence, deletion and unsafe-file rejection through the actual native broker');
-    const screenshotDirectory = path.resolve(__dirname, "../artifacts");
+    const screenshotDirectory = process.argv[3] || path.resolve(__dirname, "../artifacts");
     await fs.mkdir(screenshotDirectory, { recursive: true });
     window.setSize(1280, 900);
     for (const theme of ["light", "dark"]) {
@@ -220,8 +223,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
         ? "Автозапуск уже настроен другим способом."
         : startup.platform==='linux' ? "Автозапуск можно включить в установленном приложении Linux"
         : startup.platform==='win32' ? "Автозапуск можно включить в установленном приложении Windows."
+        : startup.platform==='darwin' ? "Для автозапуска переместите MeetSpace в папку «Программы»."
         : "Автозапуск в этой среде пока недоступен.");
-      await visible("Издатель, подпись и канал выпуска ещё не настроены");
+      await visible(startup.platform === "darwin"
+        ? "Автоматическое обновление macOS пока не настроено."
+        : startup.platform === "linux" ? "Автоматическое обновление Linux не настроено."
+        : "Издатель, подпись и канал выпуска ещё не настроены");
       assert.equal(await execute("!!document.querySelector('.desktop-native-updates button')"), false, "Disabled updater offers no release actions");
       await execute("Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations !== Infinity).map(a=>a.finished.catch(()=>{})))");
       await execute("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");

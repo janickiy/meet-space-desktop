@@ -16,7 +16,7 @@ import {
   readReleaseConfig,
   sourceDateEpoch,
 } from "./build-context.mjs";
-import { prepareBuilder } from "./prepare-builder.mjs";
+import { readBuilderEvidence } from "./prepare-builder.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
 const frontend = path.resolve(desktop, "../frontend");
@@ -34,11 +34,17 @@ const git = (...args) => {
 const releaseMode = process.env.MEETSPACE_BUILD_MODE ?? "test";
 if (!["test", "release"].includes(releaseMode))
   throw new Error("Invalid build mode");
+const macReleasePolicy = releaseMode === "release" && process.env.MEETSPACE_BUILD_TARGET === "darwin"
+  ? await import("./macos-release-policy.mjs") : null;
 const config =
   releaseMode === "release"
-    ? await readReleaseConfig(process.env.MEETSPACE_RELEASE_CONFIG)
+    ? await (macReleasePolicy?.readMacReleaseConfig ?? readReleaseConfig)(process.env.MEETSPACE_RELEASE_CONFIG)
     : null;
-const builderPatch = await prepareBuilder();
+// Only the Windows packaging driver prepares NSIS. Shared compilation and
+// macOS/Linux builds must never mutate Windows builder code as a side effect.
+const builderPatch = process.env.MEETSPACE_BUILD_TARGET === "win32"
+  ? await readBuilderEvidence()
+  : undefined;
 // Licensing resources are generated from the locked installed packages before
 // the source snapshot. Their output is deterministic and contains no credentials.
 const notices = spawnSync(
@@ -54,14 +60,14 @@ const epoch = sourceDateEpoch(
   git("show", "-s", "--format=%ct", "HEAD"),
 );
 const provenance = {
-  ...makeBuildProvenance({
+  ...(macReleasePolicy?.makeMacBuildProvenance ?? makeBuildProvenance)({
     pkg,
     inputs,
     epoch,
     releaseMode,
     config,
   }),
-  builderPatch,
+  ...(builderPatch ? { builderPatch } : {}),
 };
 const buildEnvironment = {
   ...process.env,

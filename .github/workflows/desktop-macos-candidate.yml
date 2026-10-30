@@ -1,0 +1,142 @@
+name: Desktop macOS signed candidate
+
+# Explicit protected review, no PR/workflow_run, no distribution or feed upload.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: desktop-macos-signed-candidate
+  cancel-in-progress: false
+
+jobs:
+  signed-candidate:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    environment: desktop-macos-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.1"
+          architecture: ${{ matrix.arch }}
+          package-manager-cache: false
+      - name: Prepare fresh macOS output in the disposable checkout
+        run: node -e 'require("node:fs").rmSync("desktop/artifacts/macos",{recursive:true,force:true})'
+      - name: Validate reviewed nonsecret release configuration and clean source
+        env:
+          MACOS_RELEASE_CONFIG_JSON: ${{ vars.MACOS_RELEASE_CONFIG_JSON }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync,appendFileSync,readFileSync} from 'node:fs';
+          import {execFileSync} from 'node:child_process';
+          import {validateMacReleaseConfig} from './desktop/scripts/macos-release-policy.mjs';
+          if(process.platform!=='darwin'||process.arch!==process.env.TARGET_ARCH)throw Error('Native Mac required');
+          const config=validateMacReleaseConfig(JSON.parse(process.env.MACOS_RELEASE_CONFIG_JSON||'null'));
+          if(config.notarization.keychainProfile!=='MeetSpaceNotaryCI')throw Error('Unexpected CI notarization profile');
+          const pkg=JSON.parse(readFileSync('desktop/package.json','utf8'));
+          if(!/^\d+\.\d+\.\d+$/.test(pkg.version))throw Error('Signed candidate requires an explicitly selected stable version');
+          writeFileSync(process.env.RUNNER_TEMP+'/meetspace-macos-release.json',JSON.stringify(config),{mode:0o600});
+          const epoch=execFileSync('git',['show','-s','--format=%ct','HEAD'],{encoding:'utf8'}).trim();
+          if(!/^\d{9,11}$/.test(epoch))throw Error('Invalid source timestamp');
+          appendFileSync(process.env.GITHUB_ENV,`SOURCE_DATE_EPOCH=${epoch}\n`);
+          NODE
+          node desktop/scripts/ci/source-inputs.mjs desktop/artifacts/macos-ci/source-inputs.json --require-clean
+      - name: Install frozen dependencies and validate reviewed source before reading credentials
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix desktop
+          node desktop/node_modules/electron/install.js
+          npm --prefix frontend run check
+          npm --prefix frontend run check:desktop-foundation
+          npm --prefix frontend run check:desktop-media
+          npm --prefix frontend run check:desktop-assets
+          npm --prefix desktop test
+      - name: Sign, notarize, staple and verify the candidate in an ephemeral keychain
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+          SIGNING_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
+          SIGNING_P12_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_P12_PASSWORD }}
+          NOTARY_API_KEY_BASE64: ${{ secrets.MACOS_NOTARY_API_KEY_P8_BASE64 }}
+          NOTARY_API_KEY_ID: ${{ secrets.MACOS_NOTARY_API_KEY_ID }}
+          NOTARY_API_ISSUER_ID: ${{ secrets.MACOS_NOTARY_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          signing_keychain="$RUNNER_TEMP/meetspace-signing.keychain-db"
+          certificate="$RUNNER_TEMP/meetspace-developer-id.p12"
+          api_key="$RUNNER_TEMP/meetspace-notary.p8"
+          test ! -e "$signing_keychain"
+          test ! -e "$certificate"
+          test ! -e "$api_key"
+          cleanup() {
+            security delete-keychain "$signing_keychain" >/dev/null 2>&1 || true
+            rm -f "$certificate" "$api_key"
+            unset SIGNING_P12_BASE64 SIGNING_P12_PASSWORD NOTARY_API_KEY_BASE64 keychain_password
+          }
+          trap cleanup EXIT
+          node --input-type=module <<'NODE'
+          import {writeFileSync} from 'node:fs';
+          const fields=[['SIGNING_P12_BASE64','meetspace-developer-id.p12'],['NOTARY_API_KEY_BASE64','meetspace-notary.p8']];
+          for(const [name,file] of fields){const input=process.env[name];if(!input||input.length>1048576||!/^[A-Za-z0-9+/=\s]+$/.test(input))throw Error('Signing credentials are not configured');const bytes=Buffer.from(input,'base64');if(!bytes.length)throw Error('Empty signing credential');writeFileSync(process.env.RUNNER_TEMP+'/'+file,bytes,{mode:0o600,flag:'wx'});}
+          for(const name of ['SIGNING_P12_PASSWORD','NOTARY_API_KEY_ID','NOTARY_API_ISSUER_ID'])if(!process.env[name])throw Error('Signing credentials are not configured');
+          NODE
+          keychain_password="$(openssl rand -hex 32)"
+          security create-keychain -p "$keychain_password" "$signing_keychain"
+          security set-keychain-settings -lut 21600 "$signing_keychain"
+          security unlock-keychain -p "$keychain_password" "$signing_keychain"
+          security import "$certificate" -k "$signing_keychain" -P "$SIGNING_P12_PASSWORD" -t cert -f pkcs12 -T /usr/bin/codesign >/dev/null
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$keychain_password" "$signing_keychain" >/dev/null
+          xcrun notarytool store-credentials MeetSpaceNotaryCI --key "$api_key" --key-id "$NOTARY_API_KEY_ID" --issuer "$NOTARY_API_ISSUER_ID" --keychain "$signing_keychain" >/dev/null
+          export MEETSPACE_MACOS_KEYCHAIN="$signing_keychain"
+          export CSC_KEYCHAIN="$signing_keychain"
+          export CSC_IDENTITY_AUTO_DISCOVERY=false
+          unset SIGNING_P12_BASE64 SIGNING_P12_PASSWORD NOTARY_API_KEY_BASE64 NOTARY_API_KEY_ID NOTARY_API_ISSUER_ID
+          node desktop/scripts/package-macos-dmg.mjs "$TARGET_ARCH" --release --config "$RUNNER_TEMP/meetspace-macos-release.json"
+      - name: Independently check the produced candidate checksums
+        run: |
+          count=0
+          while IFS= read -r checksum; do
+            (cd "$(dirname "$checksum")" && shasum -a 256 -c SHA256SUMS)
+            count=$((count+1))
+          done < <(find desktop/artifacts/macos -type f -name SHA256SUMS)
+          test "$count" -eq 1
+      - name: Disposable candidate file-copy lifecycle (no system installation or launch)
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          images=( "$PWD"/desktop/artifacts/macos/*/*/"$TARGET_ARCH"/release/*.dmg )
+          test "${#images[@]}" -eq 1
+          test -f "${images[0]}"
+          node desktop/scripts/ci/macos-dmg-lifecycle.mjs "${images[0]}" "$PWD/desktop/artifacts/macos-ci/dmg-lifecycle.json" --disposable
+      - name: Record unchanged inputs, native architecture and dependency inventories
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node desktop/scripts/ci/collect-macos-build-evidence.mjs "$PWD/desktop/artifacts/macos-ci" "$TARGET_ARCH"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: desktop-macos-candidate-${{ matrix.arch }}-${{ github.sha }}
+          path: |
+            desktop/artifacts/macos/**
+            desktop/artifacts/macos-ci/**
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 30

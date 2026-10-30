@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "licenseReviewed": false,
+  "signing": {
+    "teamId": "REPLACE_TEAM_ID",
+    "certificateSha1": "REPLACE_DEVELOPER_ID_APPLICATION_SHA1"
+  },
+  "notarization": {
+    "keychainProfile": "MeetSpaceNotaryCI"
+  },
+  "updateTrust": {
+    "schemaVersion": 1,
+    "enabled": false
+  }
+}

@@ -159,7 +159,7 @@ const { ConferenceMediaClient } = await compile("src/media.ts");
 const { captureWithDeviceFallback, inputTrackConstraints, routeAudioOutput } =
   await compile("src/mediaDevices.ts");
 const { createRemotePlayback } = await compile("src/remotePlayback.ts");
-async function joined({ capture = true, options, sendError } = {}) {
+async function joined({ capture = true, options, sendError, platform } = {}) {
   const commands = [];
   const client = new ConferenceMediaClient(
     (type, data) => {
@@ -169,6 +169,7 @@ async function joined({ capture = true, options, sendError } = {}) {
       return id;
     },
     () => {},
+    platform,
   );
   await client.start(capture, options);
   const join = commands.find((command) => command.type === "media.join");
@@ -641,6 +642,355 @@ await test("screen capture cancellation, unavailable sources and gesture errors 
   }
 });
 
+await test("explicit screen source switching preserves the old capture until both new senders are ready", async () => {
+  install();
+  const { client, pc } = await joined();
+  const gate = deferred();
+  try {
+    await client.startScreen();
+    const old = client.snapshot().localScreen.getTracks();
+    const inputs = client.snapshot().localStream.getTracks();
+    const next = new Stream([new Track("video"), new Track("audio")]);
+    navigator.mediaDevices.getDisplayMedia = async () => next;
+    const audioSender = pc.transceivers[3].sender;
+    audioSender.replaceTrack = async function (track) {
+      await gate.promise;
+      this.track = track;
+    };
+    const switching = client.startScreen();
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.ok(old.every((track) => track.readyState === "live"));
+    assert.equal(client.snapshot().screenSharing, true);
+    gate.resolve();
+    await switching;
+    assert.ok(old.every((track) => track.readyState === "ended"));
+    assert.ok(inputs.every((track) => track.readyState === "live"));
+    assert.deepEqual(
+      client.snapshot().localScreen.getTracks(),
+      next.getTracks(),
+    );
+    assert.equal(pc.transceivers[2].sender.track, next.getVideoTracks()[0]);
+    assert.equal(pc.transceivers[3].sender.track, next.getAudioTracks()[0]);
+    assert.equal(client.snapshot().error, null);
+    next.getVideoTracks()[0].unplug();
+    assert.ok(next.getTracks().every((track) => track.readyState === "ended"));
+    await client.queue;
+    assert.equal(client.snapshot().screenSharing, false);
+  } finally {
+    gate.resolve();
+    client.stop();
+  }
+});
+
+await test("cancelling a source switch is silent and picker failures leave the ongoing share intact", async () => {
+  for (const name of [
+    "NotAllowedError",
+    "PermissionDeniedError",
+    "NotFoundError",
+    "NotReadableError",
+  ]) {
+    install();
+    const { client, pc } = await joined({ platform: "darwin" });
+    try {
+      await client.startScreen();
+      const old = client.snapshot().localScreen.getTracks();
+      navigator.mediaDevices.getDisplayMedia = async () => {
+        throw new DOMException("private details", name);
+      };
+      await client.startScreen();
+      assert.ok(old.every((track) => track.readyState === "live"));
+      assert.equal(client.snapshot().screenSharing, true);
+      assert.equal(pc.transceivers[2].sender.track, old[0]);
+      assert.equal(pc.transceivers[3].sender.track, old[1]);
+      if (name === "NotAllowedError" || name === "PermissionDeniedError")
+        assert.equal(client.snapshot().error, null);
+      else
+        assert.ok(
+          client.snapshot().error &&
+            !client.snapshot().error.includes("private details"),
+        );
+    } finally {
+      client.stop();
+    }
+  }
+});
+
+await test("a rejected screen sender rolls back both sources without ending the previous capture", async () => {
+  for (const rejectedSender of [2, 3]) {
+    install();
+    const { client, pc } = await joined({ capture: false });
+    try {
+      await client.startScreen();
+      const old = client.snapshot().localScreen.getTracks();
+      const next = new Stream([new Track("video"), new Track("audio")]);
+      navigator.mediaDevices.getDisplayMedia = async () => next;
+      pc.transceivers[rejectedSender].sender.replaceTrack = async function (
+        track,
+      ) {
+        if (next.getTracks().includes(track))
+          throw new DOMException("sender rejected", "NotReadableError");
+        this.track = track;
+      };
+      await client.startScreen();
+      assert.ok(
+        next.getTracks().every((track) => track.readyState === "ended"),
+      );
+      assert.ok(old.every((track) => track.readyState === "live"));
+      assert.equal(pc.transceivers[2].sender.track, old[0]);
+      assert.equal(pc.transceivers[3].sender.track, old[1]);
+      assert.equal(client.snapshot().screenSharing, true);
+      assert.match(client.snapshot().error, /Прежний источник продолжает/);
+    } finally {
+      client.stop();
+    }
+  }
+});
+
+await test("an ended replacement source never discards the valid previous screen", async () => {
+  for (const failurePhase of ["before-swap", "after-video", "after-audio"]) {
+    install();
+    const { client, pc } = await joined({ capture: false });
+    try {
+      await client.startScreen();
+      const old = client.snapshot().localScreen.getTracks();
+      const video = new Track("video"),
+        audio = new Track("audio");
+      navigator.mediaDevices.getDisplayMedia = async () =>
+        new Stream([video, audio]);
+      if (failurePhase === "before-swap") video.stop();
+      else
+        pc.transceivers[
+          failurePhase === "after-video" ? 2 : 3
+        ].sender.replaceTrack = async function (track) {
+          this.track = track;
+          if (track === video || track === audio) video.stop();
+        };
+      await client.startScreen();
+      assert.ok(old.every((track) => track.readyState === "live"));
+      assert.equal(video.readyState, "ended");
+      assert.equal(audio.readyState, "ended");
+      assert.equal(pc.transceivers[2].sender.track, old[0]);
+      assert.equal(pc.transceivers[3].sender.track, old[1]);
+      assert.equal(client.snapshot().screenSharing, true);
+    } finally {
+      client.stop();
+    }
+  }
+});
+
+await test("stop, moderation and closed peer defeat an in-flight source switch and cannot resurrect either source", async () => {
+  for (const action of ["stop", "screen-policy", "camera-policy", "close"]) {
+    for (const delayedSender of [2, 3]) {
+      install();
+      const { client, pc } = await joined();
+      const gate = deferred();
+      try {
+        await client.startScreen();
+        const old = client.snapshot().localScreen.getTracks();
+        const next = new Stream([new Track("video"), new Track("audio")]);
+        navigator.mediaDevices.getDisplayMedia = async () => next;
+        pc.transceivers[delayedSender].sender.replaceTrack = async function (
+          track,
+        ) {
+          if (next.getTracks().includes(track)) await gate.promise;
+          this.track = track;
+        };
+        const switching = client.startScreen();
+        await new Promise((resolve) => setImmediate(resolve));
+        let stopping;
+        if (action === "stop") stopping = client.stopScreen();
+        else if (action === "close") client.stop();
+        else
+          client.setPolicy({
+            version: 1,
+            [action === "screen-policy" ? "screenBlocked" : "cameraBlocked"]:
+              true,
+          });
+        assert.ok(
+          [...old, ...next.getTracks()].every(
+            (track) => track.readyState === "ended",
+          ),
+          "hardware stops before sender promise settles",
+        );
+        gate.resolve();
+        await switching;
+        await stopping;
+        await client.queue;
+        assert.equal(client.snapshot().screenSharing, false);
+        assert.equal(client.snapshot().controlBusy, false);
+        if (action !== "close") {
+          assert.equal(pc.transceivers[2].sender.track, null);
+          assert.equal(pc.transceivers[3].sender.track, null);
+        } else assert.equal(pc.closed, true);
+      } finally {
+        gate.resolve();
+        client.stop();
+      }
+    }
+  }
+});
+
+await test("stopping or ending the original screen while choosing a replacement invalidates late consent", async () => {
+  for (const action of ["stop", "ended"]) {
+    install();
+    const { client, pc } = await joined({ capture: false });
+    const picker = deferred();
+    try {
+      await client.startScreen();
+      const old = client.snapshot().localScreen.getTracks();
+      navigator.mediaDevices.getDisplayMedia = () => picker.promise;
+      const switching = client.startScreen();
+      if (action === "stop") await client.stopScreen();
+      else old[0].unplug();
+      const next = new Stream([new Track("video"), new Track("audio")]);
+      picker.resolve(next);
+      await switching;
+      await client.queue;
+      assert.ok(
+        [...old, ...next.getTracks()].every(
+          (track) => track.readyState === "ended",
+        ),
+      );
+      assert.equal(client.snapshot().screenSharing, false);
+      assert.equal(pc.transceivers[2].sender.track, null);
+      assert.equal(pc.transceivers[3].sender.track, null);
+    } finally {
+      picker.resolve(new Stream());
+      client.stop();
+    }
+  }
+});
+
+await test("microphone revocation during source replacement keeps only the permitted screen video", async () => {
+  install();
+  const { client, pc } = await joined({ capture: false });
+  const gate = deferred();
+  try {
+    await client.startScreen();
+    const old = client.snapshot().localScreen.getTracks();
+    const video = new Track("video"),
+      audio = new Track("audio");
+    navigator.mediaDevices.getDisplayMedia = async () =>
+      new Stream([video, audio]);
+    pc.transceivers[3].sender.replaceTrack = async function (track) {
+      if (track === audio) await gate.promise;
+      this.track = track;
+    };
+    const switching = client.startScreen();
+    await new Promise((resolve) => setImmediate(resolve));
+    client.setPolicy({ version: 1, microphoneBlocked: true });
+    client.setPolicy({ version: 2, microphoneBlocked: false });
+    assert.equal(audio.readyState, "ended");
+    gate.resolve();
+    await switching;
+    await client.queue;
+    assert.ok(old.every((track) => track.readyState === "ended"));
+    assert.equal(video.readyState, "live");
+    assert.equal(pc.transceivers[2].sender.track, video);
+    assert.equal(pc.transceivers[3].sender.track, null);
+    assert.equal(client.snapshot().screenSharing, true);
+  } finally {
+    gate.resolve();
+    client.stop();
+  }
+});
+
+await test("a failed rollback releases every capture instead of retaining an untracked old stream", async () => {
+  install();
+  const { client, pc } = await joined({ capture: false });
+  try {
+    await client.startScreen();
+    const old = client.snapshot().localScreen.getTracks();
+    const next = new Stream([new Track("video"), new Track("audio")]);
+    navigator.mediaDevices.getDisplayMedia = async () => next;
+    pc.transceivers[2].sender.replaceTrack = async function (track) {
+      if (track === old[0]) throw new Error("rollback failed");
+      this.track = track;
+    };
+    pc.transceivers[3].sender.replaceTrack = async function (track) {
+      if (track === next.getAudioTracks()[0]) throw new Error("audio rejected");
+      this.track = track;
+    };
+    await client.startScreen();
+    assert.ok(
+      [...old, ...next.getTracks()].every(
+        (track) => track.readyState === "ended",
+      ),
+    );
+    assert.equal(client.snapshot().screenSharing, false);
+    assert.equal(pc.transceivers[2].sender.track, null);
+    assert.equal(pc.transceivers[3].sender.track, null);
+    assert.equal(
+      client.snapshot().error.includes("Прежний источник продолжает"),
+      false,
+    );
+  } finally {
+    client.stop();
+  }
+});
+
+await test("stopping during a deferred rollback cannot revive the previous source", async () => {
+  for (const delayedRollback of [2, 3]) {
+    install();
+    const { client, pc } = await joined({ capture: false });
+    const gate = deferred();
+    try {
+      await client.startScreen();
+      const old = client.snapshot().localScreen.getTracks();
+      const next = new Stream([new Track("video"), new Track("audio")]);
+      navigator.mediaDevices.getDisplayMedia = async () => next;
+      for (const i of [2, 3]) {
+        pc.transceivers[i].sender.replaceTrack = async function (track) {
+          if (i === 3 && track === next.getAudioTracks()[0])
+            throw new Error("new audio failed");
+          if (i === delayedRollback && old.includes(track)) await gate.promise;
+          this.track = track;
+        };
+      }
+      const switching = client.startScreen();
+      await new Promise((resolve) => setImmediate(resolve));
+      const stopping = client.stopScreen();
+      assert.ok(
+        [...old, ...next.getTracks()].every(
+          (track) => track.readyState === "ended",
+        ),
+      );
+      gate.resolve();
+      await switching;
+      await stopping;
+      assert.equal(client.snapshot().screenSharing, false);
+      assert.equal(pc.transceivers[2].sender.track, null);
+      assert.equal(pc.transceivers[3].sender.track, null);
+    } finally {
+      gate.resolve();
+      client.stop();
+    }
+  }
+});
+
+await test("macOS screen permission guidance names system settings without misdiagnosing a cancelled picker", async () => {
+  const desktop = await compile("src/prejoinDevices.ts");
+  const browser = await compile("src/prejoinDevices.ts", false);
+  const denied = new DOMException("private details", "NotAllowedError");
+  const macOS = desktop.screenCaptureErrorMessage(denied, "darwin");
+  assert.match(macOS, /выбор отменён или macOS/);
+  assert.match(macOS, /Screen Recording/);
+  assert.match(macOS, /⌘Q/);
+  assert.equal(macOS.includes("private details"), false);
+  assert.doesNotMatch(
+    desktop.screenCaptureErrorMessage(denied, "win32"),
+    /macOS/,
+  );
+  assert.doesNotMatch(
+    desktop.screenCaptureErrorMessage(denied, "linux"),
+    /macOS/,
+  );
+  assert.doesNotMatch(
+    browser.screenCaptureErrorMessage(denied, "darwin"),
+    /macOS/,
+  );
+});
+
 await test("device fallback is allowed for a missing preferred device but never for permission denial", async () => {
   install();
   const { client } = await joined({ capture: false });
@@ -997,6 +1347,171 @@ await test("capture fallback accepts browser error names and never retries denie
     1,
     "a closed preview never starts another hardware request",
   );
+});
+
+await test("capture rejects an input lost before listeners attach and releases every returned track", async () => {
+  const preferred = { audio: true, video: { deviceId: { exact: "camera" } } };
+  const fallback = { audio: true, video: true };
+  for (const missingKind of ["audio", "video"]) {
+    for (const returnedEndedTrack of [true, false]) {
+      const audio = new Track("audio");
+      const video = new Track("video");
+      const missing = missingKind === "audio" ? audio : video;
+      missing.unplug();
+      const tracks = [audio, video].filter(
+        (track) => returnedEndedTrack || track !== missing,
+      );
+      let captures = 0;
+      install(async () => {
+        captures++;
+        return new Stream(tracks);
+      });
+      await assert.rejects(
+        captureWithDeviceFallback(preferred, fallback, () => true),
+        { name: "NotReadableError" },
+      );
+      assert.equal(
+        captures,
+        1,
+        "a lost device must not silently start another",
+      );
+      assert.ok(tracks.every((track) => track.stops === 1));
+      assert.ok(tracks.every((track) => track.readyState === "ended"));
+    }
+  }
+  const camera = new Track("video");
+  install(async () => new Stream([camera]));
+  assert.equal(
+    (
+      await captureWithDeviceFallback({ video: true, audio: false })
+    )?.stream.getVideoTracks()[0],
+    camera,
+    "a deliberately disabled microphone is not treated as missing",
+  );
+  camera.stop();
+});
+
+await test("default fallback also rejects a device that ends during its permission request", async () => {
+  const camera = new Track("video");
+  camera.unplug();
+  let captures = 0;
+  install(async () => {
+    captures++;
+    if (captures === 1)
+      throw new DOMException("missing saved camera", "NotFoundError");
+    return new Stream([camera]);
+  });
+  await assert.rejects(
+    captureWithDeviceFallback(
+      { video: { deviceId: { exact: "removed-camera" } }, audio: false },
+      { video: true, audio: false },
+      () => true,
+    ),
+    { name: "NotReadableError" },
+  );
+  assert.equal(captures, 2);
+  assert.equal(camera.stops, 1);
+});
+
+await test("a lost initial capture never joins or reports enabled devices", async () => {
+  const microphone = new Track("audio");
+  const camera = new Track("video");
+  camera.unplug();
+  const sent = [];
+  const peers = Peer.all.length;
+  install(async () => new Stream([microphone, camera]));
+  const client = new ConferenceMediaClient(
+    (type) => sent.push(type),
+    () => {},
+  );
+  try {
+    await client.start();
+    assert.equal(client.snapshot().active, false);
+    assert.equal(client.snapshot().cameraEnabled, false);
+    assert.equal(client.snapshot().microphoneEnabled, false);
+    assert.equal(client.snapshot().localStream, null);
+    assert.match(client.snapshot().error, /устройство отключено/);
+    assert.equal(microphone.stops, 1);
+    assert.equal(camera.stops, 1);
+    assert.equal(sent.includes("media.join"), false);
+    assert.equal(Peer.all.length, peers);
+  } finally {
+    client.stop();
+  }
+});
+
+await test("denied macOS capture explains only requested privacy controls without retrying devices", async () => {
+  for (const [microphoneEnabled, cameraEnabled, expected, excluded] of [
+    [true, false, /«Микрофон»/, /«Камера»/],
+    [false, true, /«Камера»/, /«Микрофон»/],
+    [true, true, /«Камера» и «Микрофон»/, /never-present/],
+  ]) {
+    let requests = 0;
+    const sent = [];
+    install(async () => {
+      requests++;
+      throw new DOMException("fixture-private-device-label", "NotAllowedError");
+    });
+    const client = new ConferenceMediaClient(
+      (type) => sent.push(type),
+      () => {},
+      "darwin",
+    );
+    try {
+      await client.start(true, {
+        microphoneEnabled,
+        cameraEnabled,
+        audioInputId: "saved",
+      });
+      const message = client.snapshot().error;
+      assert.match(message, /macOS/);
+      assert.match(message, /Конфиденциальность и безопасность/);
+      assert.match(message, expected);
+      assert.doesNotMatch(message, excluded);
+      assert.match(message, /⌘Q/);
+      assert.doesNotMatch(message, /fixture-private-device-label/);
+      assert.equal(requests, 1);
+      assert.equal(sent.includes("media.join"), false);
+    } finally {
+      client.stop();
+    }
+  }
+});
+
+await test("macOS source changes retain the current input on denial and show the relevant privacy setting", async () => {
+  install();
+  const { client, pc } = await joined({ platform: "darwin" });
+  const microphone = pc.transceivers[0].sender.track;
+  let requests = 0;
+  navigator.mediaDevices.getUserMedia = async () => {
+    requests++;
+    throw new DOMException("fixture denied", "NotAllowedError");
+  };
+  try {
+    await client.changeSource("microphone", true, "headset");
+    assert.equal(requests, 1);
+    assert.equal(pc.transceivers[0].sender.track, microphone);
+    assert.equal(microphone.readyState, "live");
+    assert.equal(client.snapshot().microphoneEnabled, true);
+    assert.match(client.snapshot().error, /«Микрофон»/);
+    assert.doesNotMatch(client.snapshot().error, /«Камера»/);
+  } finally {
+    client.stop();
+  }
+});
+
+await test("permission guidance preserves desktop and browser boundaries", async () => {
+  const desktop = await compile("src/prejoinDevices.ts");
+  const browser = await compile("src/prejoinDevices.ts", false);
+  const denied = new DOMException("fixture-private-detail", "NotAllowedError");
+  for (const platform of ["win32", "linux", undefined]) {
+    const message = desktop.captureErrorMessage(denied, "video", platform);
+    assert.match(message, /MeetSpace.*конфиденциальности системы/);
+    assert.doesNotMatch(message, /macOS|⌘Q|браузера|fixture-private-detail/);
+  }
+  const message = browser.captureErrorMessage(denied, "video", "darwin");
+  assert.match(message, /для этого сайта.*браузера/);
+  assert.doesNotMatch(message, /MeetSpace|⌘Q|fixture-private-detail/);
 });
 
 await test("unplug before media.joined updates intent and never publishes the ended camera", async () => {

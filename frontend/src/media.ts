@@ -4,8 +4,10 @@ import { summarizeRtcStats, type RtcCounters } from "./mediaDiagnostics";
 import { isDesktopBuild } from "./platform/build";
 import {
   captureErrorMessage,
+  capturePermissionMessage,
   screenCaptureErrorMessage,
 } from "./prejoinDevices";
+import type { DesktopRuntimeInfo } from "./platform/desktop-contracts";
 import {
   captureWithDeviceFallback,
   inputTrackConstraints,
@@ -372,6 +374,7 @@ export class ConferenceMediaClient {
      *
      * @returns void — значение не возвращается; функция выполняет описанные действия.
      */ (view: MediaView) => void,
+    private platform?: DesktopRuntimeInfo["platform"],
   ) {}
 
   /**
@@ -648,15 +651,24 @@ export class ConferenceMediaClient {
           ? isDesktopBuild
             ? "Захват устройств недоступен. Перезапустите MeetSpace и повторите подключение."
             : "Камера доступна только на HTTPS или localhost. Откройте защищённую страницу."
-          : name === "NotAllowedError" || name === "SecurityError"
-            ? isDesktopBuild
-              ? "Доступ к камере или микрофону запрещён. Разрешите доступ MeetSpace в настройках конфиденциальности системы и повторите."
-              : "Доступ к камере и микрофону запрещён. Разрешите их для этого сайта в браузере и повторите."
-            : name === "NotFoundError"
-              ? "Камера или микрофон не найдены. Подключите устройства и повторите."
-              : name === "NotReadableError"
-                ? "Не удалось открыть камеру или микрофон. Возможно, устройство занято другим приложением."
-                : "Не удалось включить медиасвязь. Проверьте устройства и media-worker, затем повторите.",
+          : name === "NotAllowedError" || name === "PermissionDeniedError"
+            ? capturePermissionMessage(
+                microphone && camera
+                  ? "audio-video"
+                  : microphone
+                    ? "audio"
+                    : "video",
+                this.platform,
+              )
+            : name === "SecurityError"
+              ? isDesktopBuild
+                ? "Захват устройств недоступен. Перезапустите MeetSpace и проверьте разрешения системы."
+                : "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost."
+              : name === "NotFoundError"
+                ? "Камера или микрофон не найдены. Подключите устройства и повторите."
+                : name === "NotReadableError"
+                  ? "Не удалось открыть камеру или микрофон. Возможно, устройство отключено или занято другим приложением."
+                  : "Не удалось включить медиасвязь. Проверьте устройства и media-worker, затем повторите.",
       );
     }
   }
@@ -1125,6 +1137,7 @@ export class ConferenceMediaClient {
           error: captureErrorMessage(
             error,
             source === "microphone" ? "audio" : "video",
+            this.platform,
           ),
         });
     } finally {
@@ -1142,13 +1155,8 @@ export class ConferenceMediaClient {
    * @returns Promise, который после завершения операции возвращает: значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
    */
   async startScreen() {
-    if (
-      this.disposed ||
-      !this.pc ||
-      this.view.controlBusy ||
-      this.view.screenSharing
-    )
-      return;
+    if (this.disposed || !this.pc || this.view.controlBusy) return;
+    const replacing = this.view.screenSharing;
     if (this.policy.screenBlocked || this.policy.cameraBlocked) {
       this.update({
         error:
@@ -1221,6 +1229,16 @@ export class ConferenceMediaClient {
                *
                * @returns вычисленное значение: t.stop().
                */ (t) => t.stop(),
+            );
+            return;
+          }
+          if (replacing) {
+            await this.switchScreenSource(
+              captured,
+              current,
+              () =>
+                !this.policy.microphoneBlocked &&
+                audioRevision === this.screenAudioRevision,
             );
             return;
           }
@@ -1321,9 +1339,17 @@ export class ConferenceMediaClient {
          * @returns вычисленное значение: t.stop().
          */ (t) => t.stop(),
       );
-      if (current())
+      const cancelled =
+        error &&
+        typeof error === "object" &&
+        "name" in error &&
+        (error.name === "NotAllowedError" ||
+          error.name === "PermissionDeniedError");
+      // Cancellation must not interrupt or add an error to the ongoing share.
+      // A confirmed native permission denial is explained by the native picker event.
+      if (current() && !(replacing && cancelled && this.view.screenSharing))
         this.update({
-          error: screenCaptureErrorMessage(error),
+          error: screenCaptureErrorMessage(error, this.platform),
         });
     } finally {
       for (const track of stream?.getTracks() || []) {
@@ -1343,6 +1369,105 @@ export class ConferenceMediaClient {
           track.stop();
       }
       if (!this.disposed) this.update({ controlBusy: false });
+    }
+  }
+
+  /** Keep the previous source alive until both senders accept the user's new choice. */
+  private async switchScreenSource(
+    captured: MediaStream,
+    current: () => boolean,
+    audioAllowed: () => boolean,
+  ) {
+    const videoSlot = this.sources.get("video/screen");
+    const audioSlot = this.sources.get("audio/screen");
+    if (!videoSlot || !audioSlot) return;
+    const previous = this.screen;
+    const oldVideo = videoSlot.track;
+    const oldAudio = audioSlot.track;
+    const video = captured.getVideoTracks()[0];
+    let audio = audioAllowed() ? captured.getAudioTracks()[0] || null : null;
+    const usable = () => current() && video?.readyState === "live";
+    try {
+      if (!usable())
+        throw new DOMException("Screen source ended", "NotReadableError");
+      await videoSlot.sender.replaceTrack(video);
+      if (!usable())
+        throw new DOMException("Screen source ended", "NotReadableError");
+      await audioSlot.sender.replaceTrack(audio);
+      if (!usable())
+        throw new DOMException("Screen source ended", "NotReadableError");
+      if (audio && (!audioAllowed() || audio.readyState !== "live")) {
+        audio.stop();
+        audio = null;
+        await audioSlot.sender.replaceTrack(null);
+        if (!usable())
+          throw new DOMException("Screen source ended", "NotReadableError");
+      }
+      for (const track of previous?.getTracks() || []) {
+        track.onended = null;
+        track.stop();
+      }
+      this.screen = new MediaStream(audio ? [video, audio] : [video]);
+      videoSlot.track = video;
+      videoSlot.transceiver.direction = "sendrecv";
+      audioSlot.track = audio;
+      audioSlot.transceiver.direction = audio ? "sendrecv" : "recvonly";
+      this.watchTrack("video/screen", video);
+      if (audio) this.watchTrack("audio/screen", audio);
+    } catch (error) {
+      captured.getTracks().forEach((track) => track.stop());
+      if (this.disposed) return;
+      let restoredVideo = false;
+      for (const [source, slot, old] of [
+        ["video/screen", videoSlot, oldVideo],
+        ["audio/screen", audioSlot, oldAudio],
+      ] as const) {
+        let restore: MediaStreamTrack | null =
+          current() &&
+          old?.readyState === "live" &&
+          !this.sourceBlocked(source) &&
+          (source === "video/screen" || (restoredVideo && audioAllowed()))
+            ? old
+            : null;
+        try {
+          await slot.sender.replaceTrack(restore);
+        } catch {
+          restore?.stop();
+          restore = null;
+          await slot.sender.replaceTrack(null).catch(() => {});
+        }
+        // Stop/moderation can happen while rollback is awaiting the browser.
+        if (this.disposed) return;
+        if (
+          restore &&
+          (!current() ||
+            restore.readyState !== "live" ||
+            this.sourceBlocked(source))
+        ) {
+          restore.stop();
+          restore = null;
+          await slot.sender.replaceTrack(null).catch(() => {});
+          if (this.disposed) return;
+        }
+        slot.track = restore;
+        slot.transceiver.direction = restore ? "sendrecv" : "recvonly";
+        if (source === "video/screen") restoredVideo = !!restore;
+      }
+      const restored = [videoSlot.track, audioSlot.track].filter(
+        (track): track is MediaStreamTrack => !!track,
+      );
+      for (const track of previous?.getTracks() || []) {
+        if (!restored.includes(track)) {
+          track.onended = null;
+          track.stop();
+        }
+      }
+      this.screen = restoredVideo ? new MediaStream(restored) : null;
+      this.refreshLocal();
+      if (current())
+        this.update({
+          error: `${screenCaptureErrorMessage(error, this.platform)}${restoredVideo ? " Прежний источник продолжает передаваться." : ""}`,
+        });
     }
   }
   /**

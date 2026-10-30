@@ -50,7 +50,7 @@ async function shellProfile() {
   }
   const { NativeShell } = instrumented("native-shell", clock, { electron: {
     app: { getPath: () => directory, getAppPath: () => path.join(root, "desktop"), isPackaged: false },
-    Menu: { buildFromTemplate: template => template }, nativeImage: { createFromPath: () => ({ resize: () => ({}) }) },
+    Menu: { buildFromTemplate: template => template }, nativeImage: { createFromPath: () => ({ resize: () => ({}), isEmpty: () => false, setTemplateImage() {} }) },
     Notification: { isSupported: () => true }, screen, Tray: FakeTray,
   } });
   const shell = new NativeShell({ window: () => current, quit() {}, hide() {}, preferencesChanged() {} });

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 export interface StartupProvider {
-  status(): { supported: boolean; enabled: boolean; reason?: "unpackaged" | "unavailable" | "conflict" };
+  status(): { supported: boolean; enabled: boolean; reason?: "unpackaged" | "unavailable" | "conflict" | "approval-required" };
   setEnabled(enabled: boolean): void;
 }
 

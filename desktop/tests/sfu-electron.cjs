@@ -10,7 +10,8 @@ const { app } = require("electron");
 const config = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
 app.setPath("userData", config.userDataDir);
 app.setPath("sessionData", config.userDataDir);
-// Fake capture traverses real permission handlers; consent bypass is not used.
+// Fake capture traverses trusted production permission handlers. OS TCC is an
+// explicit in-process test double; no real device or native consent is asserted.
 app.commandLine.appendSwitch("use-fake-device-for-media-stream");
 const { startApp } = require("../dist/main.js");
 
@@ -50,7 +51,8 @@ const { startApp } = require("../dist/main.js");
     const readyState = await ready;
     assert.equal(readyState.maxPeers, config.participants);
     const wayland = process.platform === "linux" && (process.env.XDG_SESSION_TYPE === "wayland" || !!process.env.WAYLAND_DISPLAY);
-    window = await startApp({ show: wayland, userDataDir: config.userDataDir, rendererRoot: config.rendererRoot });
+    window = await startApp({ show: wayland, userDataDir: config.userDataDir, rendererRoot: config.rendererRoot,
+      mediaAccess: require('./fixtures/synthetic-media-access.cjs').syntheticMediaAccess });
     assert.ok(window);
     if (wayland) assert.equal(window.isVisible(), true, "production startup maps the Wayland surface");
     const prefs = window.webContents.getLastWebPreferences();
@@ -168,6 +170,120 @@ const { startApp } = require("../dist/main.js");
     assert.equal(rejoinedEngine.peers, ids.length); assert.equal(rejoinedEngine.tracks, ids.length * 2);
     assert.equal(rejoinedEngine.subscriptions, ids.length * (ids.length - 1) * 2);
     if (config.relay) assert.ok(rejoinedEngine.turnAllocations >= ids.length);
+    // Screen input is an explicit synthetic seam. Its pixels still traverse the
+    // production client, real Chromium encoder, Pion/TURN and remote decoder.
+    // Never invoke the OS picker or capture the user's desktop in this fixture.
+    const installScreenFixture = () => {
+      const s = window.__sfu, original = navigator.mediaDevices.getDisplayMedia;
+      const fixture = s.screenFixture = { captures: [], timers: new Set(), restored: false };
+      navigator.mediaDevices.getDisplayMedia = async () => {
+        const index = fixture.captures.length;
+        if (index > 1) throw new Error("Only two owned screen patterns are permitted");
+        const rgb = index === 0 ? [220, 35, 45] : [35, 190, 95];
+        const canvas = document.createElement("canvas"); canvas.width = 640; canvas.height = 360;
+        const context = canvas.getContext("2d");
+        let frame = 0;
+        const paint = () => {
+          context.fillStyle = `rgb(${rgb.join(",")})`; context.fillRect(0, 0, canvas.width, canvas.height);
+          // Change a corner on every frame; the center remains the source's color.
+          context.fillStyle = frame++ % 2 ? "white" : "black"; context.fillRect(0, 0, 32, 32);
+        };
+        paint();
+        const stream = canvas.captureStream(15), track = stream.getVideoTracks()[0];
+        s.tracks.push(...stream.getTracks());
+        const timer = setInterval(() => {
+          if (track.readyState === "ended") { clearInterval(timer); fixture.timers.delete(timer); return; }
+          paint();
+        }, 50);
+        fixture.timers.add(timer); fixture.captures.push({ canvas, stream, track, rgb });
+        return stream;
+      };
+      fixture.snapshot = async (publisher, receivers) => {
+        const own = new Set(s.views[publisher].localStream.getTracks().map(track => track.id));
+        const pc = s.peers.find(peer => peer.connectionState !== "closed" && peer.getSenders().some(sender => own.has(sender.track?.id)));
+        const local = s.views[publisher];
+        const remote = await Promise.all(receivers.map(async id => {
+          const screens = s.views[id].remoteStreams.filter(item => item.screen && item.mediaPeerId === local.mediaPeerId);
+          const screen = screens[0], video = screen && s.videos.get(id + ":" + screen.id);
+          const track = screen?.stream.getVideoTracks()[0];
+          const receiver = s.peers.flatMap(peer => peer.getReceivers()).find(item => item.track === track);
+          const report = receiver ? [...(await receiver.getStats()).values()] : [];
+          const inbound = report.find(item => item.type === "inbound-rtp" && item.kind === "video");
+          let rgb = null;
+          if (video?.readyState >= 2 && video.videoWidth && video.videoHeight) {
+            const canvas = document.createElement("canvas"); canvas.width = canvas.height = 1;
+            const context = canvas.getContext("2d");
+            context.drawImage(video, Math.floor(video.videoWidth / 2), Math.floor(video.videoHeight / 2), 1, 1, 0, 0, 1, 1);
+            rgb = [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+          }
+          return { id, screenCount: screens.length, trackId: track?.id, rgb,
+            width: video?.videoWidth || 0, height: video?.videoHeight || 0,
+            frames: inbound?.framesDecoded || 0, bytes: inbound?.bytesReceived || 0,
+            codec: report.find(item => item.id === inbound?.codecId)?.mimeType || "" };
+        }));
+        return { sharing: local.screenSharing, error: local.error, controlBusy: local.controlBusy,
+          localScreenTracks: local.localScreen?.getTracks().map(track => ({ id: track.id, state: track.readyState })) || [],
+          cameraAndMicrophoneLive: local.localStream.getTracks().length === 2 && local.localStream.getTracks().every(track => track.readyState === "live"),
+          captures: fixture.captures.map(item => ({ id: item.track.id, state: item.track.readyState, rgb: item.rgb })),
+          senderTrackIds: pc?.getSenders().flatMap(sender => sender.track ? [sender.track.id] : []) || [],
+          activeTimers: fixture.timers.size, remote };
+      };
+      fixture.restore = () => {
+        navigator.mediaDevices.getDisplayMedia = original;
+        for (const capture of fixture.captures) capture.stream.getTracks().forEach(track => track.stop());
+        for (const timer of fixture.timers) clearInterval(timer);
+        fixture.timers.clear(); fixture.restored = navigator.mediaDevices.getDisplayMedia === original;
+      };
+    };
+    const publisher = ids[0], receivers = ids.slice(1), screenSwitchChecks = {};
+    const screenSnapshot = () => js("window.__sfu.screenFixture.snapshot(" + JSON.stringify(publisher) + "," + JSON.stringify(receivers) + ")");
+    const waitForScreenColor = (rgb, description) => waitFor(async () => {
+      const state = await screenSnapshot();
+      return state.sharing && !state.controlBusy && !state.error && state.remote.length === receivers.length && state.remote.every(item =>
+        item.screenCount === 1 && item.frames > 3 && item.bytes > 1000 && item.codec.toLowerCase() === "video/vp8" &&
+        item.width === 640 && item.height === 360 && item.rgb?.every((value, channel) => Math.abs(value - rgb[channel]) < 24)) ? state : null;
+    }, description);
+    const screenEngineState = () => waitFor(async () => {
+      const state = await rpc("stats");
+      return state.peers === ids.length && state.tracks === ids.length * 2 + 1 &&
+        state.subscriptions === ids.length * (ids.length - 1) * 2 + receivers.length ? state : null;
+    }, "One video screen publication must reach every other peer without duplicate SFU tracks");
+    await js("(" + installScreenFixture.toString() + ")()");
+    try {
+      await js("window.__sfu.clients[" + JSON.stringify(publisher) + "].startScreen()");
+      screenSwitchChecks.first = await waitForScreenColor([220, 35, 45], "Every other peer must decode the first owned screen pattern");
+      screenSwitchChecks.firstEngine = await screenEngineState();
+      assert.equal(screenSwitchChecks.first.captures.length, 1);
+      assert.equal(screenSwitchChecks.first.cameraAndMicrophoneLive, true);
+      const oldTrackId = screenSwitchChecks.first.captures[0].id;
+      await js("window.__sfu.clients[" + JSON.stringify(publisher) + "].startScreen()");
+      screenSwitchChecks.switched = await waitForScreenColor([35, 190, 95], "Every other peer must decode the replacement screen's different color");
+      screenSwitchChecks.switchedEngine = await screenEngineState();
+      const switched = screenSwitchChecks.switched;
+      assert.equal(switched.captures.length, 2); assert.equal(switched.captures[0].state, "ended");
+      assert.equal(switched.captures[1].state, "live"); assert.notEqual(switched.captures[1].id, oldTrackId);
+      assert.deepEqual(switched.localScreenTracks, [{ id: switched.captures[1].id, state: "live" }]);
+      assert.equal(switched.senderTrackIds.includes(oldTrackId), false);
+      assert.equal(switched.senderTrackIds.includes(switched.captures[1].id), true);
+      assert.equal(switched.cameraAndMicrophoneLive, true);
+      await js("window.__sfu.clients[" + JSON.stringify(publisher) + "].stopScreen()");
+      screenSwitchChecks.stopped = await waitFor(async () => {
+        const state = await screenSnapshot();
+        return !state.sharing && state.localScreenTracks.length === 0 && state.captures.every(item => item.state === "ended") &&
+          state.activeTimers === 0 && state.remote.every(item => item.screenCount === 0) ? state : null;
+      }, "Stopping the replacement must remove all remote screens and end both screen captures/timers");
+      assert.equal(screenSwitchChecks.stopped.cameraAndMicrophoneLive, true);
+      screenSwitchChecks.baselineEngine = await waitFor(async () => {
+        const state = await rpc("stats");
+        return state.peers === ids.length && state.tracks === ids.length * 2 &&
+          state.subscriptions === ids.length * (ids.length - 1) * 2 ? state : null;
+      }, "Stopping the screen must restore the exact camera/microphone SFU baseline");
+      screenSwitchChecks.cameraAndMicrophoneAfter = await checkMedia(ids);
+    } finally {
+      await js("window.__sfu.screenFixture.restore();void 0");
+    }
+    screenSwitchChecks.captureMethodRestored = await js("window.__sfu.screenFixture.restored");
+    assert.equal(screenSwitchChecks.captureMethodRestored, true);
     await js("Object.values(window.__sfu.clients).forEach(client=>client.stop());void 0");
     const finalEngine = await waitFor(async () => {
       const s = await rpc("stats");
@@ -177,9 +293,9 @@ const { startApp } = require("../dist/main.js");
     assert.equal(resources.localTracksEnded, true); assert.equal(resources.peerConnectionsClosed, true); assert.equal(resources.retainedVideoElements, 0);
     const result = { result: "PASS", participants: ids.length, relay: config.relay, elapsedMs: Date.now() - started,
       electron: process.versions.electron, platform: process.platform, arch: process.arch, session: process.env.XDG_SESSION_TYPE || "unknown",
-      ...config.fixtureEvidence, mediaStats, activeEngine, leaveState, rejoinedEngine, growingStats, finalEngine, resources,
-      checks: ["all n-1 remote Opus and decoded VP8 streams per current peer", "selected relay and real TURN allocations when forced", "late join", "stop/leave/fresh-client rejoin", "new mediaPeerId and all-stream counter growth after rejoin", "complete PC/capture/SFU/TURN cleanup"],
-      syntheticDevices: true, physicalDevicesTested: false, physicalSleepTested: false, productionApiAuthenticationTested: false,
+      ...config.fixtureEvidence, mediaStats, activeEngine, leaveState, rejoinedEngine, growingStats, screenSwitchChecks, finalEngine, resources,
+      checks: ["all n-1 remote Opus and decoded VP8 streams per current peer", "selected relay and real TURN allocations when forced", "late join", "stop/leave/fresh-client rejoin", "new mediaPeerId and all-stream counter growth after rejoin", "active screen source replacement with distinct decoded remote colors, old-track release and stop-to-baseline", "complete PC/capture/SFU/TURN cleanup"],
+      syntheticDevices: true, syntheticScreenCapture: true, nativeScreenCaptureTested: false, physicalDevicesTested: false, physicalSleepTested: false, productionApiAuthenticationTested: false,
       scope: "Independent ConferenceMediaClient instances in one owned sandboxed renderer; production Pion engine, local signaling driver, no production service" };
     fs.writeFileSync(config.reportPath, JSON.stringify(result, null, 2) + "\n");
     console.log(JSON.stringify({ result: "PASS", participants: result.participants, relay: result.relay, elapsedMs: result.elapsedMs, finalEngine, resources }));

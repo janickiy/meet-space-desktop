@@ -10,6 +10,7 @@ import {
   CirclePlay,
 } from "lucide-react";
 import { Modal } from "./ui";
+import { useWorkspaceShortcut } from "../platform/runtime";
 
 const destinations = [
   {
@@ -46,12 +47,16 @@ const destinations = [
 
 /** Keyboard navigation and meeting search reuse the application's real routes. */
 export function WorkspaceSearch() {
+  const shortcut = useWorkspaceShortcut();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (
-        (event.ctrlKey || event.metaKey) &&
+        !event.isComposing &&
+        !event.altKey &&
+        !event.shiftKey &&
+        (shortcut.macOS ? event.metaKey : event.ctrlKey || event.metaKey) &&
         event.key.toLowerCase() === "k" &&
         !document.querySelector('[role="dialog"]')
       ) {
@@ -62,7 +67,7 @@ export function WorkspaceSearch() {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [shortcut.macOS]);
   const value = query.trim();
   return (
     <>
@@ -73,10 +78,11 @@ export function WorkspaceSearch() {
           setOpen(true);
         }}
         aria-label="Поиск в пространстве"
+        aria-keyshortcuts={shortcut.ariaKeyShortcuts}
       >
         <Search size={16} aria-hidden="true" />
         <span>Поиск в пространстве</span>
-        <kbd>Ctrl K</kbd>
+        <kbd>{shortcut.label}</kbd>
       </button>
       {open && (
         <Modal

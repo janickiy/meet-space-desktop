@@ -50,6 +50,74 @@ test("camera/microphone permissions require the owned trusted main document", ()
   assert.equal(f.controller.request(f.contents, "media", details), false);
 });
 
+test("macOS async device authorization gates only requested kinds and rechecks the owning document", async () => {
+  const waiting = deferred(), calls = [];
+  const f = fixture({ platform: "darwin", mediaAccess: {
+    check: kinds => !kinds.includes("camera"),
+    ensure: kinds => { calls.push(kinds); return waiting.promise; },
+  } });
+  const details = { isMainFrame: true, requestingUrl: `${origin}/`, securityOrigin: origin, mediaTypes: ["audio"] };
+  assert.equal(f.controller.check(f.contents, "media", origin, { ...details, mediaType: "video" }), false);
+  assert.equal(f.controller.check(f.contents, "media", origin, { ...details, mediaType: "audio" }), true);
+  assert.equal(await f.controller.authorize(f.contents, "media", { ...details, isMainFrame: false }), false);
+  assert.equal(calls.length, 0, "foreign frame never triggers a system prompt");
+  const result = f.controller.authorize(f.contents, "media", details);
+  assert.deepEqual(calls, [["microphone"]]);
+  f.controller.cancel();
+  waiting.resolve(true);
+  assert.equal(await result, false, "navigation/suspend/hide invalidates an outstanding native prompt");
+});
+
+test("macOS async authorization denies replaced owners and native errors, and leaves display-only requests alone", async () => {
+  for (const replacement of ["frame", "contents", "origin"]) {
+    const waiting = deferred();
+    const f = fixture({ platform: "darwin", mediaAccess: { check: () => true, ensure: () => waiting.promise } });
+    const details = { isMainFrame: true, requestingUrl: `${origin}/`, mediaTypes: ["video"] };
+    const result = f.controller.authorize(f.contents, "media", details);
+    if (replacement === "frame") f.setOwner({ contents: f.contents, frame: { url: f.frame.url } });
+    if (replacement === "contents") f.setOwner({ contents: { isDestroyed: () => false }, frame: f.frame });
+    if (replacement === "origin") f.frame.url = "https://evil.invalid/";
+    waiting.resolve(true);
+    assert.equal(await result, false, replacement);
+  }
+  let prompts = 0;
+  const f = fixture({ platform: "darwin", mediaAccess: { check: () => true, ensure: async () => { prompts++; throw new Error("native failure"); } } });
+  const details = { isMainFrame: true, requestingUrl: `${origin}/`, mediaTypes: [] };
+  assert.equal(await f.controller.authorize(f.contents, "media", details), true);
+  assert.equal(prompts, 0, "display media [] does not request camera or microphone");
+  assert.equal(await f.controller.authorize(f.contents, "media", { ...details, mediaTypes: ["video"] }), false);
+  assert.equal(prompts, 1);
+  assert.equal(await f.controller.authorize(f.contents, "media", { ...details, mediaTypes: ["screen"] }), false);
+  assert.equal(prompts, 1, "invalid kinds do not reach the native adapter");
+});
+
+test("permission delivery revalidates its lease in the exact callback turn, including immediate non-mac grants", async () => {
+  for (const platform of ["darwin", "win32", "linux"]) {
+    const waiting = deferred(), grants = [];
+    const f = fixture({ platform, ...(platform === "darwin" ? { mediaAccess: { check: () => true, ensure: () => waiting.promise } } : {}) });
+    const details = { isMainFrame: true, requestingUrl: `${origin}/`, mediaTypes: ["audio"] };
+    assert.equal(f.controller.authorizeRequest(f.contents, "media", details, value => grants.push(value)), undefined);
+    assert.deepEqual(grants, []);
+    waiting.resolve(true);
+    if (platform === "darwin") queueMicrotask(() => f.controller.cancel());
+    else f.controller.cancel();
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(grants, [false], platform + " cannot deliver a late true after cancel");
+  }
+});
+
+test("native permission callback delivers once and swallows a vanished Electron request", async () => {
+  for (const allowed of [true, false]) {
+    const calls = [];
+    const f = fixture({ mediaAccess: { check: () => true, ensure: async () => allowed } });
+    f.controller.authorizeRequest(f.contents, "media", { isMainFrame: true, requestingUrl: `${origin}/`, mediaTypes: ["video"] }, value => {
+      calls.push(value); throw new Error("request destroyed");
+    });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.deepEqual(calls, [allowed]);
+  }
+});
+
 test("invitation copying grants only sanitized writes from the owned main document", () => {
   const f = fixture();
   const permission = "clipboard-sanitized-write";
@@ -202,7 +270,7 @@ test("a disappeared window cannot silently fall back to another source", async (
   await f.display();
   await assert.rejects(f.controller.select(f.choice()), /capture_source_unavailable/);
   assert.deepEqual(f.grants, [null]);
-  assert.equal(f.events.at(-1).type, "cancelled");
+  assert.equal(f.events.at(-1).type, "error");
 });
 
 test("navigation/profile/logout cancellation settles once and ignores late enumeration", async () => {
@@ -333,4 +401,90 @@ test("a custom picker with one source still requires an explicit fresh selection
   await f.controller.select(f.choice());
   assert.deepEqual(f.calls, [true, false]);
   assert.equal(f.grants.length, 1);
+});
+
+test("macOS screen preflight never prevents the first explicit native enumeration", async () => {
+  let granted = false;
+  const f = fixture({ platform: "darwin", screenAccess: { canSelect: () => granted },
+    getSources: async () => { granted = true; return [source()]; } });
+  await f.display();
+  assert.equal(f.events[0].type, "request", "native first-use consent can complete during enumeration");
+  assert.deepEqual(f.grants, []);
+  await f.controller.select(f.choice());
+  assert.equal(f.grants[0].video.id, "window:42:0");
+});
+
+test("macOS screen denial withholds sources/previews and remains a terminal bounded event", async () => {
+  const f = fixture({ platform: "darwin", screenAccess: { canSelect: () => false } });
+  await f.display();
+  assert.deepEqual(f.calls, [true], "CGRequestScreenCaptureAccess is reached by native getSources");
+  assert.deepEqual(f.grants, [null]);
+  assert.deepEqual(f.events.map(e => e.type), ["denied"]);
+  assert.deepEqual(Object.keys(f.events[0]).sort(), ["requestId", "type"]);
+  f.controller.cancelRequest(f.events[0].requestId);
+  f.controller.cancel();
+  assert.deepEqual(f.grants, [null], "dismiss does not redeliver a browser callback");
+});
+
+test("macOS revoked permission before or during source refresh never grants a source", async () => {
+  for (const moment of ["before", "during"]) {
+    let granted = true, enumerations = 0;
+    const refresh = deferred();
+    const f = fixture({ platform: "darwin", screenAccess: { canSelect: () => granted },
+      getSources: previews => { enumerations++; return previews ? Promise.resolve([source()]) : refresh.promise; } });
+    await f.display();
+    const choice = f.choice();
+    if (moment === "before") granted = false;
+    const selection = f.controller.select(choice);
+    if (moment === "during") { granted = false; refresh.resolve([source()]); }
+    await assert.rejects(selection, /capture_source_unavailable/);
+    assert.equal(enumerations, moment === "before" ? 1 : 2, "revocation before selection prevents another enumeration");
+    assert.deepEqual(f.grants, [null], moment);
+    assert.deepEqual(f.events.map(e => e.type), ["request", "denied"], moment);
+    await assert.rejects(f.controller.select(choice), /stale_request/);
+  }
+});
+
+test("screen enumeration errors and empty picker results disclose no native failure details", async () => {
+  for (const platform of ["darwin", "win32", "linux"]) {
+    for (const fail of [true, false]) {
+      const f = fixture({ platform, getSources: async () => {
+        if (fail) throw new Error("private-window-name and native stack");
+        return [];
+      } });
+      await f.display();
+      assert.deepEqual(f.grants, [null]);
+      assert.deepEqual(f.events.map(e => e.type), ["error"]);
+      assert.deepEqual(Object.keys(f.events[0]).sort(), ["requestId", "type"]);
+    }
+  }
+});
+
+test("multiple macOS displays keep independent opaque choices regardless of native list order", async () => {
+  const first = { ...source("screen:100:0"), name: "Built-in Retina", display_id: "100" };
+  const second = { ...source("screen:200:0"), name: "External display", display_id: "200" };
+  const f = fixture({ platform: "darwin", screenAccess: { canSelect: () => true }, getSources: async previews => previews ? [first, second] : [second, first] });
+  await f.display({ audioRequested: true });
+  const event = f.events[0];
+  assert.deepEqual(event.sources.map(s => s.name), ["Built-in Retina", "External display"]);
+  assert.equal(event.systemAudioAvailable, false, "macOS screen path remains video only");
+  for (const s of event.sources) {
+    assert.equal(s.kind, "screen");
+    assert.deepEqual(Object.keys(s).sort(), ["id", "kind", "name", "thumbnail"]);
+    assert.ok(![first.id, second.id, first.display_id, second.display_id].includes(s.id));
+  }
+  assert.notEqual(event.sources[0].id, event.sources[1].id);
+  await f.controller.select({ requestId: event.requestId, sourceId: event.sources[1].id, systemAudio: false });
+  assert.equal(f.grants[0].video.id, second.id, "order or scale does not turn selection into first-source fallback");
+});
+
+test("replacement owner during native enumeration settles without publishing previews", async () => {
+  const native = deferred();
+  const f = fixture({ platform: "darwin", getSources: () => native.promise, screenAccess: { canSelect: () => true } });
+  const task = f.display();
+  f.setOwner({ contents: f.contents, frame: { url: `${origin}/new` } });
+  native.resolve([source()]);
+  await task;
+  assert.deepEqual(f.grants, [null]);
+  assert.deepEqual(f.events.map(e => e.type), ["cancelled"]);
 });

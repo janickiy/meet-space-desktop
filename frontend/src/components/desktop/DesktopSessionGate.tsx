@@ -19,6 +19,7 @@ import {
 import { Brand, Button, ErrorNotice, Loading, Modal } from "../ui";
 import { configureAuth } from "../../api";
 import { platform } from "../../platform";
+import { DesktopRuntimeProvider } from "../../platform/runtime";
 import { desktopBridge } from "../../platform/desktop";
 import type {
   DesktopProbeResult,
@@ -193,29 +194,36 @@ export function DesktopSessionGate({
       <ServerSettings state={state} onState={apply} onConnected={connected} />
     );
   return (
-    <ServerContext.Provider value={{ profile, open: () => setEditing(true) }}>
-      {state.storageAvailable ? (
-        children(`${profile.id}:${state.generation}`)
-      ) : (
-        <DesktopStorageUnlock
-          profile={profile}
-          runtime={runtime}
-          onState={apply}
-          onSettings={() => setEditing(true)}
-        />
-      )}
-      <DesktopScreenPicker key={`capture:${profile.id}:${state.generation}`} />
-      {editing && (
-        <Modal title="Подключение к серверу" onClose={() => setEditing(false)}>
-          <ServerSettings
-            state={state}
+    <DesktopRuntimeProvider value={runtime}>
+      <ServerContext.Provider value={{ profile, open: () => setEditing(true) }}>
+        {state.storageAvailable ? (
+          children(`${profile.id}:${state.generation}`)
+        ) : (
+          <DesktopStorageUnlock
+            profile={profile}
+            runtime={runtime}
             onState={apply}
-            onConnected={connected}
-            embedded
+            onSettings={() => setEditing(true)}
           />
-        </Modal>
-      )}
-    </ServerContext.Provider>
+        )}
+        <DesktopScreenPicker
+          key={`capture:${profile.id}:${state.generation}`}
+        />
+        {editing && (
+          <Modal
+            title="Подключение к серверу"
+            onClose={() => setEditing(false)}
+          >
+            <ServerSettings
+              state={state}
+              onState={apply}
+              onConnected={connected}
+              embedded
+            />
+          </Modal>
+        )}
+      </ServerContext.Provider>
+    </DesktopRuntimeProvider>
   );
 }
 

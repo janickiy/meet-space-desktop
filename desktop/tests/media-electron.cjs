@@ -47,6 +47,8 @@ const { createCertificates, createFixture, PASSWORD } = require("./fixtures/http
     certificates = await createCertificates();
     server = await createFixture({ name: "media", certificates, notifyOnConnect: true });
     window = await startApp({ show: wayland, userDataDir: config.userDataDir, rendererRoot: config.rendererRoot,
+      mediaAccess: require('./fixtures/synthetic-media-access.cjs').syntheticMediaAccess,
+      screenAccess: require('./fixtures/synthetic-media-access.cjs').syntheticScreenAccess,
       brokerOptions: { transport: createNodeHttpsTransport({ ca: certificates.ca, timeoutMs: 3000 }),
         createSocket: (url, protocols, options) => new WebSocket(url, protocols, { ...options, ca: certificates.ca, rejectUnauthorized: true }) } });
     if (wayland) {

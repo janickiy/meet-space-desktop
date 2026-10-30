@@ -20,6 +20,7 @@ test("macOS host policy preserves tray and absolute geometry without enabling Wi
   assert.deepEqual(value.nativeFeatures, { startup: false, absoluteWindowPosition: true, tray: "native" });
   assert.equal(value.capture.systemAudio, false);
   assert.match(value.messages.startupUnavailable, /macOS/);
+  assert.match(value.messages.trayUnavailable, /Dock/);
 });
 
 test("Linux session policy detects X11 and Wayland while keeping an unknown host conservative", () => {

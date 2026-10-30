@@ -27,6 +27,30 @@ export function inputTrackConstraints(
   };
 }
 
+/** A device can end before the capture promise's consumer attaches its listeners. */
+async function captureLiveInputs(constraints: MediaStreamConstraints) {
+  const stream = await navigator.mediaDevices.getUserMedia(constraints);
+  const tracks = stream.getTracks();
+  if (
+    (["audio", "video"] as const).some(
+      (kind) =>
+        constraints[kind] &&
+        !tracks.some(
+          (track) => track.kind === kind && track.readyState === "live",
+        ),
+    )
+  ) {
+    tracks.forEach((track) => track.stop());
+    // Do not retry another device: the original request succeeded, but its
+    // hardware disappeared. A new capture requires a new explicit attempt.
+    throw new DOMException(
+      "Capture device ended before use",
+      "NotReadableError",
+    );
+  }
+  return stream;
+}
+
 /** A missing saved device may use the system default, never a denied or busy device. */
 export async function captureWithDeviceFallback(
   preferred: MediaStreamConstraints,
@@ -35,7 +59,7 @@ export async function captureWithDeviceFallback(
 ): Promise<{ stream: MediaStream; usedFallback: boolean } | undefined> {
   try {
     return {
-      stream: await navigator.mediaDevices.getUserMedia(preferred),
+      stream: await captureLiveInputs(preferred),
       usedFallback: false,
     };
   } catch (error) {
@@ -48,7 +72,7 @@ export async function captureWithDeviceFallback(
       throw error;
     if (!isCurrent()) return;
     return {
-      stream: await navigator.mediaDevices.getUserMedia(fallback),
+      stream: await captureLiveInputs(fallback),
       usedFallback: true,
     };
   }

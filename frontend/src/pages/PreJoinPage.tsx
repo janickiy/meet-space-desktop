@@ -1,4 +1,5 @@
 import { subscribeCaptureRelease } from "../platform/captureLifecycle";
+import { useDesktopRuntime } from "../platform/runtime";
 import { DesktopServerButton } from "../components/desktop/DesktopSessionGate";
 import {
   useCallback,
@@ -62,6 +63,7 @@ interface JoinIdentity {
 export function PreJoinPage({
   invitation,
 }: { invitation?: { code: string; meeting: Invite } } = {}) {
+  const platform = useDesktopRuntime()?.platform;
   const { id: routeId = "" } = useParams();
   const id = invitation?.meeting.id || routeId;
   const [params] = useSearchParams();
@@ -469,7 +471,7 @@ export function PreJoinPage({
         preferencesOwnerRef.current === owner &&
         generation.current[kind] === request
       ) {
-        setDeviceError(captureErrorMessage(error, kind));
+        setDeviceError(captureErrorMessage(error, kind, platform));
         setPreferences((current) => ({
           ...current,
           [kind === "audio" ? "microphoneEnabled" : "cameraEnabled"]: false,

@@ -3,6 +3,8 @@ import type { DesktopCapturerSource, DisplayMediaRequestHandlerHandlerRequest, S
 import type { DesktopDisplayCaptureEvent } from "./shared/contracts";
 import { isTrustedRendererUrl } from "./security";
 import type { DisplayCaptureMode } from "./platform/display-capture";
+import type { MacOSMediaAccess, MacOSMediaKind } from "./platform/macos-media-access";
+import type { MacOSScreenAccess } from "./platform/macos-screen-access";
 
 interface Owner { contents: WebContents; frame: WebFrameMain }
 interface MediaPermissionsOptions {
@@ -13,6 +15,8 @@ interface MediaPermissionsOptions {
   getSources(thumbnails: boolean): Promise<DesktopCapturerSource[]>;
   emit(event: DesktopDisplayCaptureEvent): void;
   timeoutMs?: number;
+  mediaAccess?: Pick<MacOSMediaAccess, "check" | "ensure">;
+  screenAccess?: Pick<MacOSScreenAccess, "canSelect">;
 }
 interface Pending {
   id: string;
@@ -30,6 +34,7 @@ export class MediaPermissions {
   // Electron deduplicates concurrent getSources calls. A cancelled portal
   // operation must settle before another document/request may enumerate.
   private enumerating = false;
+  private permissionEpoch = 0;
   constructor(private readonly options: MediaPermissionsOptions) {}
 
   private trusted(contents: WebContents | null, url: unknown, mainFrame: boolean): boolean {
@@ -45,7 +50,11 @@ export class MediaPermissions {
       !isTrustedRendererUrl(origin, this.options.development) ||
       (details.embeddingOrigin && !isTrustedRendererUrl(details.embeddingOrigin, this.options.development)) ||
       (details.securityOrigin && !isTrustedRendererUrl(details.securityOrigin, this.options.development))) return false;
-    if (permission === "media") return ["audio", "video", "unknown"].includes(details.mediaType ?? "unknown");
+    if (permission === "media") {
+      if (!["audio", "video", "unknown"].includes(details.mediaType ?? "unknown")) return false;
+      const kind = details.mediaType === "audio" ? "microphone" : details.mediaType === "video" ? "camera" : null;
+      return !kind || !this.options.mediaAccess || this.options.mediaAccess.check([kind]);
+    }
     // Copying invitation text needs write-only access; clipboard reads stay denied.
     if (permission === "clipboard-sanitized-write") return true;
     // Display capture is separately gated on a user gesture and an explicit source choice.
@@ -61,6 +70,41 @@ export class MediaPermissions {
     if (permission === "media") return Array.isArray(details.mediaTypes) && details.mediaTypes.every(type => type === "audio" || type === "video");
     if (permission === "clipboard-sanitized-write") return true;
     return permission === "display-capture" || permission === "speaker-selection";
+  }
+
+  /** Native prompts may outlive their document. Never deliver a late grant to a replacement. */
+  async authorize(contents: WebContents, permission: string, details: {
+    isMainFrame: boolean; requestingUrl: string; securityOrigin?: string; mediaTypes?: string[];
+  }): Promise<boolean> {
+    if (!this.request(contents, permission, details)) return false;
+    if (permission !== "media" || !details.mediaTypes?.length || !this.options.mediaAccess) return true;
+    const owner = this.options.owner();
+    const epoch = this.permissionEpoch;
+    const types: MacOSMediaKind[] = details.mediaTypes.map(type => type === "audio" ? "microphone" : "camera");
+    try {
+      if (!await this.options.mediaAccess.ensure(types)) return false;
+      const current = this.options.owner();
+      return epoch === this.permissionEpoch && !!owner && current?.contents === owner.contents &&
+        current.frame === owner.frame && this.request(contents, permission, details);
+    } catch { return false; }
+  }
+
+  /** Final lease check and Electron callback share a synchronous turn. A promise
+   * result alone can become stale before the caller's next microtask runs. */
+  authorizeRequest(contents: WebContents, permission: string, details: {
+    isMainFrame: boolean; requestingUrl: string; securityOrigin?: string; mediaTypes?: string[];
+  }, callback: (allowed: boolean) => void): void {
+    const owner = this.options.owner(), epoch = this.permissionEpoch;
+    const complete = (allowed: boolean) => {
+      let grant = false;
+      try {
+        const current = this.options.owner();
+        grant = allowed && epoch === this.permissionEpoch && !!owner && current?.contents === owner.contents &&
+          current.frame === owner.frame && this.request(contents, permission, details);
+      } catch { /* Native ownership or the document may already be gone. */ }
+      try { callback(grant); } catch { /* Electron can drop a request during navigation. */ }
+    };
+    void this.authorize(contents, permission, details).then(complete, () => complete(false));
   }
 
   private active(pending: Pending): boolean {
@@ -96,8 +140,15 @@ export class MediaPermissions {
     this.pending = pending;
     try {
       if (mode === "portal") this.options.emit({ type: "portal", requestId: pending.id });
+      // Electron's macOS enumeration invokes CGRequestScreenCaptureAccess. A
+      // preflight false can mean "not asked yet", so never block that first
+      // explicit user request. Check consent after enumeration, before exposing
+      // previews or granting a selected source.
       const sources = await this.getSources(mode === "picker");
-      if (!this.active(pending)) return;
+      if (!this.active(pending)) { this.finish(pending, null); return; }
+      if (this.options.screenAccess && !this.options.screenAccess.canSelect()) {
+        this.finish(pending, null, "denied"); return;
+      }
       if (mode === "portal") {
         // In the pinned Linux backend, getSources already presented the portal
         // and returned its consented source. Never enumerate again or substitute
@@ -107,7 +158,7 @@ export class MediaPermissions {
         return;
       }
       const available = sources.filter(source => /^(screen|window):/.test(source.id)).slice(0, 100);
-      if (!available.length) { this.cancel(); return; }
+      if (!available.length) { this.finish(pending, null, "error"); return; }
       const publicSources = available.map(source => {
         const id = randomUUID(); pending.sources.set(id, source);
         const thumbnail = source.thumbnail.toDataURL();
@@ -116,7 +167,11 @@ export class MediaPermissions {
           thumbnail: thumbnail.length <= 256 * 1024 && thumbnail.startsWith("data:image/png;base64,") ? thumbnail : "" };
       });
       this.options.emit({ type: "request", requestId: pending.id, sources: publicSources, systemAudioAvailable: pending.audio });
-    } catch { if (this.pending === pending) this.cancel(); }
+    } catch {
+      if (this.pending === pending) this.finish(pending, null,
+        this.active(pending) && this.options.screenAccess && !this.options.screenAccess.canSelect()
+          ? "denied" : mode === "picker" && this.active(pending) ? "error" : "cancelled");
+    }
   }
   async select(input: unknown): Promise<void> {
     if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("invalid_request");
@@ -131,14 +186,22 @@ export class MediaPermissions {
     if (!source || (value.systemAudio && !pending.audio)) throw new Error("operation_not_allowed");
     pending.choosing = true;
     try {
+      if (this.options.screenAccess && !this.options.screenAccess.canSelect()) {
+        this.finish(pending, null, "denied"); throw new Error("capture_source_unavailable");
+      }
       // Windows may disappear while the picker is open; never substitute another source.
       const current = await this.getSources(false);
       if (!this.active(pending)) throw new Error("stale_request");
+      if (this.options.screenAccess && !this.options.screenAccess.canSelect()) {
+        this.finish(pending, null, "denied"); throw new Error("capture_source_unavailable");
+      }
       const selected = current.find(item => item.id === source.id);
       if (!selected) throw new Error("capture_source_unavailable");
       this.finish(pending, { video: selected, ...(value.systemAudio ? { audio: "loopback" as const } : {}) });
     } catch (error) {
-      if (this.pending === pending) this.cancel();
+      if (this.pending === pending) this.finish(pending, null,
+        this.active(pending) && this.options.screenAccess && !this.options.screenAccess.canSelect()
+          ? "denied" : this.active(pending) ? "error" : "cancelled");
       throw error instanceof Error && ["stale_request", "capture_source_unavailable"].includes(error.message)
         ? error : new Error("capture_source_unavailable");
     }
@@ -147,11 +210,11 @@ export class MediaPermissions {
     if (typeof id !== "string" || id.length > 80) throw new Error("invalid_request");
     if (this.pending?.id === id) this.cancel();
   }
-  cancel(): void { if (this.pending) this.finish(this.pending, null); }
-  private finish(pending: Pending, streams: Streams | null): void {
+  cancel(): void { this.permissionEpoch++; if (this.pending) this.finish(this.pending, null); }
+  private finish(pending: Pending, streams: Streams | null, type: "cancelled" | "denied" | "error" = "cancelled"): void {
     if (this.pending !== pending) return;
     this.pending = null; clearTimeout(pending.timer); pending.sources.clear();
     try { pending.callback(streams); } catch { /* The document may already be gone. */ }
-    try { this.options.emit({ type: "cancelled", requestId: pending.id }); } catch { /* The owner may be closing. */ }
+    try { this.options.emit({ type, requestId: pending.id }); } catch { /* The owner may be closing. */ }
   }
 }

@@ -1,0 +1,105 @@
+name: Desktop macOS test DMGs
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**", "desktop/**", ".github/workflows/desktop-macos-*.yml"]
+  pull_request:
+    paths: ["frontend/**", "desktop/**", ".github/workflows/desktop-macos-*.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: desktop-macos-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-dmg:
+    name: Unsigned macOS ${{ matrix.arch }} DMG
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Official standard labels: macos-15 is ARM64; Intel is explicit.
+          - arch: x64
+            runner: macos-15-intel
+          - arch: arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 50
+    defaults:
+      run:
+        shell: bash
+    env:
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.22.1"
+          architecture: ${{ matrix.arch }}
+          package-manager-cache: false
+      - name: Prepare fresh macOS output in the disposable checkout
+        # Published LFS outputs are not source inputs. Only this runner's Mac
+        # build outputs are removed; immutable publication gates remain intact.
+        run: node -e 'require("node:fs").rmSync("desktop/artifacts/macos",{recursive:true,force:true})'
+      - name: Capture clean inputs and deterministic build timestamp
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          node -e 'if(process.platform!=="darwin"||process.arch!==process.env.TARGET_ARCH)process.exit(1)'
+          node desktop/scripts/ci/source-inputs.mjs desktop/artifacts/macos-ci/source-inputs.json --require-clean
+          node --input-type=module <<'NODE'
+          import {execFileSync} from 'node:child_process';
+          import {appendFileSync} from 'node:fs';
+          const epoch=execFileSync('git',['show','-s','--format=%ct','HEAD'],{encoding:'utf8'}).trim();
+          if(!/^\d{9,11}$/.test(epoch))throw Error('Invalid source timestamp');
+          appendFileSync(process.env.GITHUB_ENV,`SOURCE_DATE_EPOCH=${epoch}\n`);
+          NODE
+      - name: Install frozen dependencies and validate shared code
+        run: |
+          npm ci --prefix frontend
+          npm ci --prefix desktop
+          node desktop/node_modules/electron/install.js
+          npm --prefix frontend run check
+          npm --prefix frontend run check:desktop-foundation
+          npm --prefix frontend run check:desktop-media
+          npm --prefix frontend run check:desktop-assets
+          npm --prefix desktop test
+      - name: Build and verify the native test DMG
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node desktop/scripts/package-macos-dmg.mjs "$TARGET_ARCH"
+      - name: Independently check the produced DMG checksums
+        run: |
+          count=0
+          while IFS= read -r checksum; do
+            (cd "$(dirname "$checksum")" && shasum -a 256 -c SHA256SUMS)
+            count=$((count+1))
+          done < <(find desktop/artifacts/macos -type f -name SHA256SUMS)
+          test "$count" -eq 1
+      - name: Disposable DMG file-copy lifecycle (no system installation or launch)
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          images=( "$PWD"/desktop/artifacts/macos/*/*/"$TARGET_ARCH"/test/*.dmg )
+          test "${#images[@]}" -eq 1
+          test -f "${images[0]}"
+          node desktop/scripts/ci/macos-dmg-lifecycle.mjs "${images[0]}" "$PWD/desktop/artifacts/macos-ci/dmg-lifecycle.json" --disposable
+      - name: Record unchanged inputs, native architecture and dependency inventories
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: node desktop/scripts/ci/collect-macos-build-evidence.mjs "$PWD/desktop/artifacts/macos-ci" "$TARGET_ARCH"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: desktop-macos-test-${{ matrix.arch }}-${{ github.sha }}
+          path: |
+            desktop/artifacts/macos/**
+            desktop/artifacts/macos-ci/**
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 14

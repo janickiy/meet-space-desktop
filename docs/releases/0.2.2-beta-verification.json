@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "version": "0.2.2-beta",
+  "checkedAt": "2026-10-30T01:58:52.183039+00:00",
+  "publicationTargets": [
+    "windows/x64",
+    "windows/arm64",
+    "linux/x64",
+    "linux/arm64"
+  ],
+  "macosPublication": false,
+  "buildSource": {
+    "baseCommit": "88107709dd896a8839cd1ac59bee649240a18ae6",
+    "sourceDirty": true,
+    "sourceTreeSha256": "313d2c331c8934df7872098138c825f3f3b9a018a48e9ba20be3878e240936a0",
+    "fileCount": 527,
+    "manifest": "0.2.2-beta-source-inputs.json"
+  },
+  "verificationEnvironment": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "24.19.0",
+    "electron": "44.9.3"
+  },
+  "checks": {
+    "desktop-unit": {
+      "tests": 415,
+      "pass": 414,
+      "fail": 0,
+      "skipped": 1,
+      "exitCode": 0
+    },
+    "frontend-foundation": {
+      "tests": 30,
+      "pass": 30,
+      "fail": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "frontend-media": {
+      "tests": 55,
+      "pass": 55,
+      "fail": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "frontend-assets": {
+      "tests": 9,
+      "pass": 9,
+      "fail": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "desktop-typecheck": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "frontend-typecheck": {
+      "result": "PASS",
+      "exitCode": 0
+    },
+    "build": {
+      "result": "PASS",
+      "exitCode": 0
+    }
+  },
+  "productUI": {
+    "result": "PASS",
+    "exitCode": 0,
+    "groups": 17,
+    "evidence": "0.2.2-beta-product-ui.json"
+  },
+  "limitations": [
+    "Windows and Linux native runtime acceptance not run in this verification",
+    "Product UI uses disposable profile and local fixtures; native dialogs and playback use IPC completion seam",
+    "No physical macOS devices used",
+    "Linux GIO Desktop Entry test skipped on Darwin"
+  ],
+  "publicationAudit": {
+    "inputFilesReviewed": 527,
+    "unexpectedSourceFiles": 0,
+    "credentialPatternScan": "No actual credentials found; matched test-only fixtures, runtime variables and placeholders were reviewed",
+    "pemFixture": "desktop/tests/fixtures/macos-signing-public-cert.pem contains only a public test certificate",
+    "privateKeysOrCredentialFilesAdded": false,
+    "buildOutputsStaged": false
+  }
+}

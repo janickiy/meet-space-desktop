@@ -1,10 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { desktopBridge } from "../../platform/desktop";
-import { platform } from "../../platform";
-import type {
-  DesktopRuntimeInfo,
-  DesktopNativePreferences,
-} from "../../platform/desktop-contracts";
+import { useDesktopRuntime } from "../../platform/runtime";
+import type { DesktopNativePreferences } from "../../platform/desktop-contracts";
 import { Button, ErrorNotice, Loading } from "../ui";
 import "./desktop-native-settings.css";
 import { DesktopUpdateSettings } from "./DesktopUpdateSettings";
@@ -17,14 +14,13 @@ export function DesktopNativeSettings() {
   const [settings, setSettings] = useState<DesktopNativePreferences | null>(
     null,
   );
-  const [runtime, setRuntime] = useState<DesktopRuntimeInfo | null>(null);
+  const runtime = useDesktopRuntime();
   const [error, setError] = useState<unknown>();
   const [busy, setBusy] = useState(false);
   const controller = useRef<ReturnType<
     typeof createNativePreferencesController
   > | null>(null);
   useEffect(() => {
-    let alive = true;
     const current = createNativePreferencesController(desktopBridge(), {
       value(value) {
         setSettings(value);
@@ -39,16 +35,7 @@ export function DesktopNativeSettings() {
       document,
       window,
     );
-    void platform
-      .getRuntimeInfo()
-      .then((host) => {
-        if (alive) setRuntime(host);
-      })
-      .catch((value) => {
-        if (alive) setError(value);
-      });
     return () => {
-      alive = false;
       stopWatching();
       current.dispose();
       controller.current = null;
@@ -79,33 +66,42 @@ export function DesktopNativeSettings() {
       {!settings && !error && <Loading />}
       {settings && (
         <>
-          <label className="desktop-native-toggle preference-option">
-            <input
-              type="checkbox"
-              checked={settings.closeToTray}
-              disabled={busy || !trayAvailable}
-              onChange={(event) =>
-                void update({ closeToTray: event.target.checked })
-              }
-            />
-            <span className="preference-copy">
-              <span className="preference-title">
-                При закрытии окна сворачивать в трей
-              </span>
-              <span className="field-hint">
-                {trayAvailable && settings.closeToTray
-                  ? "Звонок и получение сообщений продолжатся. Для полного закрытия выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже."
-                  : "Закрытие окна завершает приложение. Для полного закрытия также можно нажать кнопку ниже."}
-              </span>
-              {!trayAvailable && (
-                <span className="field-hint" role="status">
-                  {trayStatus === "checking"
-                    ? "Проверяем доступность системного трея. Пока проверка не завершена, закрытие окна завершает приложение."
-                    : "Системный трей недоступен в текущем сеансе."}
+          {runtime?.platform === "darwin" ? (
+            <div className="desktop-native-window-behavior">
+              <span className="preference-title">Закрытие окна</span>
+              <p className="field-hint">
+                Закрытие окна оставляет приложение в Dock. ⌘Q завершает работу.
+              </p>
+            </div>
+          ) : (
+            <label className="desktop-native-toggle preference-option">
+              <input
+                type="checkbox"
+                checked={settings.closeToTray}
+                disabled={busy || !trayAvailable}
+                onChange={(event) =>
+                  void update({ closeToTray: event.target.checked })
+                }
+              />
+              <span className="preference-copy">
+                <span className="preference-title">
+                  При закрытии окна сворачивать в трей
                 </span>
-              )}
-            </span>
-          </label>
+                <span className="field-hint">
+                  {trayAvailable && settings.closeToTray
+                    ? "Звонок и получение сообщений продолжатся. Для полного закрытия выберите «Выход из MeetSpace» в меню трея или нажмите кнопку ниже."
+                    : "Закрытие окна завершает приложение. Для полного закрытия также можно нажать кнопку ниже."}
+                </span>
+                {!trayAvailable && (
+                  <span className="field-hint" role="status">
+                    {trayStatus === "checking"
+                      ? "Проверяем доступность системного трея. Пока проверка не завершена, закрытие окна завершает приложение."
+                      : "Системный трей недоступен в текущем сеансе."}
+                  </span>
+                )}
+              </span>
+            </label>
+          )}
           <label className="desktop-native-toggle preference-option">
             <input
               type="checkbox"
@@ -141,15 +137,20 @@ export function DesktopNativeSettings() {
               <span className="preference-title">
                 Запускать MeetSpace при входе в систему
               </span>
-              {!settings.startupSupported && (
+              {(settings.startupReason === "approval-required" ||
+                !settings.startupSupported) && (
                 <span className="field-hint">
-                  {settings.startupReason === "conflict"
-                    ? "Автозапуск уже настроен другим способом. Измените существующую настройку автозапуска в системе."
-                    : runtime?.platform === "linux"
-                      ? "Автозапуск можно включить в установленном приложении Linux, если он доступен в текущем сеансе. Пока открывайте MeetSpace через меню приложений."
-                      : runtime?.platform === "win32"
-                        ? "Автозапуск можно включить в установленном приложении Windows."
-                        : "Автозапуск в этой среде пока недоступен."}
+                  {settings.startupReason === "approval-required"
+                    ? "Разрешите запуск MeetSpace в «Системные настройки → Основные → Объекты входа и расширения». Затем вернитесь в приложение: состояние обновится."
+                    : settings.startupReason === "conflict"
+                      ? "Автозапуск уже настроен другим способом. Измените существующую настройку автозапуска в системе."
+                      : runtime?.platform === "linux"
+                        ? "Автозапуск можно включить в установленном приложении Linux, если он доступен в текущем сеансе. Пока открывайте MeetSpace через меню приложений."
+                        : runtime?.platform === "win32"
+                          ? "Автозапуск можно включить в установленном приложении Windows."
+                          : runtime?.platform === "darwin"
+                            ? "Для автозапуска переместите MeetSpace в папку «Программы». Разрешение на запуск управляется в системных настройках macOS."
+                            : "Автозапуск в этой среде пока недоступен."}
                 </span>
               )}
             </span>

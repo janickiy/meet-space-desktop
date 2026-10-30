@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { lstat, realpath, readFile, rm } from "node:fs/promises";
 import { readReleaseConfig } from "./build-context.mjs";
+import { prepareBuilder } from "./prepare-builder.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
 const require = createRequire(import.meta.url);
@@ -50,8 +51,10 @@ const run = (args, env = process.env) => {
 const environment = {
   ...process.env,
   MEETSPACE_BUILD_MODE: signed ? "release" : "test",
+  MEETSPACE_BUILD_TARGET: "win32",
   MEETSPACE_RELEASE_CONFIG: configPath ?? "",
 };
+await prepareBuilder();
 run([path.join(desktop, "scripts/build.mjs")], environment);
 const provenance = JSON.parse(
   await readFile(path.join(desktop, "dist/build-provenance.json"), "utf8"),

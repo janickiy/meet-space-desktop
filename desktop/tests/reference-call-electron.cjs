@@ -82,6 +82,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       }
     };
     window = await startApp({ show: false, userDataDir: process.argv[2], rendererRoot: path.resolve(__dirname, '../../frontend/dist-desktop'),
+      mediaAccess: require('./fixtures/synthetic-media-access.cjs').syntheticMediaAccess,
       brokerOptions: { transport: { request: input => { guard(input.url, 'https:'); return transport.request(input); } },
         createSocket: (url, protocols, options) => {
           guard(url, 'wss:');

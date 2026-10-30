@@ -1,4 +1,6 @@
 import { subscribeCaptureRelease } from "../platform/captureLifecycle";
+import { isDesktopBuild } from "../platform/build";
+import { useDesktopRuntime } from "../platform/runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Play, Square, Video, VideoOff, Volume2 } from "lucide-react";
 import { initials } from "../utils";
@@ -39,7 +41,9 @@ function useSettings() {
     } catch {
       if (mounted.current)
         setDeviceError(
-          "Не удалось получить список устройств. Проверьте разрешения браузера.",
+          isDesktopBuild
+            ? "Не удалось получить список устройств. Проверьте их подключение и разрешения системы для MeetSpace."
+            : "Не удалось получить список устройств. Проверьте разрешения браузера.",
         );
     }
   }, []);
@@ -80,6 +84,7 @@ function usePreview(
   noiseSuppression: boolean,
   refresh: () => Promise<void>,
 ) {
+  const platform = useDesktopRuntime()?.platform;
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -139,7 +144,7 @@ function usePreview(
         })
         .catch((reason: unknown) => {
           if (active) {
-            setError(captureErrorMessage(reason, kind));
+            setError(captureErrorMessage(reason, kind, platform));
             setLoading(false);
           }
         });
@@ -148,7 +153,7 @@ function usePreview(
       release();
       unsubscribeRelease();
     };
-  }, [kind, enabled, deviceId, noiseSuppression, refresh, retry]);
+  }, [kind, enabled, deviceId, noiseSuppression, refresh, retry, platform]);
   return {
     stream,
     error,
@@ -327,7 +332,9 @@ function SpeakerTest({
         onPlaying?.(false);
         if (reason)
           setError(
-            "Не удалось воспроизвести звук. Проверьте выбранный динамик и разрешения браузера.",
+            isDesktopBuild
+              ? "Не удалось воспроизвести звук. Проверьте выбранный динамик и громкость системы."
+              : "Не удалось воспроизвести звук. Проверьте выбранный динамик и разрешения браузера.",
           );
       },
       volume / 100,

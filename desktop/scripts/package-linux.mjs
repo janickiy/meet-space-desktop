@@ -173,7 +173,7 @@ async function main() {
   let stage;
   try {
     await writeNewReceipt(path.join(lock, "owner.json"), JSON.stringify({ pid: process.pid, arch }) + "\n");
-    const environment = { ...process.env, MEETSPACE_BUILD_MODE: "test", MEETSPACE_TARGET_ARCH: arch,
+    const environment = { ...process.env, MEETSPACE_BUILD_MODE: "test", MEETSPACE_BUILD_TARGET: "linux", MEETSPACE_TARGET_ARCH: arch,
       MEETSPACE_RELEASE_CONFIG: "", CSC_IDENTITY_AUTO_DISCOVERY: "false", TZ: "UTC" };
     for (const key of ["CSC_LINK", "CSC_KEY_PASSWORD", "WIN_CSC_LINK", "WIN_CSC_KEY_PASSWORD", "NODE_OPTIONS", "ELECTRON_RUN_AS_NODE", "ELECTRON_BUILDER_COMPRESSION_LEVEL", "MEETSPACE_DESKTOP_DEV", "MEETSPACE_DEV_CSP_NONCE", "MEETSPACE_LINUX_OUTPUT"])
       delete environment[key];

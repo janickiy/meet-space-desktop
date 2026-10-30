@@ -730,6 +730,18 @@ export function RealtimePanel({
                 icon={<MonitorUp size={24} />}
                 label="Экран"
               />
+              {media.view.screenSharing && (
+                <ConferenceControlButton
+                  className="room-screen-switch-control"
+                  disabled={
+                    busy || membership.screenBlocked || membership.cameraBlocked
+                  }
+                  onClick={() => void media.startScreen()}
+                  aria-label="Сменить источник демонстрации"
+                  icon={<RefreshCw size={24} />}
+                  label="Сменить источник"
+                />
+              )}
               {controls}
               {openSettings && (
                 <ConferenceControlButton
@@ -877,6 +889,21 @@ export function RealtimePanel({
                     <MonitorUp size={17} />
                     {media.view.screenSharing ? "Остановить экран" : "Экран"}
                   </Button>
+                  {media.view.screenSharing && (
+                    <Button
+                      variant="secondary"
+                      className="room-screen-switch-control"
+                      disabled={
+                        busy ||
+                        membership.screenBlocked ||
+                        membership.cameraBlocked
+                      }
+                      onClick={() => void media.startScreen()}
+                    >
+                      <RefreshCw size={17} />
+                      Сменить источник
+                    </Button>
+                  )}
                 </>
               )}
               {openSettings && (

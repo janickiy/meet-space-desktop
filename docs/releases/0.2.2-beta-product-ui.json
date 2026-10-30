@@ -1,0 +1,26 @@
+{
+  "ok": true,
+  "checks": [
+    "real login keeps protected recording return route; ready server file UUID displays without remote media or auto download",
+    "actual React save reports confirmed result; playback progress/cancel and late IPC result cannot attach a stale player",
+    "existing direct/group list uses real type filter and navigation revokes pending recording media",
+    "actual chat form sends plain text and quoted replies through the production preload/broker to HTTPS; successful delivery clears the draft",
+    "centered send icon; offline sends remain as separate messages with warning icons and no banner; chat navigation preserves the session outbox; explicit per-message retry preserves request IDs and avoids duplicate delivery after a lost response",
+    "existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch",
+    "archive and document files use the real React uploader through authenticated native TLS init→PUT→finalize→message in direct/group/conference chats; exact bytes, canonical MIME, IDs, filename rendering and scoped save verified; invalid extension and oversized files never upload",
+    "existing personal folder list/detail combines authorized chat and meeting entries",
+    "existing meetings/calendar/history render server entries and send calendar range/history filters",
+    "server disabled analytics is absent in navigation and deep route fails closed without analytics request",
+    "profile avatar preview, explicit upload, 512px JPEG normalization, sidebar refresh, navigation persistence, deletion and unsafe-file rejection through the actual native broker",
+    "settings page keeps accessible tabs, profile logout and native settings, with combined devices and appearance sections",
+    "actual settings shows disabled Stage06 updates and never claims a release is current or offers install",
+    "update UI uses typed IPC and live states for explicit download/cancel/install, warns of ending calls and blocks install after signature error (installer seam)",
+    "existing recordings catalog renders the server ready artifact with UUID-backed actions",
+    "actual shared layout supplies current authenticated route and sound preference to native notification context",
+    "offline server failure stays an error with editable server settings instead of invented empty/offline meetings"
+  ],
+  "platform": "darwin",
+  "arch": "arm64",
+  "nativeDialogsAndPlayback": "IPC completion seam; tested separately by native asset integration",
+  "windowsRuntimeTested": false
+}

@@ -44,11 +44,11 @@ async function installed() {
 /** Read-only verifier: unpatched, differently patched and unknown versions fail. */
 export async function readBuilderEvidence() {
   const item = await installed(), result = patchBuilderSource(item.bytes, item.version);
-  if (result.changed) throw new Error("NSIS builder is not prepared; run the reviewed build before verification");
+  if (result.changed) throw new Error("NSIS builder is not prepared; run the reviewed Windows packaging driver before verification");
   return result.evidence;
 }
 
-/** Called by the build before recording provenance and before loading the builder. */
+/** Called only by Windows packaging before recording provenance/loading builder. */
 export async function prepareBuilder() {
   const item = await installed(), result = patchBuilderSource(item.bytes, item.version);
   if (result.changed) {

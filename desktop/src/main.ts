@@ -12,10 +12,10 @@ import {
   safeStorage,
   session,
   shell,
+  systemPreferences,
 } from "electron";
 import type {
   IpcMainInvokeEvent,
-  MenuItemConstructorOptions,
   Session,
 } from "electron";
 import path from "node:path";
@@ -43,12 +43,18 @@ import { MediaPermissions } from "./media-permissions";
 import { NativeShell } from "./native-shell";
 import { NativeNotifications } from "./native-notifications";
 import { createLinuxAutostart } from "./platform/autostart";
+import { createMacOSAutostart } from "./platform/macos-autostart";
 import { NativeAssets } from "./downloads";
 import { NativeUpdates } from "./updates";
+import { MacOSUpdates } from "./platform/macos-updates";
 import { SshInstallerController } from "./ssh/controller";
 import type { AcceptanceBuild } from "./acceptance";
 import { createHostPlatform, createCredentialStore, displayCaptureMode } from "./platform";
 import type { HostPlatform, CredentialStore } from "./platform";
+import { isSupportedMacOS } from "./platform/macos-version";
+import { createApplicationMenu } from "./platform/application-menu";
+import { MacOSMediaAccess } from "./platform/macos-media-access";
+import { MacOSScreenAccess } from "./platform/macos-screen-access";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -68,6 +74,8 @@ protocol.registerSchemesAsPrivileged([
 const development =
   !app.isPackaged && process.env.MEETSPACE_DESKTOP_DEV === "1";
 const nonce = development ? process.env.MEETSPACE_DEV_CSP_NONCE : undefined;
+// Test/dev entry scripts may live in tests/, while assets belong to the app source.
+const applicationRoot = app.isPackaged ? app.getAppPath() : path.resolve(__dirname, "..");
 let mainWindow: BrowserWindow | null = null;
 let pendingRoute: string | null = null;
 let routeReady = false;
@@ -75,17 +83,24 @@ let broker: MeetSpaceBroker | null = null;
 let nativeShell: NativeShell | null = null;
 let notifications: NativeNotifications | null = null;
 let assets: NativeAssets | null = null;
-let updates: NativeUpdates | null = null;
+let updates: NativeUpdates | MacOSUpdates | null = null;
 let sshInstaller: SshInstallerController | null = null;
 let hostPlatform: HostPlatform | null = null;
 let credentialStore: CredentialStore | null = null;
 let quitting = false;
 let quitPrepared = false;
+let openingWindow: Promise<BrowserWindow> | null = null;
+let macMediaAccess: Pick<MacOSMediaAccess, "check" | "ensure"> = new MacOSMediaAccess(systemPreferences);
+let macScreenAccess: Pick<MacOSScreenAccess, "canSelect"> = new MacOSScreenAccess(systemPreferences);
 const mediaPermissions = new MediaPermissions({
   owner: () => mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed()
     ? { contents: mainWindow.webContents, frame: mainWindow.webContents.mainFrame } : null,
   development,
   platform: process.platform,
+  mediaAccess: process.platform === "darwin" ? {
+    check: types => macMediaAccess.check(types), ensure: types => macMediaAccess.ensure(types),
+  } : undefined,
+  screenAccess: process.platform === "darwin" ? { canSelect: () => macScreenAccess.canSelect() } : undefined,
   displayMode: () => displayCaptureMode({ platform: process.platform,
     electronVersion: process.versions.electron, chromiumVersion: process.versions.chrome,
     env: process.env, ozonePlatform: app.commandLine.getSwitchValue("ozone-platform") }),
@@ -184,6 +199,27 @@ function flushRoute(): void {
 }
 
 function requestQuit(): void { if (!quitting) app.quit(); }
+
+/** Dock, a second launch, deep links and notifications all restore one window. */
+async function ensureMainWindow(show = true, rendererRoot?: string): Promise<BrowserWindow | null> {
+  if (quitting) return null;
+  if (openingWindow) {
+    const window = await openingWindow;
+    if (show && !quitting && !window.isDestroyed()) nativeShell?.show();
+    return window;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    if (show) nativeShell?.show();
+    return mainWindow;
+  }
+  openingWindow = createFoundationWindow(show, rendererRoot);
+  try { return await openingWindow; }
+  finally { openingWindow = null; }
+}
+
+function reopenMainWindow(): void {
+  void ensureMainWindow().then(() => flushRoute()).catch(requestQuit);
+}
 
 function notificationContext(input: unknown): void {
   if (!input || typeof input !== "object" || Array.isArray(input) ||
@@ -298,7 +334,7 @@ function installIpc(): void {
 
 function secureSession(browserSession: Session, rendererRoot: string): void {
   browserSession.setPermissionRequestHandler(
-    (contents, permission, callback, details) => callback(mediaPermissions.request(contents, permission, details)),
+    (contents, permission, callback, details) => mediaPermissions.authorizeRequest(contents, permission, details, callback),
   );
   browserSession.setPermissionCheckHandler((contents, permission, origin, details) => mediaPermissions.check(contents, permission, origin, details));
   browserSession.setDisplayMediaRequestHandler((request, callback) => { void mediaPermissions.display(request, callback); });
@@ -338,7 +374,7 @@ function secureSession(browserSession: Session, rendererRoot: string): void {
 
 export async function createFoundationWindow(
   show = true,
-  rendererRoot = path.join(app.getAppPath(), "renderer"),
+  rendererRoot = path.join(applicationRoot, "renderer"),
 ): Promise<BrowserWindow> {
   const browserSession = session.fromPartition("persist:meetspace-foundation");
   if (!(await browserSession.protocol.isProtocolHandled("app")))
@@ -351,7 +387,7 @@ export async function createFoundationWindow(
     show: false,
     title: "MeetSpace",
     backgroundColor: "#f7f7fb",
-    icon: path.join(app.getAppPath(), "resources", "icon.png"),
+    icon: path.join(applicationRoot, "resources", "icon.png"),
     autoHideMenuBar: true,
     webPreferences: {
       session: browserSession,
@@ -431,20 +467,28 @@ export async function startApp(
     rendererRoot?: string;
     /** Trusted test-entry injection only; never read from renderer, environment or CLI. */
     brokerOptions?: Partial<Pick<DesktopBrokerOptions, "transport" | "createSocket">>;
+    /** In-process synthetic-device fixtures only; ignored by packaged applications. */
+    mediaAccess?: Pick<MacOSMediaAccess, "check" | "ensure">;
+    /** In-process synthetic-screen fixtures only; ignored by packaged applications. */
+    screenAccess?: Pick<MacOSScreenAccess, "canSelect">;
   } = {},
 ): Promise<BrowserWindow | null> {
+  if (process.platform === "darwin") app.setName("MeetSpace");
+  if (!app.isPackaged && options.mediaAccess) macMediaAccess = options.mediaAccess;
+  if (!app.isPackaged && options.screenAccess) macScreenAccess = options.screenAccess;
   if (options.userDataDir && !app.isPackaged)
     app.setPath("userData", options.userDataDir);
   if (
     !["win32", "darwin", "linux"].includes(process.platform) ||
     !["x64", "arm64"].includes(process.arch) ||
+    (process.platform === "darwin" && !isSupportedMacOS(process.getSystemVersion(), process.arch)) ||
     (process.platform === "win32" &&
       !isSupportedWindows(release(), process.arch))
   ) {
     await app.whenReady();
     dialog.showErrorBox(
       "MeetSpace",
-      "Требуется Linux x64/ARM64, Windows 10 22H2 x64, Windows 11 x64 или Windows 11 ARM64.",
+      "Требуется macOS 15 или новее (Intel/Apple Silicon), Linux x64/ARM64, Windows 10 22H2 x64, Windows 11 x64 или Windows 11 ARM64.",
     );
     app.quit();
     return null;
@@ -462,14 +506,12 @@ export async function startApp(
   app.setAppUserModelId(identity.appId);
   app.on("second-instance", (_event, argv) => {
     argv.filter((arg) => arg.startsWith("meetspace:")).forEach(queueDeepLink);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      nativeShell?.show();
-    }
+    if (nativeShell) reopenMainWindow();
   });
   app.on("open-url", (event, url) => {
     event.preventDefault();
     queueDeepLink(url);
-    if (parseDeepLink(url)) nativeShell?.show();
+    if (parseDeepLink(url) && nativeShell) reopenMainWindow();
   });
   app.on("web-contents-created", (_event, contents) => {
     contents.on("will-attach-webview", (event) => event.preventDefault());
@@ -478,16 +520,20 @@ export async function startApp(
     .filter((arg) => arg.startsWith("meetspace:"))
     .forEach(queueDeepLink);
   await app.whenReady();
+  if (process.platform === "darwin") {
+    app.setAboutPanelOptions({ applicationName: "MeetSpace", applicationVersion: app.getVersion() });
+    app.dock?.setIcon(path.join(applicationRoot, "resources", "icon.png"));
+  }
   hostPlatform = createHostPlatform({ platform: process.platform, arch: process.arch, osRelease: release(), packaged: app.isPackaged, env: process.env });
   credentialStore = createCredentialStore(safeStorage, { platform: process.platform });
   notifications = new NativeNotifications({
     create: (options) => new Notification({
       ...options,
-      icon: path.join(app.getAppPath(), "resources", "icon.png"),
+      icon: path.join(applicationRoot, "resources", "icon.png"),
     }),
     supported: () => Notification.isSupported(),
     isFocused: () => !!mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible() && mainWindow.isFocused(),
-    navigate: (route) => { if (quitting) return; pendingRoute = route; nativeShell?.show(); flushRoute(); },
+    navigate: (route) => { if (quitting) return; pendingRoute = route; reopenMainWindow(); },
     onUnread: (count) => nativeShell?.setUnread(count),
     onSound: (identity, id) => {
       if (!quitting && mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
@@ -499,7 +545,7 @@ export async function startApp(
     storageDir: app.getPath("userData"),
     transport: overrides?.transport ?? createElectronTransport(net, session.fromPartition("meetspace-native-network")),
     createSocket: overrides?.createSocket,
-    onIdentityInvalidated: () => { mediaPermissions.cancel(); assets?.reset(); },
+    onIdentityInvalidated: () => { pendingRoute = null; mediaPermissions.cancel(); assets?.reset(); },
     onIdentityChanged: (identity) => notifications?.setIdentity(identity),
     onNotificationEvent: (event) => notifications?.observe(event),
     onAccountEvent: (event) => notifications?.observeAccount(event),
@@ -517,13 +563,16 @@ export async function startApp(
     bundleRoot: path.join(app.isPackaged ? app.getAppPath() : path.resolve(__dirname, ".."), "resources/server-installer/v1"),
   });
   await sshInstaller.load();
-  updates = new NativeUpdates({ trust: identity.trust, packaged: app.isPackaged, platform: process.platform, arch: process.arch,
+  const emitUpdate = (state: ReturnType<NativeUpdates["state"]>) => {
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
+      mainWindow.webContents.send("meetspace:transport", { kind: "update", state });
+  };
+  updates = process.platform === "darwin" ? new MacOSUpdates({ trust: identity.trust, packaged: app.isPackaged,
+    platform: process.platform, arch: process.arch, currentVersion: app.getVersion(), emit: emitUpdate })
+    : new NativeUpdates({ trust: identity.trust, packaged: app.isPackaged, platform: process.platform, arch: process.arch,
     currentVersion: app.getVersion(), currentExecutable: process.execPath, cacheDir: path.join(app.getPath("userData"), "updates"),
     transport: createElectronTransport(net, session.fromPartition("meetspace-update-network")),
-    emit: (state) => {
-      if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.webContents.isDestroyed())
-        mainWindow.webContents.send("meetspace:transport", { kind: "update", state });
-    }, beforeInstall: async () => !quitting, onInstallerLaunched: requestQuit });
+    emit: emitUpdate, beforeInstall: async () => !quitting, onInstallerLaunched: requestQuit });
   await updates.initialize();
   assets = new NativeAssets({ broker, development, cacheDir: path.join(app.getPath("userData"), "native-media-cache"),
     chooseSavePath: async (suggestedName) => {
@@ -539,9 +588,12 @@ export async function startApp(
   });
   try { await assets.initialize(); }
   catch { await assets.dispose(); assets = null; }
-  nativeShell = new NativeShell({ hostPlatform, window: () => mainWindow, quit: requestQuit,
+  nativeShell = new NativeShell({ hostPlatform, window: () => mainWindow, reopen: reopenMainWindow, quit: requestQuit,
     startupProvider: process.platform === "linux" ? createLinuxAutostart({ packaged: app.isPackaged,
-      appId: identity.appId, execPath: process.execPath, env: process.env, homeDir: app.getPath("home"), uid: process.getuid!() }) : undefined,
+      appId: identity.appId, execPath: process.execPath, env: process.env, homeDir: app.getPath("home"), uid: process.getuid!() })
+      : process.platform === "darwin" ? createMacOSAutostart({ platform: process.platform, packaged: app.isPackaged,
+        appId: identity.appId, execPath: process.execPath, homeDir: app.getPath("home"),
+        appPath: app.getAppPath(), bridge: app }) : undefined,
     hide: () => mediaPermissions.cancel(), preferencesChanged: (value) => {
       notifications?.setEnabled(value.nativeNotifications);
       const hideItem = Menu.getApplicationMenu()?.getMenuItemById("meetspace-hide-to-tray");
@@ -580,50 +632,22 @@ export async function startApp(
   };
   powerMonitor.on("suspend", () => powerChanged("suspend"));
   powerMonitor.on("resume", () => powerChanged("resume"));
-  const menu: MenuItemConstructorOptions[] = [
-    { label: "MeetSpace", submenu: [
-      { label: "Открыть MeetSpace", click: () => nativeShell?.show() },
-      { id: "meetspace-hide-to-tray", label: "Скрыть в трей", enabled: nativeShell.preferences().trayAvailable, click: () => nativeShell?.hide() },
-      { type: "separator" },
-      { label: "Выход из MeetSpace", accelerator: "CommandOrControl+Q", click: requestQuit },
-    ] },
-    {
-      label: "Правка",
-      submenu: [
-        { role: "undo" },
-        { role: "redo" },
-        { type: "separator" },
-        { role: "cut" },
-        { role: "copy" },
-        { role: "paste" },
-        { role: "selectAll" },
-      ],
-    },
-    {
-      label: "Вид",
-      submenu: [
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" },
-      ],
-    },
-    { role: "windowMenu" },
-  ];
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menu));
+  Menu.setApplicationMenu(Menu.buildFromTemplate(createApplicationMenu({
+    platform: process.platform, show: reopenMainWindow, hide: () => nativeShell?.hide(),
+    quit: requestQuit, close: () => mainWindow?.close(),
+    trayAvailable: nativeShell.preferences().trayAvailable,
+  })));
   // Linux handlers belong to the installed package's desktop entry (%u), not a
   // process-start mutation of the user's MIME defaults. Direct argv links still work.
   if (app.isPackaged && process.platform !== "linux") app.setAsDefaultProtocolClient("meetspace");
   installIpc();
-  const window = await createFoundationWindow(
+  const window = await ensureMainWindow(
     options.show !== false,
     options.rendererRoot,
   );
-  void acceptance?.run(window).catch(() => app.quit());
+  if (window) void acceptance?.run(window).catch(() => app.quit());
   app.on("activate", () => {
-    if (!mainWindow) void createFoundationWindow().catch(() => app.quit());
-    else nativeShell?.show();
+    reopenMainWindow();
   });
   app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit();

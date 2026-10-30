@@ -1,4 +1,5 @@
 import { subscribeCaptureRelease } from "./platform/captureLifecycle";
+import { useDesktopRuntime } from "./platform/runtime";
 import { useEffect, useState } from "react";
 import { captureErrorMessage } from "./prejoinDevices";
 import {
@@ -14,6 +15,7 @@ export function useCallPreview(
   noiseSuppression: boolean,
   onUnavailable: () => void,
 ) {
+  const platform = useDesktopRuntime()?.platform;
   const [stream, setStream] = useState<MediaStream>();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,7 +56,7 @@ export function useCallPreview(
         setStream(owned);
       } catch (cause) {
         if (!disposed) {
-          setError(captureErrorMessage(cause, kind));
+          setError(captureErrorMessage(cause, kind, platform));
           onUnavailable();
         }
       } finally {
@@ -79,7 +81,7 @@ export function useCallPreview(
       release();
       unsubscribeRelease();
     };
-  }, [kind, enabled, deviceId, noiseSuppression, onUnavailable]);
+  }, [kind, enabled, deviceId, noiseSuppression, onUnavailable, platform]);
   return {
     stream: enabled ? stream : undefined,
     error,

@@ -126,6 +126,8 @@ export type DesktopDisplayCaptureEvent =
     }
   | { type: "portal"; requestId: string }
   | { type: "unavailable"; requestId: string }
+  | { type: "denied"; requestId: string }
+  | { type: "error"; requestId: string }
   | { type: "cancelled"; requestId: string };
 export interface DesktopNativePreferences {
   closeToTray: boolean;
@@ -135,7 +137,8 @@ export interface DesktopNativePreferences {
   notificationsSupported: boolean;
   trayAvailable: boolean;
   trayStatus?: "checking" | "available" | "unavailable";
-  startupReason?: "unpackaged" | "unavailable" | "conflict";
+  startupReason?:
+    "unpackaged" | "unavailable" | "conflict" | "approval-required";
 }
 export interface DesktopUpdateState {
   enabled: boolean;

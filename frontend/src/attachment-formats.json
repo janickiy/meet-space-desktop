@@ -226,5 +226,133 @@
   {
     "extensions": ["lha", "lzh"],
     "mimeType": "application/x-lzh-compressed"
+  },
+  {
+    "extensions": ["bz", "bzip"],
+    "mimeType": "application/x-bzip"
+  },
+  {
+    "extensions": ["bz3", "bzip3"],
+    "mimeType": "application/x-bzip3"
+  },
+  {
+    "extensions": ["lzo", "lzop", "tzo"],
+    "mimeType": "application/x-lzop"
+  },
+  {
+    "extensions": ["ace"],
+    "mimeType": "application/x-ace-compressed"
+  },
+  {
+    "extensions": ["arc"],
+    "mimeType": "application/x-arc"
+  },
+  {
+    "extensions": ["zpaq"],
+    "mimeType": "application/x-zpaq"
+  },
+  {
+    "extensions": ["djvu", "djv"],
+    "mimeType": "image/vnd.djvu"
+  },
+  {
+    "extensions": ["fb2"],
+    "mimeType": "application/x-fictionbook+xml"
+  },
+  {
+    "extensions": ["mobi", "prc"],
+    "mimeType": "application/x-mobipocket-ebook"
+  },
+  {
+    "extensions": ["azw", "azw3"],
+    "mimeType": "application/vnd.amazon.ebook"
+  },
+  {
+    "extensions": ["xps"],
+    "mimeType": "application/vnd.ms-xpsdocument"
+  },
+  {
+    "extensions": ["oxps"],
+    "mimeType": "application/oxps"
+  },
+  {
+    "extensions": ["ps", "eps"],
+    "mimeType": "application/postscript"
+  },
+  {
+    "extensions": ["tex", "ltx", "latex"],
+    "mimeType": "application/x-tex"
+  },
+  {
+    "extensions": ["rst", "adoc", "asciidoc"],
+    "mimeType": "text/plain"
+  },
+  {
+    "extensions": ["xml"],
+    "mimeType": "application/xml"
+  },
+  {
+    "extensions": ["json"],
+    "mimeType": "application/json"
+  },
+  {
+    "extensions": ["yaml", "yml"],
+    "mimeType": "application/yaml"
+  },
+  {
+    "extensions": ["odm"],
+    "mimeType": "application/vnd.oasis.opendocument.text-master"
+  },
+  {
+    "extensions": ["oth"],
+    "mimeType": "application/vnd.oasis.opendocument.text-web"
+  },
+  {
+    "extensions": ["otm"],
+    "mimeType": "application/vnd.oasis.opendocument.text-master-template"
+  },
+  {
+    "extensions": ["odb"],
+    "mimeType": "application/vnd.oasis.opendocument.database"
+  },
+  {
+    "extensions": ["sldx"],
+    "mimeType": "application/vnd.openxmlformats-officedocument.presentationml.slide"
+  },
+  {
+    "extensions": ["sldm"],
+    "mimeType": "application/vnd.ms-powerpoint.slide.macroenabled.12"
+  },
+  {
+    "extensions": ["vsd", "vst", "vss", "vsw"],
+    "mimeType": "application/vnd.visio"
+  },
+  {
+    "extensions": ["one", "onetoc2"],
+    "mimeType": "application/onenote"
+  },
+  {
+    "extensions": ["vsdx"],
+    "mimeType": "application/vnd.ms-visio.drawing"
+  },
+  {
+    "extensions": ["vstx"],
+    "mimeType": "application/vnd.ms-visio.template"
+  },
+  {
+    "extensions": ["vssx"],
+    "mimeType": "application/vnd.ms-visio.stencil"
+  },
+  {
+    "extensions": ["vsdm"],
+    "mimeType": "application/vnd.ms-visio.drawing.macroenabled.12"
+  },
+  {
+    "extensions": ["vstm"],
+    "mimeType": "application/vnd.ms-visio.template.macroenabled.12"
+  },
+  {
+    "extensions": ["vssm"],
+    "mimeType": "application/vnd.ms-visio.stencil.macroenabled.12"
   }
 ]

@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
 import { isDesktopBuild } from "../platform/build";
+import { useWorkspaceShortcut } from "../platform/runtime";
 import { WorkspaceSearch } from "./WorkspaceSearch";
 import { usePersonalRealtime } from "../personalRealtime";
 import "../pages/personal.css";
@@ -47,6 +48,7 @@ import { DirectCallsProvider } from "./DirectCalls";
  * @return Общая оболочка с лениво загружаемым защищённым маршрутом.
  */
 export function Layout() {
+  const shortcut = useWorkspaceShortcut();
   const { user } = useAuth();
   useNotificationStream(user?.guestConferenceId ? undefined : user?.id);
   const personal = usePersonalRealtime(
@@ -485,7 +487,7 @@ export function Layout() {
               <div>
                 <dt>Поиск в пространстве</dt>
                 <dd>
-                  <kbd>Ctrl K</kbd>
+                  <kbd>{shortcut.label}</kbd>
                 </dd>
               </div>
               <div>

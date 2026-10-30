@@ -4,6 +4,13 @@
 .desktop-native-settings h2 {
   margin-top: 0;
 }
+.desktop-native-window-behavior {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+.desktop-native-window-behavior .field-hint {
+  margin: 5px 0 0;
+}
 .desktop-native-toggle {
   cursor: pointer;
 }

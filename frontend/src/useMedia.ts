@@ -1,4 +1,5 @@
 import { subscribeCaptureRelease } from "./platform/captureLifecycle";
+import { useDesktopRuntime } from "./platform/runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConferenceMediaClient, emptyMediaView } from "./media";
 import type { MediaPolicy, MediaStartOptions } from "./media";
@@ -20,6 +21,7 @@ export function useMedia(
   conferenceId: string,
   policy: MediaPolicy,
 ) {
+  const platform = useDesktopRuntime()?.platform;
   const [view, setView] = useState(emptyMediaView);
   const [running, setRunning] = useState(false);
   const controller = useRef<ConferenceMediaClient | null>(null);
@@ -197,6 +199,7 @@ export function useMedia(
           setRunning(state.active);
         }
       },
+      platform,
     );
     controller.current = next;
     next.setPolicy(policyRef.current);

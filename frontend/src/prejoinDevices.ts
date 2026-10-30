@@ -1,5 +1,6 @@
 import { isDesktopBuild } from "./platform/build";
 import { desktopServerID } from "./platform/urls";
+import type { DesktopRuntimeInfo } from "./platform/desktop-contracts";
 
 export interface DevicePreferences {
   audioInputId: string;
@@ -145,7 +146,35 @@ export function availableDeviceId(
     : preferredId;
 }
 
-export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
+export function capturePermissionMessage(
+  kind: "audio" | "video" | "audio-video",
+  platform?: DesktopRuntimeInfo["platform"],
+) {
+  const label =
+    kind === "audio"
+      ? "микрофон"
+      : kind === "video"
+        ? "камеру"
+        : "камеру и микрофон";
+  if (isDesktopBuild && platform === "darwin") {
+    const section =
+      kind === "audio"
+        ? "«Микрофон»"
+        : kind === "video"
+          ? "«Камера»"
+          : "«Камера» и «Микрофон»";
+    return `Доступ к устройствам запрещён. В macOS откройте «Системные настройки» → «Конфиденциальность и безопасность» → ${section} и разрешите MeetSpace. Затем повторите попытку. Если доступ не появился, закройте MeetSpace через ⌘Q и откройте снова.`;
+  }
+  return isDesktopBuild
+    ? `Доступ к устройству запрещён. Разрешите ${label} для MeetSpace в настройках конфиденциальности системы и повторите.`
+    : `Доступ к устройству запрещён. Разрешите ${label} для этого сайта в настройках браузера и повторите.`;
+}
+
+export function captureErrorMessage(
+  error: unknown,
+  kind: "audio" | "video",
+  platform?: DesktopRuntimeInfo["platform"],
+) {
   const name =
     error &&
     typeof error === "object" &&
@@ -155,13 +184,11 @@ export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
       : "";
   const label = kind === "audio" ? "микрофон" : "камеру";
   if (name === "NotAllowedError" || name === "PermissionDeniedError")
-    return isDesktopBuild
-      ? `Доступ к устройству запрещён. Разрешите ${label} для MeetSpace в настройках конфиденциальности системы и повторите.`
-      : `Доступ к устройству запрещён. Разрешите ${label} для этого сайта в настройках браузера и повторите.`;
+    return capturePermissionMessage(kind, platform);
   if (name === "NotFoundError" || name === "DevicesNotFoundError")
     return `Устройство не найдено. Подключите ${label} или войдите без него.`;
   if (name === "NotReadableError" || name === "TrackStartError")
-    return `Не удалось открыть ${label}. Возможно, устройство занято другим приложением.`;
+    return `Не удалось открыть ${label}. Возможно, устройство отключено или занято другим приложением.`;
   if (name === "OverconstrainedError")
     return `Выбранное устройство недоступно. Выберите другое или системное устройство.`;
   if (name === "SecurityError")
@@ -172,11 +199,16 @@ export function captureErrorMessage(error: unknown, kind: "audio" | "video") {
 }
 
 /** Browser errors cannot distinguish a cancelled system picker from denied consent. */
-export function screenCaptureErrorMessage(error: unknown) {
+export function screenCaptureErrorMessage(
+  error: unknown,
+  platform?: DesktopRuntimeInfo["platform"],
+) {
   const name =
     error && typeof error === "object" && "name" in error ? error.name : "";
   if (name === "NotAllowedError" || name === "PermissionDeniedError")
-    return "Демонстрация не началась: выбор отменён или система не разрешила доступ. Повторите выбор, когда будете готовы.";
+    return isDesktopBuild && platform === "darwin"
+      ? "Демонстрация не началась: выбор отменён или macOS не разрешила доступ. Если вы не отменяли выбор, проверьте MeetSpace в «Системные настройки» → «Конфиденциальность и безопасность» → «Запись экрана и системного аудио» (Screen Recording). После изменения разрешения может потребоваться закрыть MeetSpace через ⌘Q и открыть снова."
+      : "Демонстрация не началась: выбор отменён или система не разрешила доступ. Повторите выбор, когда будете готовы.";
   if (name === "NotSupportedError")
     return "Демонстрация экрана недоступна в этой среде. Проверьте поддержку системной демонстрации и повторите.";
   if (name === "InvalidStateError")
@@ -184,6 +216,8 @@ export function screenCaptureErrorMessage(error: unknown) {
   if (name === "NotFoundError")
     return "Не удалось получить экран или окно. Проверьте доступные источники и повторите выбор.";
   if (name === "NotReadableError" || name === "AbortError")
-    return "Не удалось захватить выбранный экран или окно. Проверьте системный диалог демонстрации и повторите.";
+    return isDesktopBuild && platform === "darwin"
+      ? "Не удалось захватить выбранный экран или окно. Проверьте, что окно открыто, а MeetSpace разрешена запись экрана в «Системные настройки» → «Конфиденциальность и безопасность». Затем выберите источник снова."
+      : "Не удалось захватить выбранный экран или окно. Проверьте системный диалог демонстрации и повторите.";
   return "Демонстрация не началась. Выберите экран или окно и повторите попытку.";
 }

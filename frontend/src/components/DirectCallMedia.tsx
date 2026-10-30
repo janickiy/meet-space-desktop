@@ -5,6 +5,7 @@ import {
   Phone,
   MicOff,
   MonitorUp,
+  RefreshCw,
   PhoneOff,
   Settings,
   Video,
@@ -375,6 +376,21 @@ export function DirectCallMedia({
             Экран
           </span>
         </button>
+        {media.view.screenSharing && (
+          <button
+            type="button"
+            className="direct-call-control direct-call-control-wide"
+            disabled={busy}
+            aria-label="Сменить источник демонстрации"
+            title="Сменить источник"
+            onClick={() => void media.startScreen()}
+          >
+            <RefreshCw />
+            <span className="direct-call-control-caption" aria-hidden="true">
+              Сменить источник
+            </span>
+          </button>
+        )}
         <button
           type="button"
           className="direct-call-control"

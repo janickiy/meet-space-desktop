@@ -1,0 +1,14 @@
+{
+  "source": "../icon.svg",
+  "sourceSha256": "d27918f4a7644c8e4c16b1c08477e429d23f0130f86a13209aff9b55f3aba378",
+  "generator": "scripts/generate-macos-icons.mjs",
+  "sharpVersion": "0.35.5",
+  "applicationIcon": "Original approved app mark, rendered at each 1x/2x size from SVG",
+  "trayIcon": "Approved mark-white silhouette, black on transparency; 18px/36px template pair",
+  "files": {
+    "icon.icns": "05353a930e896a31299042ef8f45e3bd880d5741b028e331200aee35f76b92d0",
+    "TrayTemplate.svg": "62ac62d7667b1cdcac2dfb657c9d376cb2d7959a09a435e84cc2527a4a38d96a",
+    "TrayTemplate.png": "6106b7af5371410b81d7539954790bf1c46f5ffae55019c1fa36c3891ad5b720",
+    "TrayTemplate@2x.png": "360c24fdb377f9f4b2be754726c76b142db81feeedc884e00119e452792752c3"
+  }
+}
