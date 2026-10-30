@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceTreeSha256": "313d2c331c8934df7872098138c825f3f3b9a018a48e9ba20be3878e240936a0",
+  "arch": "x64",
+  "format": "deb",
+  "formats": [
+    "deb"
+  ],
+  "verifiedFormats": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "verifiedStaging": "/work/source/desktop/artifacts/.linux-staging-313d2c331c8934df7872098138c825f3f3b9a018a48e9ba20be3878e240936a0-x64-2cYNiX",
+  "immutableDirectory": "/work/source/desktop/artifacts/linux/DEB/0.2.2-beta/313d2c331c8934df7872098138c825f3f3b9a018a48e9ba20be3878e240936a0/x64",
+  "overwriteAllowed": false
+}
