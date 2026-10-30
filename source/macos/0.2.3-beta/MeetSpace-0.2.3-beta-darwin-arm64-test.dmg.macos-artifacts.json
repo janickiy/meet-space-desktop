@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "stage": "06",
+  "format": "dmg",
+  "arch": "arm64",
+  "version": "0.2.3-beta",
+  "mode": "test",
+  "sourceTreeSha256": "6973cc89b53def53bba58e6a6e1b60a758e2ce8f54edeaccf0c64967f57535e6",
+  "sourceCommit": "eec586bec363ce40a7e384f569a70b3afd7fd535",
+  "sourceDirty": false,
+  "sourceDateEpoch": 1793354424,
+  "file": "MeetSpace-0.2.3-beta-darwin-arm64-test.dmg",
+  "size": 147128983,
+  "sha256": "e2d346ff3329e75e69b5a44ab576768348f7b4f57873038c8ba85f6aa37057e3",
+  "imageVerified": true,
+  "mountedPayloadVerified": true,
+  "gatekeeper": {
+    "assessed": true,
+    "accepted": false,
+    "distributionAcceptance": false
+  },
+  "mountedAsarSha256": "48274a90f0d95d6860d25fde7c68a8ee5cc7ef67d06e820e20698c9cb94cd1ec",
+  "app": "/private/tmp/meetspace-release-023-mac/desktop/artifacts/macos-stage02-arm64-Ewuebg/mac-arm64/MeetSpace.app",
+  "appId": "com.janickiy.meetspace.desktop.test",
+  "binaries": [
+    "Contents/MacOS/MeetSpace",
+    "Contents/Frameworks/Electron Framework.framework/Versions/A/Electron Framework",
+    "Contents/Frameworks/MeetSpace Helper (GPU).app/Contents/MacOS/MeetSpace Helper (GPU)",
+    "Contents/Frameworks/MeetSpace Helper (Plugin).app/Contents/MacOS/MeetSpace Helper (Plugin)",
+    "Contents/Frameworks/MeetSpace Helper (Renderer).app/Contents/MacOS/MeetSpace Helper (Renderer)",
+    "Contents/Frameworks/MeetSpace Helper.app/Contents/MacOS/MeetSpace Helper"
+  ],
+  "signing": "disabled",
+  "notarization": "not-performed",
+  "distributionReady": false,
+  "published": false,
+  "nativeRuntimeAcceptance": "not-performed",
+  "automaticUpdates": false,
+  "reproducibility": "Frozen dependencies, exact source bytes and SOURCE_DATE_EPOCH; DMG/signing/notarization bytes are not promised reproducible"
+}
