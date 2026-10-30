@@ -4,7 +4,7 @@
   "inventory": "actual installed production closure plus Vite injected helper and vendored QR generator; conservative installed peers included",
   "lockfiles": {
     "frontend": "c8fa772e96668490bba54c4e2c89874e6c5b212ec7bcf0e5bc4cab24ef91a342",
-    "desktop": "cd5bf06a772d5938ff65a6714d480189d8708cfc432cb4705060b322b895ae30"
+    "desktop": "ee1f9da08a200f0b09c1d0a277a1ee2fae57481464207a11e530366e12b77196"
   },
   "noticesSha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241",
   "separateNotices": [
