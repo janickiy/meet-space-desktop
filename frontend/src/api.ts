@@ -1321,10 +1321,10 @@ export const api = {
     );
     return response.json() as Promise<Item<GroupConversation>>;
   },
-  deleteGroupAvatar: (id: string) =>
+  deleteGroupAvatar: (id: string, signal?: AbortSignal) =>
     request<Item<GroupConversation>>(
       `/conversations/${encodeURIComponent(id)}/avatar`,
-      { method: "DELETE" },
+      { method: "DELETE", signal },
     ),
   searchPersonalUsers: (search: string, signal?: AbortSignal) =>
     request<{ items: PersonalPeer[] }>(

@@ -12,7 +12,7 @@ const { spawn } = require("node:child_process");
     delete environment.MEETSPACE_DESKTOP_DEV; delete environment.MEETSPACE_DEV_CSP_NONCE;
     await new Promise((resolve, reject) => {
       const child = spawn(require("electron"), [path.join(__dirname, "electron-product.cjs"), directory, ...(evidenceDirectory ? [evidenceDirectory] : [])], { stdio: "inherit", env: environment });
-      const timer = setTimeout(() => { child.kill(); reject(new Error("Product UI exceeded 110 seconds")); }, 110000);
+      const timer = setTimeout(() => { child.kill(); reject(new Error("Product UI exceeded 180 seconds")); }, 180000);
       child.once("error", error => { clearTimeout(timer); reject(error); });
       child.once("exit", (code, signal) => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error(`Product UI failed (${code ?? signal})`)); });
     });

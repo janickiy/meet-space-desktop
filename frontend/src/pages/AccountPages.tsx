@@ -287,18 +287,6 @@ export function SettingsPage() {
                 </p>
               </div>
             </div>
-            <div className="settings-profile-intro">
-              <UserAvatar
-                id={user?.id}
-                name={user?.displayName || user?.email || "Вы"}
-                version={user?.avatarVersion}
-                className="settings-profile-avatar"
-              />
-              <div>
-                <strong>{user?.displayName || user?.email}</strong>
-                <span>Участник пространства MeetSpace</span>
-              </div>
-            </div>
             <ProfileAvatarEditor key={user?.id} />
             <form
               className="reference-profile-form"

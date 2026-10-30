@@ -17,66 +17,527 @@
   height: 100%;
   border-radius: inherit;
 }
-.avatar-file-field {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  min-width: 0;
-}
-.avatar-file-picker {
-  display: grid;
-  place-items: center;
-  width: 80px;
-  height: 80px;
-  flex-shrink: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  cursor: pointer;
-}
-.avatar-file-picker > .user-avatar {
+
+/* Photo card and crop dialog match decs_maket 0aefbd4 (avatars.css). */
+.avatar-photo {
+  display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  max-width: none;
 }
-.avatar-file-copy {
+.avatar[data-avatar-group] {
+  border-radius: 28%;
+}
+.avatar .avatar-photo {
+  position: absolute;
+  inset: 0;
+}
+.call-avatar,
+.personal-call-self-avatar {
+  overflow: hidden;
+}
+.avatar-settings {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  margin: 0 0 28px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: linear-gradient(125deg, var(--primary-soft), var(--surface) 75%);
+}
+.avatar-settings-preview {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 50%;
+  padding: 0;
+  isolation: isolate;
+}
+.avatar-settings-preview > .avatar-settings-image {
+  width: 96px;
+  height: 96px;
+  font-size: 30px;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 5px var(--surface),
+    0 8px 24px #34478315;
+}
+.avatar-settings-preview.group,
+.avatar-settings-preview.group > .avatar-settings-image {
+  border-radius: 25px;
+}
+.avatar-camera {
+  position: absolute;
+  bottom: 0;
+  right: -3px;
   display: grid;
-  justify-items: start;
-  gap: 8px;
-  flex: 1 1 180px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--surface);
+  border: 3px solid var(--surface);
+}
+.avatar-camera svg {
+  width: 15px;
+  height: 15px;
+}
+.avatar-settings-copy {
   min-width: 0;
 }
-.avatar-file-copy > span {
+.avatar-settings-copy h3 {
+  font-size: 16px;
+  margin: 0 0 7px;
+}
+.avatar-settings-copy p {
   color: var(--muted);
-  font-size: calc(12px * var(--text-scale, 1));
-  line-height: 1.6;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 12px;
 }
-.avatar-file-field > .error-notice {
-  flex-basis: 100%;
+.avatar-settings-copy small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 10px;
 }
-.avatar-file-picker:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 3px;
-}
-.avatar-file-picker:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-.profile-avatar-editor {
-  display: grid;
+.avatar-settings-actions {
+  display: flex;
+  align-items: center;
   gap: 16px;
-  padding: 20px 0;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border);
 }
-.profile-avatar-editor > p {
+.avatar-settings-actions .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+}
+.avatar-settings-actions svg {
+  width: 15px;
+  height: 15px;
+}
+.avatar-remove-link {
+  font-size: 11px;
+  color: var(--muted);
+}
+.avatar-remove-link:hover {
+  color: #db5268;
+}
+/* Photo preview on the left, editing controls on the right. */
+.modal.avatar-editor-modal {
+  width: 860px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100dvh - 78px);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--surface);
+}
+.avatar-editor-modal > h2 {
+  margin: 0 0 18px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.avatar-editor-modal > h2 {
+  font-size: 21px;
+  line-height: 1.3;
+  letter-spacing: -0.4px;
+}
+.avatar-editor {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.avatar-editor-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  padding: 2px 3px;
+}
+.avatar-editor-body::-webkit-scrollbar {
+  display: none;
+}
+.avatar-workspace {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: stretch;
+  min-width: 0;
+  padding: 24px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--canvas);
+}
+.avatar-crop {
+  position: relative;
+  width: 300px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--primary-soft);
+  isolation: isolate;
+}
+.avatar-crop canvas {
+  display: none;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.avatar-crop canvas.dragging {
+  cursor: grabbing;
+}
+.avatar-crop canvas:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
+}
+.avatar-crop-guide {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 200px #080d1880;
+  outline: 2px solid #fffffff0;
+  outline-offset: -2px;
+  pointer-events: none;
+}
+.avatar-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+}
+.avatar-placeholder svg {
+  width: 60px;
+  height: 60px;
+  stroke-width: 1.2;
+}
+.has-image .avatar-placeholder {
+  display: none;
+}
+.has-image .avatar-crop canvas,
+.has-image .avatar-crop-guide {
+  display: block;
+}
+.avatar-drag-hint {
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 10px 0 0;
+}
+.avatar-adjustments label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  gap: 12px;
   margin: 0;
 }
-.profile-avatar-actions {
+.avatar-adjustments output {
+  min-width: 44px;
+  padding: 4px 7px;
+  border-radius: 8px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+.avatar-adjustments input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  margin: 0 0 10px;
+  padding: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.avatar-adjustments input:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.avatar-reset {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 0 0 8px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+}
+.avatar-file-choice {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px;
+  border: 1px dashed var(--primary);
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+}
+.avatar-file-choice svg {
+  width: 18px;
+  height: 18px;
+}
+.avatar-file-note {
+  font-size: 10px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 22px;
+  text-align: left;
+}
+.avatar-error {
+  grid-column: 1/-1;
+  font-size: 12px;
+  color: #d34b63;
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+.avatar-error:empty {
+  display: none;
+}
+.avatar-editor-footer {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 20px;
+  margin-top: 24px;
+}
+.avatar-editor-footer > div {
+  display: flex;
+  flex-shrink: 0;
+  gap: 10px;
+}
+.avatar-editor-footer .button {
+  justify-content: center;
+  min-height: 44px;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+.avatar-editor-footer > p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 280px;
+}
+.avatar-settings button:focus-visible,
+.avatar-editor button:focus-visible,
+.avatar-editor input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.avatar-editor button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+[data-theme="dark"] .avatar-crop {
+  background: #0c111b;
+}
+@media (max-width: 500px) {
+  .modal.avatar-editor-modal {
+    padding: 20px;
+    border-radius: 22px;
+  }
+  .avatar-editor-modal > h2 {
+    font-size: 19px;
+  }
+  .avatar-settings {
+    gap: 18px;
+    padding: 20px;
+  }
+  .avatar-settings-preview > .avatar-settings-image {
+    width: 72px;
+    height: 72px;
+    font-size: 24px;
+  }
+  .avatar-settings-actions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 700px) {
+  .modal.avatar-editor-modal {
+    width: 420px;
+    padding: 20px;
+  }
+  .avatar-editor-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .avatar-workspace {
+    padding: 18px;
+  }
+  .avatar-crop {
+    width: 220px;
+  }
+  .avatar-editor-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .avatar-editor-footer > div {
+    justify-content: flex-end;
+  }
+  .avatar-editor-footer > p {
+    max-width: none;
+  }
+}
+@media (max-height: 700px) and (min-width: 701px) {
+  .avatar-workspace {
+    padding: 16px;
+  }
+  .avatar-crop {
+    width: 240px;
+  }
+  .avatar-adjustments input[type="range"] {
+    height: 30px;
+    min-height: 30px;
+    margin-bottom: 5px;
+  }
+  .avatar-file-note {
+    margin-bottom: 14px;
+  }
+}
+
+.avatar-settings-preview,
+.chat-group-photo {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.avatar-settings-image {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.avatar-settings-image > .user-avatar,
+.avatar-settings-image > .personal-avatar {
+  width: 100%;
+  height: 100%;
+  flex-basis: auto;
+  border-radius: inherit;
+}
+.avatar-settings-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.avatar-settings .avatar-settings-actions .button {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.avatar-settings .avatar-settings-copy h3 {
+  margin: 0 0 7px;
+  font-size: 16px;
+}
+.avatar-remove-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.avatar-save-status {
+  margin: -14px 0 22px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.modal.avatar-editor-modal {
+  max-width: calc(100vw - 40px);
+  border-radius: 24px;
+}
+.modal.avatar-editor-modal > h2 {
+  margin: 0 34px 18px 0;
+  flex-shrink: 0;
+}
+.avatar-editor-modal .modal-close {
+  top: 20px;
+  right: 20px;
+}
+.avatar-editor .avatar-adjustments input[type="range"] {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.avatar-editor-footer .button {
+  gap: 7px;
+}
+.avatar-delete-modal .field-hint {
+  line-height: 1.7;
+}
+.avatar-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+}
+.chat-group-photo {
+  position: relative;
+  flex-shrink: 0;
+  border-radius: 20px;
+  padding: 0;
+}
+.chat-group-photo > .avatar-settings-image {
+  width: 68px;
+  height: 68px;
+  font-size: 22px;
+  border-radius: 20px;
+}
+.chat-group-photo:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 5px;
+}
+.chat-group-photo:hover {
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.group-avatar-editor {
+  margin: 0 0 16px;
+}
+@media (max-width: 800px) {
+  .chat-group-photo > .avatar-settings-image {
+    width: 55px;
+    height: 55px;
+    font-size: 19px;
+    border-radius: 16px;
+  }
 }

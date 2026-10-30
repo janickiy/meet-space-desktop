@@ -14,7 +14,6 @@ import {
 import { useNavigate } from "react-router";
 import {
   ArrowLeft,
-  Camera,
   LogOut,
   MessageCircle,
   Pencil,
@@ -27,6 +26,7 @@ import {
 import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
 import { revokePersonalConversation } from "../personalRealtime";
+import { AvatarPicker } from "./AvatarPicker";
 import { loadGroupAvatar } from "../groupAvatarLoader";
 import type {
   GroupConversation,
@@ -87,77 +87,6 @@ export function ConversationAvatar({
         )
       )}
     </span>
-  );
-}
-
-function avatarError(file: File): string | undefined {
-  if (!file.size || file.size > 2 * 1024 * 1024)
-    return "Выберите изображение размером от 1 байта до 2 МБ.";
-  if (!["image/png", "image/jpeg"].includes(file.type))
-    return "Для аватара подходят PNG и JPEG.";
-}
-
-function AvatarFileField({
-  file,
-  onChange,
-  disabled,
-}: {
-  file?: File;
-  onChange: (file?: File) => void;
-  disabled: boolean;
-}) {
-  const input = useRef<HTMLInputElement>(null);
-  const [url, setUrl] = useState<string>();
-  const [error, setError] = useState("");
-  useEffect(() => {
-    if (!file) {
-      setUrl(undefined);
-      return;
-    }
-    const object = URL.createObjectURL(file);
-    setUrl(object);
-    return () => URL.revokeObjectURL(object);
-  }, [file]);
-  return (
-    <div className="group-avatar-field">
-      <button
-        type="button"
-        className="group-avatar-picker"
-        disabled={disabled}
-        aria-label="Выбрать аватар группы"
-        onClick={() => input.current?.click()}
-      >
-        {url ? <img src={url} alt="" /> : <Camera size={25} />}
-      </button>
-      <input
-        ref={input}
-        type="file"
-        accept="image/png,image/jpeg"
-        hidden
-        aria-label="Файл аватара группы"
-        disabled={disabled}
-        onChange={(event) => {
-          const selected = event.target.files?.[0];
-          event.target.value = "";
-          if (!selected) return;
-          const error = avatarError(selected);
-          setError(error || "");
-          if (!error) onChange(selected);
-        }}
-      />
-      <span>PNG или JPEG, до 2 МБ</span>
-      {file && (
-        <button
-          type="button"
-          className="text-link"
-          disabled={disabled}
-          onClick={() => onChange(undefined)}
-        >
-          Убрать выбранный аватар
-        </button>
-      )}
-      {error && <ErrorNotice>{error}</ErrorNotice>}
-    </div>
   );
 }
 
@@ -382,7 +311,8 @@ export function GroupCreateModal({ onClose }: { onClose: () => void }) {
           create.mutate();
         }}
       >
-        <AvatarFileField
+        <AvatarPicker
+          kind="group"
           file={file}
           onChange={setFile}
           disabled={create.isPending}
@@ -559,14 +489,11 @@ export function GroupInfoModal({
   const [validation, setValidation] = useState("");
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description);
-  const [file, setFile] = useState<File>();
   const [transferId, setTransferId] = useState("");
   const [removeTarget, setRemoveTarget] = useState<GroupMember>();
   const [profileId, setProfileId] = useState<string>();
   const profileTrigger = useRef<HTMLButtonElement | null>(null);
   const submitting = useRef(false);
-  const controller = useRef<AbortController | null>(null);
-  useEffect(() => () => controller.current?.abort(), []);
   const detail = useQuery({
     queryKey: ["personal-detail", group.id, user?.id],
     queryFn: ({ signal }) => api.personalConversation(group.id, signal),
@@ -656,6 +583,29 @@ export function GroupInfoModal({
     transfer: "Передать владение",
     delete: "Удалить группу",
   };
+  const photoControl = (compact: boolean) => (
+    <AvatarPicker
+      key={`${user?.id}:${group.id}:${compact}`}
+      kind="group"
+      compact={compact}
+      hasPhoto={Boolean(current.avatarVersion)}
+      disabled={mutation.isPending}
+      fallback={<ConversationAvatar conversation={current} large />}
+      loadCurrent={(signal) => api.groupAvatar(group.id, signal)}
+      onSave={async (file, signal) => {
+        const result = await api.putGroupAvatar(group.id, file, signal);
+        signal.throwIfAborted();
+        client.setQueryData(["personal-detail", group.id, user?.id], result);
+        invalidateGroup(client, group.id);
+      }}
+      onRemove={async (signal) => {
+        const result = await api.deleteGroupAvatar(group.id, signal);
+        signal.throwIfAborted();
+        client.setQueryData(["personal-detail", group.id, user?.id], result);
+        invalidateGroup(client, group.id);
+      }}
+    />
+  );
   if (accessError) return <ErrorNotice error={accessError} />;
   return (
     <>
@@ -690,7 +640,11 @@ export function GroupInfoModal({
         {(view === "info" || view === "members" || view === "files") && (
           <>
             <div className="group-identity">
-              <ConversationAvatar conversation={current} large />
+              {manages ? (
+                photoControl(true)
+              ) : (
+                <ConversationAvatar conversation={current} large />
+              )}
               <div>
                 <h3>{current.name}</h3>
                 <p>Групповой чат · {current.memberCount} участн.</p>
@@ -1034,33 +988,10 @@ export function GroupInfoModal({
                     name: name.trim(),
                     description: description.trim(),
                   });
-                  if (file) {
-                    controller.current = new AbortController();
-                    await api.putGroupAvatar(
-                      group.id,
-                      file,
-                      controller.current.signal,
-                    );
-                    setFile(undefined);
-                  }
                 }, "info");
               }}
             >
-              <AvatarFileField
-                file={file}
-                onChange={setFile}
-                disabled={mutation.isPending}
-              />
-              {current.avatarVersion && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={mutation.isPending}
-                  onClick={() => run(() => api.deleteGroupAvatar(group.id))}
-                >
-                  Удалить аватар группы
-                </Button>
-              )}
+              {manages && photoControl(false)}
               <label className="field">
                 Название группы
                 <input

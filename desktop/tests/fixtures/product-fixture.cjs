@@ -37,6 +37,7 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);
     if (route === "/auth/me/avatar") {
+      if (controls.avatarFailure) return reply({status:"failed",message:"Photo upload unavailable"},503);
       if (request.method === "PUT") {
         controls.avatar = Buffer.from(body);
         controls.avatarUploads = (controls.avatarUploads || 0) + 1;
@@ -48,6 +49,20 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
       if (!controls.avatar) return reply({ status: "failed" }, 404);
       response.writeHead(200, { "content-type": "image/jpeg", "cache-control": "private, no-store" });
       response.end(controls.avatar); return true;
+    }
+    if (route === `/conversations/${GROUP}/avatar`) {
+      if (controls.groupAvatarFailure) return reply({status:"failed",message:"Group photo unavailable"},503);
+      if (request.method === "PUT") {
+        controls.groupAvatar = Buffer.from(body);
+        controls.groupAvatarUploads = (controls.groupAvatarUploads || 0) + 1;
+        group.avatarVersion = "fixture-group-avatar-" + controls.groupAvatarUploads;
+      } else { controls.groupAvatar = null; group.avatarVersion = null; }
+      return reply({ item: group });
+    }
+    if (route === `/conversations/${GROUP}/avatar/content`) {
+      if (!controls.groupAvatar) return reply({status:"failed"},404);
+      response.writeHead(200,{"content-type":"image/jpeg","cache-control":"private, no-store"});
+      response.end(controls.groupAvatar);return true;
     }
     if (route === "/notifications/preferences") return reply({ invitation: true, reminder: true, recording: true, summary: true });
     if (route === "/capabilities" && controls.capabilityError) return reply({ status: "failed", message: "fixture capability unavailable" }, 503);
