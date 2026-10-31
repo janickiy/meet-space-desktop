@@ -1,0 +1,96 @@
+{
+  "artifact": "MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
+  "file": "MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
+  "arch": "arm64",
+  "sha256": "fd874578bf7eb5d29f4705bcfe172209b3ebe6933dead56b7faab81fa38ddb7d",
+  "sha512": "69bIY201ZDo024or2uZQ11EB7BAY15+vcjKLUuliY5BgS9PY4PfBPydhJV2BKaRczI+ASp1kxpRdrWrUFrgUYg==",
+  "bytes": 116831109,
+  "size": 116831109,
+  "payloadMachine": "0xaa64",
+  "payloadSHA256": "b986905bebc741da42a3c489f7ed21fe2de741992ef5e30c147a1a45ad698f93",
+  "appAsarSHA256": "3aa4ce810dce5aa494d8d1831764f53e81bb190024e4c47004b92c4a22141875",
+  "schemaVersion": 2,
+  "releaseMode": "test",
+  "appId": "com.janickiy.meetspace.desktop.test",
+  "sourceCommit": "470291bd86f715d02fac81f92de4ff374abf89b2",
+  "sourceDirty": false,
+  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "buildVersion": "0.3.0-beta-test",
+  "buildTime": "2026-10-31T16:36:46Z",
+  "sourceDateEpoch": 1793464606,
+  "buildHostPlatform": "darwin",
+  "buildHostArch": "arm64",
+  "builderPatch": {
+    "package": "app-builder-lib",
+    "version": "26.17.0",
+    "patch": "serialize-nsis-language-includes-v1",
+    "sourceSha256": "12dd62260619425bd6bd981336db22ca2c04c62bc1219918ced7da053e3df455"
+  },
+  "platform": "win32",
+  "requiredOS": [
+    "Windows 11 ARM64 (build 22000+)"
+  ],
+  "payloadDlls": [
+    {
+      "file": "d3dcompiler_47.dll",
+      "machine": "0xaa64",
+      "sha256": "1e59fd5cb9c3df2c38ffef93c3d858288c39a9d7c954d8bf3a9675686a2aff7f"
+    },
+    {
+      "file": "dxcompiler.dll",
+      "machine": "0xaa64",
+      "sha256": "7578d37d2d3bd573453235c3c99747878091bca1dec33889ddeecdee098e8baa"
+    },
+    {
+      "file": "dxil.dll",
+      "machine": "0xaa64",
+      "sha256": "1f1bae7a41916ce84d6b63defe47bd2815dbd29ee080a5d29f42ae8665e00bb4"
+    },
+    {
+      "file": "ffmpeg.dll",
+      "machine": "0xaa64",
+      "sha256": "ace404be205792999d4f7e039f945b123dd9363be75c775abb500c307b11e9f1"
+    },
+    {
+      "file": "vk_swiftshader.dll",
+      "machine": "0xaa64",
+      "sha256": "db0f548952870620096ad17a87f940613f23569316700448974c3782f906a1f5"
+    },
+    {
+      "file": "vulkan-1.dll",
+      "machine": "0xaa64",
+      "sha256": "08a55a2184d0f0994c7b859c9e50b560617cd0d52e7c9090a6627de5c9440fc3"
+    }
+  ],
+  "licenseFiles": [
+    {
+      "file": "LICENSE.electron.txt",
+      "bytes": 1096,
+      "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+    },
+    {
+      "file": "LICENSES.chromium.html",
+      "bytes": 20477229,
+      "sha256": "e6e6b1f9cb0f32235412be113de7716333e88121f9159a0ea0ff3be652021af7"
+    },
+    {
+      "file": "resources/THIRD_PARTY_NOTICES.txt",
+      "bytes": 131395,
+      "sha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241"
+    },
+    {
+      "file": "resources/third-party-licenses.json",
+      "bytes": 7971,
+      "sha256": "c79d67f39cba7843824eaafb3a7b4dfef731852c550f30a8c82d150180d2a59e"
+    },
+    {
+      "file": "resources/TEST-LICENSE.txt",
+      "bytes": 698,
+      "sha256": "ac5af2a793a4862f92b3145a324fb659b405a979a3a0a98e8c12cf8fdea6096f"
+    }
+  ],
+  "embeddedPayloadVerified": true,
+  "electron": "44.9.3",
+  "signed": false,
+  "windowsRuntimeTested": false
+}
