@@ -1,0 +1,77 @@
+{
+  "result": "PASS",
+  "version": "0.3.0-beta",
+  "packageCommit": "47cb0217b7eab385affa3c68ab6c91bff1d9e326",
+  "sourceCommit": "470291bd86f715d02fac81f92de4ff374abf89b2",
+  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "landingURL": "https://meet-space.janickiy.com/download",
+  "httpVerifiedPackages": 8,
+  "sha256Verified": true,
+  "uiVerifiedPackages": 8,
+  "uiErrors": [],
+  "viewports": [
+    1440,
+    390
+  ],
+  "macosUnchanged": true,
+  "androidUnchanged": true,
+  "packages": [
+    {
+      "name": "MeetSpace-0.3.0-beta-win-x64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-x64-test-setup.exe",
+      "bytes": 122289854,
+      "sha256": "c29e390236f81699b47298c85843d892714e40c3d1ab07c9e0dea8752a62640b",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
+      "bytes": 116831109,
+      "sha256": "fd874578bf7eb5d29f4705bcfe172209b3ebe6933dead56b7faab81fa38ddb7d",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-amd64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-amd64-test.deb",
+      "bytes": 100729624,
+      "sha256": "885e35d2cb5abaa7b2088fe3fd6aa1dfe26c98efea6c3ef560caad3d92d661b8",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-x86_64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-x86_64-test.rpm",
+      "bytes": 90314313,
+      "sha256": "ced52a08aed2ddde26f88bf26c8bb0bff17037d52959513c7bbca4dd891412f7",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-x86_64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-x86_64-test.AppImage",
+      "bytes": 127384809,
+      "sha256": "554c5ab4f8427014742882051866d4c0c802ac125070da66205239faf9b02709",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-arm64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-arm64-test.deb",
+      "bytes": 95795908,
+      "sha256": "7e5835f964cf20ed5071ba9ae555d585135730eb871d7ca7bd6762adceaafdd9",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-aarch64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-aarch64-test.rpm",
+      "bytes": 85933653,
+      "sha256": "aec2c71fca5f6057492b01c3982545d3c6f73400b755d68bcb626665f381bff4",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.0-beta-linux-arm64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-arm64-test.AppImage",
+      "bytes": 119399500,
+      "sha256": "1b547bf24319ee8e46d34056f58bf24078bdc5286d125e80adb3e3349cd2ccd1",
+      "result": "PASS"
+    }
+  ],
+  "checkedAt": "2026-10-31T17:03:20.288761+00:00"
+}

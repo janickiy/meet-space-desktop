@@ -1,0 +1,38 @@
+{
+  "result": "PASS",
+  "version": "0.3.0-beta",
+  "sourceCommit": "470291bd86f715d02fac81f92de4ff374abf89b2",
+  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "platforms": [
+    {
+      "os": "Ubuntu 24.04",
+      "architecture": "arm64",
+      "format": "AppImage",
+      "version": "0.3.0-beta",
+      "packageSha256": "1b547bf24319ee8e46d34056f58bf24078bdc5286d125e80adb3e3349cd2ccd1",
+      "appAsarSha256": "ea4dd124882f442904a8e54861fac7102b5d61288587414ffc7e72c8986e2ecd",
+      "running": true,
+      "profilePreserved": true,
+      "dockPinned": true,
+      "apparmorRestrictionEnabled": true
+    },
+    {
+      "os": "Windows 11",
+      "architecture": "arm64",
+      "format": "NSIS",
+      "version": "0.3.0-beta",
+      "packageSha256": "fd874578bf7eb5d29f4705bcfe172209b3ebe6933dead56b7faab81fa38ddb7d",
+      "appAsarSha256": "3aa4ce810dce5aa494d8d1831764f53e81bb190024e4c47004b92c4a22141875",
+      "installerExitCode": 0,
+      "running": true,
+      "profilePreserved": true,
+      "shortcutNames": [
+        "MeetSpace.lnk",
+        "MeetSpace.lnk"
+      ],
+      "temporaryTaskRemoved": true
+    }
+  ],
+  "scope": "Installed package/payload identity, application launch in user session, profile preservation and launchers. Visual UTM acceptance pending: host Mac is locked. Settings UI verified separately against local HTTPS fixture.",
+  "checkedAt": "2026-10-31T16:57:19.127253+00:00"
+}
