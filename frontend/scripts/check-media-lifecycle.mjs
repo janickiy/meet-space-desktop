@@ -77,6 +77,23 @@ class Stream {
     this.tracks = this.tracks.filter((item) => item !== track);
   }
 }
+// Lifecycle-only Web Audio stand-in. The Electron microphone-gain check verifies
+// actual signal levels across two RTCPeerConnections with the production class.
+class AudioContextFixture {
+  static all = [];
+  state = "suspended";
+  constructor() { AudioContextFixture.all.push(this); }
+  node(properties = {}) {
+    return { ...properties, connect(next) { return next; }, disconnect() {} };
+  }
+  createMediaStreamSource() { return this.node(); }
+  createGain() { return this.node({ gain: { value: 1 } }); }
+  createMediaStreamDestination() {
+    return this.node({ stream: new Stream([new Track("audio")]) });
+  }
+  async resume() { this.state = "running"; }
+  async close() { this.state = "closed"; }
+}
 class Peer {
   static all = [];
   constructor(options) {
@@ -140,6 +157,7 @@ function install(
   capture = async () => new Stream([new Track("audio"), new Track("video")]),
 ) {
   globalThis.MediaStream = Stream;
+  globalThis.AudioContext = AudioContextFixture;
   globalThis.RTCPeerConnection = Peer;
   globalThis.RTCRtpReceiver = { getCapabilities: () => ({ codecs: [] }) };
   Object.defineProperty(globalThis, "navigator", {
@@ -1552,7 +1570,9 @@ await test("unplug before media.joined updates intent and never publishes the en
     await client.queue;
     const pc = Peer.all.at(-1);
     assert.equal(pc.transceivers[1].sender.track, null);
-    assert.equal(pc.transceivers[0].sender.track, microphone);
+    assert.notEqual(pc.transceivers[0].sender.track, microphone);
+    assert.equal(pc.transceivers[0].sender.track.kind, "audio");
+    assert.equal(pc.transceivers[0].sender.track.readyState, "live");
     assert.equal(captures, 1, "unplugging never enables a replacement device");
   } finally {
     client.stop();
@@ -1597,7 +1617,10 @@ await test("successful switch releases the previous input; busy replacement keep
     await client.changeSource("microphone", true, "headset");
     assert.equal(original.readyState, "ended");
     assert.equal(replacement.readyState, "live");
-    assert.equal(pc.transceivers[0].sender.track, replacement);
+    const processed = pc.transceivers[0].sender.track;
+    assert.notEqual(processed, replacement);
+    assert.equal(processed.kind, "audio");
+    assert.equal(processed.readyState, "live");
     let requests = 0;
     navigator.mediaDevices.getUserMedia = async () => {
       requests++;
@@ -1605,7 +1628,7 @@ await test("successful switch releases the previous input; busy replacement keep
     };
     await client.changeSource("microphone", true, "busy-headset");
     assert.equal(requests, 1);
-    assert.equal(pc.transceivers[0].sender.track, replacement);
+    assert.equal(pc.transceivers[0].sender.track, processed);
     assert.equal(replacement.readyState, "live");
     assert.match(client.snapshot().error, /занято другим приложением/);
   } finally {
@@ -1633,7 +1656,7 @@ await test("input ending during sender replacement is detached before deferred s
     const sender = pc.transceivers[index].sender;
     sender.replaceTrack = async (track) => {
       calls.push(track);
-      if (track === replacement) {
+      if (track && track.kind === kind) {
         entered.resolve();
         await first.promise;
       } else if (track === null) {
@@ -1678,7 +1701,12 @@ await test("input ending during sender replacement is detached before deferred s
         1,
         "a lost replacement never starts another device",
       );
-      assert.deepEqual(calls, [replacement, null]);
+      assert.equal(calls.length, 2);
+      assert.equal(calls[1], null);
+      assert.equal(calls[0].kind, kind);
+      assert.equal(calls[0].readyState, "ended");
+      if (source === "camera") assert.equal(calls[0], replacement);
+      else assert.notEqual(calls[0], replacement);
     } finally {
       first.resolve();
       cleanup.resolve();
@@ -2275,16 +2303,27 @@ await test("reused notification player applies system output after clearing a sa
     sound.notify("first");
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(players[0].plays, 1);
+    assert.equal(players[0].volume, 0.35);
     now += 2000;
     preferences.saveDevicePreferences("fixture-user", {
       ...preferences.readDevicePreferences("fixture-user"),
       notificationOutputId: "",
+      signalVolume: 0,
     });
     sound.notify("second");
     await new Promise((resolve) => setImmediate(resolve));
     assert.equal(players.length, 1);
     assert.equal(players[0].plays, 2);
-    assert.deepEqual(players[0].routes, ["headset", ""]);
+    assert.equal(players[0].volume, 0);
+    preferences.saveDevicePreferences("fixture-user", {
+      ...preferences.readDevicePreferences("fixture-user"), signalVolume: 25,
+    });
+    now += 2000;
+    sound.notify("quarter");
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(players[0].volume, 0.0875);
+    assert.equal(players[0].plays, 3);
+    assert.deepEqual(players[0].routes, ["headset", "", ""]);
   } finally {
     sound.dispose();
     Date.now = originalNow;
@@ -2359,4 +2398,9 @@ await test("notification output preference changes invalidate delayed playback o
     sound.dispose();
     Date.now = originalNow;
   }
+});
+
+await test("outgoing microphone contexts are released after every lifecycle scenario", () => {
+  assert.ok(AudioContextFixture.all.length > 0);
+  assert.ok(AudioContextFixture.all.every((context) => context.state === "closed"));
 });

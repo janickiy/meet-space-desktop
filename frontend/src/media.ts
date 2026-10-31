@@ -1,3 +1,5 @@
+import { MicrophoneGain } from "./microphoneGain";
+import { volumePercent } from "./prejoinDevices";
 import type { ClientRealtimeType } from "./realtime";
 import type { RealtimeEvent } from "./types";
 import { summarizeRtcStats, type RtcCounters } from "./mediaDiagnostics";
@@ -36,6 +38,7 @@ export interface MediaPolicy {
 }
 
 export interface MediaStartOptions {
+  microphoneVolume?: number;
   audioInputId?: string;
   videoInputId?: string;
   microphoneEnabled?: boolean;
@@ -324,6 +327,9 @@ export class ConferenceMediaClient {
   private localRevision = 0;
   private preferredInputs = new Map<MediaSource, string>();
   private noiseSuppression = true;
+  private microphoneVolume = 100;
+  private microphoneGain: MicrophoneGain | null = null;
+  private pendingMicrophoneGain: MicrophoneGain | null = null;
   private receiveVideo = true;
   private configuredInputs = new Map<MediaSource, string>();
   private answeredLocalRevision = -1;
@@ -452,6 +458,9 @@ export class ConferenceMediaClient {
   stop() {
     if (this.disposed) return;
     this.disposed = true;
+    this.microphoneGain?.dispose();
+    this.pendingMicrophoneGain?.dispose();
+    this.microphoneGain = this.pendingMicrophoneGain = null;
     this.screenRevision++;
     clearTimeout(this.timer);
     clearTimeout(this.disconnectedTimer);
@@ -526,6 +535,7 @@ export class ConferenceMediaClient {
   async start(captureDevices = true, options?: MediaStartOptions) {
     if (this.started || this.disposed) return;
     this.started = true;
+    this.microphoneVolume = volumePercent(options?.microphoneVolume);
     this.noiseSuppression = options?.noiseSuppression !== false;
     this.receiveVideo = options?.hideParticipantVideo !== true;
     this.configuredInputs.set("microphone", options?.audioInputId || "");
@@ -835,6 +845,11 @@ export class ConferenceMediaClient {
    */
   /** Applies account settings without enabling a muted microphone or camera. */
   configure(options: MediaStartOptions) {
+    if (!this.disposed && options.microphoneVolume !== undefined) {
+      this.microphoneVolume = volumePercent(options.microphoneVolume);
+      this.microphoneGain?.setVolume(this.microphoneVolume);
+      this.pendingMicrophoneGain?.setVolume(this.microphoneVolume);
+    }
     if (this.disposed || !this.pc || this.view.controlBusy) return;
     if (this.noiseSuppression !== (options.noiseSuppression !== false)) {
       this.noiseSuppression = options.noiseSuppression !== false;
@@ -873,6 +888,11 @@ export class ConferenceMediaClient {
 
   /** Release hardware immediately; sender renegotiation remains serialized. */
   private stopCapturedSources(sources: MediaSource[]) {
+    if (sources.includes("microphone")) {
+      this.microphoneGain?.dispose();
+      this.pendingMicrophoneGain?.dispose();
+      this.microphoneGain = this.pendingMicrophoneGain = null;
+    }
     const tracks = new Set<MediaStreamTrack>();
     for (const source of sources) {
       const stream = source.endsWith("/screen") ? this.screen : this.local;
@@ -920,7 +940,34 @@ export class ConferenceMediaClient {
       return;
     }
     const previous = slot.track;
-    await slot.sender.replaceTrack(track);
+    let nextGain: MicrophoneGain | null = null;
+    try {
+      if (source === "microphone" && track) {
+        nextGain = new MicrophoneGain(track, this.microphoneVolume);
+        this.pendingMicrophoneGain = nextGain;
+        await nextGain.ready();
+      }
+      if (
+        this.disposed ||
+        (track && (track.readyState === "ended" || this.sourceBlocked(source)))
+      ) {
+        nextGain?.dispose();
+        track?.stop();
+        return;
+      }
+      await slot.sender.replaceTrack(nextGain?.track || track);
+    } catch (error) {
+      nextGain?.dispose();
+      throw error;
+    } finally {
+      if (this.pendingMicrophoneGain === nextGain)
+        this.pendingMicrophoneGain = null;
+    }
+    if (source === "microphone") {
+      this.microphoneGain?.dispose();
+      this.microphoneGain = this.disposed ? null : nextGain;
+    }
+    if (this.disposed) nextGain?.dispose();
     if (this.disposed) {
       track?.stop();
       return;
@@ -1671,11 +1718,12 @@ export class ConferenceMediaClient {
         data.iceTransportPolicy !== "relay"
       )
         throw new Error("invalid_ice_policy");
-      this.createPeer(
+      await this.createPeer(
         data.iceServers as RTCIceServer[],
         Number(data.maxPeers),
         data.iceTransportPolicy === "relay" ? "relay" : "all",
       );
+      if (this.disposed) return;
       this.refreshLocal();
       await this.offer();
       return;
@@ -1844,7 +1892,7 @@ export class ConferenceMediaClient {
    *
    * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
    */
-  private createPeer(
+  private async createPeer(
     iceServers: RTCIceServer[],
     maxPeers: number,
     iceTransportPolicy: RTCIceTransportPolicy = "all",
@@ -1882,9 +1930,31 @@ export class ConferenceMediaClient {
              * @returns true, если проверяемый элемент удовлетворяет условию; false в противном случае.
              */ (t) => t.kind === kind && t.readyState === "live",
           ) || null;
-      const transceiver = pc.addTransceiver(track || kind, {
-        direction: track ? "sendrecv" : "recvonly",
-        ...(track ? { streams: [this.local!] } : {}),
+      let outgoing = track;
+      if (source === "microphone" && track) {
+        const processed = new MicrophoneGain(track, this.microphoneVolume);
+        this.pendingMicrophoneGain = processed;
+        try {
+          await processed.ready();
+        } finally {
+          if (this.pendingMicrophoneGain === processed)
+            this.pendingMicrophoneGain = null;
+        }
+        if (this.disposed) {
+          processed.dispose();
+          return;
+        }
+        if (track.readyState !== "live" || this.sourceBlocked(source)) {
+          processed.dispose();
+          outgoing = null;
+        } else {
+          this.microphoneGain = processed;
+          outgoing = processed.track;
+        }
+      }
+      const transceiver = pc.addTransceiver(outgoing || kind, {
+        direction: outgoing ? "sendrecv" : "recvonly",
+        ...(outgoing ? { streams: [this.local!] } : {}),
       });
       this.sources.set(source, {
         sender: transceiver.sender,
@@ -2114,7 +2184,9 @@ export class ConferenceMediaClient {
            * @returns true, если проверяемый элемент удовлетворяет условию; false в противном случае.
            */
           ([, slot]) =>
-            slot.track?.readyState === "live" && slot.transceiver.mid !== null,
+            slot.track?.readyState === "live" &&
+            slot.sender.track?.readyState === "live" &&
+            slot.transceiver.mid !== null,
         )
         .map(
           /**
@@ -2127,7 +2199,7 @@ export class ConferenceMediaClient {
            */ ([source, slot]) => ({
             mid: slot.transceiver.mid!,
             source,
-            trackId: slot.track!.id,
+            trackId: slot.sender.track!.id,
           }),
         ),
     });

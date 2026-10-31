@@ -502,10 +502,9 @@ function CallRinging({
     if (call.status !== "ringing" || (!incoming && !owned)) return;
     const audio = new Audio(toneURL);
     audio.loop = true;
-    audio.volume = 0.25;
+    audio.volume = (0.25 * preferences.signalVolume) / 100;
     let disposed = false;
     let release: (() => void) | undefined;
-    const preferences = readDevicePreferences(userId);
     const play = async () => {
       if (!preferences.notificationSounds || disposed) return;
       if (preferences.notificationOutputId && "setSinkId" in audio)
@@ -541,7 +540,16 @@ function CallRinging({
       audio.load();
       if (player.current === audio) player.current = null;
     };
-  }, [call.id, call.status, incoming, owned, userId]);
+  }, [
+    call.id,
+    call.status,
+    incoming,
+    owned,
+    userId,
+    preferences.signalVolume,
+    preferences.notificationSounds,
+    preferences.notificationOutputId,
+  ]);
   const label =
     call.status === "ringing"
       ? incoming

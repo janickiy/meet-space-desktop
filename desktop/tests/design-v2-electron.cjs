@@ -74,8 +74,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     await click(`input[type=radio][value=${theme}]`);
     await until(()=>execute(`document.documentElement.dataset.theme===${JSON.stringify(theme)}`),'theme applied');
     await capture('settings-'+theme);
-    await tab('Устройства');
-    await until(()=>execute(`!!document.querySelector('#devices-heading') && !!document.querySelector('select[aria-label="Камера"]') && !!document.querySelector('select[aria-label="Микрофон"]')`),'camera and microphone share the devices section');
+    await tab('Аудио');
+    await until(()=>execute(`!!document.querySelector('#devices-heading') && !!document.querySelector('select[aria-label="Микрофон"]')`),'audio settings are available');
     await capture('devices-'+theme);
     for(const [name,url,ready] of pages){
       await route(url);await visible(ready);await capture(name+'-'+theme);

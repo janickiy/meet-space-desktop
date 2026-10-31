@@ -13,6 +13,7 @@ import { Button, ErrorNotice, Loading } from "./ui";
 import { playDeviceTone } from "../deviceSound";
 import {
   readDevicePreferences,
+  signalGain,
   saveDevicePreferences,
   subscribeDevicePreferences,
 } from "../prejoinDevices";
@@ -82,7 +83,7 @@ export function IntegrationsSettings({
       >
         <div className="account-settings-section-heading">
           <h2>Уведомления</h2>
-          <p>Выберите события и каналы доставки</p>
+          <p>Выберите события и каналы доставки.</p>
         </div>
         <ErrorNotice error={preferences.error || capabilities.error} />
         {preferences.isPending || capabilities.isPending ? (
@@ -219,7 +220,14 @@ function PreferencesForm({
 }) {
   const { user } = useAuth();
   const client = useQueryClient();
-  const [draft, setDraft] = useState(initial);
+  const [draft, setDraft] = useState<NotificationPreferences>(() => ({
+    invitation: initial.invitation,
+    reminder: initial.reminder,
+    recording: initial.recording,
+    summary: initial.summary,
+    email: initial.email,
+    push: initial.push,
+  }));
   const [soundEnabled, setSoundEnabled] = useState(
     () => readDevicePreferences(user?.id || "").notificationSounds,
   );
@@ -251,24 +259,21 @@ function PreferencesForm({
     >
       <fieldset className="preferences-fieldset">
         <legend>События</legend>
-        {(["invitation", "reminder", "recording", "summary"] as const).map(
-          (name) => (
-            <label className="preference-option" key={name}>
-              <input
-                type="checkbox"
-                checked={draft[name]}
-                onChange={(event) =>
-                  setDraft({ ...draft, [name]: event.target.checked })
-                }
-              />
-              <span className="preference-copy">
-                <span className="preference-title">
-                  {preferenceLabels[name]}
-                </span>
-              </span>
-            </label>
-          ),
-        )}
+        {(["invitation", "reminder", "recording"] as const).map((name) => (
+          <label className="preference-option preference-checkbox" key={name}>
+            <input
+              type="checkbox"
+              checked={draft[name]}
+              onChange={(event) => {
+                save.reset();
+                setDraft({ ...draft, [name]: event.target.checked });
+              }}
+            />
+            <span className="preference-copy">
+              <span className="preference-title">{preferenceLabels[name]}</span>
+            </span>
+          </label>
+        ))}
       </fieldset>
       <fieldset className="preferences-fieldset">
         <legend>Звук уведомлений</legend>
@@ -315,34 +320,31 @@ function PreferencesForm({
                     ),
                   );
               },
-              0.35,
+              signalGain(readDevicePreferences(user?.id || "").signalVolume),
             );
           }}
         >
-          {previewing
-            ? "Воспроизводится…"
-            : isDesktopBuild
-              ? "Проверить устройство"
-              : "Проверить звук"}
+          {previewing ? "Воспроизводится…" : "Проверить звук"}
         </Button>
         <p className="field-hint">
           {isDesktopBuild
-            ? "Системные уведомления используют звук и устройство вывода системы. Эта кнопка проверяет выбранное устройство приложения. В чатах с отключёнными уведомлениями сигнал не звучит."
+            ? "Громкость сигналов и устройство вывода выбираются в разделе «Аудио». В чатах с отключёнными уведомлениями сигнал не звучит."
             : "Если браузер ограничивает воспроизведение, сначала нажмите любую кнопку в приложении. В чатах с отключёнными уведомлениями сигнал не звучит."}
         </p>
         <ErrorNotice error={soundError} />
       </fieldset>
       <fieldset className="preferences-fieldset">
         <legend>Каналы доставки</legend>
-        {(["email", "push"] as const).map((name) => (
-          <label className="preference-option" key={name}>
+        {(["email"] as const).map((name) => (
+          <label className="preference-option preference-checkbox" key={name}>
             <input
               type="checkbox"
               disabled={capabilities[name] === "noop"}
               checked={draft[name]}
-              onChange={(event) =>
-                setDraft({ ...draft, [name]: event.target.checked })
-              }
+              onChange={(event) => {
+                save.reset();
+                setDraft({ ...draft, [name]: event.target.checked });
+              }}
             />
             <span className="preference-copy">
               <span className="preference-title">{preferenceLabels[name]}</span>
@@ -352,11 +354,7 @@ function PreferencesForm({
         ))}
       </fieldset>
       <div className="preferences-actions">
-        <p className="field-hint">
-          Push требует зарегистрированного поддерживаемого устройства. Этот
-          браузер не запрашивает разрешение, если доставка не настроена.
-        </p>
-        {(capabilities.email === "mock" || capabilities.push === "mock") && (
+        {capabilities.email === "mock" && (
           <p className="demo-notice">
             Тестовый канал не отправляет реальные сообщения.
           </p>

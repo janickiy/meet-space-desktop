@@ -175,13 +175,14 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     assert.equal(await execute("!!document.querySelector('.reference-settings-page [role=tablist]') && !document.querySelector('.account-settings-modal')"), true);
     const settingsLabels = await execute("[...document.querySelectorAll('.reference-settings-page [role=tab]')].map(e=>e.textContent)");
     assert.ok(settingsLabels.some(label => label.includes("Внешний вид")));
-    assert.ok(settingsLabels.some(label => label.includes("Устройства")));
+    assert.ok(settingsLabels.some(label => label.includes("Аудио")));
     assert.ok(settingsLabels.some(label => /Приложение|Компьютер|Windows/.test(label)), "Native settings are available on the settings page");
     assert.equal(await execute("[...document.querySelectorAll('.reference-settings-page button')].some(button=>button.textContent.trim()==='Выйти из аккаунта')"), true, "Account logout remains accessible on the profile page");
     checks.push(...await require('./avatar-editor-checks.cjs')({execute,until,visible,click,clickText,route,fixture,window,GROUP,
       directory:process.argv[3] || path.resolve(__dirname,'../artifacts/avatar-editor')}));
     const screenshotDirectory = process.argv[3] || path.resolve(__dirname, "../artifacts");
     await fs.mkdir(screenshotDirectory, { recursive: true });
+    checks.push(...await require("./settings-media-checks.cjs")({execute,until,visible,click,clickText,field,route,fixture,window,directory:screenshotDirectory}));
     window.setSize(1280, 900);
     for (const theme of ["light", "dark"]) {
       await clickText("Внешний вид"); await click(`input[type=radio][value=${theme}]`);

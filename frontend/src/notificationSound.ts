@@ -5,6 +5,7 @@ import toneURL from "./assets/device-tone.wav";
 import { routeAudioOutput } from "./mediaDevices";
 import {
   readDevicePreferences,
+  signalGain,
   subscribeDevicePreferences,
 } from "./prejoinDevices";
 
@@ -15,7 +16,7 @@ export function createNotificationSound(userId: string) {
     !isDesktopBuild || (!!profileId && desktopServerID() === profileId);
   const audio = new Audio(toneURL);
   audio.preload = "auto";
-  audio.volume = 0.35;
+  audio.volume = signalGain(readDevicePreferences(userId).signalVolume);
   let disposed = false;
   let unlocked = false;
   let priming: Promise<void> | undefined;
@@ -61,6 +62,7 @@ export function createNotificationSound(userId: string) {
     )
       playbackRevision++;
     soundPreferences = preferences;
+    audio.volume = signalGain(preferences.signalVolume);
     if (!preferences.notificationSounds) audio.pause();
   });
 
@@ -125,6 +127,7 @@ export function createNotificationSound(userId: string) {
     );
     if (routed === "unavailable" || routed === "superseded") return;
     if (!isCurrent()) return;
+    audio.volume = signalGain(readDevicePreferences(userId).signalVolume);
     audio.currentTime = 0;
     await audio.play().catch(() => {});
   };

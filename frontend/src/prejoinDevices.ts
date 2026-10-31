@@ -7,6 +7,8 @@ export interface DevicePreferences {
   videoInputId: string;
   audioOutputId: string;
   outputVolume: number;
+  microphoneVolume: number;
+  signalVolume: number;
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
   notificationOutputId: string;
@@ -35,6 +37,8 @@ const emptyPreferences: DevicePreferences = {
   videoInputId: "",
   audioOutputId: "",
   outputVolume: 100,
+  microphoneVolume: 100,
+  signalVolume: 100,
   microphoneEnabled: true,
   cameraEnabled: true,
   notificationOutputId: "",
@@ -45,6 +49,13 @@ const emptyPreferences: DevicePreferences = {
 };
 
 const key = (userId: string) => `meet.devices.v1:${scope(userId)}`;
+/** Invalid/missing values retain the pre-slider level on existing installations. */
+export const volumePercent = (value: unknown): number =>
+  typeof value === "number" && Number.isFinite(value)
+    ? Math.min(100, Math.max(0, value))
+    : 100;
+export const signalGain = (value: number) =>
+  (0.35 * volumePercent(value)) / 100;
 const safeId = (value: unknown) =>
   typeof value === "string" && value.length <= 512 ? value : "";
 
@@ -66,6 +77,8 @@ export function readDevicePreferences(userId: string): DevicePreferences {
         Number.isFinite(value.outputVolume)
           ? Math.min(100, Math.max(0, value.outputVolume))
           : 100,
+      microphoneVolume: volumePercent(value.microphoneVolume),
+      signalVolume: volumePercent(value.signalVolume),
       microphoneEnabled: value.microphoneEnabled === true,
       cameraEnabled: value.cameraEnabled === true,
       notificationOutputId: safeId(value.notificationOutputId),

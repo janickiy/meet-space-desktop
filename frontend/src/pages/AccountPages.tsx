@@ -10,6 +10,7 @@ import {
   Search,
   Palette,
   Video,
+  Mic,
   Server,
   LogOut,
   Sun,
@@ -61,7 +62,8 @@ export function SettingsPage() {
           { id: "accounts", label: "Аккаунты", Icon: UsersRound },
         ]
       : []),
-    { id: "devices", label: "Устройства", Icon: Video },
+    { id: "audio", label: "Аудио", Icon: Mic },
+    { id: "video", label: "Видео", Icon: Video },
     ...(!guest
       ? [{ id: "notifications", label: "Уведомления", Icon: Bell }]
       : []),
@@ -77,18 +79,32 @@ export function SettingsPage() {
     const section = window.location.hash;
     if (section === "#accounts" && !guest) return "accounts";
     return ["#audio-video", "#audio-settings"].includes(section)
-      ? "devices"
+      ? "audio"
       : section === "#video-settings"
-        ? "devices"
+        ? "video"
         : section === "#notification-settings" && !guest
           ? "notifications"
           : section === "#appearance-settings"
             ? "appearance"
             : guest
-              ? "devices"
+              ? "audio"
               : "profile";
   });
   useEffect(() => {
+    const mediaTab = [
+      "#audio-video",
+      "#audio-settings",
+      "#devices",
+      "#audio",
+    ].includes(location.hash)
+      ? "audio"
+      : ["#video-settings", "#video"].includes(location.hash)
+        ? "video"
+        : null;
+    if (mediaTab) {
+      setActiveSection(mediaTab);
+      setMobileSectionOpen(true);
+    }
     if (location.hash === "#accounts" && !guest) {
       setActiveSection("accounts");
       setMobileSectionOpen(true);
@@ -252,7 +268,7 @@ export function SettingsPage() {
         </div>
       </div>
       <div
-        className={`account-dialog-panel settings-section-content ${activeSection === "devices" ? "account-media-panel" : ""}`}
+        className={`account-dialog-panel settings-section-content ${["audio", "video"].includes(activeSection) ? "account-media-panel" : ""}`}
         role="tabpanel"
         id={`${prefix}-${activeSection}-panel`}
         aria-labelledby={`${prefix}-${activeSection}-tab`}
@@ -354,7 +370,9 @@ export function SettingsPage() {
           </section>
         )}
         {activeSection === "accounts" && !guest && <AccountManagement />}
-        {activeSection === "devices" && <DeviceSettings />}
+        {(activeSection === "audio" || activeSection === "video") && (
+          <DeviceSettings key={activeSection} section={activeSection} />
+        )}
         {activeSection === "connection" && isDesktopBuild && (
           <DesktopConnectionSettings />
         )}

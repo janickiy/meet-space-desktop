@@ -36,6 +36,16 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     const reply = (body, status = 200) => { send(response, status, { status: "success", ...body }); return true; };
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);
+    if (route === "/integrations/capabilities") return reply({ email:"smtp", push:"noop", calendar:"noop", calendarOAuthConfigured:false });
+    if (route === "/notifications/preferences") {
+      controls.notificationPreferences ||= {invitation:true,reminder:true,recording:true,summary:true,email:true,push:true};
+      if (request.method === "PUT") {
+        controls.savedNotificationPreferences = { ...body };
+        controls.notificationPreferences = controls.savedNotificationPreferences;
+      }
+      return reply(controls.notificationPreferences);
+    }
+
     if (route === "/auth/me/avatar") {
       if (controls.avatarFailure) return reply({status:"failed",message:"Photo upload unavailable"},503);
       if (request.method === "PUT") {

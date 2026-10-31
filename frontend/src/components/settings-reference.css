@@ -471,3 +471,189 @@
     transition: none;
   }
 }
+
+/* Audio/video cards and notification choices from decs_maket 7248a87. */
+.settings-audio-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+.settings-audio-cards > .settings-device-card:first-child {
+  grid-column: 1 / -1;
+}
+.account-dialog-panel .settings-device-card {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--surface);
+}
+.settings-device-card > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.settings-device-card > header > svg {
+  color: var(--primary);
+  flex: 0 0 auto;
+}
+.settings-device-card > header > h3 {
+  margin: 0;
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+}
+.settings-device-card > header > .device-level {
+  margin-left: auto;
+}
+.settings-device-card .device-select-row {
+  display: flex;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+.settings-device-card .device-select-row .device-select {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+.settings-device-card .device-test {
+  flex-shrink: 0;
+  min-height: 41px;
+  white-space: nowrap;
+}
+.settings-device-card .device-hint {
+  margin: 10px 0 14px;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.6;
+  color: var(--muted);
+}
+.settings-device-card .settings-device-field {
+  gap: 10px;
+}
+.settings-device-card .settings-volume {
+  margin-top: 18px;
+}
+.settings-device-card .settings-volume > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-device-card .settings-volume output {
+  color: var(--primary);
+  background: var(--primary-soft);
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: calc(11px * var(--text-scale));
+  font-variant-numeric: tabular-nums;
+}
+.settings-device-card .settings-volume input {
+  width: 100%;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+}
+.settings-device-card .settings-device-toggles {
+  margin-top: 14px;
+}
+.account-dialog-panel .settings-device-card .device-toggle-row {
+  padding: 14px 0;
+  gap: 18px;
+}
+.account-dialog-panel .settings-device-card .device-toggle-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.settings-device-card > .device-test {
+  margin-top: 14px;
+}
+.account-dialog-panel .settings-video-card .settings-camera-preview {
+  min-height: 220px;
+  height: 260px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+.settings-video-card > .settings-device-field {
+  max-width: 460px;
+}
+.settings-autosave {
+  margin-top: 22px;
+}
+.account-dialog-panel .preferences-form > .preferences-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin: 0 0 22px;
+  padding: 12px 20px 20px;
+  min-width: 0;
+}
+.account-dialog-panel .preferences-fieldset > legend {
+  padding: 0 8px;
+  margin-left: -8px;
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+}
+.account-dialog-panel .preference-option.preference-checkbox {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border: 0;
+  cursor: pointer;
+}
+.account-dialog-panel .preference-checkbox > input[type="checkbox"] {
+  appearance: auto;
+  position: static;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: none;
+  box-shadow: none;
+  accent-color: var(--primary);
+}
+.account-dialog-panel .preference-checkbox > input[type="checkbox"]::after {
+  content: none;
+}
+.account-dialog-panel .preference-checkbox .preference-title {
+  font-size: calc(12px * var(--text-scale));
+  font-weight: 500;
+  line-height: 17px;
+}
+.account-dialog-panel .preference-checkbox .field-hint {
+  font-size: calc(11px * var(--text-scale));
+  margin-top: 6px;
+  line-height: 1.5;
+}
+.account-dialog-panel .preferences-actions {
+  padding-top: 0;
+}
+.account-dialog-panel
+  .preferences-fieldset
+  .preference-option:not(.preference-checkbox) {
+  border-bottom: 0;
+  padding: 12px 0 18px;
+}
+@media (max-width: 1100px) {
+  .settings-audio-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-audio-cards > .settings-device-card:first-child {
+    grid-column: auto;
+  }
+}
+@media (max-width: 767px) {
+  .account-dialog-panel .settings-device-card {
+    padding: 16px;
+  }
+  .account-dialog-panel .preferences-form > .preferences-fieldset {
+    padding: 12px 16px 16px;
+  }
+}
