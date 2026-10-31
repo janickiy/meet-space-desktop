@@ -1,0 +1,76 @@
+{
+  "result": "PASS",
+  "version": "0.3.1-beta",
+  "packageCommit": "f664357992831f4980e6ad14520758378fb81d8e",
+  "sourceCommit": "21e3e196dac809b5f7f8c1f626666d2ea0a82921",
+  "sourceTreeSha256": "36dcc6351cf8d8122e4f6a63be774342a9cb4e72932fa0be7a25a77f0f25ae87",
+  "landingURL": "https://meet-space.janickiy.com/download",
+  "landingRelease": "landing-20261031T211024Z-desktop-0.3.1-beta",
+  "httpVerifiedPackages": 8,
+  "sha256Verified": true,
+  "landingCatalogVerifiedPackages": 8,
+  "landingStaticFallbackVerified": true,
+  "nonDesktopCatalogUnchanged": true,
+  "macosUnchanged": true,
+  "androidUnchanged": true,
+  "packages": [
+    {
+      "name": "MeetSpace-0.3.1-beta-win-x64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/windows/0.3.1-beta/MeetSpace-0.3.1-beta-win-x64-test-setup.exe",
+      "bytes": 122292045,
+      "sha256": "823ea1707b2c31b0d7677b4e9b4c34be3a6f5588a7f9f1a0818a077f1acf5a1a",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-win-arm64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/windows/0.3.1-beta/MeetSpace-0.3.1-beta-win-arm64-test-setup.exe",
+      "bytes": 116833336,
+      "sha256": "8b52a0aa23523fd9e6611a735f44b4524411ef1060c9bad29e7036b9c44329b1",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-amd64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/DEB/MeetSpace-0.3.1-beta-linux-amd64-test.deb",
+      "bytes": 100729476,
+      "sha256": "a5386a415757f6477ab4c2838c59987c3242bbf7f4862b8ca3a331c091f09b54",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-x86_64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/RPM/MeetSpace-0.3.1-beta-linux-x86_64-test.rpm",
+      "bytes": 90312797,
+      "sha256": "45bcf82d2a351f01efdb4c98acbbd5f94105bdb043a23cd667a8021b720553ed",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-x86_64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/AppImage/MeetSpace-0.3.1-beta-linux-x86_64-test.AppImage",
+      "bytes": 127385050,
+      "sha256": "5a2f45058072339b6d0134977551514cd86ed941bbe26ffd386f35e27551b772",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-arm64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/DEB/MeetSpace-0.3.1-beta-linux-arm64-test.deb",
+      "bytes": 95795760,
+      "sha256": "79dda8534dd771485ca072e014ac9369645c9890a837a6f4954904f89256f7d2",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-aarch64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/RPM/MeetSpace-0.3.1-beta-linux-aarch64-test.rpm",
+      "bytes": 85929193,
+      "sha256": "a1a6e20e8f9574e5549bea9d64a3db64ef88b7f71f408b130eaa284d00515a0e",
+      "result": "PASS"
+    },
+    {
+      "name": "MeetSpace-0.3.1-beta-linux-arm64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/f664357992831f4980e6ad14520758378fb81d8e/source/linux/0.3.1-beta/AppImage/MeetSpace-0.3.1-beta-linux-arm64-test.AppImage",
+      "bytes": 119399639,
+      "sha256": "255d955ab6908baaa47d3bf8c90b84eb75fc1ff093e82a507c40be88b52c5231",
+      "result": "PASS"
+    }
+  ],
+  "scope": "All eight public files downloaded and matched by SHA-256 and byte size. Live HTML/default download links and all eight JavaScript package entries verified. Outside Windows/Linux package metadata and release links the served JavaScript is byte-identical to the preceding release. No new installer execution in UTM for this publication.",
+  "checkedAt": "2026-10-31T21:19:20.437390+00:00"
+}
