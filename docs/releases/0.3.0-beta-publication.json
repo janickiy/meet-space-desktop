@@ -1,77 +1,82 @@
 {
   "result": "PASS",
   "version": "0.3.0-beta",
-  "packageCommit": "47cb0217b7eab385affa3c68ab6c91bff1d9e326",
-  "sourceCommit": "470291bd86f715d02fac81f92de4ff374abf89b2",
-  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "packageCommit": "a9cd3135eb1918d72457b82e64d3b6d341effd51",
+  "sourceCommit": "c783cacbc491a7c609a337eb93ac8b04f541fd00",
+  "sourceTreeSha256": "cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761",
   "landingURL": "https://meet-space.janickiy.com/download",
   "httpVerifiedPackages": 8,
   "sha256Verified": true,
-  "uiVerifiedPackages": 8,
-  "uiErrors": [],
-  "viewports": [
-    1440,
-    390
-  ],
   "macosUnchanged": true,
   "androidUnchanged": true,
   "packages": [
     {
       "name": "MeetSpace-0.3.0-beta-win-x64-test-setup.exe",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-x64-test-setup.exe",
-      "bytes": 122289854,
-      "sha256": "c29e390236f81699b47298c85843d892714e40c3d1ab07c9e0dea8752a62640b",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-x64-test-setup.exe",
+      "bytes": 122289635,
+      "sha256": "7d9bb6a9fb265c2c1e6fb7bb000c2f65a79107f07e23b84602bc91e03f183426",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
-      "bytes": 116831109,
-      "sha256": "fd874578bf7eb5d29f4705bcfe172209b3ebe6933dead56b7faab81fa38ddb7d",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/windows/0.3.0-beta/MeetSpace-0.3.0-beta-win-arm64-test-setup.exe",
+      "bytes": 116830924,
+      "sha256": "7c86372be83de01f88663aed866459c841cfea4d981b00f8ee75a40e287c19a5",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-amd64-test.deb",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-amd64-test.deb",
-      "bytes": 100729624,
-      "sha256": "885e35d2cb5abaa7b2088fe3fd6aa1dfe26c98efea6c3ef560caad3d92d661b8",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-amd64-test.deb",
+      "bytes": 100729792,
+      "sha256": "8123ca7763f71ae329f739c32d1f923b0cfc1cc935414b80e3c2588070c3db62",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-x86_64-test.rpm",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-x86_64-test.rpm",
-      "bytes": 90314313,
-      "sha256": "ced52a08aed2ddde26f88bf26c8bb0bff17037d52959513c7bbca4dd891412f7",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-x86_64-test.rpm",
+      "bytes": 90327357,
+      "sha256": "bd854c924ccf9728e3cb44906da3a4a1dbfe1739627079a57fcebff6623b7f02",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-x86_64-test.AppImage",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-x86_64-test.AppImage",
-      "bytes": 127384809,
-      "sha256": "554c5ab4f8427014742882051866d4c0c802ac125070da66205239faf9b02709",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-x86_64-test.AppImage",
+      "bytes": 127384792,
+      "sha256": "dafcf306a45e191c8645caf2632659e871141e1f13cb44b37926f0266907a300",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-arm64-test.deb",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-arm64-test.deb",
-      "bytes": 95795908,
-      "sha256": "7e5835f964cf20ed5071ba9ae555d585135730eb871d7ca7bd6762adceaafdd9",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/DEB/MeetSpace-0.3.0-beta-linux-arm64-test.deb",
+      "bytes": 95796128,
+      "sha256": "83714e5f511ea98e5c217d368aaa318a69d80a25bfec155b909dc77fbcadfb40",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-aarch64-test.rpm",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-aarch64-test.rpm",
-      "bytes": 85933653,
-      "sha256": "aec2c71fca5f6057492b01c3982545d3c6f73400b755d68bcb626665f381bff4",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/RPM/MeetSpace-0.3.0-beta-linux-aarch64-test.rpm",
+      "bytes": 85935317,
+      "sha256": "43b3fef4e1339b0ef685844317a115075de60eb2c2f2362f2cff28086a3ae922",
       "result": "PASS"
     },
     {
       "name": "MeetSpace-0.3.0-beta-linux-arm64-test.AppImage",
-      "url": "https://github.com/janickiy/meet-space-desktop/raw/47cb0217b7eab385affa3c68ab6c91bff1d9e326/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-arm64-test.AppImage",
-      "bytes": 119399500,
-      "sha256": "1b547bf24319ee8e46d34056f58bf24078bdc5286d125e80adb3e3349cd2ccd1",
+      "url": "https://github.com/janickiy/meet-space-desktop/raw/a9cd3135eb1918d72457b82e64d3b6d341effd51/source/linux/0.3.0-beta/AppImage/MeetSpace-0.3.0-beta-linux-arm64-test.AppImage",
+      "bytes": 119403704,
+      "sha256": "93f5bf3709ff040cc996b8d13d1b63685223222e74bdbb92acc72cf93ef9955b",
       "result": "PASS"
     }
   ],
-  "checkedAt": "2026-10-31T17:03:20.288761+00:00"
+  "checkedAt": "2026-10-31T20:39:29.688908+00:00",
+  "landingRelease": "landing-20261031T202051Z-desktop-0.3.0-beta-compat",
+  "landingCatalogVerifiedPackages": 8,
+  "landingStaticFallbackVerified": true,
+  "uiVerification": {
+    "viewports": [
+      1440,
+      390
+    ],
+    "result": "PASS",
+    "scope": "Architecture and format selectors verified on the initial 0.3.0-beta publication. The final compatibility rebuild changed package metadata only; all eight final catalog entries and static default download links were rechecked over HTTPS."
+  }
 }
