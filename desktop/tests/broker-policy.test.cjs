@@ -92,6 +92,34 @@ test("unavailable OS encryption leaves server profiles usable and denies auth wi
   await assert.rejects(login(), /secure_storage_unavailable/); assert.equal(calls.length, count);
 });
 
+test("login and session restoration accept servers that omit disabled optional capabilities", async (t) => {
+  const { login, http } = await setup(t, { handle(request, resource) {
+    if (resource === "/api/v1/capabilities" && request.headers.Authorization)
+      return json(200, { status: "success", capabilities: { recordingModes: ["composite", "audio_only", "individual_tracks", "screen_focus"] } });
+  } });
+  const marker = await login();
+  assert.match(marker, /^desktop-session:/);
+  const restored = await http("/auth/refresh", { body: {} });
+  assert.equal(restored.body.accessToken, marker);
+  assert.equal(restored.body.user.id, USER);
+});
+
+test("login still rejects malformed advertised capabilities and unsupported recording modes", async (t) => {
+  for (const capabilities of [
+    { recordingModes: ["composite"], liveCaptions: "false" },
+    { recordingModes: ["composite"], aiSummary: null },
+    { recordingModes: ["unknown"] },
+    { recordingModes: [] },
+    {},
+  ]) {
+    const { login } = await setup(t, { handle(request, resource) {
+      if (resource === "/api/v1/capabilities" && request.headers.Authorization)
+        return json(200, { capabilities });
+    } });
+    await assert.rejects(login(), /incompatible_server/);
+  }
+});
+
 test("explicit server refresh recovers an initially locked keyring and preserves encrypted sessions", async (t) => {
   const storageDir = await temp(t), encryption = cipher(); let available = true;
   encryption.isAvailable = () => available;

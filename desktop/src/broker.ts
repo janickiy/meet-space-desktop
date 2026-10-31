@@ -356,7 +356,9 @@ export class MeetSpaceBroker {
       const capabilityResponse = await this.request(this.profiles.selected().origin, "/api/v1/capabilities", operation, { headers: { Authorization: `Bearer ${value.accessToken}` } });
       const info = decodeJSON(capabilityResponse);
       const capabilities = record(info) && info.capabilities;
-      if (!successful(capabilityResponse.status) || !record(capabilities) || ["liveCaptions", "transcription", "aiSummary", "semanticSearch", "meetingAnalytics"].some((key) => typeof capabilities[key] !== "boolean") || !Array.isArray(capabilities.recordingModes) || !capabilities.recordingModes.length || !capabilities.recordingModes.every((mode) => ["composite", "audio_only", "individual_tracks", "screen_focus"].includes(String(mode)))) throw new Error("incompatible_server");
+      // Servers may omit disabled optional features. Absence must not block
+      // login; explicitly advertised features must still have valid types.
+      if (!successful(capabilityResponse.status) || !record(capabilities) || ["liveCaptions", "transcription", "aiSummary", "semanticSearch", "meetingAnalytics"].some((key) => key in capabilities && typeof capabilities[key] !== "boolean") || !Array.isArray(capabilities.recordingModes) || !capabilities.recordingModes.length || !capabilities.recordingModes.every((mode) => ["composite", "audio_only", "individual_tracks", "screen_focus"].includes(String(mode)))) throw new Error("incompatible_server");
     }
     this.check(operation);
     try { await this.vault.accept(profileId, pathname, response.headers["set-cookie"]); }
