@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "sourceCommit": "470291bd86f715d02fac81f92de4ff374abf89b2",
+  "sourceCommit": "c783cacbc491a7c609a337eb93ac8b04f541fd00",
   "sourceDirty": false,
-  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "sourceTreeSha256": "cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761",
   "files": [
     {
       "path": ".github/workflows/desktop-acceptance.yml",
@@ -496,8 +496,8 @@
     },
     {
       "path": "desktop/src/broker.ts",
-      "sha256": "4d3d6f22a7d6f7e4052e4d3dabd3b95a96d058057b8368483d47c63a62af97d3",
-      "bytes": 42492
+      "sha256": "390fe090fd7130e0a84e39c7fd0be7461fe9cffaec2c62f5b622868142bf2cfc",
+      "bytes": 42668
     },
     {
       "path": "desktop/src/downloads.ts",
@@ -736,8 +736,8 @@
     },
     {
       "path": "desktop/tests/broker-policy.test.cjs",
-      "sha256": "c295bedeb2791031a0083b7c9a03c378987f63f5d3032d31a1a1d103d6475a90",
-      "bytes": 29232
+      "sha256": "634c7fc22414e51dfdf999e118396008fa3530eae1d5af42c0b3e881bfb7530e",
+      "bytes": 30491
     },
     {
       "path": "desktop/tests/build-context.test.cjs",

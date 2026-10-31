@@ -6,7 +6,7 @@
 
 Настройки аудио, видео и уведомлений приведены к макету. Добавлены отдельные уровни громкости микрофона, динамиков и сигналов. [Изменения и проверки](../docs/releases/0.3.0-beta.md).
 
-Все восемь пакетов Windows/Linux собраны из чистого снимка исходников [470291bd86f715d02fac81f92de4ff374abf89b2](https://github.com/janickiy/meet-space-desktop/commit/470291bd86f715d02fac81f92de4ff374abf89b2). SHA-256 533 входных файлов: `ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d`.
+Все восемь пакетов Windows/Linux собраны из чистого снимка исходников [c783cacbc491a7c609a337eb93ac8b04f541fd00](https://github.com/janickiy/meet-space-desktop/commit/c783cacbc491a7c609a337eb93ac8b04f541fd00). SHA-256 533 входных файлов: `cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761`.
 
 | Пакет | x64 | ARM64 |
 |---|---|---|

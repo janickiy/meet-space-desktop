@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "sourceTreeSha256": "cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761",
   "arch": "x64",
   "format": "deb",
   "formats": [
@@ -11,7 +11,7 @@
     "rpm",
     "AppImage"
   ],
-  "verifiedStaging": "/work/release030/desktop/artifacts/.linux-staging-ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d-x64-arMJEi",
-  "immutableDirectory": "/work/release030/desktop/artifacts/linux/DEB/0.3.0-beta/ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d/x64",
+  "verifiedStaging": "/work/release030/desktop/artifacts/.linux-staging-cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761-x64-Rg5szx",
+  "immutableDirectory": "/work/release030/desktop/artifacts/linux/DEB/0.3.0-beta/cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761/x64",
   "overwriteAllowed": false
 }

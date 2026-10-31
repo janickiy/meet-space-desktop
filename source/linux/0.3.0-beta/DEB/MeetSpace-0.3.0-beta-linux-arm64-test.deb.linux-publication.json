@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "sourceTreeSha256": "ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d",
+  "sourceTreeSha256": "cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761",
   "arch": "arm64",
   "format": "deb",
   "formats": [
@@ -11,7 +11,7 @@
     "rpm",
     "AppImage"
   ],
-  "verifiedStaging": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/.linux-staging-ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d-arm64-t6Vgr0",
-  "immutableDirectory": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/linux/DEB/0.3.0-beta/ccb6739fe7a6a9ad548a2ba938b17895431128e3bbdb8ca6272f0229a93b4c5d/arm64",
+  "verifiedStaging": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/.linux-staging-cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761-arm64-Tal1SM",
+  "immutableDirectory": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/linux/DEB/0.3.0-beta/cd5d933f35695661c9fe16600842c12d45be49cc047913916cffb2e2b78b8761/arm64",
   "overwriteAllowed": false
 }
