@@ -1,3 +1,4 @@
+import "./session-recovery.css";
 import { DesktopServerButton } from "./components/desktop/DesktopSessionGate";
 import { lazy, Suspense } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router";
@@ -110,36 +111,38 @@ function Protected() {
     );
   if (auth.startupError)
     return (
-      <div className="page-center">
-        <div className="content-card">
+      <div className="page-center session-recovery-page">
+        <div className="content-card session-recovery-card">
           <h1>Не удалось проверить сессию</h1>
           <ErrorNotice>
             Сервер недоступен. Ваш токен не удалён — попробуйте снова.
           </ErrorNotice>
-          <Button onClick={auth.retry}>Попробовать снова</Button>
           <DesktopServerButton />
-          <Button
-            variant="secondary"
-            onClick={
-              /**
-               * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-               *
-               *
-               * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
-               */ () => {
-                void auth.logout().catch(
-                  /**
-                   * Обработчик catch выполняет переданный шаг вызова catch в интерфейсе Meet.
-                   *
-                   *
-                   * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
-                   */ () => {},
-                );
+          <div className="session-recovery-actions">
+            <Button onClick={auth.retry}>Попробовать снова</Button>
+            <Button
+              variant="secondary"
+              onClick={
+                /**
+                 * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
+                 *
+                 *
+                 * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
+                 */ () => {
+                  void auth.logout().catch(
+                    /**
+                     * Обработчик catch выполняет переданный шаг вызова catch в интерфейсе Meet.
+                     *
+                     *
+                     * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
+                     */ () => {},
+                  );
+                }
               }
-            }
-          >
-            Выйти
-          </Button>
+            >
+              Выйти
+            </Button>
+          </div>
         </div>
       </div>
     );

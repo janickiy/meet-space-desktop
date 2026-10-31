@@ -412,6 +412,38 @@ const {
     await alpha.close();
     window.webContents.reload();
     await visible("Не удалось проверить сессию");
+    const recoveryOutput = path.resolve(__dirname, '../artifacts/session-recovery');
+    await fs.mkdir(recoveryOutput, {recursive:true});
+    const previousSize = window.getContentSize();
+    const previousMinimum = window.getMinimumSize();
+    const previousTheme = await execute('document.documentElement.dataset.theme');
+    window.setMinimumSize(0, 0);
+    for (const theme of ['light', 'dark']) {
+      for (const width of [360, 768, 1280]) {
+        window.setContentSize(width, 800);
+        await execute(`document.documentElement.dataset.theme=${JSON.stringify(theme)};document.documentElement.style.setProperty('--text-scale','1.25');document.querySelector('.session-recovery-card .desktop-server-button span').textContent='Сервер: very-long-workspace-address.for-our-team.example.com';void 0`);
+        await execute('document.fonts.ready');
+        await new Promise(resolve => setTimeout(resolve, 80));
+        const layout = await execute(`(() => {
+          const card=document.querySelector('.session-recovery-card');
+          const buttons=[...card.querySelectorAll('button')];
+          const rect=e=>{const r=e.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom}};
+          return {width:innerWidth,scrollWidth:document.documentElement.scrollWidth,card:rect(card),buttons:buttons.map(e=>({...rect(e),clipped:e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1}))};
+        })()`);
+        assert.ok(layout.scrollWidth<=layout.width, 'Recovery page must not overflow horizontally');
+        assert.ok(layout.card.left>=0 && layout.card.right<=layout.width, 'Recovery card stays inside window');
+        assert.equal(layout.buttons.length,3);
+        assert.ok(layout.buttons.every(b=>!b.clipped && b.left>=layout.card.left && b.right<=layout.card.right), 'Recovery buttons and long server label fit');
+        const [server,retry,logout]=layout.buttons;
+        assert.ok(server.bottom+10<=retry.top, 'Server row is separate from actions');
+        assert.ok(width<=480 ? retry.bottom+10<=logout.top : retry.right+10<=logout.left, 'Recovery actions have consistent gaps');
+        await fs.writeFile(path.join(recoveryOutput, `recovery-${theme}-${width}.png`),(await window.webContents.capturePage()).toPNG());
+      }
+    }
+    window.setContentSize(...previousSize);
+    window.setMinimumSize(...previousMinimum);
+    await execute(`document.documentElement.dataset.theme=${JSON.stringify(previousTheme)};document.documentElement.style.removeProperty('--text-scale');void 0`);
+    checks.push('session recovery layout: separate server row, spaced actions, long domain and 125% text at 360/768/1280 in light/dark themes');
     await openSettings();
     await selectSaved(new URL(beta.origin).host);
     await visible(beta.users[0].displayName);

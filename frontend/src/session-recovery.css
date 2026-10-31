@@ -1,0 +1,74 @@
+.session-recovery-page {
+  padding: 24px;
+}
+
+.session-recovery-card {
+  display: grid;
+  gap: 20px;
+  width: min(100%, 520px);
+  min-width: 0;
+  padding: 32px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.session-recovery-card h1 {
+  margin: 0;
+  font-size: calc(24px * var(--text-scale));
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.session-recovery-card .error-notice {
+  margin: 0;
+  align-items: center;
+}
+
+.session-recovery-card .error-notice > svg,
+.session-recovery-card .desktop-server-button > svg {
+  flex-shrink: 0;
+}
+
+.session-recovery-card .desktop-server-button {
+  justify-content: flex-start;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  text-align: left;
+}
+
+.session-recovery-card .desktop-server-button > span {
+  min-width: 0;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+
+.session-recovery-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.session-recovery-actions .button {
+  min-width: 0;
+  min-height: 44px;
+  height: auto;
+  white-space: normal;
+}
+
+@media (max-width: 480px) {
+  .session-recovery-page {
+    padding: 16px;
+  }
+
+  .session-recovery-card {
+    padding: 24px;
+  }
+
+  .session-recovery-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
