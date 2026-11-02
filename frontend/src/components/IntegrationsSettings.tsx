@@ -260,9 +260,10 @@ function PreferencesForm({
       <fieldset className="preferences-fieldset">
         <legend>События</legend>
         {(["invitation", "reminder", "recording"] as const).map((name) => (
-          <label className="preference-option preference-checkbox" key={name}>
+          <label className="preference-option preference-toggle" key={name}>
             <input
               type="checkbox"
+              role="switch"
               checked={draft[name]}
               onChange={(event) => {
                 save.reset();
@@ -277,9 +278,10 @@ function PreferencesForm({
       </fieldset>
       <fieldset className="preferences-fieldset">
         <legend>Звук уведомлений</legend>
-        <label className="preference-option">
+        <label className="preference-option preference-toggle">
           <input
             type="checkbox"
+            role="switch"
             checked={soundEnabled}
             onChange={(event) => {
               const enabled = event.target.checked;
@@ -336,9 +338,10 @@ function PreferencesForm({
       <fieldset className="preferences-fieldset">
         <legend>Каналы доставки</legend>
         {(["email"] as const).map((name) => (
-          <label className="preference-option preference-checkbox" key={name}>
+          <label className="preference-option preference-toggle" key={name}>
             <input
               type="checkbox"
+              role="switch"
               disabled={capabilities[name] === "noop"}
               checked={draft[name]}
               onChange={(event) => {
