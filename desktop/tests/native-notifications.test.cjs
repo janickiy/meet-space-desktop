@@ -381,6 +381,39 @@ test("supported recording/summary events route by validated IDs and categories",
   assert.ok(f.shown.every((handle) => handle.closed));
 });
 
+for (const summaryEnabled of [true, false]) {
+  test(`summary=${summaryEnabled} preserves chat, invitation, reminder and recording notifications`, () => {
+    const sounds = [];
+    const f = fixture({ onSound: (_, id) => sounds.push(id) });
+    f.notifier.setPreferences({ ...preferences, summary: summaryEnabled });
+    const recordingId = randomUUID();
+    const cases = [
+      f.notice(),
+      f.notice({}, { conversationType: "group" }),
+      ...["conference.invited", "conference.soon", "recording.ready", "summary.ready", "summary.failed"].map(
+        (type) => f.notice({ type }, { conferenceId: conference, recordingId, conversationId: undefined }),
+      ),
+    ];
+    for (const event of cases) {
+      f.notifier.observe(event);
+      f.advance(1000);
+    }
+    const allowed = summaryEnabled ? cases : cases.slice(0, 5);
+    assert.equal(f.shown.length, allowed.length);
+    assert.deepEqual(sounds, allowed.map((event) => event.data.notification.id));
+    if (summaryEnabled) {
+      assert.equal(f.shown[5].options.body, "Итоги встречи готовы");
+      assert.equal(f.shown[6].options.body, "Не удалось подготовить итоги встречи");
+      f.shown[5].emit("click");
+      f.shown[6].emit("click");
+      assert.deepEqual(f.routes, [
+        `/history/${conference}?recording=${recordingId}&tab=summary&section=summary`,
+        `/history/${conference}?recording=${recordingId}&tab=summary&section=summary`,
+      ]);
+    }
+  });
+}
+
 test("app sound replaces the OS tone, is identity scoped and coalesces duplicate/burst delivery", () => {
   const sounds = [];
   const f = fixture({ onSound: (identity, id) => sounds.push({ ...identity, id }) });

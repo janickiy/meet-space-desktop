@@ -221,12 +221,7 @@ function PreferencesForm({
   const { user } = useAuth();
   const client = useQueryClient();
   const [draft, setDraft] = useState<NotificationPreferences>(() => ({
-    invitation: initial.invitation,
-    reminder: initial.reminder,
-    recording: initial.recording,
-    summary: initial.summary,
-    email: initial.email,
-    push: initial.push,
+    ...initial,
   }));
   const [soundEnabled, setSoundEnabled] = useState(
     () => readDevicePreferences(user?.id || "").notificationSounds,

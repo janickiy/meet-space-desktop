@@ -22,21 +22,25 @@ module.exports = async ({execute,until,visible,click,clickText,field,route,fixtu
   assert.deepEqual(await execute("[...document.querySelectorAll('.reference-audio input[type=range]')].map(e=>e.value)"),['37','0','23']);
   assert.equal((await pref()).cameraEnabled,cam);
   checks.push('Audio and Video expose the reference controls in separate tabs; microphone/speaker/signal volume and camera preference persist independently');
+  const productionPreferences={invitation:true,reminder:true,recording:true,email:false,push:false};
+  fixture.product.controls.notificationPreferences={...productionPreferences};
   await clickText('Уведомления'); await visible('Каналы доставки');
   const labels=await execute("[...document.querySelectorAll('.preferences-fieldset:not(:nth-of-type(2)) .preference-toggle .preference-title')].map(e=>e.textContent)");
   assert.deepEqual(labels,['Приглашения и изменения встреч','Напоминания о встречах','Готовность записи','Email']);
   const switches=await execute("[...document.querySelectorAll('.preferences-form input[type=checkbox]')].map(e=>({role:e.getAttribute('role'),appearance:getComputedStyle(e).appearance,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}))");
   assert.equal(switches.length,5);
   assert.ok(switches.every(s=>s.role==='switch' && s.appearance==='none' && s.width===34 && s.height===20),'All notification choices use the shared switch style');
+  assert.deepEqual(await execute("[...document.querySelectorAll('.preferences-fieldset:first-of-type input,.preferences-fieldset:nth-of-type(3) input')].map(e=>e.checked)"),[true,true,true,false],'Production preferences without summary initialize controlled event/email switches');
   await execute("document.querySelector('.preferences-fieldset input[role=switch]').focus();void 0");
   window.webContents.sendInputEvent({type:'keyDown',keyCode:'Space'});
   window.webContents.sendInputEvent({type:'keyUp',keyCode:'Space'});
   await until(()=>execute("document.querySelector('.preferences-fieldset input').checked===false"),'Space toggles the invitation switch');
   await clickText('Сохранить настройки');await visible('Настройки сохранены.');
-  assert.deepEqual(fixture.product.controls.savedNotificationPreferences,{invitation:false,reminder:true,recording:true,summary:true,email:true,push:true});
+  assert.deepEqual(fixture.product.controls.savedNotificationPreferences,{...productionPreferences,invitation:false});
+  assert.equal(Object.hasOwn(fixture.product.controls.savedNotificationPreferences,'summary'),false,'Saving other choices must not introduce an unsupported summary preference');
   await click('.preferences-fieldset:nth-of-type(2) input');
   assert.equal(await execute("[...document.querySelectorAll('.preferences-fieldset:nth-of-type(2) button')].find(e=>e.textContent.includes('Проверить звук')).disabled"),true);
-  checks.push('Notification event/email/sound choices use consistent accessible switches; Space toggles the invitation setting; HTTPS save preserves hidden summary/push preferences; sound-off disables the test');
+  checks.push('Production notification preferences without summary initialize controlled accessible switches; Space toggles invitation; HTTPS save preserves absent summary and hidden push:false; sound-off disables the test');
   for(const theme of ['light','dark']) {
     await clickText('Внешний вид'); await click(`input[value=${theme}][type=radio]`);
     for(const width of [1440,1024]) {

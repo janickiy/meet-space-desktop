@@ -1429,3 +1429,91 @@ await test("shared desktop API routes REST/upload through native transport and p
     { status: 502 },
   );
 });
+
+await test("notification preferences preserve absent and explicit summary without changing hidden channels", async () => {
+  const apiModule = await compileModule("src/api.ts", true);
+  const production = {
+    invitation: true,
+    reminder: true,
+    recording: true,
+    email: false,
+    push: false,
+  };
+  const requests = [];
+  let response = production;
+  transportFixture({
+    http: async (request) => {
+      requests.push(request);
+      return {
+        status: 200,
+        headers: { "content-type": "application/json" },
+        body: { status: "success", ...response },
+      };
+    },
+  });
+  apiModule.configureAuth("preferences-marker");
+  for (const expected of [
+    production,
+    { ...production, summary: true, push: true },
+    { ...production, summary: false },
+  ]) {
+    response = expected;
+    const loaded = await apiModule.api.notificationPreferences();
+    assert.deepEqual(loaded, expected);
+    const draft = { ...loaded, invitation: false };
+    response = draft;
+    assert.deepEqual(
+      await apiModule.api.saveNotificationPreferences(draft),
+      draft,
+    );
+    assert.deepEqual(requests.at(-1).body, draft);
+    assert.equal(
+      Object.hasOwn(requests.at(-1).body, "summary"),
+      Object.hasOwn(expected, "summary"),
+    );
+  }
+  assert.ok(
+    requests.every(
+      (request) =>
+        request.path === "/api/v1/notifications/preferences" &&
+        request.token === "preferences-marker",
+    ),
+  );
+
+  const malformed = [null, [], "false"];
+  for (const summary of [null, "false", 0, {}])
+    malformed.push({ ...production, summary });
+  for (const key of ["invitation", "reminder", "recording", "email", "push"]) {
+    const missing = { ...production };
+    delete missing[key];
+    malformed.push(missing, { ...production, [key]: "true" });
+  }
+  for (const value of malformed) {
+    response = value;
+    await assert.rejects(apiModule.api.notificationPreferences(), {
+      status: 502,
+    });
+    const count = requests.length;
+    await assert.rejects(apiModule.api.saveNotificationPreferences(value), {
+      status: 502,
+    });
+    assert.equal(
+      requests.length,
+      count,
+      "Invalid drafts never reach the server",
+    );
+  }
+  response = { ...production, summary: null };
+  await assert.rejects(apiModule.api.saveNotificationPreferences(production), {
+    status: 502,
+  });
+  const count = requests.length;
+  await assert.rejects(
+    apiModule.api.saveNotificationPreferences({
+      ...production,
+      summary: undefined,
+    }),
+    { status: 502 },
+  );
+  assert.equal(requests.length, count);
+});

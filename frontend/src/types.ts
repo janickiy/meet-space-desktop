@@ -565,7 +565,8 @@ export interface NotificationPreferences {
   invitation: boolean;
   reminder: boolean;
   recording: boolean;
-  summary: boolean;
+  /** Omitted by servers that do not support summary notification preferences. */
+  summary?: boolean;
   email: boolean;
   push: boolean;
 }

@@ -144,6 +144,36 @@ export class ApiError extends Error {
     this.name = "ApiError";
   }
 }
+
+/** Validate preferences without adding optional categories omitted by the server. */
+function parseNotificationPreferences(value: unknown): NotificationPreferences {
+  const data =
+    value && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : null;
+  if (
+    !data ||
+    !["invitation", "reminder", "recording", "email", "push"].every(
+      (key) => typeof data[key] === "boolean",
+    ) ||
+    (Object.hasOwn(data, "summary") && typeof data.summary !== "boolean")
+  )
+    throw new ApiError(
+      502,
+      "Сервер вернул некорректные настройки уведомлений.",
+    );
+  return {
+    invitation: data.invitation as boolean,
+    reminder: data.reminder as boolean,
+    recording: data.recording as boolean,
+    email: data.email as boolean,
+    push: data.push as boolean,
+    ...(Object.hasOwn(data, "summary")
+      ? { summary: data.summary as boolean }
+      : {}),
+  };
+}
+
 const messages: Record<string, string> = {
   "browser account limit reached":
     "Можно подключить до 5 аккаунтов. Сначала выйдите из одного из них.",
@@ -875,18 +905,22 @@ export const api = {
    * @args signal — необязательная отмена запроса.
    * @return Независимые флаги событий и каналов.
    */
-  notificationPreferences: (signal?: AbortSignal) =>
-    request<NotificationPreferences>("/notifications/preferences", { signal }),
+  notificationPreferences: async (signal?: AbortSignal) =>
+    parseNotificationPreferences(
+      await request<unknown>("/notifications/preferences", { signal }),
+    ),
   /**
    * Сохраняет только явно выбранные пользователем предпочтения.
-   * @args body — полный набор флагов без идентификатора другого пользователя.
+   * @args body — поддерживаемые сервером флаги без идентификатора другого пользователя.
    * @return Подтверждённые сервером настройки.
    */
-  saveNotificationPreferences: (body: NotificationPreferences) =>
-    request<NotificationPreferences>("/notifications/preferences", {
-      method: "PUT",
-      body,
-    }),
+  saveNotificationPreferences: async (body: NotificationPreferences) =>
+    parseNotificationPreferences(
+      await request<unknown>("/notifications/preferences", {
+        method: "PUT",
+        body: parseNotificationPreferences(body),
+      }),
+    ),
   /**
    * Читает доступность интеграций без секретов провайдеров.
    * @args signal — отмена запроса.
