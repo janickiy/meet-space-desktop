@@ -1,0 +1,37 @@
+{
+  "version": "0.3.4-beta",
+  "result": "PASS",
+  "sourceCommit": "fab3f40df7d5676581bccf1e6041b4469b46a6b0",
+  "sourceTreeSha256": "3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437",
+  "platforms": [
+    {
+      "platform": "linux",
+      "architecture": "arm64",
+      "os": "Ubuntu 24.04 UTM",
+      "result": "PASS",
+      "version": "0.3.4-beta",
+      "packageSha256": "6e5c48e2e979083f652e64da78e62c6b37b52cb3546921146a08012398b6c128",
+      "appAsarSha256": "cb856df9caaa7c16700bbc0bef4fec5c81d3a3d2b76e14f3678514dd8477abb1",
+      "running": true,
+      "dockPinned": true,
+      "appArmorRestrictionEnabled": true,
+      "profileAndAccountsPreserved": true,
+      "oldFlatBinaryOverwritten": false
+    },
+    {
+      "platform": "windows",
+      "architecture": "arm64",
+      "os": "Windows 11 ARM64 UTM",
+      "result": "PASS",
+      "version": "0.3.4-beta",
+      "packageSha256": "5493002787eafae809605b646ba1618c7abaeb3c81d8884e602063844c04469e",
+      "appAsarSha256": "2de50e2957ed146a3ea74bcdc8f32d99a435576116974b01f2269f86965eeea5",
+      "running": true,
+      "interactiveSession": 1,
+      "desktopAndStartMenuShortcut": "MeetSpace.lnk",
+      "temporaryTaskRemoved": true,
+      "profileAndAccountsPreserved": true
+    }
+  ],
+  "visualVerification": "UTM display output inactive during final observation; installed version, running payload and launchers verified independently. Shared Electron UI regression passed."
+}

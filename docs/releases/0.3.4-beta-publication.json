@@ -1,0 +1,321 @@
+{
+  "version": "0.3.4-beta",
+  "result": "PASS",
+  "packageCommit": "d9ebbfadbfe40a523ba8625f6a6f07c506fdda24",
+  "sourceCommit": "fab3f40df7d5676581bccf1e6041b4469b46a6b0",
+  "sourceTreeSha256": "3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437",
+  "packagesDownloadedAndHashVerified": 8,
+  "downloadVerification": {
+    "result": "PASS",
+    "desktopCommit": "d9ebbfadbfe40a523ba8625f6a6f07c506fdda24",
+    "sourceTreeSha256": "3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437",
+    "specSha256": "a71be0bc76ff01cd01ed3630ba023ecfe4456fd362ac16807e2403345ea46764",
+    "assets": [
+      {
+        "name": "MeetSpace-0.3.4-beta-win-x64-test-setup.exe",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/windows/0.3.4-beta/MeetSpace-0.3.4-beta-win-x64-test-setup.exe",
+        "bytes": 122291634,
+        "sha256": "7280acf9c472ff1fc1dd0b59133cef30027342364d5f894fedc2324598f0783a",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-win-arm64-test-setup.exe",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/windows/0.3.4-beta/MeetSpace-0.3.4-beta-win-arm64-test-setup.exe",
+        "bytes": 116832888,
+        "sha256": "5493002787eafae809605b646ba1618c7abaeb3c81d8884e602063844c04469e",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-amd64-test.deb",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/DEB/MeetSpace-0.3.4-beta-linux-amd64-test.deb",
+        "bytes": 100729732,
+        "sha256": "cc1aaa73724ca6c4c5e444f9bd488d36ff0cf1ff876059c13004eb64ca19b827",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-x86_64-test.rpm",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/RPM/MeetSpace-0.3.4-beta-linux-x86_64-test.rpm",
+        "bytes": 90301677,
+        "sha256": "e0c85cf30aba99c564229cf8a76b9676bef026636295e8de8dcc66e0051cd38f",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-x86_64-test.AppImage",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/AppImage/MeetSpace-0.3.4-beta-linux-x86_64-test.AppImage",
+        "bytes": 127384950,
+        "sha256": "43864ffcad9986da31bee00e33828f90880d14e34a53a8141323ebfd090e50d3",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-arm64-test.deb",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/DEB/MeetSpace-0.3.4-beta-linux-arm64-test.deb",
+        "bytes": 95796128,
+        "sha256": "213a8e96074183a954023f09e44281c212d95331413e04b7c63f214bd725463c",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-aarch64-test.rpm",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/RPM/MeetSpace-0.3.4-beta-linux-aarch64-test.rpm",
+        "bytes": 85922833,
+        "sha256": "96bb9500e32ad440e947efdabcfa3299cc3e4304a0a6e1568e930a836ed7380c",
+        "result": "PASS"
+      },
+      {
+        "name": "MeetSpace-0.3.4-beta-linux-arm64-test.AppImage",
+        "url": "https://github.com/janickiy/meet-space-desktop/raw/d9ebbfadbfe40a523ba8625f6a6f07c506fdda24/source/linux/0.3.4-beta/AppImage/MeetSpace-0.3.4-beta-linux-arm64-test.AppImage",
+        "bytes": 119399585,
+        "sha256": "6e5c48e2e979083f652e64da78e62c6b37b52cb3546921146a08012398b6c128",
+        "result": "PASS"
+      }
+    ],
+    "checkedAt": "2026-11-02T17:01:52.932271+00:00"
+  },
+  "landingPreparation": {
+    "result": "PASS",
+    "parentTreeSha256": "6e00aee00406b94632c32192ae67f855915aeca777fe8d202b4bb20429c10463",
+    "parentFileCount": 55695,
+    "siteTreeSha256": "8596a76182f38fe62ab57b9db6bce195e69b7c8a6c6970c17f028f11a47b721e",
+    "siteFileCount": 56074,
+    "addedNamespaceFiles": 379,
+    "changedHTML": [
+      {
+        "path": "docs/architecture/index.html",
+        "sizeBytes": 46834,
+        "sha256": "6c0e90db9cfa037a371fd3cf3725d3b21ce6c840dfd28118ff8a98b72cdd830f"
+      },
+      {
+        "path": "docs/before-you-begin/index.html",
+        "sizeBytes": 32067,
+        "sha256": "ab3021c8f071da632b5e29ca88f44f2e5667822ec88b3e5c9e2df4b5e5c39d63"
+      },
+      {
+        "path": "docs/features/index.html",
+        "sizeBytes": 49412,
+        "sha256": "6048f6a73a854e9dd3330f927f69f11ef7c19a301cc21c92bdefd9903def559c"
+      },
+      {
+        "path": "docs/index.html",
+        "sizeBytes": 21302,
+        "sha256": "470007c08cc54d82c8a7cfe5627c1f37f8f3227fa194c699b3d718308b99aa54"
+      },
+      {
+        "path": "docs/installation/index.html",
+        "sizeBytes": 66093,
+        "sha256": "6ef96d14434907a1aa83eb037d518fc09f090bbb4fe13e180632c8ac46799f04"
+      },
+      {
+        "path": "docs/interface/index.html",
+        "sizeBytes": 55599,
+        "sha256": "427774f6e34161d5d0acd5101cf6ebe943bb6c3ce1c28557e7a51f34f1426c3d"
+      },
+      {
+        "path": "docs/overview/index.html",
+        "sizeBytes": 21311,
+        "sha256": "e5387b517da2cb1fb98d61359ae3ef8e474571f7a0175ded121edb196129dc12"
+      },
+      {
+        "path": "docs/self-hosted/index.html",
+        "sizeBytes": 66133,
+        "sha256": "aba25479aabbfd9354f80797f1c50c70d40cf5ad9a7682e29531a62fd5428757"
+      },
+      {
+        "path": "docs/source-and-releases/index.html",
+        "sizeBytes": 11882,
+        "sha256": "aac7d5ee60e09938d1f1651171200f7a5ab28fd7f407cf1a4dfe47dc84161aaf"
+      },
+      {
+        "path": "docs/support/index.html",
+        "sizeBytes": 15254,
+        "sha256": "16797406a1c548b57e36d744c11f86d6907d10c4e37c1816f9793c2640fed592"
+      },
+      {
+        "path": "docs/system-requirements/index.html",
+        "sizeBytes": 49243,
+        "sha256": "4c59df13390aae5b4b055eb8dfdb58d15b8499c8803381b5f220b0a93117065e"
+      },
+      {
+        "path": "docs/troubleshooting/index.html",
+        "sizeBytes": 49991,
+        "sha256": "b9ea19b02a1b0fbc0be4f88bb864d831b62d67a6c291ba205bbe949f0031b471"
+      },
+      {
+        "path": "docs/updates-and-backups/index.html",
+        "sizeBytes": 42897,
+        "sha256": "07087e55f7bf7fda0cc7249e38ba19ea2bc5ee46013b6a3eea530f354b6babee"
+      },
+      {
+        "path": "download/index.html",
+        "sizeBytes": 29349,
+        "sha256": "433086ec2e4712e164738e64e032600bba2c3e826dd76d38cedd6c7ebf10151a"
+      },
+      {
+        "path": "index.html",
+        "sizeBytes": 97127,
+        "sha256": "f37c58c396999f19adcab7957add568ef30cec40be46828dfee0dfd1bd1fea96"
+      },
+      {
+        "path": "self-hosted/index.html",
+        "sizeBytes": 21628,
+        "sha256": "df49916e65f38597ad28e3eef185c43de154a8acb521ba061f303c8698661850"
+      },
+      {
+        "path": "welcome/index.html",
+        "sizeBytes": 97134,
+        "sha256": "55a92399b48047c9eadcb244e149dc08839270439c7bc63ce63902ab4922e96e"
+      }
+    ],
+    "newBundleURL": "/assets/desktop-034-3665f49f/index-eKUardRc.js",
+    "normalizedBundleEqualsParent": true,
+    "allOtherFilesByteIdentical": true,
+    "androidVersion": "0.5.2-beta",
+    "androidUnchanged": true,
+    "macosUnchanged": true,
+    "release": "landing-20261102T165808Z-desktop-0.3.4-beta",
+    "previousRelease": "landing-20261102T150928Z-desktop-0.3.3-beta",
+    "assetNamespace": "desktop-034-3665f49f",
+    "activated": false,
+    "packages": 8,
+    "diskSpace": {
+      "availableBytes": 0,
+      "freeBytesIncludingReserved": 987705344,
+      "estimatedNewBytes": 15070992,
+      "minimumRemainingBytes": 268435456,
+      "reservedBlocksUsed": true
+    },
+    "checkedAt": "2026-11-02T17:06:56.407627+00:00",
+    "releaseManifestSha256": "70542d9eb53acf007489fc43226a84a0fedd313b48973a4ed957714b485f1f00"
+  },
+  "landingActivation": {
+    "result": "PASS",
+    "parentTreeSha256": "6e00aee00406b94632c32192ae67f855915aeca777fe8d202b4bb20429c10463",
+    "parentFileCount": 55695,
+    "siteTreeSha256": "8596a76182f38fe62ab57b9db6bce195e69b7c8a6c6970c17f028f11a47b721e",
+    "siteFileCount": 56074,
+    "addedNamespaceFiles": 379,
+    "changedHTML": [
+      {
+        "path": "docs/architecture/index.html",
+        "sizeBytes": 46834,
+        "sha256": "6c0e90db9cfa037a371fd3cf3725d3b21ce6c840dfd28118ff8a98b72cdd830f"
+      },
+      {
+        "path": "docs/before-you-begin/index.html",
+        "sizeBytes": 32067,
+        "sha256": "ab3021c8f071da632b5e29ca88f44f2e5667822ec88b3e5c9e2df4b5e5c39d63"
+      },
+      {
+        "path": "docs/features/index.html",
+        "sizeBytes": 49412,
+        "sha256": "6048f6a73a854e9dd3330f927f69f11ef7c19a301cc21c92bdefd9903def559c"
+      },
+      {
+        "path": "docs/index.html",
+        "sizeBytes": 21302,
+        "sha256": "470007c08cc54d82c8a7cfe5627c1f37f8f3227fa194c699b3d718308b99aa54"
+      },
+      {
+        "path": "docs/installation/index.html",
+        "sizeBytes": 66093,
+        "sha256": "6ef96d14434907a1aa83eb037d518fc09f090bbb4fe13e180632c8ac46799f04"
+      },
+      {
+        "path": "docs/interface/index.html",
+        "sizeBytes": 55599,
+        "sha256": "427774f6e34161d5d0acd5101cf6ebe943bb6c3ce1c28557e7a51f34f1426c3d"
+      },
+      {
+        "path": "docs/overview/index.html",
+        "sizeBytes": 21311,
+        "sha256": "e5387b517da2cb1fb98d61359ae3ef8e474571f7a0175ded121edb196129dc12"
+      },
+      {
+        "path": "docs/self-hosted/index.html",
+        "sizeBytes": 66133,
+        "sha256": "aba25479aabbfd9354f80797f1c50c70d40cf5ad9a7682e29531a62fd5428757"
+      },
+      {
+        "path": "docs/source-and-releases/index.html",
+        "sizeBytes": 11882,
+        "sha256": "aac7d5ee60e09938d1f1651171200f7a5ab28fd7f407cf1a4dfe47dc84161aaf"
+      },
+      {
+        "path": "docs/support/index.html",
+        "sizeBytes": 15254,
+        "sha256": "16797406a1c548b57e36d744c11f86d6907d10c4e37c1816f9793c2640fed592"
+      },
+      {
+        "path": "docs/system-requirements/index.html",
+        "sizeBytes": 49243,
+        "sha256": "4c59df13390aae5b4b055eb8dfdb58d15b8499c8803381b5f220b0a93117065e"
+      },
+      {
+        "path": "docs/troubleshooting/index.html",
+        "sizeBytes": 49991,
+        "sha256": "b9ea19b02a1b0fbc0be4f88bb864d831b62d67a6c291ba205bbe949f0031b471"
+      },
+      {
+        "path": "docs/updates-and-backups/index.html",
+        "sizeBytes": 42897,
+        "sha256": "07087e55f7bf7fda0cc7249e38ba19ea2bc5ee46013b6a3eea530f354b6babee"
+      },
+      {
+        "path": "download/index.html",
+        "sizeBytes": 29349,
+        "sha256": "433086ec2e4712e164738e64e032600bba2c3e826dd76d38cedd6c7ebf10151a"
+      },
+      {
+        "path": "index.html",
+        "sizeBytes": 97127,
+        "sha256": "f37c58c396999f19adcab7957add568ef30cec40be46828dfee0dfd1bd1fea96"
+      },
+      {
+        "path": "self-hosted/index.html",
+        "sizeBytes": 21628,
+        "sha256": "df49916e65f38597ad28e3eef185c43de154a8acb521ba061f303c8698661850"
+      },
+      {
+        "path": "welcome/index.html",
+        "sizeBytes": 97134,
+        "sha256": "55a92399b48047c9eadcb244e149dc08839270439c7bc63ce63902ab4922e96e"
+      }
+    ],
+    "newBundleURL": "/assets/desktop-034-3665f49f/index-eKUardRc.js",
+    "normalizedBundleEqualsParent": true,
+    "allOtherFilesByteIdentical": true,
+    "androidVersion": "0.5.2-beta",
+    "androidUnchanged": true,
+    "macosUnchanged": true,
+    "release": "landing-20261102T165808Z-desktop-0.3.4-beta",
+    "previousRelease": "landing-20261102T150928Z-desktop-0.3.3-beta",
+    "assetNamespace": "desktop-034-3665f49f",
+    "activated": true,
+    "packages": 8,
+    "diskSpace": {
+      "availableBytes": 0,
+      "freeBytesIncludingReserved": 987705344,
+      "estimatedNewBytes": 15070992,
+      "minimumRemainingBytes": 268435456,
+      "reservedBlocksUsed": true
+    },
+    "checkedAt": "2026-11-02T17:06:56.407627+00:00",
+    "releaseManifestSha256": "70542d9eb53acf007489fc43226a84a0fedd313b48973a4ed957714b485f1f00",
+    "activatedAt": "2026-11-02T17:09:03.422963+00:00",
+    "rollbackRelease": "landing-20261102T150928Z-desktop-0.3.3-beta",
+    "httpVerifiedPackages": 8,
+    "staticCatalogVerifiedPackages": 8
+  },
+  "publicLandingVerification": {
+    "result": "PASS",
+    "url": "https://meet-space.janickiy.com/download",
+    "release": "landing-20261102T165808Z-desktop-0.3.4-beta",
+    "packageCommit": "d9ebbfadbfe40a523ba8625f6a6f07c506fdda24",
+    "catalogPackages": 8,
+    "defaultDownloadLinksVerified": true,
+    "normalizedBundleEqualsParent": true,
+    "nonDesktopCatalogUnchanged": true,
+    "androidVersion": "0.5.2-beta",
+    "androidUnchanged": true,
+    "macosUnchanged": true,
+    "checkedAt": "2026-11-02T17:08:46.580760+00:00"
+  }
+}
