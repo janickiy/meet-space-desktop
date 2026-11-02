@@ -1,0 +1,99 @@
+{
+  "version": "0.3.4-beta",
+  "result": "PASS",
+  "sourceCommit": "fab3f40df7d5676581bccf1e6041b4469b46a6b0",
+  "sourceTreeSha256": "3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437",
+  "audited": [
+    "notification preference parsing in broker and renderer",
+    "notification preference read/save with summary omitted, true, false or malformed",
+    "notification category filtering for direct/group/invitation/reminder/recording/summary",
+    "summary-ready/failed routing to recording details",
+    "AI summary feature-gated tabs and API requests"
+  ],
+  "findings": [
+    "Broker no longer requires summary to enable unrelated notification categories.",
+    "Renderer treats summary as optional, preserves omission on save and validates explicit values.",
+    "No additional confirmed defects found in AI summary feature gating or notification routing."
+  ],
+  "validation": {
+    "desktopTests": {
+      "total": 423,
+      "passed": 422,
+      "skipped": 1,
+      "failed": 0
+    },
+    "frontendFoundationChecks": 31,
+    "productUi": {
+      "ok": true,
+      "checks": [
+        "real login keeps protected recording return route; ready server file UUID displays without remote media or auto download",
+        "actual React save reports confirmed result; playback progress/cancel and late IPC result cannot attach a stale player",
+        "existing direct/group list uses real type filter and navigation revokes pending recording media",
+        "actual chat form sends plain text and quoted replies through the production preload/broker to HTTPS; successful delivery clears the draft",
+        "centered send icon; offline sends remain as separate messages with warning icons and no banner; chat navigation preserves the session outbox; explicit per-message retry preserves request IDs and avoids duplicate delivery after a lost response",
+        "existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch",
+        "archive and document files use the real React uploader through authenticated native TLS init→PUT→finalize→message in direct/group/conference chats; exact bytes, canonical MIME, IDs, filename rendering and scoped save verified; invalid extension and oversized files never upload",
+        "existing personal folder list/detail combines authorized chat and meeting entries",
+        "existing meetings/calendar/history render server entries and send calendar range/history filters",
+        "server disabled analytics is absent in navigation and deep route fails closed without analytics request",
+        "profile/group reference photo cards and confirmations; circular crop, real pointer drag, keyboard offsets, zoom, reset, preview, replace, cancel, JPEG512 crop pixels, failures/retry, private API save/delete, cache refresh, nested focus and responsive footer",
+        "Audio and Video expose the reference controls in separate tabs; microphone/speaker/signal volume and camera preference persist independently",
+        "Production notification preferences without summary initialize controlled accessible switches; Space toggles invitation; HTTPS save preserves absent summary and hidden push:false; sound-off disables the test",
+        "Audio/video/notification cards fit at 1440 and 1024 CSS pixels in light and dark themes",
+        "Shared Audio layout: three equal cards in a single row when content fits; narrow panels stack; light/dark at 1024/1440/1662/1920 with 100%/125% text; no clipped controls",
+        "settings page keeps accessible tabs, profile logout and native settings, with combined devices and appearance sections",
+        "actual settings shows disabled Stage06 updates and never claims a release is current or offers install",
+        "update UI uses typed IPC and live states for explicit download/cancel/install, warns of ending calls and blocks install after signature error (installer seam)",
+        "existing recordings catalog renders the server ready artifact with UUID-backed actions",
+        "actual shared layout supplies current authenticated route and sound preference to native notification context",
+        "offline server failure stays an error with editable server settings instead of invented empty/offline meetings"
+      ],
+      "platform": "darwin",
+      "arch": "arm64",
+      "nativeDialogsAndPlayback": "IPC completion seam; tested separately by native asset integration",
+      "windowsRuntimeTested": false
+    },
+    "realElectronSoundWithProductionPreferences": {
+      "ok": true,
+      "platform": "darwin",
+      "arch": "arm64",
+      "hiddenWindowAudible": true,
+      "directAndGroupChat": true,
+      "restoredHiddenSessionWithoutGesture": true,
+      "duplicateAndBurstSuppressed": true,
+      "perChatMute": true,
+      "muteToggle": true,
+      "plays": [
+        {
+          "src": "app://meetspace/assets/device-tone--3RIYZMa.wav",
+          "sinkId": "",
+          "volume": 0.35
+        },
+        {
+          "src": "app://meetspace/assets/device-tone--3RIYZMa.wav",
+          "sinkId": "",
+          "volume": 0.35
+        },
+        {
+          "src": "app://meetspace/assets/device-tone--3RIYZMa.wav",
+          "sinkId": "",
+          "volume": 0.35
+        },
+        {
+          "src": "app://meetspace/assets/device-tone--3RIYZMa.wav",
+          "sinkId": "",
+          "volume": 0.35
+        },
+        {
+          "src": "app://meetspace/assets/device-tone--3RIYZMa.wav",
+          "sinkId": "",
+          "volume": 0.35
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Live incoming DM audibility was user-confirmed on the initial 0.3.4-beta broker fix; final audit packages add preference validation/preservation and pass the real Electron sound fixture.",
+    "No AI generation request or outbound test message was sent to a production account."
+  ]
+}

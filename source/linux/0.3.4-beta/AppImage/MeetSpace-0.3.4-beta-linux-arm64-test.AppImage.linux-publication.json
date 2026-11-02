@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "sourceTreeSha256": "3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437",
+  "arch": "arm64",
+  "format": "AppImage",
+  "formats": [
+    "AppImage"
+  ],
+  "verifiedFormats": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "verifiedStaging": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/.linux-staging-3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437-arm64-ae7kea",
+  "immutableDirectory": "/home/meetspace/releases/version-030-20261031/desktop/artifacts/linux/AppImage/0.3.4-beta/3665f49f309a5f214c6450d765c170a1ee8d09a765307b47a7ff888f37e2f437/arm64",
+  "overwriteAllowed": false
+}
