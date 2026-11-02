@@ -2,24 +2,24 @@
 
 Пакеты опубликованы через Git LFS: `source/windows/<версия>/`, `source/linux/<версия>/<DEB|RPM|AppImage>/`, `source/macos/<версия>/`.
 
-## Последние сборки Windows/Linux 0.3.1 beta
+## Последние сборки Windows/Linux 0.3.2-beta
 
-Исправлена карточка ошибки проверки сессии: адрес сервера размещён отдельно, кнопки выровнены, добавлены отступы и адаптация для узких окон. [Изменения и проверки](../docs/releases/0.3.1-beta.md).
+Исправлена вкладка «Аудио»: карточки микрофона, динамика и звуковых уведомлений выровнены в один ряд. Во вкладке «Уведомления» флажки заменены переключателями. [Изменения и проверки](../docs/releases/0.3.2-beta.md).
 
-Все восемь пакетов Windows/Linux собраны из чистого снимка исходников [21e3e196dac809b5f7f8c1f626666d2ea0a82921](https://github.com/janickiy/meet-space-desktop/commit/21e3e196dac809b5f7f8c1f626666d2ea0a82921). SHA-256 534 входных файлов: `36dcc6351cf8d8122e4f6a63be774342a9cb4e72932fa0be7a25a77f0f25ae87`.
+Все восемь пакетов Windows/Linux собраны из чистого снимка исходников [9f129f1c2675dddd4bac0d64af06c57f71aeaf4a](https://github.com/janickiy/meet-space-desktop/commit/9f129f1c2675dddd4bac0d64af06c57f71aeaf4a). SHA-256 534 входных файлов: `547fac11ab9b1f7912d39c5fe91ee0257a6182cdc27b67a455d623a1940694d4`.
 
 | Пакет | x64 | ARM64 |
 |---|---|---|
-| Windows — EXE | [x64](windows/0.3.1-beta/MeetSpace-0.3.1-beta-win-x64-test-setup.exe) | [ARM64](windows/0.3.1-beta/MeetSpace-0.3.1-beta-win-arm64-test-setup.exe) |
-| Ubuntu/Debian — DEB | [x64](linux/0.3.1-beta/DEB/MeetSpace-0.3.1-beta-linux-amd64-test.deb) | [ARM64](linux/0.3.1-beta/DEB/MeetSpace-0.3.1-beta-linux-arm64-test.deb) |
-| Fedora — RPM | [x64](linux/0.3.1-beta/RPM/MeetSpace-0.3.1-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.3.1-beta/RPM/MeetSpace-0.3.1-beta-linux-aarch64-test.rpm) |
-| Linux — AppImage | [x64](linux/0.3.1-beta/AppImage/MeetSpace-0.3.1-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.3.1-beta/AppImage/MeetSpace-0.3.1-beta-linux-arm64-test.AppImage) |
+| Windows — EXE | [x64](windows/0.3.2-beta/MeetSpace-0.3.2-beta-win-x64-test-setup.exe) | [ARM64](windows/0.3.2-beta/MeetSpace-0.3.2-beta-win-arm64-test-setup.exe) |
+| Ubuntu/Debian — DEB | [x64](linux/0.3.2-beta/DEB/MeetSpace-0.3.2-beta-linux-amd64-test.deb) | [ARM64](linux/0.3.2-beta/DEB/MeetSpace-0.3.2-beta-linux-arm64-test.deb) |
+| Fedora — RPM | [x64](linux/0.3.2-beta/RPM/MeetSpace-0.3.2-beta-linux-x86_64-test.rpm) | [ARM64](linux/0.3.2-beta/RPM/MeetSpace-0.3.2-beta-linux-aarch64-test.rpm) |
+| Linux — AppImage | [x64](linux/0.3.2-beta/AppImage/MeetSpace-0.3.2-beta-linux-x86_64-test.AppImage) | [ARM64](linux/0.3.2-beta/AppImage/MeetSpace-0.3.2-beta-linux-arm64-test.AppImage) |
 
-Пакеты тестовые, без цифровой подписи. DMG не нотариализованы Apple; Gatekeeper может блокировать запуск. Автообновление выключено.
+Пакеты тестовые, без цифровой подписи. Автообновление выключено.
 
 ## Последние сборки каждой версии
 
-В каталоге **132 пакета**: восемь новых Windows/Linux `0.3.1-beta` и 124 ранее опубликованных. macOS остаётся на `0.2.3-beta`. Контрольные суммы — в [SHA256SUMS](SHA256SUMS), проверка запускается из `source/`. [catalog.json](catalog.json) содержит пакеты и результаты проверок.
+В каталоге **140 пакетов**: восемь новых Windows/Linux `0.3.2-beta` и 132 ранее опубликованных. macOS сохранён без изменений. Контрольные суммы — в [SHA256SUMS](SHA256SUMS), проверка запускается из `source/`. [catalog.json](catalog.json) содержит пакеты и результаты проверок.
 
 | ОС | Версия | Формат / архитектура | Пакет |
 |---|---|---|---|
@@ -165,3 +165,11 @@ Ubuntu 24.04 ARM64 в UTM обновлена до 0.1.12-beta: подтверж�
 | Linux | 0.3.1-beta | DEB / arm64 | [MeetSpace-0.3.1-beta-linux-arm64-test.deb](linux/0.3.1-beta/DEB/MeetSpace-0.3.1-beta-linux-arm64-test.deb) |
 | Linux | 0.3.1-beta | RPM / arm64 | [MeetSpace-0.3.1-beta-linux-aarch64-test.rpm](linux/0.3.1-beta/RPM/MeetSpace-0.3.1-beta-linux-aarch64-test.rpm) |
 | Linux | 0.3.1-beta | AppImage / arm64 | [MeetSpace-0.3.1-beta-linux-arm64-test.AppImage](linux/0.3.1-beta/AppImage/MeetSpace-0.3.1-beta-linux-arm64-test.AppImage) |
+| Windows | 0.3.2-beta | NSIS / x64 | [MeetSpace-0.3.2-beta-win-x64-test-setup.exe](windows/0.3.2-beta/MeetSpace-0.3.2-beta-win-x64-test-setup.exe) |
+| Windows | 0.3.2-beta | NSIS / arm64 | [MeetSpace-0.3.2-beta-win-arm64-test-setup.exe](windows/0.3.2-beta/MeetSpace-0.3.2-beta-win-arm64-test-setup.exe) |
+| Linux | 0.3.2-beta | DEB / x64 | [MeetSpace-0.3.2-beta-linux-amd64-test.deb](linux/0.3.2-beta/DEB/MeetSpace-0.3.2-beta-linux-amd64-test.deb) |
+| Linux | 0.3.2-beta | RPM / x64 | [MeetSpace-0.3.2-beta-linux-x86_64-test.rpm](linux/0.3.2-beta/RPM/MeetSpace-0.3.2-beta-linux-x86_64-test.rpm) |
+| Linux | 0.3.2-beta | AppImage / x64 | [MeetSpace-0.3.2-beta-linux-x86_64-test.AppImage](linux/0.3.2-beta/AppImage/MeetSpace-0.3.2-beta-linux-x86_64-test.AppImage) |
+| Linux | 0.3.2-beta | DEB / arm64 | [MeetSpace-0.3.2-beta-linux-arm64-test.deb](linux/0.3.2-beta/DEB/MeetSpace-0.3.2-beta-linux-arm64-test.deb) |
+| Linux | 0.3.2-beta | RPM / arm64 | [MeetSpace-0.3.2-beta-linux-aarch64-test.rpm](linux/0.3.2-beta/RPM/MeetSpace-0.3.2-beta-linux-aarch64-test.rpm) |
+| Linux | 0.3.2-beta | AppImage / arm64 | [MeetSpace-0.3.2-beta-linux-arm64-test.AppImage](linux/0.3.2-beta/AppImage/MeetSpace-0.3.2-beta-linux-arm64-test.AppImage) |
