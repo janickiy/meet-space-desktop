@@ -1,0 +1,45 @@
+{
+  "version": "0.3.4-beta",
+  "sourceCommit": "b71b15a96dbf2fe15c84e669794b21007cfc7287",
+  "sourceTreeSha256": "2f488c300011362bf0b69d9185067edc6e57906a0402c67fec0a25e44144cb04",
+  "cause": "Authenticated server notification preferences omit optional summary. Previous broker rejected the entire response, leaving native notification preferences uninitialized; REST bell polling still worked.",
+  "serverPreferenceShape": {
+    "invitation": true,
+    "reminder": true,
+    "recording": true,
+    "email": false,
+    "push": false
+  },
+  "fix": "Require the three established category booleans; normalize absent summary to false; preserve explicit booleans; reject malformed values.",
+  "oldCodeRegression": "FAIL with exact server response; native preferences callback absent",
+  "fixedRegression": "PASS",
+  "unitTests": {
+    "passed": 420,
+    "skipped": 1,
+    "failed": 0
+  },
+  "directAndGroupSoundWithServerShape": "PASS in actual Electron with hidden/restored session",
+  "ubuntuInstallation": {
+    "version": "0.3.4-beta",
+    "profilePreserved": true,
+    "packageSha256": "a2db683f3ecdbba4414a7e0a194b3096b39ade05818f22a1176b1990fc18db9e",
+    "pid": 21883,
+    "appAsarSha256": "7158ff23670c39c8db064af66717405f1df62a66fb81e4bb7dfe78ccc1264c3a",
+    "dockPinned": true,
+    "apparmorRestrictionEnabled": true,
+    "running": true,
+    "result": "PASS"
+  },
+  "checkedAt": "2026-11-02T16:17:35.991050+00:00",
+  "result": "PASS",
+  "liveAccountVerification": {
+    "result": "PASS",
+    "userConfirmed": "Sound heard for an incoming direct message after update to0.3.4-beta",
+    "receivedEventTypes": [],
+    "eventAndNotificationIDsMatch": null,
+    "nonzeroOutputWindows": 3,
+    "audioSamplesRetained": false,
+    "confirmedAt": "2026-11-02T16:19:10.849362+00:00",
+    "sseEventCaptured": false
+  }
+}
