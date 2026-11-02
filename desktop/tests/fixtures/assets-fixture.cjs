@@ -24,7 +24,8 @@ function signed(origin, expire=300) {
 async function createAssetsFixture(certificates, options={}) {
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),'meetspace-assets-'));
   const bytes=options.bytes||Buffer.from(Array.from({length:256*1024},(_,i)=>i%251));
-  const seen=[], peers=new Set(), controls={denied:false,redirect:false,expireOnce:false,slow:false,wrongRange:false,wrongLength:false,wrongMime:false,size:bytes.length,initialPreferencesFail:!!options.initialPreferencesFail};
+  const seen=[], peers=new Set(), controls={denied:false,redirect:false,expireOnce:false,slow:false,wrongRange:false,wrongLength:false,wrongMime:false,size:bytes.length,initialPreferencesFail:!!options.initialPreferencesFail,
+    notificationPreferences:options.notificationPreferences??{invitation:true,reminder:true,recording:false,summary:false}};
   let origin, api, metadataReads=0, contentReads=0, preferenceReads=0;
   const serve=(request,response)=>{
     contentReads++;
@@ -58,7 +59,7 @@ async function createAssetsFixture(certificates, options={}) {
   const card=()=>({uuid:RECORDING,conferenceId:CONFERENCE,status:'ready',files:[{uuid:FILE,fileType:'final_mp4',fileName:'recording.mp4',mimeType:'video/mp4',sizeBytes:controls.size,url:signed(origin)}]});
   api=await createFixture({name:'assets',certificates,handleRequest:async({request,response,url,send})=>{
     if(url.pathname==='/api/v1/notifications/preferences'){
-      preferenceReads++;send(response,controls.initialPreferencesFail?503:200,controls.initialPreferencesFail?{status:'failed'}:{invitation:true,reminder:true,recording:false,summary:false});return true;
+      preferenceReads++;send(response,controls.initialPreferencesFail?503:200,controls.initialPreferencesFail?{status:'failed'}:controls.notificationPreferences);return true;
     }
     if(url.pathname===`/api/v1/conferences/${CONFERENCE}/recordings/${RECORDING}`){metadataReads++;send(response,controls.denied?403:200,controls.denied?{status:'failed'}:{item:card()});return true;}
     if(url.pathname===`/api/v1/conferences/${CONFERENCE}/recordings`){send(response,200,{items:[card()]});return true;}

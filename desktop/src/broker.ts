@@ -151,9 +151,11 @@ export class MeetSpaceBroker {
     if (!record(value)) return;
     try {
       if (pathname === "/api/v1/notifications/preferences" &&
-        ["invitation", "reminder", "recording", "summary"].every(key => typeof value[key] === "boolean")) {
+        ["invitation", "reminder", "recording"].every(key => typeof value[key] === "boolean") &&
+        (!Object.hasOwn(value, "summary") || typeof value.summary === "boolean")) {
+        // Older servers omit summary; unsupported categories stay disabled.
         this.options.onNotificationPreferences?.({ invitation: value.invitation as boolean, reminder: value.reminder as boolean,
-          recording: value.recording as boolean, summary: value.summary as boolean });
+          recording: value.recording as boolean, summary: value.summary === true });
       }
       if (pathname === "/api/v1/notifications" && Number.isSafeInteger(value.unreadCount) && Number(value.unreadCount) >= 0)
         this.options.onNotificationUnread?.(Number(value.unreadCount));

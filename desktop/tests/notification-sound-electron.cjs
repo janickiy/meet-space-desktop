@@ -19,7 +19,8 @@ const timeout = setTimeout(() => { console.error('notification sound timeout'); 
   fixture = await createFixture({ name: 'sound', certificates: cert, ui: true,
     handleRequest: ({ response, url, send }) => {
       if (url.pathname === '/api/v1/notifications/preferences') {
-        send(response, 200, { invitation: true, reminder: true, recording: true, summary: true, email: false, push: true }); return true;
+        // Production currently omits the optional summary category.
+        send(response, 200, { invitation: true, reminder: true, recording: true, email: false, push: false }); return true;
       }
       if (url.pathname === '/api/v1/integrations/capabilities') {
         send(response, 200, { email: 'noop', push: 'noop', calendar: 'noop', calendarOAuthConfigured: false, mockConnectAllowed: false }); return true;

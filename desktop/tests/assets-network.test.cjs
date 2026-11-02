@@ -134,6 +134,38 @@ test('authoritative notification hooks recover preferences on SSE reconnect and 
   await c.http('POST','/auth/logout',{},c.marker);assert.equal(c.identities.at(-1),null);
 });
 
+test('production notification preferences without summary enable native chat delivery conservatively',async t=>{
+  const production={invitation:true,reminder:true,recording:true,email:false,push:false};
+  const c=await createAssetsFixture(certificates,{notificationPreferences:production});t.after(()=>c.close());
+  const response=await c.http('GET','/notifications/preferences',undefined,c.marker);
+  assert.equal(response.status,200);assert.deepEqual(response.body,production);
+  assert.deepEqual(c.preferences.at(-1),{invitation:true,reminder:true,recording:true,summary:false},
+    'the authenticated production shape must initialize native preferences even without summary support');
+});
+
+test('notification preference normalization preserves explicit summary choices and rejects incomplete or invalid values',async t=>{
+  const base={invitation:true,reminder:false,recording:true,email:false,push:false};
+  const c=await createAssetsFixture(certificates,{initialPreferencesFail:true});t.after(()=>c.close());
+  await until(()=>c.preferenceReads===1);
+  c.controls.initialPreferencesFail=false;
+  for(const summary of [true,false]){
+    c.preferences.length=0;c.controls.notificationPreferences={...base,summary};
+    await c.http('GET','/notifications/preferences',undefined,c.marker);
+    assert.deepEqual(c.preferences.at(-1),{invitation:true,reminder:false,recording:true,summary});
+  }
+  const malformed=[];
+  for(const key of ['invitation','reminder','recording']){
+    const missing={...base};delete missing[key];malformed.push([`missing ${key}`,missing]);
+    malformed.push([`invalid ${key}`,{...base,[key]:'true'}]);
+  }
+  for(const summary of [null,'false',0,{}])malformed.push([`invalid summary ${JSON.stringify(summary)}`,{...base,summary}]);
+  for(const [label,value] of malformed){
+    c.preferences.length=0;c.controls.notificationPreferences=value;
+    await c.http('GET','/notifications/preferences',undefined,c.marker);
+    assert.deepEqual(c.preferences,[],`${label} must not initialize native preferences`);
+  }
+});
+
 test('development media CORS allows only the fixed local renderer; production retains same-origin protection',async t=>{
   const c=await setup(t,{development:true}),opened=await c.assets.open(c.input());
   for(const origin of ['https://evil.invalid','http://localhost:5173','http://127.0.0.1:5174','null','app://meetspace']){
