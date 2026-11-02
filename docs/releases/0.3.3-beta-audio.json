@@ -1,0 +1,29 @@
+{
+  "version": "0.3.3-beta",
+  "result": "PASS",
+  "testKind": "Native desktop broker, renderer, bundled tone with isolated local HTTPS fixture in Ubuntu ARM64 UTM",
+  "runtimeCodeUnderTest": "Unmodified0.3.2-beta source9f129f1; expanded033 regression tests. Notification production code unchanged in033.",
+  "sourceCodeCommit": "0a644a99960d473fcfb981cae80663ff6717580b",
+  "sourceTreeSha256": "b85e6b75fff3b11f0b26595294dab66f1cf5ac24121c56f11fdc78d055a288ea",
+  "incomingDirectAndGroupMessagesAudible": true,
+  "restoredHiddenSessionWithoutGesture": true,
+  "pulseAudioMonitor": {
+    "capturedTones": 4,
+    "peak": 0.08282470703125,
+    "nonzeroSamples": 83848
+  },
+  "perChatMuteSuppression": true,
+  "globalSoundToggleSuppression": true,
+  "duplicateAndBurstSuppression": true,
+  "installedProfileAudit": {
+    "soundEnabled": true,
+    "signalVolumePercent": 100,
+    "defaultOutput": true,
+    "applicationStreamMuted": false,
+    "systemOutputMuted": false,
+    "installed032ToneAndHandlersVerified": true
+  },
+  "reportedIntermittentSilenceReproduced": false,
+  "productionSoundCodeChanged": false,
+  "scopeLimit": "Audio verified at guest audio output. Audibility at Mac speakers and the exact reported live-server event were not confirmed. No live server messages or user profile changes made."
+}

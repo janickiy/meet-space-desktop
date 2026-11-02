@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "platform": "linux",
+  "arch": "arm64",
+  "node": "v24.19.0",
+  "glibcBuildRuntime": "2.39",
+  "electron": "44.9.3",
+  "builder": "26.17.0",
+  "version": "0.3.3-beta",
+  "releaseMode": "test",
+  "sourceCommit": "0a644a99960d473fcfb981cae80663ff6717580b",
+  "sourceDirty": false,
+  "sourceTreeSha256": "b85e6b75fff3b11f0b26595294dab66f1cf5ac24121c56f11fdc78d055a288ea",
+  "formats": [
+    "deb",
+    "rpm",
+    "AppImage"
+  ],
+  "appImageLauncher": {
+    "package": "app-builder-lib",
+    "version": "26.17.0",
+    "transform": "meetspace-fail-closed-appimage-launcher-v1",
+    "upstreamSha256": "70cdc560883573fa65246fbea08dd923a4905dc147769995ceb7257658a9980c",
+    "patchedSha256": "915b313b2cc9128fcc9a3efa897fe67c00ec5bae114ed20dd42fbe3762dda88c",
+    "launcherSha256": "fe5c63521484744a476ec8484a64f56744c380e95647a6ed83fde09ead87b4ef"
+  },
+  "appImageToolset": "1.0.3",
+  "automaticUpdates": false,
+  "published": false,
+  "maintainerIdentity": "MeetSpace <janickiy@mail.ru>"
+}

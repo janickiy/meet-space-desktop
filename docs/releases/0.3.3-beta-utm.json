@@ -1,0 +1,33 @@
+{
+  "version": "0.3.3-beta",
+  "result": "PASS",
+  "sourceCodeCommit": "0a644a99960d473fcfb981cae80663ff6717580b",
+  "sourceTreeSha256": "b85e6b75fff3b11f0b26595294dab66f1cf5ac24121c56f11fdc78d055a288ea",
+  "checkedAt": "2026-11-02T15:08:05.445529+00:00",
+  "windows": {
+    "result": "PASS",
+    "executableVersion": "0.3.3-beta",
+    "appAsarSha256": "d0e8771f891612c80b4936ae6ecaf8890ae8a25b5873fffa7aadcea61402193b",
+    "interactiveUserPresent": true
+  },
+  "linux": {
+    "result": "PASS",
+    "version": "0.3.3-beta",
+    "packageSha256": "b805cf3a0e332455183c1cc76dcb828560630d45f3755ca261e79ca6ad8addfd",
+    "appAsarSha256": "cb6fb7dc7aba00c69838d24a97a3feab608ce223db1c2661acf2b5b0642132f1",
+    "dockPinned": true,
+    "apparmorRestrictionEnabled": true,
+    "running": true,
+    "profilePreserved": true
+  },
+  "windowsProfilePreserved": true,
+  "windowsShortcutNames": [
+    "MeetSpace.lnk",
+    "MeetSpace.lnk"
+  ],
+  "windowsTemporaryUpdateTaskRemoved": true,
+  "architecturesTested": [
+    "arm64"
+  ],
+  "visualRuntimeAcceptance": "UTM display output inactive during release run. Shared UI tested in Electron with80 captures on macOS, light/dark and narrow/wide views; installed payload and launch verified in both VMs."
+}
