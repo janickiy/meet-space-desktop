@@ -1021,14 +1021,6 @@
   margin-bottom: 24px;
   align-items: center;
 }
-.recordings-page .recordings-count {
-  font-size: calc(10px * var(--text-scale));
-  padding: 5px 8px;
-  border-radius: 5px;
-  color: var(--muted);
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
 .recordings-page .recordings-selection {
   grid-template-columns:
     minmax(180px, 1.15fr) minmax(150px, 0.75fr) minmax(180px, 1fr)

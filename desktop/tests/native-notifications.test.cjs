@@ -419,3 +419,47 @@ test("app sound obeys active-chat, mute, category, stale-event and logout suppre
   assert.deepEqual(sounds, []);
   assert.equal(f.shown.length, 0);
 });
+
+for (const type of ["direct", "group"]) {
+  test(`${type} chat sound follows native focus, per-chat mute and identity policy`, () => {
+    const sounds = [];
+    const f = fixture({ onSound: (_, id) => sounds.push(id) });
+    const incoming = () => f.notice({}, { conversationType: type });
+    const first = incoming();
+    f.notifier.observe(first);
+    assert.deepEqual(sounds, [first.id]);
+    assert.equal(f.shown[0].options.silent, true);
+
+    f.advance(1100);
+    f.setFocused(true);
+    f.notifier.setContext({ route: `/personal/${conversation}`, soundEnabled: true });
+    f.notifier.observe(incoming());
+    assert.equal(sounds.length, 1, "reading this chat stays silent");
+
+    f.setFocused(false);
+    const hidden = incoming();
+    f.notifier.observe(hidden);
+    assert.deepEqual(sounds, [first.id, hidden.id], "a hidden open chat can ring");
+
+    f.advance(1100);
+    const preference = (enabled) => f.account("conversation.preferences.updated", {
+      type, userId: user, item: { id: conversation, notificationsEnabled: enabled },
+    });
+    f.notifier.observeAccount(preference(false));
+    f.notifier.observe(incoming());
+    assert.equal(sounds.length, 2, "per-chat mute suppresses sound");
+    assert.ok(f.shown.every((handle) => handle.closed));
+
+    f.notifier.observeAccount(preference(true));
+    const unmuted = incoming();
+    f.notifier.observe(unmuted);
+    assert.equal(sounds.at(-1), unmuted.id);
+    f.notifier.observe(unmuted);
+    assert.equal(sounds.length, 3, "the same message never rings twice");
+
+    f.advance(1100);
+    f.notifier.setIdentity(null);
+    f.notifier.observe(incoming());
+    assert.equal(sounds.length, 3, "logged-out identity cannot ring");
+  });
+}

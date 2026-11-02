@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft,
   CirclePlay,
   ArrowUpRight,
   FileArchive,
@@ -223,7 +222,6 @@ export function RecordingsPage() {
   const ready = entries.filter(
     ({ record }) => playableRecordings([record]).length,
   );
-  const countLabel = new Intl.PluralRules("ru-RU").select(ready.length);
   const visible = ready
     .filter((entry) =>
       entry.conference.title
@@ -240,17 +238,6 @@ export function RecordingsPage() {
     <div className="recordings-page recordings-reference-library">
       <section className="page-heading recordings-heading">
         <h1>Записи встреч</h1>
-        {library.isSuccess && (
-          <span className="recordings-count">
-            {ready.length}
-            {library.hasNextPage ? "+" : ""}{" "}
-            {countLabel === "one"
-              ? "запись"
-              : countLabel === "few"
-                ? "записи"
-                : "записей"}
-          </span>
-        )}
       </section>
       <section
         className="recordings-catalogue-toolbar"
@@ -313,17 +300,10 @@ export function RecordingsPage() {
                     ? "Попробуйте другое название встречи."
                     : "Здесь появятся доступные записи ваших встреч."}
               </p>
-              {search.trim() ? (
+              {search.trim() && (
                 <Button variant="secondary" onClick={() => setSearch("")}>
                   Сбросить поиск
                 </Button>
-              ) : (
-                <Link
-                  className="button button-secondary"
-                  to="/conferences?view=past"
-                >
-                  Завершённые встречи
-                </Link>
               )}
             </section>
           )}
@@ -346,12 +326,6 @@ export function RecordingsPage() {
           </Button>
         </div>
       )}
-      <footer className="recordings-catalogue-footer">
-        <Link to="/conferences?view=past">
-          <ArrowLeft size={15} aria-hidden="true" />
-          Завершённые встречи
-        </Link>
-      </footer>
     </div>
   );
 }

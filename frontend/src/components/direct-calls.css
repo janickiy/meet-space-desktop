@@ -140,11 +140,14 @@
   background: #992033;
   border-color: #992033;
 }
-.direct-call-accept.button {
+.direct-call-control.direct-call-accept {
   background: #188453;
   border-color: #21a96c;
   color: #fff;
-  border-radius: 12px;
+}
+.direct-call-control.direct-call-accept:hover:not(:disabled) {
+  background: #136c44;
+  border-color: #21a96c;
 }
 .direct-call-meta {
   display: flex;

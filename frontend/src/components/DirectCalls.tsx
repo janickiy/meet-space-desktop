@@ -670,23 +670,34 @@ function CallRinging({
           </>
         )}
         {call.status === "ringing" && incoming && (
-          <Button
-            className="direct-call-accept"
+          <button
+            type="button"
+            className="direct-call-control direct-call-accept"
+            aria-label="Ответить"
             onClick={onAccept}
             disabled={pending}
           >
-            <Phone size={22} />
-            Ответить
-          </Button>
+            <Phone aria-hidden="true" />
+            <span className="direct-call-control-caption" aria-hidden="true">
+              Ответить
+            </span>
+          </button>
         )}
-        <Button className="direct-call-end" onClick={onEnd} disabled={pending}>
-          <PhoneOff size={22} />
-          {ongoing(call)
-            ? incoming && call.status === "ringing"
-              ? "Отклонить"
-              : "Завершить"
-            : "Закрыть"}
-        </Button>
+        <button
+          type="button"
+          className="direct-call-control direct-call-end"
+          onClick={onEnd}
+          disabled={pending}
+        >
+          <PhoneOff aria-hidden="true" />
+          <span className="direct-call-control-caption">
+            {ongoing(call)
+              ? incoming && call.status === "ringing"
+                ? "Отклонить"
+                : "Завершить"
+              : "Закрыть"}
+          </span>
+        </button>
       </div>
     </>
   );

@@ -36,6 +36,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   const tab=label=>execute(`(()=>{const e=[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent.trim()===${JSON.stringify(label)});if(!e)throw new Error('Missing settings tab: '+${JSON.stringify(label)});e.click()})()`);
   const field=(selector,value)=>execute(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw new Error('Missing field');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const route=async value=>{window.webContents.send('meetspace:route',value);await until(()=>execute(`location.pathname+location.search===${JSON.stringify(value)}`),'Route applies');};
+  const reload=async()=>{
+    assert.deepEqual(await execute('window.__designErrors'),[]);
+    const loaded=new Promise(resolve=>window.webContents.once('did-finish-load',resolve));
+    window.webContents.reload();await loaded;
+    await execute('window.__designErrors=[];window.addEventListener("error",e=>window.__designErrors.push(e.message));void 0');
+  };
   const capture=async name=>{
     await execute('document.fonts.ready');
     await execute('Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})))');
@@ -55,6 +61,49 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     for(const dialog of metrics.dialogs) assert.ok(dialog.left>=-1&&dialog.top>=-1&&dialog.right<=metrics.width+1&&dialog.bottom<=metrics.height+1,`${name}: dialog is outside the viewport`);
     await fs.writeFile(path.join(output,name+'.png'),(await window.webContents.capturePage()).toPNG());
     captures.push({name,...metrics});
+  };
+  const checkMeetingFilters=async name=>{
+    await click('.dashboard-mobile-filter');
+    await until(()=>execute('!!document.querySelector(".conference-filters-open")'),'meeting filters open');
+    const controls=await execute(`(()=>{const root=document.querySelector('.conference-filters');return [...root.querySelectorAll('input[type=date],:scope > button')].map(e=>{const r=e.getBoundingClientRect();return {height:r.height,top:r.top,bottom:r.bottom};});})()`);
+    assert.equal(controls.length,3,'Meeting filters contain two dates and reset');
+    for(const control of controls) {
+      assert.ok(Math.abs(control.height-controls[0].height)<1,'Date and reset controls have equal heights');
+      assert.ok(Math.abs(control.bottom-controls[0].bottom)<1,'Date and reset controls share a baseline');
+    }
+    await capture(name);
+    await click('.dashboard-mobile-filter');
+  };
+  const checkIncomingCall=async theme=>{
+    await route(`/personal/${DIRECT}`);await visible('Product server message');
+    const call={id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',conversationId:DIRECT,
+      caller:{id:USER_B,displayName:'Product direct peer'},callee:{id:USER_A,displayName:'Product owner'},status:'ringing',version:1};
+    await execute(`window.dispatchEvent(new CustomEvent('meet:direct-call',{detail:{userId:${JSON.stringify(USER_A)},call:${JSON.stringify(call)}}}));void 0`);
+    await until(()=>execute('!!document.querySelector(".direct-call-accept")'),'incoming call opens');
+    for(const [width,height] of [[1280,800],[390,844]]) {
+      window.setMinimumSize(320,500);window.setContentSize(width,height);
+      const controls=await execute(`(()=>[...document.querySelectorAll('.direct-call-controls > button')].map(e=>{const r=e.getBoundingClientRect(),caption=e.querySelector('.direct-call-control-caption'),c=caption?.getBoundingClientRect();return {width:r.width,height:r.height,top:r.top,bottom:r.bottom,label:e.getAttribute('aria-label')||e.innerText.trim(),caption:caption?.textContent.trim(),captionTop:c?.top,captionCenter:c?(c.left+c.right)/2:null,center:(r.left+r.right)/2,background:getComputedStyle(e).backgroundColor};}))()`);
+      assert.equal(controls.length,4,'Incoming call has microphone, camera, answer and decline');
+      assert.deepEqual(controls.map(c=>c.caption),['Микрофон','Камера','Ответить','Отклонить']);
+      for(const control of controls) {
+        assert.equal(control.width,controls[0].width,'Answer and decline match device control width');
+        assert.equal(control.height,controls[0].height,'Answer and decline match device control height');
+        assert.equal(control.top,controls[0].top,'Call controls share a row');
+        assert.ok(control.label,'Call controls retain accessible names');
+        assert.ok(control.captionTop>control.bottom,'Call captions sit below the icon buttons');
+        assert.ok(Math.abs(control.captionCenter-control.center)<1,'Call captions are centered below their buttons');
+      }
+      const rgb=color=>color.match(/\d+/g).map(Number);
+      const answer=rgb(controls[2].background),decline=rgb(controls[3].background);
+      assert.ok(answer[1]>answer[0]&&answer[1]>answer[2],'Answer retains its green background');
+      assert.ok(decline[0]>decline[1]&&decline[0]>decline[2],'Decline retains its red background');
+      await capture(`incoming-call-${width}x${height}-${theme}`);
+    }
+    await execute(`window.dispatchEvent(new CustomEvent('meet:direct-call',{detail:{userId:${JSON.stringify(USER_A)},call:${JSON.stringify({...call,status:'ended',version:2})}}}));void 0`);
+    await until(()=>execute('!document.querySelector(".direct-call-accept")'),'ended call replaces ringing controls');
+    await click('.direct-call-end');
+    await until(()=>execute('!document.querySelector(".direct-call-modal")'),'ended call closes');
+    window.setMinimumSize(1000,700);window.setContentSize(1440,1000);
   };
   await execute('window.__designErrors=[];window.addEventListener("error",e=>window.__designErrors.push(e.message));void 0');
   await visible('Начнём с подключения'); await capture('onboarding-intro-light');
@@ -84,6 +133,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await click('.collection-view-toggle button[aria-pressed=false]');
       }
       if(name==='meetings'){
+        await checkMeetingFilters('meeting-filters-'+theme);
+        assert.equal(await execute(`document.querySelector('[role=tab][id=tab-past]')?.textContent.trim()`),'Завершённые','Completed meetings tab remains available');
         await click('.dashboard-meeting-row .meeting-info-trigger');
         await until(()=>execute('!!document.querySelector(".meeting-reference-info .meeting-info-facts")'),'meeting information dialog');
         await capture('meeting-info-'+theme);
@@ -110,8 +161,19 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       }
       if(name==='recordings'){
         assert.equal(await execute('document.querySelectorAll(".recordings-conference-selector,.recordings-meeting-view").length'),0,'Library has no obsolete meeting-selection toolbar');
+        assert.equal(await execute(`document.querySelectorAll('.recordings-count,.recordings-catalogue-footer,.recordings-page a[href="/conferences?view=past"]').length`),0,'Recording library omits the count and completed-meeting links');
+        await field('.recordings-search input','No matching recording');
+        await until(()=>execute('!!document.querySelector(".recordings-empty")'),'empty recording search appears');
+        assert.equal(await execute(`document.querySelectorAll('.recordings-page a[href="/conferences?view=past"]').length`),0,'Empty recording search omits completed-meeting links');
+        await click('.recordings-empty button');await visible('Product finished meeting');
       }
     }
+    fixture.product.recording.status='failed';
+    await route('/recordings');await reload();await visible('Записей пока нет');
+    assert.equal(await execute(`document.querySelectorAll('.recordings-count,.recordings-page a[href="/conferences?view=past"]').length`),0,'Empty recording library omits the count and completed-meeting links');
+    await capture('recordings-empty-'+theme);
+    fixture.product.recording.status='ready';
+    await reload();await visible('Product finished meeting');
     for(const [width,height] of [[1280,800],[1920,1080]]){
       window.setContentSize(width,height);
       for(const [name,url,ready] of pages.filter(([name])=>['chat','group','recordings'].includes(name))){
@@ -119,6 +181,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       }
       await route('/conferences');await visible('Product scheduled meeting');
       await capture(`meetings-${width}x${height}-${theme}`);
+      await checkMeetingFilters(`meeting-filters-${width}x${height}-${theme}`);
       await click('.meetings-quick-primary');
       await until(()=>execute('!!document.querySelector(".meeting-create-modal #conference-title")'),'new meeting dialog');
       await field('#conference-title','Обсуждение следующего выпуска MeetSpace');
@@ -132,6 +195,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       await click('.meeting-create-modal button[aria-label="Закрыть окно"]');
       await until(()=>execute('!document.querySelector(".meeting-create-modal")'),'scheduled meeting editor closes without submitting');
     }
+    await checkIncomingCall(theme);
     window.setContentSize(1440,1000);
   }
   await route('/conferences'); await visible('Product scheduled meeting');
@@ -148,6 +212,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   window.setContentSize(1280,800);
   await capture('settings-text150-1280x800');
   await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-text150');
+  await checkMeetingFilters('meeting-filters-text150');
   await route('/app/settings');await visible('Мой профиль');await tab('Внешний вид');
   await execute(`(()=>{const s=document.querySelector('.appearance-text-size select');s.value='100';s.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   await route('/conferences');await visible('Product scheduled meeting');
@@ -160,6 +225,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
   await tab('Мой профиль');await visible('Мой профиль');await capture('profile-mobile');
   checks.push('onboarding introduction leads to server connection; settings render as a page with combined devices; meeting and calendar information dialogs close without mutation; recording information and native download actions sit beside the player');
+  checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; meeting filter reset matches date height and baseline including 150% text; recordings omit count and completed links while completed meetings remain available');
   checks.push('shared routes render in both themes; 1280x800 and 1920x1080 workspace and meeting editors, 1280x800 onboarding/login and 150% settings/meetings; desktop/compact/mobile have no document or content-region horizontal overflow, clipped button content, out-of-viewport dialog or missing image');
   assert.deepEqual(await execute('window.__designErrors'),[]);
   await fs.writeFile(path.join(output,'result.json'),JSON.stringify({ok:true,checks,captures,platform:process.platform,arch:process.arch,source:'shared production React; synthetic local TLS API data',windowsRuntimeTested:false},null,2)+'\n');

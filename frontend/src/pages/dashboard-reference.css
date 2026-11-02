@@ -149,6 +149,10 @@
   border-radius: 8px;
 }
 .dashboard-page.meetings-reference-page .conference-filters {
+  --meeting-filter-control-height: max(
+    44px,
+    calc(20px * var(--text-scale) + 22px)
+  );
   display: none;
   grid-template-columns: 145px 145px auto;
   align-items: end;
@@ -158,9 +162,13 @@
 .dashboard-page.meetings-reference-page .conference-filters-open {
   display: grid;
 }
+.meetings-reference-page .conference-filters input {
+  height: var(--meeting-filter-control-height);
+}
 .meetings-reference-page .conference-filters > .button {
   justify-self: start;
-  min-height: 38px;
+  height: var(--meeting-filter-control-height);
+  min-height: var(--meeting-filter-control-height);
   font-size: calc(11px * var(--text-scale));
 }
 .dashboard-page.meetings-reference-page .conference-list {
