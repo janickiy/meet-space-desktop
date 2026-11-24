@@ -360,7 +360,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         }
       }
     }
-    checks.push('The seven icon-and-label controls stay in reference order while disconnected and before media, in light/dark, 1440/1280/390 widths and 150% text; each label stays below its icon, all controls fit, and no enclosing toolbar frame/background returns');
+    checks.push('The seven icon-and-label controls stay in reference order while disconnected and before media, in light/dark, 1440/1280/390 widths and 150% text; each label stays below its icon, all controls fit within the outlined toolbar');
     checks.push('Microphone, camera and screen are disabled before conference.state; local participants, chat, settings and leave remain available, and clicking disabled capture controls never requests devices');
 
     const shareOpener = '.room-header button[aria-label="Пригласить"]';

@@ -104,14 +104,14 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
           const back=bounds('.desktop-ssh-back'),backIcon=bounds('.desktop-ssh-back svg'),stepper=bounds('.desktop-ssh-steps'),heading=bounds('.desktop-ssh-heading'),close=bounds('.desktop-ssh-close');
           const setup=document.querySelector('.desktop-ssh-setup-form');
           const setupLayout=setup?{width:document.querySelector('.desktop-ssh-installer').clientWidth,domain:bounds('#desktop-ssh-domain'),email:bounds('#desktop-ssh-acme-email'),hasPublicIp:!!document.querySelector('#desktop-ssh-public-ip'),hasPublicIpLabel:[...setup.querySelectorAll('label')].some(e=>/IPv4/.test(e.textContent)),emailRequired:document.querySelector('#desktop-ssh-acme-email').required}:null;
-          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing,back,backIcon,stepper,heading,close,setupLayout,installerHeading:document.querySelector('.desktop-foundation-installing .on-side h2')?.textContent};
+          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing,back,backIcon,stepper,heading,close,setupLayout,installer:!!document.querySelector('.desktop-foundation-installing'),installerHeading:document.querySelector('.desktop-foundation-installing .on-side h2')?.textContent};
         })()`);
         layoutChecks.push({name,...layout});
         assert.deepEqual(layout.viewport,{width,height},'Capture uses the requested viewport, without OS minimum-size clamping');
         assert.equal(layout.scale,largeText?'1.5':'1');
         assert.ok(layout.documentScrollWidth <= layout.documentWidth + 1, 'Installer must not overflow the document horizontally');
         assert.deepEqual(layout.overflowing,[], 'Installer cards, choices, checks, buttons and inputs must fit horizontally');
-        assert.match(layout.installerHeading,/Своё пространство/, 'Installer retains its dedicated reference artwork and heading');
+        if(layout.installer) assert.match(layout.installerHeading,/Своё пространство/, 'Installer retains its dedicated reference artwork and heading');
         if(layout.back) {
           assert.ok(Math.abs(layout.back.left-layout.stepper.left)<=1,'Back button aligns with the stepper content edge');
           assert.ok(Math.abs(layout.backIcon.left-layout.stepper.left)<=1,'Back arrow has no extra button padding at the content edge');

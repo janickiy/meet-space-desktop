@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
@@ -327,7 +328,8 @@ function DesktopStorageUnlock({
 }
 
 function useSystemTheme(enabled: boolean) {
-  useEffect(() => {
+  // Hand off the document theme before the account appearance provider applies its own layout effect.
+  useLayoutEffect(() => {
     if (!enabled) return;
     const root = document.documentElement;
     const scheme = window.matchMedia("(prefers-color-scheme: dark)");

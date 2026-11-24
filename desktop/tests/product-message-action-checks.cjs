@@ -129,6 +129,17 @@ module.exports = async function checkMessageActions({
       ),
       true,
     );
+    const photoCentered = await execute(`(() => {
+      const button = document.querySelector('.chat-info-page .chat-group-photo');
+      const preview = button.querySelector('.avatar-settings-image');
+      const icon = preview.querySelector('svg').getBoundingClientRect();
+      const circle = button.getBoundingClientRect();
+      return preview.clientWidth === button.clientWidth &&
+        preview.clientHeight === button.clientHeight &&
+        Math.abs((icon.left + icon.right - circle.left - circle.right) / 2) < 1 &&
+        Math.abs((icon.top + icon.bottom - circle.top - circle.bottom) / 2) < 1;
+    })()`);
+    assert.ok(photoCentered, "Default group icon is centered inside the entire avatar");
     await screenshot("group-info-page");
     await click(".chat-info-heading button");
     await visible("Переслано от Product peer");
