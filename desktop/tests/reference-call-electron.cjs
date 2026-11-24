@@ -168,10 +168,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         assert.deepEqual([...metrics.toolbar.buttons].sort((a,b) => Math.abs(a.top-b.top)>2 ? a.top-b.top : a.left-b.left).map(button => button.label), ['Микрофон','Камера','Экран','Участники','Чат','Настройки','Выйти'], `${name}: visual order matches DOM and reference order`);
         if (metrics.width >= 1000) assert.ok(Math.max(...metrics.toolbar.buttons.map(button => button.top))-Math.min(...metrics.toolbar.buttons.map(button => button.top)) <= 2, `${name}: desktop controls share one row`);
         assert.ok(metrics.toolbar.buttons.every(button => button.tag === 'BUTTON' && button.compact && button.icon && button.labelBelowIcon && button.labelCentered && button.withinViewport), `${name}: each compact icon tile has its own centered label below it and fits the viewport`);
-        assert.equal(metrics.toolbar.background, 'rgba(0, 0, 0, 0)', `${name}: no enclosing toolbar background`);
+        assert.notEqual(metrics.toolbar.background, 'rgba(0, 0, 0, 0)', `${name}: room controls share the reference toolbar surface`);
         assert.equal(metrics.toolbar.backgroundImage, 'none', `${name}: no enclosing toolbar background image`);
         assert.equal(metrics.toolbar.boxShadow, 'none', `${name}: no enclosing toolbar shadow`);
-        assert.deepEqual(metrics.toolbar.borders, ['0px','0px','0px','0px'], `${name}: no enclosing toolbar frame`);
+        assert.deepEqual(metrics.toolbar.borders, ['1px','1px','1px','1px'], `${name}: room controls retain the toolbar outline`);
         assert.equal(metrics.toolbar.receiveOnlyInside, false, `${name}: receive-only action is outside the seven controls`);
         if (toolbarState === 'disconnected') {
           assert.deepEqual(metrics.toolbar.buttons.map(button => button.disabled), [true,true,true,false,false,false,false], `${name}: capture and screen controls wait for authenticated room state; participant/chat/settings/leave remain available`);
@@ -184,7 +184,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         assert.equal(invitation.focusInside, true, `${name}: focus stays inside the current invitation step ${JSON.stringify(invitation.focusDiagnostic)}`);
         assert.equal(invitation.titleOverlapsClose, false, `${name}: heading does not overlap the close action`);
         assert.equal(invitation.fieldsLabelled, true, `${name}: all invitation fields have accessible labels`);
-        assert.ok(Math.abs(invitation.width - Math.min(invitation.step === 'share' ? 850 : 520, metrics.width-40)) <= 1, `${name}: reference modal width`);
+        assert.ok(Math.abs(invitation.width - Math.min(invitation.step === 'share' ? 680 : 520, metrics.width - (metrics.width <= 650 ? 28 : 60))) <= 1, `${name}: reference modal width (${invitation.width}px at ${metrics.width}px)`);
         if (invitation.step === 'share') {
           assert.equal(invitation.title, 'Поделиться встречей', `${name}: share step heading`);
           assert.equal(invitation.link, expectedInviteLink, `${name}: share link uses the selected backend origin`);
@@ -208,8 +208,8 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       await fs.writeFile(path.join(output, `${name}.png`), (await window.webContents.capturePage()).toPNG());
       captures.push({ name, ...metrics });
     };
-    await visible('Начнём с подключения');
-    await click('.reference-onboarding-intro .button');
+    await visible('Команда ближе.');
+    await click('[data-onboarding=connect]');
     await exists('#desktop-server-origin');
     await field('#desktop-server-origin', fixture.origin);
     await click('.desktop-server-form button[type=submit]');
@@ -241,6 +241,8 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await exists('.prejoin-toggles button[aria-label="Выключить камеру"][aria-pressed=true]');
     await until(() => execute('document.querySelector(".prejoin-video-frame video")?.videoWidth>0'), 'Fake camera produces actual video frames');
     await capture('prejoin-camera-and-microphone');
+    const opener = '.prejoin-mobile-devices';
+    await click(opener); await exists('[role=dialog] .prejoin-device-selects');
     for (const index of [0, 1]) {
       const before = await trackCounts();
       await until(() => execute(`document.querySelectorAll('.prejoin-device-selects select')[${index}]?.options.length>1`), 'Fake input is enumerated');
@@ -249,8 +251,6 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       await tracksAre(1,1);
       assert.ok((await trackCounts()).ended > before.ended, 'Replaced device track stops');
     }
-    const opener = '.prejoin-mobile-devices';
-    await click(opener); await exists('[role=dialog] .prejoin-device-selects');
     assert.equal(await execute(`(()=>{const d=document.querySelector('[role=dialog]');return d.getAttribute('aria-modal')==='true'&&!!document.getElementById(d.getAttribute('aria-labelledby'))?.textContent.trim()&&d.contains(document.activeElement);})()`), true, 'Devices dialog has a name, modal semantics and initial focus');
     assert.equal(await execute(`(()=>{const d=document.querySelector('[role=dialog]');const els=[...d.querySelectorAll('button:not(:disabled),select:not(:disabled)')];els.at(-1).focus();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true,cancelable:true}));return document.activeElement===els[0];})()`), true, 'Devices dialog wraps Tab');
     assert.equal(await execute(`(()=>{const d=document.querySelector('[role=dialog]');const els=[...d.querySelectorAll('button:not(:disabled),select:not(:disabled)')];els[0].focus();document.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));return document.activeElement===els.at(-1);})()`), true, 'Devices dialog wraps Shift+Tab');
@@ -271,8 +271,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await capture('prejoin-narrow-390'); await click(opener); await capture('prejoin-narrow-devices-dialog');
     await click('[role=dialog] button[aria-label="Закрыть окно"]');
     window.setContentSize(1440,1000);
+    await click(opener); await exists('[role=dialog] .prejoin-device-selects');
     const selectedOutput = await execute(`(()=>{const e=document.querySelectorAll('.prejoin-device-selects select')[2];if(!e)return null;const option=[...e.options].find(o=>o.value&&o.value!=='default');if(!option)return null;e.value=option.value;e.dispatchEvent(new Event('change',{bubbles:true}));return e.value;})()`);
     assert.ok(selectedOutput, 'Chromium fake audio output is selectable');
+    await click('[role=dialog] button[aria-label="Закрыть окно"]');
     await click('.prejoin-join'); await exists('.call-reference-room');
     await tracksAre(0,0);
     assert.equal(await execute('document.querySelector(".conference-stage-rail").hidden'), true, 'Room starts with the side panel closed, matching the reference');
@@ -281,12 +283,13 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     // Model a real presence event from the local server, without pretending to
     // negotiate a media connection or publishing a synthetic remote video.
     let stateRevision = 0;
-    const sendPresence = async () => {
+    const sendPresence = async (withPeer = false) => {
       await until(() => Promise.resolve(conferenceSockets.at(-1)?.readyState === WebSocket.OPEN), 'Conference realtime socket opens');
       const connectionId = `fixture-connection-${++stateRevision}`;
       const stateEvent = JSON.stringify({ id: `fixture-call-state-${stateRevision}`, version: 1, type: 'conference.state', userId: USER_A,
         conferenceId: CONFERENCE, timestamp: now, data: { connectionId, participantId: membership.id,
-          status: 'active', participants: [{ ...membership, online: true, connections: 1, connectionIds: [connectionId] }] } });
+          status: 'active', participants: [{ ...membership, online: true, connections: 1, connectionIds: [connectionId] },
+            ...(withPeer ? [{...membership,id:'55555555-5555-4555-8555-555555555555',userId:USER_B,displayName:'Анна Кузнецова',role:'participant',online:true,connections:1,connectionIds:['fixture-peer']}] : [])] } });
       for (const socket of fixture.sockets) {
         if (!observedSockets.has(socket)) {
           observedSockets.add(socket);
@@ -302,11 +305,18 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         }
         if (socket.readyState === WebSocket.OPEN) socket.send(stateEvent);
       }
-      await visible('В эфире · Участников: 1');
+      await visible('В эфире · Участников: '+(withPeer ? 2 : 1));
       await until(() => execute('!document.querySelector(".room-microphone-control")?.disabled'), 'Presence enables independent mic/camera start');
     };
     await sendPresence();
     await capture('active-room-before-media', 'before-media');
+    await sendPresence(true);
+    await click('.room-view-options button:nth-child(2)'); await exists('.room-pin-picker select');
+    await execute("(()=>{const picker=document.querySelector('.room-pin-picker select');picker.value='55555555-5555-4555-8555-555555555555';picker.dispatchEvent(new Event('change',{bubbles:true}));})()");
+    await until(()=>execute("document.querySelector('.media-tile[data-featured=true]')?.innerText.includes('Анна Кузнецова')"), 'Pinned member appears in the speaker tile');
+    assert.equal(await execute("document.querySelectorAll('.media-tile[data-featured=true]:not([hidden])').length"),1,'Exactly one visible speaker tile');
+    await capture('active-room-speaker-pin');
+    await click('.room-view-options button:first-child'); await sendPresence();
     await click('.room-header button[aria-label="Пригласить"]'); await exists('[role=dialog]');
     await capture('active-room-invitation'); await click('[role=dialog] button[aria-label="Закрыть окно"]');
     await click('.room-participants-control');

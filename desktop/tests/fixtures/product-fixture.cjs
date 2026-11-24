@@ -96,6 +96,37 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
       if (url.searchParams.has("search")) items = items.filter(item => (item.name || item.peer.displayName).toLowerCase().includes(url.searchParams.get("search").toLowerCase()));
       return reply({ items, nextCursor: null, unreadCount: 0 });
     }
+    // Dedicated message-action scenarios opt in to this mutable DTO history.
+    if (controls.actionThreads) {
+      const [, targetId, operation] = /^\/conversations\/([^/]+)\/messages(?:\/([^/]+))?$/.exec(route) || [];
+      const history = controls.actionThreads.get(targetId);
+      if (history && !operation && request.method === "GET") return reply({items: history, nextCursor:null, unreadCount:0});
+      if (history && operation === "forward" && request.method === "POST") {
+        controls.forwardAttempts.push(body);
+        let forwarded = controls.forwardReplay.get(body.clientRequestId);
+        if (!forwarded) {
+          const source = controls.actionThreads.get(body.sourceId);
+          forwarded = body.messageIds.map(id => {
+            const original = source.find(message => message.id === id);
+            return {...original, id:require("node:crypto").randomUUID(), conversationId:targetId,
+              sequence:String(history.length + 1), senderId:USER_A, senderName:"Product owner",
+              forwardedFrom:{ senderName:original.senderName }, attachments:original.attachments.map(file => ({...file,id:require("node:crypto").randomUUID()}))};
+          });
+          history.push(...forwarded);
+          controls.forwardReplay.set(body.clientRequestId, forwarded);
+        }
+        if (controls.loseForwardResponse) { controls.loseForwardResponse=false; request.socket.destroy(); return true; }
+        return reply({ items:forwarded });
+      }
+      if (history && operation && request.method === "DELETE") {
+        controls.deleteAttempts.push(operation);
+        if (controls.refuseDelete === operation) return reply({status:"failed",message:"temporarily unavailable"},503);
+        const item = history.find(entry => entry.id === operation);
+        if (!item || item.senderId !== USER_A) return reply({status:"failed"},403);
+        Object.assign(item,{text:"",attachments:[],deletedAt:new Date().toISOString()});
+        return reply({item});
+      }
+    }
     const attachmentInit = /^\/(conversations|conferences)\/([^/]+)\/attachments\/init$/.exec(route);
     if (attachmentInit && request.method === "POST") {
       const id = require("node:crypto").randomUUID();

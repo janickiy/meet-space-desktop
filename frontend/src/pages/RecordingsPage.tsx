@@ -3,7 +3,9 @@ import { Link } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   CirclePlay,
-  ArrowUpRight,
+  AudioLines,
+  FolderOpen,
+  Video,
   FileArchive,
   Play,
   Search,
@@ -11,6 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { isDesktopBuild } from "../platform/build";
 import type {
   Conference,
   ConferenceHistory,
@@ -66,6 +69,7 @@ export function RecordingCard({
     : audioOnly
       ? "Аудиозапись"
       : "Видеозапись";
+  const ModeIcon = tracks ? FileArchive : audioOnly ? AudioLines : Video;
   return (
     <article className="recordings-row" data-testid="recordings-row">
       <Link
@@ -82,7 +86,6 @@ export function RecordingCard({
           />
         ) : (
           <>
-            <span className="recordings-thumbnail-label">{modeLabel}</span>
             {audioOnly ? (
               <span className="recordings-thumbnail-wave" aria-hidden="true">
                 {Array.from({ length: 19 }, (_, index) => (
@@ -132,6 +135,9 @@ export function RecordingCard({
         )}
       </Link>
       <div className="recordings-row-info">
+        <span className="recordings-kind">
+          <ModeIcon size={13} aria-hidden="true" /> {modeLabel}
+        </span>
         <Link to={path} className="recordings-row-title">
           {conference.title}
         </Link>
@@ -160,13 +166,17 @@ export function RecordingCard({
         )}
       </div>
       <div className="recordings-row-actions">
-        <span className="recordings-row-type">{modeLabel}</span>
         <Link
           to={path}
-          className="icon-button recordings-watch"
+          className="button button-outline recordings-watch"
           aria-label={`Смотреть запись: ${conference.title}`}
         >
-          <ArrowUpRight size={17} aria-hidden="true" />
+          {tracks ? (
+            <FolderOpen size={17} aria-hidden="true" />
+          ) : (
+            <Play size={17} aria-hidden="true" />
+          )}
+          {tracks ? "Материалы" : "Смотреть"}
         </Link>
         <RecordingActions
           title={conference.title}
@@ -192,7 +202,7 @@ export function RecordingCard({
 export function RecordingsPage() {
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [layout, setLayout] = useState<CollectionView>("grid");
+  const [layout, setLayout] = useState<CollectionView>("list");
   const library = useInfiniteQuery({
     queryKey: ["recording-library", user?.id],
     enabled: !!user,
@@ -236,8 +246,10 @@ export function RecordingsPage() {
   const failed = library.data?.pages.some((page) => page.failed.length);
   return (
     <div className="recordings-page recordings-reference-library">
-      <section className="page-heading recordings-heading">
-        <h1>Записи встреч</h1>
+      <section className="recordings-library-intro">
+        {!isDesktopBuild && <h1>Записи встреч</h1>}
+        <h2>Библиотека встреч</h2>
+        <p>Записи и материалы ваших встреч.</p>
       </section>
       <section
         className="recordings-catalogue-toolbar"

@@ -1,4 +1,5 @@
 import { BarChart3 } from "lucide-react";
+import { isDesktopBuild } from "../platform/build";
 import { Link, useSearchParams } from "react-router";
 import { AnalyticsPanel } from "../components/AnalyticsPanel";
 import { Button, ErrorNotice, Loading } from "../components/ui";
@@ -14,12 +15,14 @@ export function AnalyticsPage() {
   const capabilities = useCapabilities();
   return (
     <div className="analytics-page">
-      <section className="page-heading">
-        <div>
-          <h1>Аналитика</h1>
-          <p>Объективные показатели ваших встреч.</p>
-        </div>
-      </section>
+      {!isDesktopBuild && (
+        <section className="page-heading">
+          <div>
+            <h1>Аналитика</h1>
+            <p>Объективные показатели ваших встреч.</p>
+          </div>
+        </section>
+      )}
       <ErrorNotice error={capabilities.error} />
       {capabilities.isPending ? (
         <Loading />

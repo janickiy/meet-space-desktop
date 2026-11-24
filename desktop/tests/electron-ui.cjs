@@ -153,12 +153,12 @@ const {
     await execute(
       "window.__uiStreamEvents = []; window.meetspaceDesktop.onTransportEvent(e => { if (e.kind === 'stream') window.__uiStreamEvents.push({id:e.id,type:e.type,status:e.status,headers:e.headers, bytes:e.data?.byteLength, nativeArray:e.data instanceof Uint8Array}); }); window.__uiErrors=[]; window.addEventListener('error',e=>window.__uiErrors.push(e.message)); void 0",
     );
-    await visible("Начнём с подключения");
-    await click(".reference-onboarding-intro .button");
+    await visible("Команда ближе.");
+    await click("[data-onboarding=connect]");
     await visible("Подключиться к серверу");
     assert.equal(
       await execute(
-        "!!document.querySelector('.reference-welcome-brand img[src*=meetspace-symbol-color]')",
+        "!!document.querySelector('.entry-title img[src*=desktop-brand-mark]')",
       ),
       true,
       "First run reuses the shipped brand",

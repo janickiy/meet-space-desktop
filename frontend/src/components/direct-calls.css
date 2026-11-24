@@ -993,3 +993,38 @@
     font-size: calc(10px * var(--text-scale));
   }
 }
+
+/* The reference preserves the desktop chrome around its dark personal-call stage. */
+@media (min-width: 768px) {
+  body:has(.desktop-workbench) .modal-backdrop:has(> .direct-call-modal) {
+    inset: 56px 0 28px;
+    align-items: stretch;
+  }
+  body:has(.desktop-workbench) .direct-call-modal.modal {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: 100%;
+    border: 0;
+    border-radius: 0;
+    padding: 16px 24px 20px;
+  }
+  body:has(.desktop-workbench) .direct-call-modal.modal > h2 {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    margin: 0 70px 12px 52px;
+    font-size: calc(17px * var(--text-scale));
+    letter-spacing: -0.02em;
+  }
+  body:has(.desktop-workbench) .direct-call-modal .modal-close {
+    left: 24px;
+    right: auto;
+    top: 16px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    border-radius: 8px;
+  }
+}

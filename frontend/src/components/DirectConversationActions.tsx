@@ -49,7 +49,9 @@ export function DirectUserInfoModal({
   conversation,
   onClose,
   returnFocus,
+  embedded = false,
 }: {
+  embedded?: boolean;
   conversation: DirectConversation;
   onClose: () => void;
   returnFocus?: () => HTMLElement | null;
@@ -65,6 +67,7 @@ export function DirectUserInfoModal({
   }, [denied, client, conversation.id, user, onClose]);
   return (
     <UserInfoModal
+      embedded={embedded}
       person={conversation.peer}
       conversationId={conversation.id}
       subtitle="Участник вашей переписки"

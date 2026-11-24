@@ -1,3 +1,4 @@
+import { isDesktopBuild } from "../platform/build";
 import { Link } from "react-router";
 import {
   useInfiniteQuery,
@@ -43,7 +44,7 @@ export function NotificationsPage() {
     <div className="notifications-page">
       <section className="page-heading">
         <div>
-          <h1>Уведомления</h1>
+          {!isDesktopBuild && <h1>Уведомления</h1>}
           <p>Сообщения и ответы в чатах, приглашения и материалы встреч.</p>
         </div>
         <span className="notifications-count" role="status">

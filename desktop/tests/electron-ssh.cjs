@@ -104,14 +104,14 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
           const back=bounds('.desktop-ssh-back'),backIcon=bounds('.desktop-ssh-back svg'),stepper=bounds('.desktop-ssh-steps'),heading=bounds('.desktop-ssh-heading'),close=bounds('.desktop-ssh-close');
           const setup=document.querySelector('.desktop-ssh-setup-form');
           const setupLayout=setup?{width:document.querySelector('.desktop-ssh-installer').clientWidth,domain:bounds('#desktop-ssh-domain'),email:bounds('#desktop-ssh-acme-email'),hasPublicIp:!!document.querySelector('#desktop-ssh-public-ip'),hasPublicIpLabel:[...setup.querySelectorAll('label')].some(e=>/IPv4/.test(e.textContent)),emailRequired:document.querySelector('#desktop-ssh-acme-email').required}:null;
-          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing,back,backIcon,stepper,heading,close,setupLayout,hasInstallerSlogan:!!document.querySelector('.reference-welcome-installer .reference-welcome-copy > span')};
+          return {viewport:{width:innerWidth,height:innerHeight},scale:getComputedStyle(root).getPropertyValue('--text-scale').trim(),documentWidth:root.clientWidth,documentScrollWidth:root.scrollWidth,overflowing,back,backIcon,stepper,heading,close,setupLayout,installerHeading:document.querySelector('.desktop-foundation-installing .on-side h2')?.textContent};
         })()`);
         layoutChecks.push({name,...layout});
         assert.deepEqual(layout.viewport,{width,height},'Capture uses the requested viewport, without OS minimum-size clamping');
         assert.equal(layout.scale,largeText?'1.5':'1');
         assert.ok(layout.documentScrollWidth <= layout.documentWidth + 1, 'Installer must not overflow the document horizontally');
         assert.deepEqual(layout.overflowing,[], 'Installer cards, choices, checks, buttons and inputs must fit horizontally');
-        assert.equal(layout.hasInstallerSlogan,false,'The installer sidebar has no small slogan above its heading');
+        assert.match(layout.installerHeading,/Своё пространство/, 'Installer retains its dedicated reference artwork and heading');
         if(layout.back) {
           assert.ok(Math.abs(layout.back.left-layout.stepper.left)<=1,'Back button aligns with the stepper content edge');
           assert.ok(Math.abs(layout.backIcon.left-layout.stepper.left)<=1,'Back arrow has no extra button padding at the content edge');
@@ -195,7 +195,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
       assert.equal(observed.hasSavedPlan,false,'The old installation plan is hidden until explicitly opened');
     };
     const openSaved=async()=>{await assertSavedLanding();await clickText('Открыть сохранённую установку');};
-    await visible('Начнём с подключения');await clickText('Продолжить');await visible('Подключиться к серверу');
+    await visible('Команда ближе.');await click('[data-onboarding=connect]');await visible('Подключиться к серверу');
     state={busy:false,phase:'planned',hasCredentials:false,endpoint:{host:'saved-vps.example.com',port:22,user:'root'},identity:{fingerprint:'SHA256:'+'F'.repeat(43),algorithm:'ssh-ed25519',changed:false,trusted:true},plan:structuredClone(plan),ticket:{jobId:'84a53fb8-fb75-425a-b1a0-50cbe30cc573',domain:plan.options.domain,host:'saved-vps.example.com',port:22,user:'root',planHash:plan.hash}};
     const savedTicket=structuredClone(state.ticket);
     await clickText('Установить сервер по SSH');await assertSavedLanding();
@@ -248,7 +248,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images','Ready Docker images are the default');
     assert.equal(await execute(`!!document.getElementById('desktop-ssh-image-release')`),false,'Ready-image mode has no version selector');
     assert.doesNotMatch(await execute(`document.querySelector('.desktop-ssh-install-source').textContent`),/Версия Docker-образов|latest|Выпуск, размер и контрольные суммы/,'Ready-image mode has no removed version hints');
-    assert.doesNotMatch(await execute(`document.querySelector('.reference-welcome-brand').textContent`),/WINDOWS|LINUX/i,'The logo has no platform caption');
+    assert.doesNotMatch(await execute(`document.querySelector('.on-logo').textContent`),/WINDOWS|LINUX/i,'The logo has no platform caption');
     await capture('ssh-image-mode-1280-light',{selector:'.desktop-ssh-install-source'});
     await capture('ssh-image-mode-800-dark-large-text',{width:800,height:900,theme:'dark',largeText:true,selector:'.desktop-ssh-install-source'});
     await click('input[name="desktop-ssh-image-mode"][value="source"]');
@@ -371,7 +371,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await capture('ssh-completed-1440-dark',{width:1440,height:1000,theme:'dark'});
     await capture('ssh-completed-800-light',{width:800,height:900});
     await capture('ssh-completed-1280-large-text',{largeText:true});
-    const completedLayout=await execute(`(()=>{const action=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Подключиться к MeetSpace');const r=action.getBoundingClientRect();return {top:r.top,bottom:r.bottom,viewport:innerHeight,hasResultCard:!!document.querySelector('.desktop-ssh-result-address'),completionCaption:document.querySelector('.desktop-ssh-step-caption').textContent,hasReferenceArt:!!document.querySelector('.desktop-ssh-art')};})()`);
+    const completedLayout=await execute(`(()=>{const action=[...document.querySelectorAll('button')].find(e=>e.textContent.trim()==='Подключиться к MeetSpace');const r=action.getBoundingClientRect();return {top:r.top,bottom:r.bottom,viewport:innerHeight,hasResultCard:!!document.querySelector('.desktop-ssh-result-address'),completionCaption:document.querySelector('.desktop-ssh-step-caption').textContent,hasReferenceArt:!!document.querySelector('.on-side .on-orbit-art .on-video-tile')};})()`);
     assert.ok(completedLayout.hasResultCard);assert.match(completedLayout.completionCaption,/05 \/ 05/);assert.ok(completedLayout.hasReferenceArt);
     await execute("document.documentElement.dataset.largeText='false';document.documentElement.style.setProperty('--text-scale','1');void 0");
     await capture('ssh-completed-1440-light',{width:1440,height:1000});

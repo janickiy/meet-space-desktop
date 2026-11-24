@@ -221,19 +221,19 @@
   padding: 0;
   min-height: 0;
   max-height: calc(100dvh - 78px);
-  border-radius: 20px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 32px 100px #111d463d;
+  box-shadow: var(--shadow-float);
 }
 .modal.meeting-reference-editor {
-  width: min(900px, 100%);
-  max-width: 900px;
+  width: min(560px, 100%);
+  max-width: 560px;
 }
 .modal.meeting-reference-info {
-  width: min(760px, 100%);
-  max-width: 760px;
+  width: min(560px, 100%);
+  max-width: 560px;
 }
 .modal.meeting-reference-editor > h2,
 .modal.meeting-reference-info > h2 {
@@ -299,7 +299,7 @@
 }
 .meeting-editor-body {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr);
   gap: 26px;
   padding: 2px 30px 28px;
   overflow-y: auto;
@@ -507,7 +507,7 @@
   align-items: center;
   gap: 18px;
   padding: 28px 76px 28px 30px;
-  background: linear-gradient(115deg, var(--primary-soft), var(--surface) 80%);
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex: none;
 }
@@ -551,7 +551,7 @@
   );
 }
 .meeting-reference-info-past .meeting-info-header {
-  background: linear-gradient(115deg, var(--canvas), var(--surface) 80%);
+  background: var(--surface);
 }
 .meeting-reference-info-past .meeting-info-emblem {
   color: var(--muted);
@@ -708,7 +708,7 @@
   .modal.meeting-reference-editor,
   .modal.meeting-reference-info {
     max-height: calc(100dvh - 32px);
-    border-radius: 20px;
+    border-radius: 12px;
   }
   .meeting-editor-body {
     grid-template-columns: minmax(0, 1fr);
@@ -828,12 +828,12 @@
 }
 
 .modal.meeting-design-modal.meeting-share-modal {
-  width: min(760px, 100%);
-  max-width: 760px;
+  width: min(560px, 100%);
+  max-width: 560px;
   min-height: 0;
   max-height: calc(100dvh - 48px);
   padding: 0;
-  border-radius: 20px;
+  border-radius: 12px;
 }
 .meeting-share-modal > h2 {
   position: absolute;

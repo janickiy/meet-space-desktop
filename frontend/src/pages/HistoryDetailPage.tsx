@@ -98,7 +98,7 @@ export function HistoryDetailPage() {
     );
 
   return (
-    <>
+    <div className="history-reference-page">
       <Link className="back-link" to="/history">
         <ArrowLeft size={17} />
         История встреч
@@ -264,7 +264,7 @@ export function HistoryDetailPage() {
           )}
         </Suspense>
       </div>
-    </>
+    </div>
   );
 }
 

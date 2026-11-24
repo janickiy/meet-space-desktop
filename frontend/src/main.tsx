@@ -17,6 +17,7 @@ import "./workspace.css";
 import "./appearance.css";
 import "./desktop-design.css";
 import "./reference-design.css";
+import "./desktop-workbench.css";
 import { PRODUCT_DESCRIPTION, PRODUCT_TAGLINE } from "./brand";
 import { ApiError } from "./api";
 import { AuthProvider } from "./auth";

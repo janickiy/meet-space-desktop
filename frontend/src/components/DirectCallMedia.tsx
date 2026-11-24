@@ -22,6 +22,7 @@ import {
 import { useSpeakingParticipants } from "../useSpeakingParticipants";
 import { meetingShortcut } from "../conferenceShortcuts";
 import { initials } from "../utils";
+import { primaryParticipantStreams } from "../presence";
 import { MediaTile } from "./RealtimePanel";
 import { useAccountSettings } from "./AccountSettingsContext";
 import { Button, ErrorNotice } from "./ui";
@@ -131,6 +132,8 @@ export function DirectCallMedia({
       stream.participantId === peerPresence.id &&
       !stream.screen,
   );
+  const primaryRemote =
+    peerPresence && primaryParticipantStreams(remote).get(peerPresence.id);
   const screens = media.view.remoteStreams.filter(
     (stream) =>
       peerPresence?.online &&
@@ -252,7 +255,7 @@ export function DirectCallMedia({
                   stream.kinds.includes("audio")
                 }
                 audioLevel={speaking.get(peer.id) ?? 0}
-                covered={showingScreen}
+                covered={showingScreen || stream !== primaryRemote}
                 reconnecting={connectionProblem}
               />
             ))}

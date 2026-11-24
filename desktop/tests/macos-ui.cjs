@@ -62,8 +62,8 @@ if (process.argv.includes("--second-instance-probe")) {
       assert.equal(await js("typeof require === 'undefined' && typeof process === 'undefined' && Object.isFrozen(window.meetspaceDesktop)"), true);
       report.checks.push("sandbox, frozen bridge and renderer isolation");
       stage = "connection-themes";
-      await text("Начнём с подключения");
-      await click(".reference-onboarding-intro .button");
+      await text("Команда ближе.");
+      await click("[data-onboarding=connect]");
       await text("Подключиться к серверу");
       for (const theme of ["light", "dark"]) {
         nativeTheme.themeSource = theme;

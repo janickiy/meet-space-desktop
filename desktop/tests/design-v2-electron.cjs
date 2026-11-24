@@ -33,6 +33,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   const until=async(predicate,label)=>{const end=Date.now()+12000;while(Date.now()<end){if(await predicate())return;await new Promise(r=>setTimeout(r,40));}throw new Error(label);};
   const visible=value=>until(async()=>(await execute('document.body.innerText')).includes(value),`Missing ${value}`);
   const click=selector=>execute(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)throw new Error('Missing action: '+${JSON.stringify(selector)});e.click()})()`);
+  const clickTextInForm = text => execute(`(() => { const b=[...document.querySelectorAll('#auth-form button')].find(e=>e.textContent.trim()===${JSON.stringify(text)});if (!b) throw new Error('Missing form action');b.click(); })()`);
   const tab=label=>execute(`(()=>{const e=[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent.trim()===${JSON.stringify(label)});if(!e)throw new Error('Missing settings tab: '+${JSON.stringify(label)});e.click()})()`);
   const field=(selector,value)=>execute(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)throw new Error('Missing field');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   const route=async value=>{window.webContents.send('meetspace:route',value);await until(()=>execute(`location.pathname+location.search===${JSON.stringify(value)}`),'Route applies');};
@@ -63,16 +64,17 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     captures.push({name,...metrics});
   };
   const checkMeetingFilters=async name=>{
-    await click('.dashboard-mobile-filter');
-    await until(()=>execute('!!document.querySelector(".conference-filters-open")'),'meeting filters open');
+    const compact=await execute("document.querySelector('.dashboard-mobile-filter').getClientRects().length>0");
+    if(compact) await click('.dashboard-mobile-filter');
+    await until(()=>execute("document.querySelector('.conference-filters').getClientRects().length>0"),'meeting filters visible');
     const controls=await execute(`(()=>{const root=document.querySelector('.conference-filters');return [...root.querySelectorAll('input[type=date],:scope > button')].map(e=>{const r=e.getBoundingClientRect();return {height:r.height,top:r.top,bottom:r.bottom};});})()`);
     assert.equal(controls.length,3,'Meeting filters contain two dates and reset');
     for(const control of controls) {
       assert.ok(Math.abs(control.height-controls[0].height)<1,'Date and reset controls have equal heights');
-      assert.ok(Math.abs(control.bottom-controls[0].bottom)<1,'Date and reset controls share a baseline');
+      if(!compact) assert.ok(Math.abs(control.bottom-controls[0].bottom)<1,'Date and reset controls share a baseline');
     }
     await capture(name);
-    await click('.dashboard-mobile-filter');
+    if(compact) await click('.dashboard-mobile-filter');
   };
   const checkIncomingCall=async theme=>{
     await route(`/personal/${DIRECT}`);await visible('Product server message');
@@ -106,14 +108,28 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     window.setMinimumSize(1000,700);window.setContentSize(1440,1000);
   };
   await execute('window.__designErrors=[];window.addEventListener("error",e=>window.__designErrors.push(e.message));void 0');
-  await visible('Начнём с подключения'); await capture('onboarding-intro-light');
-  await click('.reference-onboarding-intro .button');
+  await visible('Команда ближе.'); await capture('onboarding-intro-light');
+  await click('[data-onboarding=connect]');
   await visible('Подключиться к серверу'); await capture('onboarding-light');
   await field('#desktop-server-origin',fixture.origin);await click('.desktop-server-form button[type=submit]');
   await until(()=>execute('!!document.querySelector("#email")'),'login ready');await capture('login-light');
+  await clickTextInForm("Забыли пароль?");
+  await field('#email',fixture.users[0].email); await click('#auth-form button[type=submit]');
+  await visible("вы получите письмо"); await capture("password-recovery-light");
+  await route("/register"); await visible("Рады знакомству"); await capture("register-light");
+  fixture.controls.authMode = "ldap";
+  await reload(); await visible("Корпоративный вход");
+  assert.equal(await execute('location.pathname'),'/login');
+  assert.equal(await execute("!!document.querySelector('.reference-auth-tabs a[href*=register]')"),false);
+  await capture("ldap-light");
+  fixture.controls.providersStatus = 503; await reload(); await visible("Не удалось получить настройки входа");
+  assert.equal(await execute('!!document.querySelector("#password")'),false);
+  fixture.controls.providersStatus = 404; fixture.controls.authMode = "local"; await clickTextInForm("Повторить");
+  await until(()=>execute('!!document.querySelector("#password")'), "legacy local login after provider discovery 404");
   await field('#email',fixture.users[0].email);await field('#password',PASSWORD);await click('#auth-form button[type=submit]');
   await until(()=>execute('!!document.querySelector(".sidebar")'),'authenticated workspace');
   window.setContentSize(1440,1000);
+  await require("./redesign-matrix.cjs")({window,route,visible,click,tab,execute,until,output});
   const pages=[['meetings','/conferences','Product scheduled meeting'],['chat',`/personal/${DIRECT}`,'Product server message'],['group',`/personal/${GROUP}`,'Product server message'],['folders','/folders','Product personal folder'],['folder',`/folders/${FOLDER}`,'Product scheduled meeting'],['calendar','/calendar','Product scheduled meeting'],['recordings','/recordings','Product finished meeting'],['recording',`/recordings/${RECORDING}?conference=${CONFERENCE}`,'Открыть запись']];
   for(const theme of ['light','dark']){
     // Production preference selector, rather than a CSS-only theme override.
@@ -142,11 +158,15 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'meeting information dialog closes');
       }
       if(name==='calendar'){
-        await click('.calendar-month-grid .calendar-event');
+        assert.equal(await execute("document.querySelectorAll('.agenda-week button').length"),7,'Agenda displays all seven days');
+        await click('.agenda-time .calendar-event');
         await until(()=>execute('!!document.querySelector(".meeting-reference-info .meeting-info-facts")'),'calendar meeting information dialog');
         await capture('calendar-meeting-'+theme);
         await click('.meeting-reference-info button[aria-label="Закрыть окно"]');
         await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'calendar meeting dialog closes');
+        await click('.calendar-view-switch button:last-child');
+        await until(()=>execute("!!document.querySelector('.calendar-month-grid .calendar-event')"),'month view retains scheduled meeting');
+        await capture('calendar-month-'+theme);
       }
       if(name==='recording'){
         const recordingLayout=await execute(`(()=>{const player=document.querySelector('.recording-detail-player')?.getBoundingClientRect();const about=document.querySelector('.recording-detail-sidebar')?.getBoundingClientRect();return {right:!!player&&!!about&&about.left>=player.right,actions:document.querySelector('.recording-detail-about-actions')?.innerText||'',nativePlayerPending:!!document.querySelector('.recording-detail-player .button')};})()`);
@@ -155,9 +175,27 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         assert.equal(recordingLayout.nativePlayerPending,true,'Opening the page does not fetch private media before user action');
       }
       if(['chat','group'].includes(name)){
-        const chat=await execute(`(()=>{const root=document.querySelector('.personal-thread');const messages=[...root.querySelectorAll('.chat-message')];const composer=root.querySelector('.chat-compose-row').getBoundingClientRect();const input=root.querySelector('textarea').getBoundingClientRect();const send=root.querySelector('.chat-send-button').getBoundingClientRect();return {headerTimes:root.querySelectorAll('.chat-message header time').length,bubbleTimes:root.querySelectorAll('.chat-message-bubble footer time').length,messages:messages.length,ownAvatarHidden:getComputedStyle(root.querySelector('.chat-message-own .chat-message-avatar')).display==='none',composerTwoRows:send.top>=input.bottom-1,sendInside:send.right<=composer.right,chatIcon:!!document.querySelector('.sidebar a[href="/personal"] svg.lucide-messages-square')};})()`);
-        assert.equal(chat.headerTimes,0,'Timestamps belong inside chat bubbles');assert.equal(chat.bubbleTimes,chat.messages,'Every confirmed bubble has its own timestamp');
-        assert.ok(chat.ownAvatarHidden&&chat.composerTwoRows&&chat.sendInside&&chat.chatIcon,'Reference message alignment, composer and navigation icon');
+        const chat = await execute(`(() => {
+          const root = document.querySelector('.personal-thread');
+          const composer = root.querySelector('.chat-compose-row').getBoundingClientRect();
+          const input = root.querySelector('textarea').getBoundingClientRect();
+          const send = root.querySelector('.chat-send-button').getBoundingClientRect();
+          return {
+            messages: root.querySelectorAll('.chat-message').length,
+            headerTimes: root.querySelectorAll('.chat-message header time').length,
+            bubbleTimes: root.querySelectorAll('.chat-message-bubble footer time').length,
+            ownAvatarHidden: getComputedStyle(root.querySelector('.chat-message-own .chat-message-avatar')).display === 'none',
+            composerInline: send.left >= input.right && Math.abs(send.bottom - input.bottom) <= 2,
+            sendInside: send.right <= composer.right + 1,
+            chatIcon: !!document.querySelector('.sidebar a[href="/personal"] svg.lucide-messages-square'),
+            newChatAction: !!document.querySelector('.workspace-top .chat-new-action button[aria-label="Новый чат"]')
+          };
+        })()`);
+        assert.equal(chat.headerTimes, 0, 'Timestamps belong inside chat bubbles');
+        assert.equal(chat.bubbleTimes, chat.messages, 'Every confirmed bubble has a timestamp');
+        for (const field of ['ownAvatarHidden','composerInline','sendInside','chatIcon','newChatAction']) {
+          assert.equal(chat[field], true, 'Messenger layout: ' + field);
+        }
       }
       if(name==='recordings'){
         assert.equal(await execute('document.querySelectorAll(".recordings-conference-selector,.recordings-meeting-view").length'),0,'Library has no obsolete meeting-selection toolbar');
@@ -203,7 +241,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await field('.workspace-search-input input','Product');
   await click('#workspace-meeting-search');
   await until(()=>execute('new URLSearchParams(location.search).get("search")==="Product"'),'meeting search route');
-  await until(()=>execute(`document.querySelector('.dashboard-all input[aria-label=\"Поиск конференции по названию\"]')?.value==='Product'`),'meeting search applied');
+  await until(()=>execute(`document.querySelector('.meetings-reference-page input[aria-label=\"Поиск конференции по названию\"]')?.value==='Product'`),'meeting search applied');
   checks.push('workspace search opens an accessible dialog and filters the loaded authorized meetings');
   await route('/app/settings');await visible('Мой профиль');
   await tab('Внешний вид');
@@ -223,7 +261,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-mobile');
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-mobile');
   await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
-  await tab('Мой профиль');await visible('Мой профиль');await capture('profile-mobile');
+  await tab('Мой профиль');await visible('Электронная почта');await capture('profile-mobile');
   checks.push('onboarding introduction leads to server connection; settings render as a page with combined devices; meeting and calendar information dialogs close without mutation; recording information and native download actions sit beside the player');
   checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; meeting filter reset matches date height and baseline including 150% text; recordings omit count and completed links while completed meetings remain available');
   checks.push('shared routes render in both themes; 1280x800 and 1920x1080 workspace and meeting editors, 1280x800 onboarding/login and 150% settings/meetings; desktop/compact/mobile have no document or content-region horizontal overflow, clipped button content, out-of-viewport dialog or missing image');

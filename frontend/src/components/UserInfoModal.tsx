@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { MessageCircle, UserRound } from "lucide-react";
 import type { PersonalPeer } from "../types";
-import { initials } from "../utils";
+import { UserAvatar } from "./UserAvatar";
+import { ChatInfoPage } from "./ChatInfoPage";
 import { DirectCallButton } from "./DirectCallButton";
 import { Button, Modal } from "./ui";
 import { ConversationFiles } from "./ConversationFiles";
@@ -18,7 +19,9 @@ export function UserInfoModal({
   returnFocus,
   actions,
   conversationId,
+  embedded = false,
 }: {
+  embedded?: boolean;
   conversationId?: string;
   person: PersonalPeer;
   subtitle: string;
@@ -37,8 +40,9 @@ export function UserInfoModal({
       : online === false
         ? "Не в сети"
         : "Статус недоступен";
+  const Info = embedded ? ChatInfoPage : Modal;
   return (
-    <Modal
+    <Info
       title="Информация о пользователе"
       className="personal-info-modal"
       onClose={onClose}
@@ -50,7 +54,11 @@ export function UserInfoModal({
             className="personal-avatar group-avatar-large"
             aria-hidden="true"
           >
-            {initials(person.displayName)}
+            <UserAvatar
+              id={person.id}
+              name={person.displayName}
+              className="profile-photo"
+            />
             {online === true && (
               <span className="personal-profile-online-dot" />
             )}
@@ -138,6 +146,6 @@ export function UserInfoModal({
           )}
         </div>
       </div>
-    </Modal>
+    </Info>
   );
 }

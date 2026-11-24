@@ -42,6 +42,8 @@ import { UserInfoModal } from "./UserInfoModal";
 import { ConversationFiles } from "./ConversationFiles";
 import "./group-chats.css";
 import "./chat-profiles.css";
+import { ChatInfoPage } from "./ChatInfoPage";
+import { UserAvatar } from "./UserAvatar";
 
 export function ConversationAvatar({
   conversation,
@@ -70,6 +72,15 @@ export function ConversationAvatar({
       if (objectURL) URL.revokeObjectURL(objectURL);
     };
   }, [group?.id, group?.avatarVersion, user?.id]);
+  if (conversation.type === "direct") {
+    return (
+      <UserAvatar
+        id={conversation.peer.id}
+        name={conversation.peer.displayName}
+        className={`personal-avatar ${large ? "group-avatar-large" : ""}`}
+      />
+    );
+  }
   return (
     <span
       className={`personal-avatar ${group ? "group-avatar" : ""} ${large ? "group-avatar-large" : ""}`}
@@ -80,11 +91,7 @@ export function ConversationAvatar({
       ) : group && large ? (
         <Users size={32} />
       ) : (
-        initials(
-          conversation.type === "direct"
-            ? conversation.peer.displayName
-            : conversation.name,
-        )
+        initials(conversation.name)
       )}
     </span>
   );
@@ -475,7 +482,9 @@ export function GroupInfoModal({
   group,
   onClose,
   returnFocus,
+  embedded = false,
 }: {
+  embedded?: boolean;
   group: GroupConversation;
   onClose: () => void;
   returnFocus: () => HTMLElement | null;
@@ -483,7 +492,8 @@ export function GroupInfoModal({
   const { user } = useAuth();
   const client = useQueryClient();
   const navigate = useNavigate();
-  const [view, setView] = useState<GroupView>("info");
+  const Info = embedded ? ChatInfoPage : Modal;
+  const [view, setView] = useState<GroupView>(embedded ? "members" : "info");
   const [selected, setSelected] = useState<PersonalPeer[]>([]);
   const [search, setSearch] = useState("");
   const [validation, setValidation] = useState("");
@@ -609,14 +619,15 @@ export function GroupInfoModal({
   if (accessError) return <ErrorNotice error={accessError} />;
   return (
     <>
-      <Modal
-        title={titles[view]}
+      <Info
+        title={embedded && view === "members" ? titles.info : titles[view]}
         className="group-modal group-info-modal"
         returnFocus={returnFocus}
         onClose={() => {
           if (submitting.current) return;
           if (removeTarget) setRemoveTarget(undefined);
-          else if (view !== "info") setView("info");
+          else if (view !== "info" && !(embedded && view === "members"))
+            setView("info");
           else onClose();
         }}
       >
@@ -1063,7 +1074,7 @@ export function GroupInfoModal({
             </>
           )}
         </div>
-      </Modal>
+      </Info>
       {profile && (
         <GroupMemberInfoModal
           key={profile.id}

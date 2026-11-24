@@ -1,3 +1,4 @@
+import { Switch } from "./ui";
 import { subscribeCaptureRelease } from "../platform/captureLifecycle";
 import { isDesktopBuild } from "../platform/build";
 import { useDesktopRuntime } from "../platform/runtime";
@@ -243,9 +244,7 @@ function Toggle({
         {label}
         {hint && <small>{hint}</small>}
       </span>
-      <input
-        type="checkbox"
-        role="switch"
+      <Switch
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}

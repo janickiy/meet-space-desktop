@@ -1,3 +1,4 @@
+import { EntryFrame } from "../EntryFrame";
 import {
   createContext,
   useContext,
@@ -9,12 +10,10 @@ import {
 import { useLocation, useNavigate } from "react-router";
 import {
   ArrowLeft,
-  ArrowRight,
-  Circle,
-  CircleCheck,
+  ArrowUpRight,
+  Link as LinkIcon,
   LockKeyhole,
   Server,
-  Users,
 } from "lucide-react";
 import { Brand, Button, ErrorNotice, Loading, Modal } from "../ui";
 import { configureAuth } from "../../api";
@@ -170,24 +169,26 @@ export function DesktopSessionGate({
   };
   if (!state || error)
     return (
-      <main className="page-center desktop-foundation">
-        <section className="content-card desktop-foundation-card">
-          <Brand />
-          {error ? (
-            <>
-              <ErrorNotice>
-                Не удалось связаться с приложением. Повторите попытку или
-                перезапустите MeetSpace.
-              </ErrorNotice>
-              <Button onClick={() => setAttempt(attempt + 1)}>
-                Попробовать снова
-              </Button>
-            </>
-          ) : (
-            <Loading />
-          )}
-        </section>
-      </main>
+      <EntryFrame>
+        <main className="page-center desktop-foundation">
+          <section className="content-card desktop-foundation-card">
+            <Brand />
+            {error ? (
+              <>
+                <ErrorNotice>
+                  Не удалось связаться с приложением. Повторите попытку или
+                  перезапустите MeetSpace.
+                </ErrorNotice>
+                <Button onClick={() => setAttempt(attempt + 1)}>
+                  Попробовать снова
+                </Button>
+              </>
+            ) : (
+              <Loading />
+            )}
+          </section>
+        </main>
+      </EntryFrame>
     );
   if (!profile)
     return (
@@ -269,57 +270,59 @@ function DesktopStorageUnlock({
     }
   }
   return (
-    <main className="page-center desktop-foundation">
-      <WelcomePanel />
-      <section
-        className="content-card desktop-foundation-card desktop-storage-gate"
-        aria-labelledby="desktop-storage-title"
-      >
-        <span className="desktop-foundation-label">ШАГ 2 ИЗ 2 · ВХОД</span>
-        <h1 id="desktop-storage-title">Подготовим безопасный вход</h1>
-        <p className="desktop-foundation-description">
-          Сервер подключён. Чтобы войти в аккаунт, разблокируйте хранилище
-          паролей на этом устройстве.
-        </p>
-        <div className="reference-connection-card">
-          <Server size={24} aria-hidden="true" />
-          <div>
-            <strong>Ваш сервер MeetSpace</strong>
-            <p>{profile.origin}</p>
+    <EntryFrame>
+      <main className="page-center desktop-foundation">
+        <WelcomePanel />
+        <section
+          className="content-card desktop-foundation-card desktop-storage-gate"
+          aria-labelledby="desktop-storage-title"
+        >
+          <span className="desktop-foundation-label">ШАГ 2 ИЗ 2 · ВХОД</span>
+          <h1 id="desktop-storage-title">Подготовим безопасный вход</h1>
+          <p className="desktop-foundation-description">
+            Сервер подключён. Чтобы войти в аккаунт, разблокируйте хранилище
+            паролей на этом устройстве.
+          </p>
+          <div className="reference-connection-card">
+            <Server size={24} aria-hidden="true" />
+            <div>
+              <strong>Ваш сервер MeetSpace</strong>
+              <p>{profile.origin}</p>
+            </div>
           </div>
-        </div>
-        <div className="desktop-storage-notice" role="status">
-          <LockKeyhole size={22} aria-hidden="true" />
-          <strong>Разблокируйте системное хранилище паролей</strong>
-          <p>
-            {runtime?.platform === "linux"
-              ? "В Ubuntu откройте «Пароли и ключи» и разблокируйте связку «Вход» (Login). Она может использовать отдельный пароль, который отличается от пароля входа в Ubuntu. В других средах Linux проверьте GNOME Keyring или KWallet."
-              : "Разблокируйте системное хранилище паролей, затем повторите проверку. Если оно уже разблокировано, перезапустите MeetSpace."}
-          </p>
-          <p>
-            Это локальная настройка устройства. Повторно устанавливать сервер не
-            нужно. Данные входа не будут сохраняться без защиты.
-          </p>
-        </div>
-        {message && (
-          <p className="field-hint" role="status">
-            {message}
-          </p>
-        )}
-        <div className="desktop-server-actions">
-          <Button
-            busy={busy}
-            disabled={busy}
-            onClick={() => void checkStorage()}
-          >
-            Проверить хранилище
-          </Button>
-          <Button variant="secondary" disabled={busy} onClick={onSettings}>
-            Выбрать другой сервер
-          </Button>
-        </div>
-      </section>
-    </main>
+          <div className="desktop-storage-notice" role="status">
+            <LockKeyhole size={22} aria-hidden="true" />
+            <strong>Разблокируйте системное хранилище паролей</strong>
+            <p>
+              {runtime?.platform === "linux"
+                ? "В Ubuntu откройте «Пароли и ключи» и разблокируйте связку «Вход» (Login). Она может использовать отдельный пароль, который отличается от пароля входа в Ubuntu. В других средах Linux проверьте GNOME Keyring или KWallet."
+                : "Разблокируйте системное хранилище паролей, затем повторите проверку. Если оно уже разблокировано, перезапустите MeetSpace."}
+            </p>
+            <p>
+              Это локальная настройка устройства. Повторно устанавливать сервер
+              не нужно. Данные входа не будут сохраняться без защиты.
+            </p>
+          </div>
+          {message && (
+            <p className="field-hint" role="status">
+              {message}
+            </p>
+          )}
+          <div className="desktop-server-actions">
+            <Button
+              busy={busy}
+              disabled={busy}
+              onClick={() => void checkStorage()}
+            >
+              Проверить хранилище
+            </Button>
+            <Button variant="secondary" disabled={busy} onClick={onSettings}>
+              Выбрать другой сервер
+            </Button>
+          </div>
+        </section>
+      </main>
+    </EntryFrame>
   );
 }
 
@@ -387,9 +390,6 @@ function ServerSettings({
   const [showIntro, setShowIntro] = useState(
     !embedded && state.items.length === 0,
   );
-  const [connectionChoice, setConnectionChoice] = useState<"existing" | "own">(
-    "existing",
-  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const active = useRef(true);
@@ -430,52 +430,49 @@ function ServerSettings({
     />
   ) : showIntro ? (
     <div className="reference-onboarding-intro">
-      <span className="desktop-foundation-label">
-        ВАШЕ РАБОЧЕЕ ПРОСТРАНСТВО
-      </span>
-      <h1 id="desktop-title">Начнём с подключения</h1>
+      <span className="on-kicker">ЕДИНОЕ ПРОСТРАНСТВО</span>
+      <h1 id="desktop-title">
+        Команда ближе.
+        <br />
+        <em>Идей больше.</em>
+      </h1>
       <p className="desktop-foundation-description">
-        Выберите, где будет работать ваша команда.
+        MeetSpace — единое пространство для встреч и общения.
       </p>
-      <div className="reference-server-options">
-        {(["existing", "own"] as const).map((choice) => {
-          const Icon = choice === "existing" ? Users : Server;
-          return (
-            <button
-              type="button"
-              key={choice}
-              aria-pressed={connectionChoice === choice}
-              onClick={() => setConnectionChoice(choice)}
-            >
-              <span>
-                <Icon />
-              </span>
-              <div>
-                <strong>
-                  {choice === "existing"
-                    ? "Присоединиться к команде"
-                    : "Развернуть свой сервер"}
-                </strong>
-                <small>
-                  {choice === "existing"
-                    ? "У меня есть адрес рабочего сервера"
-                    : "Установка на удалённый Linux VPS по SSH"}
-                </small>
-              </div>
-              {connectionChoice === choice ? <CircleCheck /> : <Circle />}
-            </button>
-          );
-        })}
+      <div className="on-choice-stack">
+        <button
+          type="button"
+          className="on-choice on-choice-main"
+          data-onboarding="connect"
+          onClick={() => setShowIntro(false)}
+        >
+          <span className="on-choice-icon">
+            <LinkIcon />
+          </span>
+          <span>
+            <strong>Подключиться к серверу</strong>
+            <small>У меня уже есть адрес MeetSpace</small>
+          </span>
+          <ArrowUpRight />
+        </button>
+        <button
+          type="button"
+          className="on-choice"
+          onClick={() => {
+            setShowIntro(false);
+            setInstallingServer(true);
+          }}
+        >
+          <span className="on-choice-icon">
+            <Server />
+          </span>
+          <span>
+            <strong>Развернуть свой сервер</strong>
+            <small>Создать пространство на своём VPS</small>
+          </span>
+          <ArrowUpRight />
+        </button>
       </div>
-      <Button
-        className="full-width"
-        onClick={() => {
-          setShowIntro(false);
-          if (connectionChoice === "own") setInstallingServer(true);
-        }}
-      >
-        Продолжить <ArrowRight size={15} />
-      </Button>
     </div>
   ) : (
     <>
@@ -618,18 +615,20 @@ function ServerSettings({
   return embedded ? (
     <div className="desktop-server-settings">{content}</div>
   ) : (
-    <main
-      className={`page-center desktop-foundation${installingServer ? " desktop-foundation-installing" : ""}`}
-    >
-      <WelcomePanel installer={installingServer} />
-      <section
-        className="content-card desktop-foundation-card"
-        aria-labelledby={
-          installingServer ? "desktop-ssh-title" : "desktop-title"
-        }
+    <EntryFrame>
+      <main
+        className={`page-center desktop-foundation${installingServer ? " desktop-foundation-installing" : ""}`}
       >
-        {content}
-      </section>
-    </main>
+        <WelcomePanel installer={installingServer} />
+        <section
+          className="content-card desktop-foundation-card"
+          aria-labelledby={
+            installingServer ? "desktop-ssh-title" : "desktop-title"
+          }
+        >
+          {content}
+        </section>
+      </main>
+    </EntryFrame>
   );
 }

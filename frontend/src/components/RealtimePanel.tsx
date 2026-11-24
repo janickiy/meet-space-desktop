@@ -8,6 +8,9 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
+  Grid2X2,
+  UserRound,
+  Pin,
   Mic,
   MicOff,
   Settings,
@@ -34,7 +37,7 @@ import {
 import { meetingShortcut } from "../conferenceShortcuts";
 import { initials } from "../utils";
 import { useSpeakingParticipants } from "../useSpeakingParticipants";
-import { onlineParticipants } from "../presence";
+import { onlineParticipants, primaryParticipantStreams } from "../presence";
 import type { AudioOutputResult } from "../mediaDevices";
 import { createRemotePlayback } from "../remotePlayback";
 
@@ -65,6 +68,7 @@ export const MediaTile = memo(function MediaTile({
   role,
   reconnecting = false,
   covered = false,
+  featured = false,
 }: {
   stream?: MediaStream;
   name: string;
@@ -78,6 +82,7 @@ export const MediaTile = memo(function MediaTile({
   role?: Participant["role"];
   reconnecting?: boolean;
   covered?: boolean;
+  featured?: boolean;
 }) {
   const element = useRef<HTMLMediaElement | null>(null);
   const remotePlayback = useRef<ReturnType<typeof createRemotePlayback> | null>(
@@ -176,6 +181,7 @@ export const MediaTile = memo(function MediaTile({
     <>
       <div
         className={`media-tile ${local ? "media-tile-local" : ""} ${screen ? "media-tile-screen" : ""} ${speakingNow ? "media-tile-speaking" : ""}`}
+        data-featured={featured || undefined}
         hidden={covered}
         data-speaking={speakingNow}
         data-audio-level={level}
@@ -392,6 +398,8 @@ export function RealtimePanel({
     membership.admissionState,
   ]);
   const hasSelection = hasDevicePreferences(user?.id || "guest");
+  const [layout, setLayout] = useState<"gallery" | "speaker">("gallery");
+  const [pinnedId, setPinnedId] = useState("");
   const [online, setOnline] = useState(() => navigator.onLine);
   useEffect(() => {
     const refresh = () => setOnline(navigator.onLine);
@@ -422,10 +430,9 @@ export function RealtimePanel({
     onlineIds.has(remote.participantId),
   );
   const present = roster;
-  const remoteParticipants = new Set(
-    visibleRemoteStreams
-      .filter((remote) => !remote.screen)
-      .map((remote) => remote.participantId),
+  const primaryStreams = primaryParticipantStreams(
+    visibleRemoteStreams,
+    membership.id,
   );
   const showingScreen = Boolean(
     localScreen ||
@@ -437,11 +444,11 @@ export function RealtimePanel({
   const participantsWithoutStream = present.filter((person) =>
     person.id === membership.id
       ? preferences.showSelf && !localStream
-      : !remoteParticipants.has(person.id),
+      : !primaryStreams.has(person.id),
   );
   const cameraTileCount =
     Number(Boolean(localStream)) +
-    visibleRemoteStreams.filter((remote) => !remote.screen).length +
+    primaryStreams.size +
     participantsWithoutStream.length;
   const pairedTiles = !showingScreen && cameraTileCount === 2;
   const speaking = useSpeakingParticipants(
@@ -470,6 +477,28 @@ export function RealtimePanel({
     ],
     media.running && !connectionProblem,
   );
+  // Spotlight is presentation state only. Keep media elements keyed to their original streams.
+  const selectable = roster.filter(
+    (p) => p.id !== membership.id || preferences.showSelf,
+  );
+  const pinned = selectable.find((p) => p.id === pinnedId);
+  const lastSpeaker = useRef("");
+  const loudest = selectable.reduce(
+    (best, person) =>
+      (speaking.get(person.id) ?? 0) > (speaking.get(best) ?? 0)
+        ? person.id
+        : best,
+    "",
+  );
+  useEffect(() => {
+    if (loudest) lastSpeaker.current = loudest;
+  }, [loudest]);
+  const featuredId =
+    pinned?.id ||
+    loudest ||
+    selectable.find((p) => p.id === lastSpeaker.current)?.id ||
+    selectable[0]?.id;
+  const speakerView = compactControls && !showingScreen && layout === "speaker";
   const localAudioLevel =
     media.view.microphoneEnabled &&
     !membership.microphoneBlocked &&
@@ -952,12 +981,56 @@ export function RealtimePanel({
               </span>
             </div>
           )}
+        {compactControls && cameraTileCount > 0 && !showingScreen && (
+          <div className="room-viewbar">
+            <div
+              className="room-view-options"
+              role="group"
+              aria-label="Вид участников"
+            >
+              <button
+                type="button"
+                aria-pressed={layout === "gallery"}
+                onClick={() => setLayout("gallery")}
+              >
+                <Grid2X2 size={15} />
+                Сетка
+              </button>
+              <button
+                type="button"
+                aria-pressed={layout === "speaker"}
+                onClick={() => setLayout("speaker")}
+              >
+                <UserRound size={15} />
+                Выступающий
+              </button>
+            </div>
+            {speakerView && (
+              <label className="room-pin-picker">
+                <Pin size={14} />
+                <select
+                  aria-label="Закрепить участника"
+                  value={pinned?.id || ""}
+                  onChange={(e) => setPinnedId(e.target.value)}
+                >
+                  <option value="">Активный выступающий</option>
+                  {selectable.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.displayName || "Участник"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        )}
         {(localStream ||
           localScreen ||
           visibleRemoteStreams.length > 0 ||
           present.length > 0) && (
           <div
             className={`media-grid ${showingScreen ? "media-grid-sharing" : pairedTiles ? "media-grid-pair" : ""}`}
+            data-layout={speakerView ? "speaker" : "gallery"}
             role="region"
             aria-label={
               showingScreen
@@ -974,6 +1047,7 @@ export function RealtimePanel({
             {localStream && (
               <MediaTile
                 local
+                featured={speakerView && featuredId === membership.id}
                 stream={localStream}
                 video={media.view.cameraEnabled}
                 name={membership.displayName || "Вы"}
@@ -995,8 +1069,18 @@ export function RealtimePanel({
                */ (remote) => (
                 <MediaTile
                   key={remote.id}
+                  featured={
+                    speakerView &&
+                    primaryStreams.get(remote.participantId) === remote &&
+                    featuredId === remote.participantId
+                  }
                   screen={remote.screen && !preferences.hideParticipantVideo}
-                  covered={showingScreen && !remote.screen}
+                  covered={
+                    remote.screen
+                      ? preferences.hideParticipantVideo
+                      : showingScreen ||
+                        primaryStreams.get(remote.participantId) !== remote
+                  }
                   stream={remote.stream}
                   audioLevel={speaking.get(remote.participantId) ?? 0}
                   video={
@@ -1034,6 +1118,7 @@ export function RealtimePanel({
             {participantsWithoutStream.map((person) => (
               <MediaTile
                 key={`waiting-${person.id}`}
+                featured={speakerView && featuredId === person.id}
                 name={person.displayName || "Участник"}
                 local={person.id === membership.id}
                 video={false}

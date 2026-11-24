@@ -44,6 +44,7 @@ import {
 } from "../components/FolderItems";
 import "./folders-page.css";
 import "./collections-redesign.css";
+import "./folder-library.css";
 import {
   CollectionViewToggle,
   type CollectionView,
@@ -62,6 +63,34 @@ export function FoldersPage() {
     <FolderList key={user?.id} />
   );
 }
+function FolderArtwork() {
+  return (
+    <span className="pf-folder-art" aria-hidden="true">
+      <i className="pf-paper" />
+      <i className="pf-cover" />
+    </span>
+  );
+}
+
+const folderPlurals = new Intl.PluralRules("ru");
+function folderSummary(folder: PersonalFolder) {
+  const count = (n: number, forms: Record<string, string>) =>
+    n ? `${n} ${forms[folderPlurals.select(n)] || forms.many}` : "";
+  const conversations = count(folder.conversationCount, {
+    one: "чат",
+    few: "чата",
+    many: "чатов",
+  });
+  const conferences = count(folder.conferenceCount, {
+    one: "встреча",
+    few: "встречи",
+    many: "встреч",
+  });
+  return (
+    [conversations, conferences].filter(Boolean).join(" · ") || "Папка пуста"
+  );
+}
+
 function FolderList() {
   const { user } = useAuth();
   const client = useQueryClient();
@@ -95,27 +124,30 @@ function FolderList() {
     order.mutate(next);
   }
   return (
-    <section className="folders-page" aria-label="Папки">
-      <header className="folders-heading">
+    <section className="pf-page" aria-label="Папки">
+      <header className="pf-collection-heading">
         <div>
-          <h1>Мои папки</h1>
-          <p className="muted">Чаты и встречи, собранные по вашим проектам.</p>
+          <h2>Мои папки</h2>
+          <p>
+            <LockKeyhole aria-hidden="true" />
+            Видны только вам
+          </p>
         </div>
-        <Button
-          disabled={items.length >= 100}
-          onClick={() => setManage({ mode: "create" })}
-        >
-          <Plus size={18} aria-hidden="true" />
-          Новая папка
-        </Button>
+        <div className="pf-collection-actions">
+          <Button
+            disabled={items.length >= 100}
+            onClick={() => setManage({ mode: "create" })}
+          >
+            <Plus size={18} aria-hidden="true" />
+            Новая папка
+          </Button>
+          <CollectionViewToggle
+            value={layout}
+            onChange={setLayout}
+            label="Вид папок"
+          />
+        </div>
       </header>
-      <div className="collections-toolbar">
-        <CollectionViewToggle
-          value={layout}
-          onChange={setLayout}
-          label="Вид папок"
-        />
-      </div>
       <ErrorNotice error={list.error || order.error} />
       {list.isError && (
         <Button variant="outline" onClick={() => void list.refetch()}>
@@ -124,54 +156,41 @@ function FolderList() {
       )}
       {list.isPending && <MessagingSkeleton />}
       <div
-        className={`folder-list folder-collection folder-layout-${layout}`}
+        className="pf-folder-grid"
+        data-view={layout}
         aria-busy={order.isPending || undefined}
       >
         {items.map((folder, index) => (
-          <div className="folder-row" key={folder.id}>
-            <Link to={`/folders/${folder.id}`} className="folder-link">
-              <span className="folder-symbol">
-                <Folder size={27} aria-hidden="true" />
+          <article
+            className="pf-card"
+            key={folder.id}
+            data-tone={["lilac", "mint", "honey"][folder.position % 3]}
+          >
+            <Link to={`/folders/${folder.id}`} className="pf-card-open">
+              <span className="pf-card-art">
+                <FolderArtwork />
               </span>
-              <span className="folder-item-copy">
+              <span className="pf-card-body">
                 <strong>{folder.name}</strong>
-                <small>{folder.itemCount} элементов</small>
-              </span>
-              <span
-                className="folder-count"
-                aria-label={`${folder.itemCount} элементов`}
-              >
-                {folder.itemCount}
+                <small>{folderSummary(folder)}</small>
               </span>
             </Link>
-            <div className="folder-card-footer">
-              <span>Только для вас</span>
-              <div
-                className="folder-order-actions"
-                aria-label={`Порядок папки: ${folder.name}`}
-              >
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Переместить выше: ${folder.name}`}
-                  disabled={index === 0 || order.isPending}
-                  onClick={() => move(index, -1)}
-                >
-                  <ArrowUp size={15} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="icon-button"
-                  aria-label={`Переместить ниже: ${folder.name}`}
-                  disabled={index === items.length - 1 || order.isPending}
-                  onClick={() => move(index, 1)}
-                >
-                  <ArrowDown size={15} aria-hidden="true" />
-                </button>
-              </div>
+            <div className="pf-card-menu">
               <ItemActions
                 label={`Действия с папкой: ${folder.name}`}
                 actions={[
+                  {
+                    label: "Переместить выше",
+                    icon: <ArrowUp size={18} aria-hidden="true" />,
+                    disabled: index === 0 || order.isPending,
+                    run: () => move(index, -1),
+                  },
+                  {
+                    label: "Переместить ниже",
+                    icon: <ArrowDown size={18} aria-hidden="true" />,
+                    disabled: index === items.length - 1 || order.isPending,
+                    run: () => move(index, 1),
+                  },
                   {
                     label: "Переименовать",
                     icon: <Pencil size={18} aria-hidden="true" />,
@@ -188,7 +207,7 @@ function FolderList() {
                 ]}
               />
             </div>
-          </div>
+          </article>
         ))}
       </div>
       {!list.isPending && !list.isError && !items.length && (
@@ -202,10 +221,6 @@ function FolderList() {
           </Button>
         </div>
       )}
-      <p className="folder-private-note">
-        <LockKeyhole size={16} aria-hidden="true" />
-        Ваши папки видны только вам
-      </p>
       {manage && (
         <FolderManageModal {...manage} onClose={() => setManage(null)} />
       )}
@@ -308,19 +323,26 @@ function FolderDetail({ id }: { id: string }) {
         ).values(),
       );
   return (
-    <section className="folders-page" aria-label="Содержимое папки">
+    <section
+      className="folders-page pf-page pf-detail"
+      aria-label="Содержимое папки"
+    >
       <Link to="/folders" className="folder-back">
         <ArrowLeft size={18} aria-hidden="true" />
         Все папки
       </Link>
       <header className="folders-heading">
-        <div>
-          <h1>{folder?.name || "Папка"}</h1>
-          {folder && (
-            <p className="muted">
-              {folder.conversationCount} чатов · {folder.conferenceCount} встреч
-            </p>
-          )}
+        <div className="pf-detail-title">
+          <span
+            className="pf-detail-symbol"
+            data-tone={["lilac", "mint", "honey"][(folder?.position ?? 0) % 3]}
+          >
+            <FolderArtwork />
+          </span>
+          <div>
+            <h2>{folder?.name || "Папка"}</h2>
+            {folder && <p className="muted">{folderSummary(folder)}</p>}
+          </div>
         </div>
         {folder && (
           <div className="folders-heading-actions">

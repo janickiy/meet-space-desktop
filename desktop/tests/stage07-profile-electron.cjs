@@ -104,9 +104,9 @@ const lsof = pids => {
     const route = async value => { await sleep(180); window.webContents.send('meetspace:route', value); await until(() => execute(`location.pathname === ${JSON.stringify(value)}`), 'route'); };
     const bridge = (method, ...args) => execute(`window.meetspaceDesktop[${JSON.stringify(method)}](...${JSON.stringify(args)})`);
     const idleConnections = () => until(() => owned.broker.operations.size === 0 && owned.broker.sockets.size === 1 && owned.broker.streams.size === 1 && sockets.size === 1, 'one account WS and one notification SSE');
-    await visible('Начнём с подключения');
+    await visible('Команда ближе.');
     report.firstScreen = { harnessToWelcomeMs: performance.now() - profileStartedAt };
-    await execute("[...document.querySelectorAll('button')].find(item => item.textContent.trim() === 'Продолжить').click()");
+    await execute("[...document.querySelectorAll('button')].find(item => item.matches('[data-onboarding=connect]')).click()");
     await visible('Подключиться к серверу');
     report.startup = { harnessToConnectScreenMs: performance.now() - profileStartedAt,
       scope: 'Instrumented main start to shared React connection screen; existing filesystem cache, not cold-boot performance' };

@@ -13,13 +13,14 @@ import { useAuth } from "./auth";
 
 export const TEXT_SIZE_OPTIONS = [75, 90, 100, 110, 125, 150, 200] as const;
 export type TextSize = (typeof TEXT_SIZE_OPTIONS)[number];
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "system";
 
 interface Preferences {
   theme: Theme;
   textSize: TextSize;
 }
 interface Appearance extends Preferences {
+  resolvedTheme: "light" | "dark";
   setTheme: (theme: Theme) => void;
   setTextSize: (textSize: TextSize) => void;
   persistenceError: boolean;
@@ -30,9 +31,10 @@ interface AccountPreferences {
   persistenceError?: boolean;
 }
 
-const DEFAULT_PREFERENCES: Preferences = { theme: "light", textSize: 100 };
+const DEFAULT_PREFERENCES: Preferences = { theme: "system", textSize: 100 };
 const Context = createContext<Appearance>({
   ...DEFAULT_PREFERENCES,
+  resolvedTheme: "light",
   setTheme: () => {},
   setTextSize: () => {},
   persistenceError: false,
@@ -61,7 +63,10 @@ function parsePreferences(raw: string | null): Preferences {
     if (!value || typeof value !== "object" || !("version" in value))
       return DEFAULT_PREFERENCES;
     if (value.version !== 1) return DEFAULT_PREFERENCES;
-    const theme = "theme" in value && value.theme === "dark" ? "dark" : "light";
+    const theme =
+      "theme" in value && (value.theme === "dark" || value.theme === "light")
+        ? value.theme
+        : "system";
     const textSize =
       "textSize" in value &&
       typeof value.textSize === "number" &&
@@ -113,8 +118,25 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
   const current = useRef<AccountPreferences>({ userId, preferences });
   current.current = { userId, preferences };
 
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia("(prefers-color-scheme: dark)").matches,
+  );
+  useEffect(() => {
+    if (preferences.theme !== "system") return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => setSystemDark(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [preferences.theme]);
+  const resolvedTheme =
+    preferences.theme === "system"
+      ? systemDark
+        ? "dark"
+        : "light"
+      : preferences.theme;
   useLayoutEffect(() => {
-    document.documentElement.dataset.theme = preferences.theme;
+    document.documentElement.dataset.theme = resolvedTheme;
     document.documentElement.dataset.textSize = String(preferences.textSize);
     document.documentElement.dataset.largeText = String(
       preferences.textSize >= 150,
@@ -123,7 +145,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
       "--text-scale",
       String(preferences.textSize / 100),
     );
-  }, [preferences.theme, preferences.textSize]);
+  }, [resolvedTheme, preferences.textSize]);
 
   useEffect(() => {
     setAccount({ userId, preferences: loaded });
@@ -187,7 +209,8 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
    */
   const setTheme = useCallback(
     (theme: Theme) => {
-      if (theme === "light" || theme === "dark") update({ theme });
+      if (theme === "light" || theme === "dark" || theme === "system")
+        update({ theme });
     },
     [update],
   );
@@ -206,7 +229,13 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
 
   return (
     <Context.Provider
-      value={{ ...preferences, setTheme, setTextSize, persistenceError }}
+      value={{
+        ...preferences,
+        resolvedTheme,
+        setTheme,
+        setTextSize,
+        persistenceError,
+      }}
     >
       {children}
     </Context.Provider>

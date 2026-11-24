@@ -57,6 +57,13 @@ test("route policy rejects arbitrary URLs, tickets and credentials but permits r
   assert.equal(validateApiPath("PUT", `/api/v1/conversations/${USER}/attachments/${OTHER}/content`), `/api/v1/conversations/${USER}/attachments/${OTHER}/content`);
 });
 
+test("forwarding is allowed only to a target conversation through its POST route", () => {
+  const forward = `/api/v1/conversations/${USER}/messages/forward`;
+  assert.equal(validateApiPath("POST", forward), forward);
+  assert.throws(() => validateApiPath("DELETE", forward));
+  assert.throws(() => validateApiPath("POST", `/api/v1/conferences/${USER}/messages/forward`));
+});
+
 test("credential fields are removed recursively without rewriting signed resource URLs", () => {
   const url = "https://storage.fixture/file%20name?X-Amz-Credential=a%2Fb&X-Amz-Signature=opaque";
   assert.deepEqual(redactCredentials({ url, nested: [{ accessToken: "secret", ticket: "secret", text: "visible" }], cookie: "secret" }), { url, nested: [{ text: "visible" }] });

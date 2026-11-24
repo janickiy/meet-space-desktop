@@ -55,8 +55,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     const field = (selector, value) => execute(`(() => { const element = document.querySelector(${JSON.stringify(selector)}); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(element, ${JSON.stringify(value)}); element.dispatchEvent(new Event('input', {bubbles:true})); element.dispatchEvent(new Event('change', {bubbles:true})); })()`);
     const route = async value => { window.webContents.send("meetspace:route", value); await until(() => execute(`location.pathname + location.search === ${JSON.stringify(value)}`), "Product route applies"); };
     await execute("window.__productErrors=[]; window.addEventListener('error', event => window.__productErrors.push(event.message)); void 0");
-    await visible("Начнём с подключения");
-    await clickText("Продолжить");
+    await visible("Команда ближе.");
+    await click("[data-onboarding=connect]");
     await visible("Подключиться к серверу");
     await field("#desktop-server-origin", fixture.origin);
     await click(".desktop-server-form button[type=submit]");
@@ -155,11 +155,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     checks.push("existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch");
 
     await require("./product-attachment-checks.cjs")({ execute, until, visible, click, route, fixture, saves, checks, sendDraft });
+    await require("./product-message-action-checks.cjs")({ execute, until, visible, click, clickText, route, fixture, window, checks, directory:process.argv[3] });
 
     await route("/folders"); await visible("Product personal folder");
     await click(`a[href="/folders/${FOLDER}"]`); await visible("Product direct peer"); await visible("Product scheduled meeting");
     checks.push("existing personal folder list/detail combines authorized chat and meeting entries");
-    await route("/conferences"); await until(() => execute("!!document.querySelector('.dashboard-all')"), "Existing meetings screen mounts"); await visible("Product scheduled meeting");
+    await route("/conferences"); await until(() => execute("!!document.querySelector('section[aria-label=\"Список встреч\"]')"), "Existing meetings screen mounts"); await visible("Product scheduled meeting");
     await route("/calendar");
     await until(() => fixture.requests.some(request => request.path === "/api/v1/me/conferences" && request.query.includes("from=") && request.query.includes("to=")), "Calendar requests server range");
     await visible("Product scheduled meeting");

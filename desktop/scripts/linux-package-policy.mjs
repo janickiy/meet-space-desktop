@@ -12,6 +12,7 @@ export const LINUX_TEST_IDENTITY = Object.freeze({
 });
 export const LINUX_MACHINES = Object.freeze({ x64: 62, arm64: 183 });
 export const LINUX_PACKAGE_FORMATS = Object.freeze(["deb", "rpm", "AppImage"]);
+export const LINUX_PACKAGE_VERSION = /^\d+\.\d+\.\d+(?:-beta(?:\.\d+)?)?$/;
 // Official appimage@1.0.3, appimage-tools-runtime-20251108.tar.gz. This static
 // type-2 runtime has no ELF interpreter or DT_NEEDED libraries. The builder
 // copies these exact bytes before the SquashFS and appends its blockmap later.
@@ -31,7 +32,7 @@ export function validateLinuxTarget({ arch, formats, platform = process.platform
   return { arch, formats: [...formats] };
 }
 export function artifactFilename({ version, arch, format }) {
-  if (!/^\d+\.\d+\.\d+-beta(?:\.\d+)?$/.test(version) || !(arch in LINUX_MACHINES) ||
+  if (!LINUX_PACKAGE_VERSION.test(version) || !(arch in LINUX_MACHINES) ||
       !LINUX_PACKAGE_FORMATS.includes(format))
     fail("invalid test artifact identity");
   const artifactArch = arch === "x64" ? (format === "deb" ? "amd64" : "x86_64") : (format === "rpm" ? "aarch64" : "arm64");

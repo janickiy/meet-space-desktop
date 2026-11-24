@@ -1,3 +1,4 @@
+import { Switch } from "../ui";
 import { useEffect, useRef, useState } from "react";
 import { desktopBridge } from "../../platform/desktop";
 import { useDesktopRuntime } from "../../platform/runtime";
@@ -75,8 +76,7 @@ export function DesktopNativeSettings() {
             </div>
           ) : (
             <label className="desktop-native-toggle preference-option">
-              <input
-                type="checkbox"
+              <Switch
                 checked={settings.closeToTray}
                 disabled={busy || !trayAvailable}
                 onChange={(event) =>
@@ -103,8 +103,7 @@ export function DesktopNativeSettings() {
             </label>
           )}
           <label className="desktop-native-toggle preference-option">
-            <input
-              type="checkbox"
+            <Switch
               checked={settings.nativeNotifications}
               disabled={busy || !settings.notificationsSupported}
               onChange={(event) =>
@@ -125,8 +124,7 @@ export function DesktopNativeSettings() {
             </span>
           </label>
           <label className="desktop-native-toggle preference-option">
-            <input
-              type="checkbox"
+            <Switch
               checked={settings.startAtLogin}
               disabled={busy || !settings.startupSupported}
               onChange={(event) =>

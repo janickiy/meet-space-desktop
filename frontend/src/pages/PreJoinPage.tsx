@@ -781,27 +781,23 @@ export function PreJoinPage({
           Для выбора вывода звука используйте настройки браузера или системы.
         </p>
       )}
-      <p className="field-hint">Выбор сохраняется в этом браузере.</p>
+      <p className="field-hint">Выбор сохраняется на этом устройстве.</p>
     </div>
   );
   return (
     <main className="prejoin-page prejoin-parity-page prejoin-reference-page">
       <header className="prejoin-brand">
-        <Link className="prejoin-back" to={home} aria-label="К встречам">
-          <ArrowLeft size={15} aria-hidden="true" />
-          Все встречи
-        </Link>
+        <strong>Перед встречей</strong>
         <DesktopServerButton />
+        <Link
+          className="prejoin-back"
+          to={home}
+          aria-label="К встречам"
+          title="К встречам"
+        >
+          <ArrowLeft size={18} aria-hidden="true" />
+        </Link>
       </header>
-      <div className="prejoin-heading">
-        <div>
-          <span className="eyebrow">
-            {invitation ? "ВАС ПРИГЛАСИЛИ" : "ПОЧТИ НА МЕСТЕ"}
-          </span>
-          <h1>{meeting.title}</h1>
-          <p>Проверьте звук и устраивайтесь поудобнее</p>
-        </div>
-      </div>
       <form
         className="prejoin-grid"
         aria-label="Проверка перед входом"
@@ -812,13 +808,6 @@ export function PreJoinPage({
       >
         <section className="content-card prejoin-preview">
           <div className="prejoin-video-frame">
-            <div className="prejoin-preview-top">
-              <StatusBadge status={meeting.status} />
-              <span>
-                <ShieldCheck size={14} aria-hidden="true" />
-                Видно только вам
-              </span>
-            </div>
             {cameraOn ? (
               <video
                 ref={video}
@@ -832,10 +821,7 @@ export function PreJoinPage({
                 <span className="prejoin-initials">
                   {initials(name || "Гость")}
                 </span>
-                <strong className="prejoin-person-name">
-                  {name || "Гость"}
-                </strong>
-                <span>Ваша камера выключена</span>
+                <span>Камера выключена</span>
               </div>
             )}
             {cameraOn && (
@@ -872,24 +858,8 @@ export function PreJoinPage({
                 {cameraOn ? <Camera size={21} /> : <CameraOff size={21} />}
                 <span>Камера</span>
               </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="prejoin-mobile-devices"
-                aria-label="Настройки устройств"
-                aria-haspopup="dialog"
-                disabled={join.isPending}
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings size={21} />
-                <span>Устройства</span>
-              </Button>
             </div>
           </div>
-          <p className="prejoin-preview-privacy">
-            <ShieldCheck size={14} aria-hidden="true" />
-            Камера и микрофон подключатся к встрече только после входа.
-          </p>
           {playbackBlocked && (
             <Button
               type="button"
@@ -914,9 +884,11 @@ export function PreJoinPage({
           )}
         </section>
         <section className="content-card prejoin-settings">
-          <h2>
-            {guestMode ? "Как вас представить?" : "Готовы присоединиться?"}
-          </h2>
+          <div className="prejoin-heading">
+            <StatusBadge status={meeting.status} />
+            <h1>{meeting.title}</h1>
+            <p>Проверьте звук и камеру перед встречей.</p>
+          </div>
           {guestMode ? (
             <label className="field">
               Имя на встрече
@@ -939,9 +911,24 @@ export function PreJoinPage({
               </div>
             </div>
           )}
-          {!settingsOpen && (
-            <div className="prejoin-desktop-devices">{deviceFields}</div>
-          )}
+          <button
+            type="button"
+            className="prejoin-device-trigger prejoin-mobile-devices"
+            aria-label="Настройки устройств"
+            aria-haspopup="dialog"
+            onClick={() => setSettingsOpen(true)}
+            disabled={join.isPending}
+          >
+            <Mic size={16} aria-hidden="true" />
+            <span>
+              {devices.find(
+                (device) =>
+                  device.kind === "audioinput" &&
+                  device.deviceId === preferences.audioInputId,
+              )?.label || "Микрофон по умолчанию"}
+            </span>
+            <Settings size={18} aria-hidden="true" />
+          </button>
           {meeting.waitingRoomEnabled && !inviteCode && (
             <p className="prejoin-waiting-note">
               После входа организатор может направить вас в зал ожидания. Медиа
@@ -990,6 +977,9 @@ export function PreJoinPage({
               : "Присоединиться к встрече"}
             <ArrowRight size={16} aria-hidden="true" />
           </Button>
+          <Link className="prejoin-return" to={home}>
+            Вернуться к встречам
+          </Link>
           <p className="prejoin-privacy">
             <ShieldCheck size={16} aria-hidden="true" />
             Можно войти с выключенными камерой и микрофоном.

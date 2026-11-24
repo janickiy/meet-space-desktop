@@ -443,7 +443,7 @@ export class MeetSpaceBroker {
         let value = decodeJSON(response);
         if (authResponse(pathname) && successful(response.status)) value = await this.acceptIdentity(value, response, profile.id, pathname, operation);
         else {
-          try { await this.vault.accept(profile.id, pathname, response.headers["set-cookie"]); }
+          try { if (cookieOperation(pathname)) await this.vault.accept(profile.id, pathname, response.headers["set-cookie"]); }
           catch { this.storageReady = false; throw new Error("secure_storage_unavailable"); }
           this.check(operation);
           value = this.sanitize(value);

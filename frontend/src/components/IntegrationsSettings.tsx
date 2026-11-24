@@ -1,3 +1,4 @@
+import { Switch } from "./ui";
 import { isDesktopBuild } from "../platform/build";
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
@@ -256,9 +257,7 @@ function PreferencesForm({
         <legend>События</legend>
         {(["invitation", "reminder", "recording"] as const).map((name) => (
           <label className="preference-option preference-toggle" key={name}>
-            <input
-              type="checkbox"
-              role="switch"
+            <Switch
               checked={draft[name]}
               onChange={(event) => {
                 save.reset();
@@ -274,9 +273,7 @@ function PreferencesForm({
       <fieldset className="preferences-fieldset">
         <legend>Звук уведомлений</legend>
         <label className="preference-option preference-toggle">
-          <input
-            type="checkbox"
-            role="switch"
+          <Switch
             checked={soundEnabled}
             onChange={(event) => {
               const enabled = event.target.checked;
@@ -334,9 +331,7 @@ function PreferencesForm({
         <legend>Каналы доставки</legend>
         {(["email"] as const).map((name) => (
           <label className="preference-option preference-toggle" key={name}>
-            <input
-              type="checkbox"
-              role="switch"
+            <Switch
               disabled={capabilities[name] === "noop"}
               checked={draft[name]}
               onChange={(event) => {

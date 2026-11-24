@@ -399,3 +399,22 @@
     padding-top: 20px;
   }
 }
+/* The shared invite sheet includes a real per-meeting QR code. */
+.modal-backdrop:has(> :is(.call-share-modal, .call-invite-modal)) {
+  padding: 30px;
+}
+.modal.modal.modal.call-share-modal {
+  width: min(680px, 100%);
+  max-width: 100%;
+  border-radius: 12px;
+}
+.modal.modal.call-invite-modal {
+  width: min(520px, 100%);
+  max-width: 100%;
+  border-radius: 12px;
+}
+@media (max-width: 650px) {
+  .modal-backdrop:has(> :is(.call-share-modal, .call-invite-modal)) {
+    padding: 14px;
+  }
+}

@@ -82,17 +82,33 @@ class Stream {
 class AudioContextFixture {
   static all = [];
   state = "suspended";
-  constructor() { AudioContextFixture.all.push(this); }
-  node(properties = {}) {
-    return { ...properties, connect(next) { return next; }, disconnect() {} };
+  constructor() {
+    AudioContextFixture.all.push(this);
   }
-  createMediaStreamSource() { return this.node(); }
-  createGain() { return this.node({ gain: { value: 1 } }); }
+  node(properties = {}) {
+    return {
+      ...properties,
+      connect(next) {
+        return next;
+      },
+      disconnect() {},
+    };
+  }
+  createMediaStreamSource() {
+    return this.node();
+  }
+  createGain() {
+    return this.node({ gain: { value: 1 } });
+  }
   createMediaStreamDestination() {
     return this.node({ stream: new Stream([new Track("audio")]) });
   }
-  async resume() { this.state = "running"; }
-  async close() { this.state = "closed"; }
+  async resume() {
+    this.state = "running";
+  }
+  async close() {
+    this.state = "closed";
+  }
 }
 class Peer {
   static all = [];
@@ -173,6 +189,27 @@ function install(
   globalThis.window = new EventTarget();
   globalThis.localStorage = { getItem: () => null, setItem() {} };
 }
+const { primaryParticipantStreams } = await compile("src/presence.ts");
+await test("separate microphone and camera streams contribute one visible member tile", () => {
+  const mic = { participantId: "peer", kinds: ["audio"] };
+  const camera = { participantId: "peer", kinds: ["video"] };
+  const replacement = { participantId: "peer", kinds: ["audio", "video"] };
+  const quiet = { participantId: "other", kinds: ["audio"] };
+  const screen = { ...camera, screen: true };
+  const self = { participantId: "self", kinds: ["video"] };
+  assert.deepEqual(
+    [
+      ...primaryParticipantStreams(
+        [mic, quiet, screen, self, camera, replacement],
+        "self",
+      ).values(),
+    ],
+    [camera, quiet],
+  );
+  assert.equal(primaryParticipantStreams([mic, screen]).get("peer"), mic);
+  assert.equal(primaryParticipantStreams([camera, mic]).get("peer"), camera);
+});
+
 const { ConferenceMediaClient } = await compile("src/media.ts");
 const { captureWithDeviceFallback, inputTrackConstraints, routeAudioOutput } =
   await compile("src/mediaDevices.ts");
@@ -2316,7 +2353,8 @@ await test("reused notification player applies system output after clearing a sa
     assert.equal(players[0].plays, 2);
     assert.equal(players[0].volume, 0);
     preferences.saveDevicePreferences("fixture-user", {
-      ...preferences.readDevicePreferences("fixture-user"), signalVolume: 25,
+      ...preferences.readDevicePreferences("fixture-user"),
+      signalVolume: 25,
     });
     now += 2000;
     sound.notify("quarter");
@@ -2402,5 +2440,7 @@ await test("notification output preference changes invalidate delayed playback o
 
 await test("outgoing microphone contexts are released after every lifecycle scenario", () => {
   assert.ok(AudioContextFixture.all.length > 0);
-  assert.ok(AudioContextFixture.all.every((context) => context.state === "closed"));
+  assert.ok(
+    AudioContextFixture.all.every((context) => context.state === "closed"),
+  );
 });

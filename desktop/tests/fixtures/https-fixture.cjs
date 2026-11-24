@@ -103,6 +103,16 @@ async function createFixture({ name, certificates, version = "1.0.0", malformedV
       if (versionDelay) await new Promise((resolve) => setTimeout(resolve, versionDelay));
       return send(response, 200, malformedVersion ? { arbitrary: true } : { version, commit: "f".repeat(40), buildTime: "2026-01-01T00:00:00Z" });
     }
+    if (url.pathname === "/api/v1/auth/providers" && request.method === "GET") {
+      if (controls.providersStatus) return failure(response, controls.providersStatus);
+      const directory = controls.authMode === "ldap";
+      return send(response, 200, {
+        mode: directory ? "ldap" : "local", registrationEnabled: !directory,
+        passwordRecoveryEnabled: !directory, ldap: { enabled: directory, label: "Корпоративный вход" },
+      });
+    }
+    if (url.pathname === "/api/v1/auth/password-recovery" && request.method === "POST")
+      return controls.authMode === "ldap" ? failure(response, 403) : send(response, 200, { status: "success" });
     if (url.pathname === "/api/v1/auth/login" && request.method === "POST") {
       const user = users.find((candidate) => candidate.email === body.email);
       return user && body.password === PASSWORD ? issue(response, user) : failure(response);

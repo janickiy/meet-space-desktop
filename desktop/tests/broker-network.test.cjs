@@ -282,3 +282,17 @@ test("leaving a transient guest session preserves the separately saved account",
   assert.equal(restored.status, 200);
   assert.equal(restored.body.user.email, c.alpha.users[0].email);
 });
+
+test("public provider discovery and password recovery work without exposing session cookies", async t => {
+  const c = await context(t);
+  c.alpha.controls.authMode = "ldap";
+  const policy = await c.http("GET", "/auth/providers");
+  assert.equal(policy.body.mode, "ldap");
+  assert.equal(policy.body.registrationEnabled, false);
+  await c.login(c.alpha);
+  assert.equal((await c.http("POST", "/auth/password-recovery", {email:c.alpha.users[0].email})).status,403);
+  const recovery = c.alpha.requests.findLast(r => r.path.endsWith("/password-recovery"));
+  assert.equal(recovery.headers.cookie, undefined);
+  assert.equal(recovery.headers.authorization, undefined);
+  await assert.rejects(c.http("POST","/auth/providers",{}), /operation_not_allowed/);
+});

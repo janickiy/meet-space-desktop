@@ -62,7 +62,7 @@ const initial = () => ({ busy: false, phase: 'preflight', hasCredentials: true,
       layouts.push({ name, ...layout });
       const file = path.join(output, name + '.png'); await fs.writeFile(file, (await window.webContents.capturePage()).toPNG()); screenshots.push(file);
     };
-    await visible('Начнём с подключения'); await clickText('Продолжить'); await visible('Подключиться к серверу');
+    await visible('Команда ближе.'); await click('[data-onboarding=connect]'); await visible('Подключиться к серверу');
     await clickText('Установить сервер по SSH'); await visible('SSL-сертификат');
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-tls-mode"]:checked').value`), 'letsencrypt');
     assert.equal(await execute(`!!document.getElementById('desktop-ssh-acme-email')`), true);

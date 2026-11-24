@@ -1,146 +1,313 @@
-/* Flat library composition from decs_maket/recording-library.js and .css. */
+/* Library and player follow the responsive rows in recordings-refresh.css. */
+.recordings-page.recordings-reference-library,
+.recordings-page.recording-detail-page {
+  width: 100%;
+  max-width: 1140px;
+  margin-inline: auto;
+  container-type: inline-size;
+}
+.recordings-library-intro {
+  margin: 0 0 24px;
+}
+.recordings-library-intro h2 {
+  margin: 0;
+  font-size: calc(26px * var(--text-scale));
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+}
+.recordings-library-intro p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+}
 .recordings-reference-library .recordings-catalogue-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
+  margin: 0 0 18px;
 }
-.recordings-reference-library
-  .recordings-catalogue-toolbar
-  > .recordings-search {
-  width: 360px;
-  max-width: 100%;
+.recordings-reference-library .recordings-catalogue-toolbar .recordings-search {
+  flex: 1;
+  height: 48px;
+  padding-inline: 13px;
+  border-radius: 10px;
 }
-.recordings-reference-library .recordings-heading h1 {
-  font-size: calc(28px * var(--text-scale));
+.recordings-reference-library .recordings-search input {
+  font-size: calc(13px * var(--text-scale));
+}
+.recordings-reference-library .collection-view-toggle {
+  flex: none;
+}
+.recordings-reference-library .collection-view-toggle button {
+  width: 42px;
+  height: 40px;
+  gap: 0;
+  font-size: 0;
+}
+.recordings-page .recordings-kind {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: calc(10px * var(--text-scale));
   font-weight: 600;
-  line-height: 1.5;
-  margin: 0;
+  color: var(--primary);
+  margin-bottom: 5px;
 }
 .recordings-reference-library .recordings-list {
+  display: grid;
   margin: 0;
+  gap: 12px;
   background: transparent;
-  border-radius: 0;
 }
-.recordings-reference-library .recordings-list > .recordings-row {
+.recordings-reference-library .recordings-list .recordings-row {
+  min-width: 0;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: 16px;
   background: var(--surface);
 }
-.recordings-reference-library .recordings-layout-grid {
+.recordings-reference-library .recordings-layout-list .recordings-row {
   display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 12px;
+}
+.recordings-reference-library .recordings-layout-list .recordings-thumbnail {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 16/10;
+}
+.recordings-reference-library .recordings-layout-list .recordings-row-title,
+.recordings-reference-library .recordings-layout-grid .recordings-row-title {
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 650;
+  line-height: 1.4;
+}
+.recordings-reference-library .recordings-meta {
+  font-size: calc(11px * var(--text-scale));
+}
+.recordings-reference-library .recordings-row-owner {
+  margin: 5px 0 0;
+  font-size: calc(10px * var(--text-scale));
+}
+.recordings-reference-library .recordings-thumbnail {
+  border-radius: 10px;
+}
+.recordings-reference-library .recordings-thumbnail-placeholder {
+  background: #242b42;
+}
+.recordings-reference-library .recordings-thumbnail-tracks {
+  background: #28243c;
+}
+.recordings-reference-library .recordings-thumbnail-audio {
+  background: linear-gradient(125deg, #254952, #19323f);
+}
+.recordings-reference-library .recordings-thumbnail-wave i {
+  background: #79d4c6;
+}
+.recordings-reference-library .recordings-thumbnail-tiles {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  gap: 4px;
+  transform: none;
+  grid-template: repeat(2, minmax(0, 1fr)) / repeat(2, minmax(0, 1fr));
+}
+.recordings-reference-library .recordings-thumbnail-tiles i {
+  display: grid;
+  place-items: center;
+  height: auto;
+  color: #e0e7f5;
+  background: #39435e;
+  border-radius: 5px;
+}
+.recordings-reference-library .recordings-thumbnail-tiles i:nth-child(2) {
+  background: #423953;
+}
+.recordings-reference-library .recordings-thumbnail-tiles i:nth-child(3) {
+  background: #254c4e;
+}
+.recordings-reference-library .recordings-thumbnail-tiles i:nth-child(4) {
+  background: #4c4043;
+}
+.recordings-reference-library .recordings-thumbnail-play {
+  background: #1e263dce;
+  color: white;
+  border: 1px solid #ffffff36;
+  box-shadow: none;
+}
+.recordings-reference-library .recordings-list .recordings-watch {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  height: auto;
+  min-height: 44px;
+  width: auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  font-size: calc(11px * var(--text-scale));
+  color: var(--text);
+  background: var(--surface);
+}
+.recordings-reference-library .recordings-list .recordings-menu-trigger {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.recordings-reference-library .recordings-layout-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
+  gap: 16px;
 }
 .recordings-reference-library .recordings-layout-grid .recordings-row {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  overflow: hidden;
+  gap: 0;
+  padding: 10px;
+}
+.recordings-reference-library .recordings-layout-grid .recordings-thumbnail {
+  height: auto;
+  min-height: 0;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+}
+.recordings-reference-library .recordings-layout-grid .recordings-row-info {
+  padding: 13px 3px 10px;
 }
 .recordings-reference-library .recordings-layout-grid .recordings-row-actions {
-  flex: 1;
-  align-items: flex-end;
-}
-.recordings-reference-library .recordings-layout-list {
-  display: grid;
-  gap: 12px;
-}
-.recordings-reference-library .recordings-thumbnail-placeholder {
-  background: #eeedf8;
-}
-.recordings-reference-library
-  .recordings-row:nth-child(3n + 2)
-  .recordings-thumbnail-placeholder {
-  background: #e8eeeb;
-}
-.recordings-reference-library
-  .recordings-row:nth-child(3n)
-  .recordings-thumbnail-placeholder {
-  background: #eeebf6;
-}
-.recordings-reference-library .recordings-thumbnail-play {
-  color: var(--primary);
-  background: var(--surface);
-  box-shadow: 0 6px 20px #252c3f18;
-}
-.recordings-reference-library .recordings-thumbnail-tiles {
-  transform: rotate(-8deg);
-  width: 48%;
-  gap: 6px;
-}
-.recordings-reference-library .recordings-thumbnail-tiles > i {
-  height: 48px;
-  background: #ffffff75;
-  border-radius: 4px;
-  color: #a6aceb;
-}
-.recordings-reference-library .recordings-row-owner {
-  margin-top: 5px;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+  padding: 7px 0 0;
 }
 .recordings-reference-library .recordings-list > .recordings-empty {
-  grid-column: 1 / -1;
-  padding: 52px 20px;
-  background: var(--surface);
+  grid-column: 1/-1;
   border: 1px dashed var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 42px 20px;
 }
 .recordings-reference-library .recordings-empty > svg {
-  width: 36px;
-  height: 36px;
-  margin: 0 0 14px;
-  color: var(--muted);
-}
-.recordings-reference-library .recordings-empty h2 {
-  margin: 0;
-  font-size: calc(17px * var(--text-scale));
-}
-.recordings-reference-library .recordings-empty p {
-  font-size: calc(12px * var(--text-scale));
-  margin: 10px 0 20px;
-}
-.recordings-reference-library .recordings-empty .button {
-  min-height: 34px;
-  padding: 8px 13px;
-  font-size: calc(11px * var(--text-scale));
+  color: var(--primary);
 }
 .recordings-load-more {
   margin-top: 20px;
   text-align: center;
 }
-[data-theme="dark"]
-  .recordings-reference-library
-  .recordings-thumbnail-placeholder {
-  background: #313c55;
+.recording-detail-page > .recordings-back {
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  font-size: calc(12px * var(--text-scale));
 }
-[data-theme="dark"]
-  .recordings-reference-library
-  .recordings-row:nth-child(3n + 2)
-  .recordings-thumbnail-placeholder {
-  background: #2b4540;
+.recording-detail-page .recordings-heading.recording-detail-heading {
+  margin: 5px 0 22px;
+  align-items: start;
 }
-[data-theme="dark"]
-  .recordings-reference-library
-  .recordings-row:nth-child(3n)
-  .recordings-thumbnail-placeholder {
-  background: #423958;
+.recording-detail-page .recording-detail-heading h1 {
+  font-size: calc(25px * var(--text-scale));
+  line-height: 1.25;
+  margin: 7px 0;
 }
-@media (max-width: 1180px) {
-  .recordings-reference-library .recordings-layout-grid {
-    gap: 14px;
+.recording-detail-page .recording-detail-layout {
+  grid-template-columns: minmax(0, 1.65fr) minmax(260px, 1fr);
+  gap: 22px;
+}
+.recording-detail-page .recording-detail-player {
+  background: #202838;
+  border-radius: 16px;
+}
+.recording-detail-page .recording-detail-sidebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border: 0;
+  padding: 0;
+  gap: 14px;
+  background: transparent;
+  box-shadow: none;
+}
+.recording-detail-page .recording-detail-sidebar > .recording-detail-section {
+  display: block;
+  padding: 18px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.recording-detail-page .recording-detail-info > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.recording-detail-page .recording-detail-info dd {
+  margin-left: auto;
+  text-align: right;
+}
+.recording-detail-page .recording-detail-file .recordings-file-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--primary-soft);
+  border-radius: 8px;
+  color: var(--primary);
+}
+.recording-detail-page .recording-detail-download {
+  min-width: 44px;
+  min-height: 44px;
+}
+@container (max-width: 904px) {
+  .recordings-reference-library .recordings-layout-list .recordings-row {
+    grid-template-columns: 128px minmax(0, 1fr) auto;
+    gap: 12px;
   }
-}
-@media (max-width: 950px) {
   .recordings-reference-library .recordings-layout-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .recording-detail-page .recording-detail-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, 1fr);
+    gap: 16px;
+  }
 }
-@media (max-width: 700px) {
+@container (max-width: 650px) {
+  .recording-detail-page .recording-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+@container (max-width: 600px) {
+  .recordings-reference-library .recordings-layout-list .recordings-row {
+    grid-template-columns: 84px minmax(0, 1fr) 44px;
+    gap: 8px;
+    padding: 10px;
+  }
+  .recordings-reference-library .recordings-layout-list .recordings-watch {
+    display: none;
+  }
   .recordings-reference-library .recordings-layout-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-  .recordings-reference-library .recordings-catalogue-toolbar {
-    flex-wrap: wrap;
-  }
+}
+.recording-detail-page .recording-detail-file .recording-detail-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--primary);
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font: inherit;
+  font-size: calc(12px * var(--text-scale));
+}
+.recording-detail-page .recording-detail-file .recording-detail-download:hover {
+  background: var(--primary-soft);
 }

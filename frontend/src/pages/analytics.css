@@ -314,3 +314,20 @@ html[data-large-text="true"] .analytics-selector-fields {
     color: var(--muted);
   }
 }
+.analytics-page {
+  width: 100%;
+  max-width: 1140px;
+  margin-inline: auto;
+}
+.analytics-page .content-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: none;
+}
+.analytics-page .analytics-selector {
+  padding: 18px;
+}
+.analytics-page .analytics-selector .field {
+  margin: 0;
+}

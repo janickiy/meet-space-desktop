@@ -852,54 +852,9 @@
   border-right: 1px solid var(--ssh-border);
   color: var(--text);
 }
-.desktop-foundation-installing .reference-welcome-installer::before {
-  content: none;
-}
-.reference-welcome-installer .reference-welcome-brand {
-  flex-wrap: wrap;
-  font-size: 26px;
-  letter-spacing: -1px;
-  line-height: 1.2;
-}
 .desktop-ssh-art svg {
   stroke-width: 1.7;
   flex-shrink: 0;
-}
-.reference-welcome-installer .reference-welcome-brand img {
-  width: 35px;
-  height: 35px;
-}
-.reference-welcome-installer .reference-welcome-copy {
-  margin-top: clamp(48px, 9vh, 105px);
-}
-.reference-welcome-installer .reference-welcome-copy > span {
-  font-size: calc(10px * var(--text-scale));
-  letter-spacing: 1.5px;
-  line-height: 1.6;
-  color: var(--ssh-copy);
-  margin: 0;
-}
-.reference-welcome-installer .reference-welcome-copy h2 {
-  font-size: calc(clamp(31px, 3.3vw, 48px) * var(--text-scale));
-  line-height: 1.12;
-  letter-spacing: -2px;
-  margin: 0 0 23px;
-  max-width: 460px;
-}
-.reference-welcome-installer .reference-welcome-copy p {
-  max-width: 370px;
-  color: var(--ssh-copy);
-  font-size: calc(14px * var(--text-scale));
-  line-height: 1.85;
-  margin: 0;
-}
-.reference-welcome-installer .reference-welcome-footer {
-  color: var(--ssh-copy);
-  font-size: calc(10px * var(--text-scale));
-  padding-top: 24px;
-}
-.reference-welcome-installer .reference-welcome-footer svg {
-  color: var(--primary);
 }
 :root
   .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
@@ -1941,9 +1896,6 @@
   :root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
     padding-inline: 72px;
   }
-  .reference-welcome-installer .reference-welcome-copy h2 {
-    font-size: calc(49px * var(--text-scale));
-  }
 }
 @media (max-width: 1150px) {
   :root
@@ -1954,16 +1906,6 @@
   }
   :root .desktop-foundation.desktop-foundation-installing > .reference-welcome {
     padding: 29px 30px 25px;
-  }
-  .reference-welcome-installer .reference-welcome-copy {
-    margin-top: 65px;
-  }
-  .reference-welcome-installer .reference-welcome-copy h2 {
-    font-size: calc(35px * var(--text-scale));
-    letter-spacing: -1.5px;
-  }
-  .reference-welcome-installer .reference-welcome-copy p {
-    font-size: calc(13px * var(--text-scale));
   }
   :root
     .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
@@ -1991,16 +1933,6 @@
   }
 }
 @media (max-height: 850px) and (min-width: 1000px) {
-  .reference-welcome-installer .reference-welcome-copy {
-    margin-top: 55px;
-  }
-  .reference-welcome-installer .reference-welcome-copy h2 {
-    font-size: calc(36px * var(--text-scale));
-    letter-spacing: -1.4px;
-  }
-  .reference-welcome-installer .reference-welcome-copy p {
-    font-size: calc(13px * var(--text-scale));
-  }
   .desktop-ssh-topbar {
     margin-bottom: 19px;
   }
@@ -2310,13 +2242,6 @@
   }
 }
 @media (max-height: 680px) and (min-width: 1000px) {
-  .reference-welcome-installer .reference-welcome-copy {
-    margin-top: 28px;
-  }
-  .reference-welcome-installer .reference-welcome-copy h2 {
-    font-size: calc(32px * var(--text-scale));
-    margin-bottom: 17px;
-  }
   .desktop-ssh-art {
     height: 230px;
     min-height: 170px;
@@ -2363,4 +2288,26 @@
   .desktop-ssh-progress
   > .desktop-ssh-actions {
   margin-top: 12px;
+}
+
+/* Give the installer its own scroll pane between the native-style title and status bars. */
+:root
+  .entry-frame
+  .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome) {
+  height: calc(100dvh - 84px);
+  min-height: 0;
+}
+:root
+  .entry-frame
+  .desktop-foundation.desktop-foundation-installing
+  > .desktop-foundation-card {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+.desktop-ssh-installer .desktop-ssh-progress > .desktop-ssh-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  background: var(--surface);
 }

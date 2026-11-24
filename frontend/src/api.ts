@@ -1,3 +1,4 @@
+import { validateAuthProviders } from "./auth-policy";
 import { isDesktopBuild } from "./platform/build";
 import { serviceOrigin } from "./platform/urls";
 import { attachmentMimeType } from "./attachmentPolicy";
@@ -414,6 +415,30 @@ async function privateBlob(
   }
 }
 export const api = {
+  async authProviders(signal?: AbortSignal) {
+    try {
+      return validateAuthProviders(
+        await request("/auth/providers", { public: true, signal }),
+      );
+    } catch (error) {
+      // Older MeetSpace servers predate provider discovery and expose local accounts.
+      if (error instanceof ApiError && error.status === 404)
+        return {
+          mode: "local" as const,
+          registrationEnabled: true,
+          passwordRecoveryEnabled: false,
+          ldap: { enabled: false, label: "" },
+        };
+      throw error;
+    }
+  },
+  recoverPassword: (email: string, signal?: AbortSignal) =>
+    request<{ status: string }>("/auth/password-recovery", {
+      method: "POST",
+      public: true,
+      body: { email },
+      signal,
+    }),
   folders: (target?: FolderTarget, signal?: AbortSignal) =>
     request<Items<PersonalFolder>>(
       `/folders${target ? `?${new URLSearchParams({ itemKind: target.type, itemId: target.id })}` : ""}`,
@@ -1193,6 +1218,20 @@ export const api = {
       `/conferences/${encodeURIComponent(id)}/chat/messages/${encodeURIComponent(messageId)}/context`,
       { signal },
     ),
+  forwardMessages: (
+    id: string,
+    body: {
+      sourceType: "conversation" | "conference";
+      sourceId: string;
+      messageIds: string[];
+      clientRequestId: string;
+    },
+    signal?: AbortSignal,
+  ) =>
+    request<{ items: ChatMessage[] }>(
+      `/conversations/${encodeURIComponent(id)}/messages/forward`,
+      { method: "POST", body, signal },
+    ),
   personalConversations: (
     before?: string,
     signal?: AbortSignal,
@@ -1713,10 +1752,10 @@ export function createChatAPI(namespace: "conferences" | "conversations") {
         `${base(id)}/messages/${encodeURIComponent(messageId)}`,
         { method: "PATCH", body: { text } },
       ),
-    deleteMessage: (id: string, messageId: string) =>
+    deleteMessage: (id: string, messageId: string, signal?: AbortSignal) =>
       request<Item<ChatMessage>>(
         `${base(id)}/messages/${encodeURIComponent(messageId)}`,
-        { method: "DELETE" },
+        { method: "DELETE", signal },
       ),
     chatRead: (id: string, signal?: AbortSignal) =>
       request<Item<ChatReadState>>(`${base(id)}/chat/read`, { signal }),

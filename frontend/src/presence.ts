@@ -1,3 +1,4 @@
+import type { RemoteMedia } from "./media";
 import type { Participant, PresenceParticipant } from "./types";
 
 /** Собирает состав живой комнаты по подтверждённому сервером присутствию.
@@ -24,4 +25,23 @@ export function onlineParticipants(
       (!person.admissionState || person.admissionState === "admitted")
     );
   });
+}
+
+/** Select a single visible camera/avatar per member. Other streams still deliver audio. */
+export function primaryParticipantStreams(
+  streams: readonly RemoteMedia[],
+  localId?: string,
+) {
+  const result = new Map<string, RemoteMedia>();
+  for (const stream of streams) {
+    if (stream.screen || stream.participantId === localId) continue;
+    const primary = result.get(stream.participantId);
+    if (
+      !primary ||
+      (!primary.kinds.includes("video") && stream.kinds.includes("video"))
+    ) {
+      result.set(stream.participantId, stream);
+    }
+  }
+  return result;
 }

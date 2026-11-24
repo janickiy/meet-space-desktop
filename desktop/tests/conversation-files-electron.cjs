@@ -78,20 +78,20 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
     const click = selector => execute(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e||e.disabled)throw new Error('Missing enabled action: '+${JSON.stringify(selector)});e.click()})()`);
     const clickText = (label, within = "body") => execute(`(()=>{const e=[...document.querySelector(${JSON.stringify(within)}).querySelectorAll('button')].find(e=>e.textContent.trim()===${JSON.stringify(label)});if(!e||e.disabled)throw new Error('Missing enabled action: '+${JSON.stringify(label)});e.click()})()`);
     const field = (selector, value) => execute(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}))})()`);
-    const profileFiles = () => execute("[...document.querySelectorAll('[role=dialog] .chat-profile-file-copy strong')].map(e=>e.textContent)");
+    const profileFiles = () => execute("[...document.querySelectorAll('.personal-content .chat-info-page .chat-profile-file-copy strong')].map(e=>e.textContent)");
     const capture = async name => {
       await execute("document.fonts.ready");
       await execute("Promise.all(document.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished.catch(()=>{})))");
       await new Promise(resolve => setTimeout(resolve, 150));
-      const metrics = await execute(`(()=>{const e=document.querySelector('[role=dialog]'),r=e?.getBoundingClientRect();return {visible:!!e,left:r?.left,top:r?.top,right:r?.right,bottom:r?.bottom,width:innerWidth,height:innerHeight,scrollWidth:e?.scrollWidth,clientWidth:e?.clientWidth}})()`);
+      const metrics = await execute(`(()=>{const e=document.querySelector('.personal-content .chat-info-page'),r=e?.getBoundingClientRect();return {visible:!!e,left:r?.left,top:r?.top,right:r?.right,bottom:r?.bottom,width:innerWidth,height:innerHeight,scrollWidth:e?.scrollWidth,clientWidth:e?.clientWidth}})()`);
       assert.ok(metrics.visible && metrics.left >= 0 && metrics.top >= 0 && metrics.right <= metrics.width && metrics.bottom <= metrics.height, name + " fits viewport");
       assert.ok(metrics.scrollWidth <= metrics.clientWidth + 1, name + " has no horizontal overflow");
       await fs.writeFile(path.join(output, name + ".png"), (await window.webContents.capturePage()).toPNG());
     };
     await fs.mkdir(output, { recursive: true });
     await execute("window.__profileErrors=[];window.addEventListener('error',e=>window.__profileErrors.push(e.message));void 0");
-    await until(() => execute("!!document.querySelector('.reference-onboarding-intro .button')"), "Intro ready");
-    await click(".reference-onboarding-intro .button");
+    await until(() => execute("!!document.querySelector('[data-onboarding=connect]')"), "Intro ready");
+    await click("[data-onboarding=connect]");
     await until(() => execute("!!document.querySelector('#desktop-server-origin')"), "Server form ready");
     await field("#desktop-server-origin", fixture.origin); await click(".desktop-server-form button[type=submit]");
     await until(() => execute("!!document.querySelector('#email')"), "Login ready");
@@ -103,15 +103,15 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
       await until(() => execute(`location.pathname==='/personal/${item.id}' && !!document.querySelector('.personal-peer-button') && document.body.innerText.includes('Authorized message')`), "Conversation ready");
       const requestsBefore = fixture.requests.filter(r => r.path === `/api/v1/conversations/${item.id}/messages`).length;
       await click(".personal-peer-button");
-      await until(() => execute("!!document.querySelector('[role=dialog] .group-profile-tabs')"), "Profile ready");
+      await until(() => execute("!!document.querySelector('.personal-content .chat-info-page .group-profile-tabs')"), "Profile ready");
       await capture(item.type + "-profile");
       assert.equal(fixture.requests.filter(r => r.path === `/api/v1/conversations/${item.id}/messages`).length, requestsBefore, "Opening profile does not request file history");
-      await clickText("Файлы", "[role=dialog]");
+      await clickText("Файлы", ".personal-content .chat-info-page");
       await until(async () => (await profileFiles()).includes(visibleFile.filename), "Visible attachment is rendered");
       assert.deepEqual(await profileFiles(), [visibleFile.filename], "Deleted messages do not reveal their attachments");
       assert.equal(fixture.requests.some(r => r.path === `/api/v1/conversations/${item.id}/messages` && r.query.includes("before=")), false, "Older history is not prefetched");
       await capture(item.type + "-files");
-      await click(`[role=dialog] button[aria-label="Скачать файл: ${visibleFile.filename}"]`);
+      await click(`.personal-content .chat-info-page button[aria-label="Скачать файл: ${visibleFile.filename}"]`);
       await until(() => saves.length === (item.type === "direct" ? 1 : 2), "Native save invoked");
       const saved = saves.at(-1);
       assert.deepEqual(saved.asset, { kind: "attachment", scope: "conversation", scopeId: item.id, attachmentId: ATTACHMENT, filename: visibleFile.filename });
@@ -119,21 +119,21 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
       assert.equal(Object.hasOwn(saved.asset, "url"), false, "Native save carries IDs only");
       assert.equal(fixture.requests.some(r => r.path.endsWith("/download")), false, "Renderer does not fetch a signed URL");
       if (item.type === "direct") {
-        await clickText("Загрузить более ранние сообщения", "[role=dialog]");
+        await clickText("Загрузить более ранние сообщения", ".personal-content .chat-info-page");
         await until(async () => (await profileFiles()).includes(earlierFile.filename), "Explicit pagination loads older file");
         assert.deepEqual((await profileFiles()).sort(), [visibleFile.filename, earlierFile.filename].sort(), "Repeated attachment IDs render once across pages");
         await capture("direct-files-paginated");
-        await click('[role=dialog] button[aria-label="Закрыть окно"]');
-        await until(() => execute("!document.querySelector('[role=dialog]')"), "Profile closed");
+        await click('.personal-content .chat-info-page button[aria-label="Назад к чату"]');
+        await until(() => execute("!document.querySelector('.personal-content .chat-info-page')"), "Profile closed");
         controls.deny = 403; controls.deniedConversation = item.id;
         await click(".personal-peer-button");
-        await until(() => execute("!!document.querySelector('[role=dialog] .group-profile-tabs')"), "Reopened profile ready");
-        await clickText("Файлы", "[role=dialog]");
+        await until(() => execute("!!document.querySelector('.personal-content .chat-info-page .group-profile-tabs')"), "Reopened profile ready");
+        await clickText("Файлы", ".personal-content .chat-info-page");
       } else {
         controls.deny = 404; controls.deniedConversation = item.id;
-        await clickText("Загрузить более ранние сообщения", "[role=dialog]");
+        await clickText("Загрузить более ранние сообщения", ".personal-content .chat-info-page");
       }
-      await until(() => execute("!document.querySelector('[role=dialog]')"), `${item.type} access loss closes profile`);
+      await until(() => execute("!document.querySelector('.personal-content .chat-info-page')"), `${item.type} access loss closes profile`);
       assert.deepEqual(await profileFiles(), [], "No files remain visible after access loss");
       checks.push(`${item.type}: lazy authorized history, deleted attachments excluded, native save by IDs; ${controls.deny} closes profile and removes visible files`);
     }

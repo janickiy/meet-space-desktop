@@ -783,3 +783,39 @@ html[data-large-text="true"] .history-overview-grid {
     flex-direction: column;
   }
 }
+.history-reference-page,
+.notifications-page {
+  width: 100%;
+  max-width: 1140px;
+  margin-inline: auto;
+}
+.history-reference-page .history-library,
+.notifications-page > .content-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+  background: var(--surface);
+}
+.history-reference-page .history-library-toolbar {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.history-reference-page .history-overview-grid > .content-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.notifications-page .page-heading {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.notifications-page .page-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+.notifications-page .notifications-count {
+  padding: 5px 9px;
+  border-radius: 6px;
+  color: var(--primary);
+  background: var(--primary-soft);
+}

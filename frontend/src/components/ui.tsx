@@ -19,6 +19,33 @@ import { errorMessage, statusLabels } from "../api";
 import type { ConferenceStatus } from "../types";
 import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
 
+export function Switch(
+  props: Omit<InputHTMLAttributes<HTMLInputElement>, "role" | "type">,
+) {
+  return <input {...props} type="checkbox" role="switch" />;
+}
+
+export function IconButton({
+  label,
+  children,
+  className = "desktop-icon",
+  ...props
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "aria-label"> & {
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      title={label}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 /**
  * Brand показывает предоставленный логотип MeetSpace и ведёт на указанную страницу.
  * Светлая и тёмная версии выбираются стилями по фону; узкая панель использует отдельный знак.

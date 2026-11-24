@@ -520,3 +520,99 @@
     flex: 1;
   }
 }
+
+.chat-info-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  max-width: none;
+  background: var(--canvas);
+}
+.chat-info-heading {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.chat-info-heading h2 {
+  margin: 0;
+  font-size: calc(16px * var(--text-scale));
+}
+.chat-info-heading .modal-close {
+  position: static;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+}
+.chat-info-body {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  padding: 26px clamp(14px, 3vw, 48px) 32px;
+}
+.chat-info-body > *,
+.chat-info-body .personal-user-info > * {
+  width: min(100%, 724px);
+  margin-inline: auto;
+}
+.chat-info-page .personal-profile-hero,
+.chat-info-page .group-identity {
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 0 0 15px;
+  text-align: center;
+}
+.chat-info-page .personal-profile-copy h3,
+.chat-info-page .group-identity h3 {
+  text-align: center;
+}
+.chat-info-page .personal-profile-subtitle,
+.chat-info-page .group-info-actions,
+.chat-info-page .personal-profile-actions {
+  justify-content: center;
+  text-align: center;
+}
+.chat-info-page .group-identity .group-avatar-large,
+.chat-info-page .personal-profile-hero .group-avatar-large,
+.chat-info-page .group-identity .chat-group-photo {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  font-size: calc(34px * var(--text-scale));
+  flex: none;
+}
+.personal-profile-hero .profile-photo {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+.chat-info-page .group-profile-tabs,
+.chat-info-page .chat-profile-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.chat-info-page .group-profile-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 0 12px;
+}
+.chat-info-page .chat-profile-pane {
+  padding: 18px 20px;
+  overflow-y: visible;
+}

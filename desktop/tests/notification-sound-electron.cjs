@@ -54,7 +54,7 @@ const timeout = setTimeout(() => { console.error('notification sound timeout'); 
     });
   })()`);
   await instrument();
-  await exists('.reference-onboarding-intro .button'); await click('.reference-onboarding-intro .button');
+  await exists('[data-onboarding=connect]'); await click('[data-onboarding=connect]');
   await exists('#desktop-server-origin'); await field('#desktop-server-origin', fixture.origin); await click('.desktop-server-form button[type=submit]');
   await exists('#email'); await field('#email', fixture.users[0].email); await field('#password', PASSWORD); await click('#auth-form button[type=submit]');
   await exists('.sidebar'); await until(() => fixture.streams.size > 0 && fixture.sockets.size > 0, 'notification and account streams');

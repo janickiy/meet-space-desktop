@@ -420,6 +420,7 @@ export interface ChatAttachment {
  *   - attachments — метаданные прикреплённых файлов.
  */
 export interface ChatMessage {
+  forwardedFrom?: { senderName: string };
   id: string;
   sequence: string;
   conferenceId?: string;
@@ -847,4 +848,11 @@ export interface FolderItemFilters {
 export interface FolderPage {
   items: FolderItem[];
   nextCursor?: string;
+}
+
+export interface AuthProviders {
+  mode: "local" | "ldap";
+  registrationEnabled: boolean;
+  passwordRecoveryEnabled: boolean;
+  ldap: { enabled: boolean; label: string };
 }

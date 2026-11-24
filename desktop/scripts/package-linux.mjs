@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { sourceInputs } from "./ci/source-inputs.mjs";
-import { artifactFilename, LINUX_PACKAGE_FORMATS, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
+import { artifactFilename, LINUX_PACKAGE_FORMATS, LINUX_PACKAGE_VERSION, validateLinuxTarget, writeNewReceipt } from "./linux-package-policy.mjs";
 import { prepareLinuxElectronReference } from "./prepare-linux-electron.mjs";
 
 const desktop = fileURLToPath(new URL("..", import.meta.url));
@@ -189,7 +189,7 @@ async function main() {
     const inputs = JSON.parse(manifestBytes);
     const provenance = JSON.parse(await readFile(path.join(desktop, "dist/build-provenance.json"), "utf8"));
     const pkg = JSON.parse(await readFile(path.join(desktop, "package.json"), "utf8"));
-    if (!/^\d+\.\d+\.\d+-beta(?:\.\d+)?$/.test(pkg.version) ||
+    if (!LINUX_PACKAGE_VERSION.test(pkg.version) ||
         !/^[a-f0-9]{64}$/.test(inputs.sourceTreeSha256) || provenance.sourceTreeSha256 !== inputs.sourceTreeSha256 ||
         provenance.releaseMode !== "test" || provenance.appId !== "com.janickiy.meetspace.desktop.test" ||
         provenance.buildHostPlatform !== "linux" || provenance.buildHostArch !== arch ||

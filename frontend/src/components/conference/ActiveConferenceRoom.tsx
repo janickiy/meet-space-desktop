@@ -86,7 +86,6 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
         <div className="room-title">
           <h1>{conference.title}</h1>
           <div className="room-title-meta">
-            <MeetingClock startedAt={conference.startedAt} />
             <span>
               {live.state
                 ? `В эфире · Участников: ${onlinePeople.length}`
@@ -95,6 +94,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           </div>
         </div>
         <div className="room-header-actions">
+          <MeetingClock startedAt={conference.startedAt} />
           {activeRecording && (
             <span
               className="room-recording-status"

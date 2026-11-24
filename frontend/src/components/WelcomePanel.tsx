@@ -1,31 +1,27 @@
-import {
-  MessageSquare,
-  MessageCircle,
-  Mic,
-  MonitorUp,
-  PhoneOff,
-  Phone,
-  ShieldCheck,
-  Video,
-} from "lucide-react";
-import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
+import { MessageCircle, Mic, Phone, ShieldCheck, Video } from "lucide-react";
+import { PRODUCT_NAME } from "../brand";
 import "./welcome-panel.css";
 
-/** Decorative artwork from the supplied desktop reference, separate from live call state. */
+/** Static onboarding artwork, independent of user/device/session state. */
 export function WelcomePanel({ installer = false }: { installer?: boolean }) {
   return (
-    <aside
-      className={`reference-welcome${installer ? " reference-welcome-installer" : ""}`}
-    >
-      <div className="reference-welcome-brand">
+    <aside className="reference-welcome on-side">
+      <div className="on-logo">
         <img
-          src={`/branding/meetspace-symbol-color.svg?v=${BRAND_ASSET_VERSION}`}
+          src="/branding/desktop-brand-mark.svg"
+          width="32"
+          height="32"
           alt=""
         />
-        <span>{PRODUCT_NAME}</span>
+        <span>
+          {PRODUCT_NAME}
+          <span className="on-logo-dot">.</span>
+        </span>
       </div>
-      <div className="reference-welcome-copy">
-        {!installer && <span>МЕСТО, ГДЕ КОМАНДА ВМЕСТЕ</span>}
+      <div className="on-side-body">
+        <span className="on-kicker">
+          {installer ? "ВАШ СЕРВЕР. ВАШИ ПРАВИЛА." : "БЛИЖЕ К КОМАНДЕ."}
+        </span>
         <h2>
           {installer ? (
             <>
@@ -35,110 +31,67 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
             </>
           ) : (
             <>
-              Большие идеи
+              Быть на одной
               <br />
-              начинаются
-              <br />с разговора.
+              волне.
             </>
           )}
         </h2>
         <p>
           {installer ? (
-            <>
-              Подключите удалённый сервер,
-              <br />а мы покажем каждый шаг настройки.
-            </>
+            "Подключите удалённый сервер, а мы покажем каждый шаг настройки."
           ) : (
             <>
-              Встречи, сообщения и решения.
-              <br />В одном пространстве вашей команды.
+              Встречи, сообщения и идеи —<br />в одном пространстве.
             </>
           )}
         </p>
-      </div>
-      {installer ? (
-        <div className="desktop-ssh-art" aria-hidden="true">
-          <div className="desktop-ssh-art-orbit">
-            <div />
-            <div />
-          </div>
-          <div className="desktop-ssh-art-call">
-            <span className="desktop-ssh-art-live">Встреча команды</span>
-            <div className="desktop-ssh-art-people">
+        <div className="on-orbit-art" aria-hidden="true">
+          <div className="on-orbit on-orbit-one" />
+          <div className="on-orbit on-orbit-two" />
+          <div className="on-orbit on-orbit-three" />
+          <div className="on-orbit-line" />
+          <div className="on-video-tile">
+            <div className="on-person on-person-one">
               <span>АК</span>
-              <span>МП</span>
             </div>
-            <div className="desktop-ssh-art-controls">
+            <div className="on-person on-person-two">
+              <span>МИ</span>
+            </div>
+            <div className="on-mini-call">
               <span>
                 <Video />
               </span>
               <span>
                 <Mic />
               </span>
-              <span>
+              <span className="on-call-red">
                 <Phone />
               </span>
             </div>
+            <span className="on-art-live">
+              <i />
+              Встреча команды
+            </span>
           </div>
-          <div className="desktop-ssh-art-message">
+          <div className="on-chat-bubble">
             <MessageCircle />
             <div>
-              Хорошие идеи.
+              Хорошие идеи
               <br />
-              <strong>Начинаются здесь.</strong>
+              <strong>начинаются здесь.</strong>
             </div>
           </div>
+          <div className="on-secure-node">
+            <ShieldCheck />
+          </div>
+          <div className="on-star-node">✦</div>
         </div>
-      ) : (
-        <div className="reference-welcome-art" aria-hidden="true">
-          <div className="reference-welcome-call">
-            <div className="reference-welcome-live">
-              <i />
-              Команда на связи
-            </div>
-            <div className="reference-welcome-people">
-              <div>
-                <span>АС</span>
-                <small>Вы</small>
-              </div>
-              <div>
-                <span>АК</span>
-                <small>Анна</small>
-              </div>
-              <div>
-                <span>МП</span>
-                <small>Максим</small>
-              </div>
-            </div>
-            <div className="reference-welcome-controls">
-              <span>
-                <Mic />
-              </span>
-              <span>
-                <Video />
-              </span>
-              <span>
-                <MonitorUp />
-              </span>
-              <span>
-                <PhoneOff />
-              </span>
-            </div>
-          </div>
-          <div className="reference-welcome-message">
-            <MessageSquare />
-            <div>
-              <strong>Отличная идея.</strong>
-              <p>Давайте сделаем вместе!</p>
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="reference-welcome-footer">
-        <ShieldCheck size={15} />
-        {installer
-          ? "На вашей инфраструктуре"
-          : "Ваш сервер. Ваши данные. Ваша команда."}
+      </div>
+      <div className="on-side-footer">
+        <span>
+          <ShieldCheck /> На вашей инфраструктуре
+        </span>
       </div>
     </aside>
   );

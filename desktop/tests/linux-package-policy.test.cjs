@@ -44,7 +44,8 @@ test("Linux packaging requires native explicit architecture and supported test f
     { arch: "x64", formats: ["deb", "deb"], platform: "linux", hostArch: "x64" },
   ]) assert.throws(() => api.validateLinuxTarget(invalid), /Linux package verification/);
   assert.equal(api.artifactFilename({ version: "0.1.1-beta", arch: "x64", format: "deb" }), "MeetSpace-0.1.1-beta-linux-amd64-test.deb");
-  for (const version of ["0.1.1", "../0.1.1-beta", "0.1.1-beta;touch bad"]) assert.throws(() => api.artifactFilename({ version, arch: "x64", format: "deb" }));
+  assert.equal(api.artifactFilename({ version: "0.4.0", arch: "x64", format: "deb" }), "MeetSpace-0.4.0-linux-amd64-test.deb");
+  for (const version of ["0.4", "0.4.0-unknown", "../0.1.1-beta", "0.1.1-beta;touch bad"]) assert.throws(() => api.artifactFilename({ version, arch: "x64", format: "deb" }));
 });
 test("artifact names match the pinned builder's format-specific architecture macro", async () => {
   const { artifactFilename } = await import("../scripts/linux-package-policy.mjs");

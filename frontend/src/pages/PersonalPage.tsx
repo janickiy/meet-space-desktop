@@ -21,6 +21,7 @@ import {
   MessagesSquare,
   Search,
   RefreshCw,
+  Plus,
   SquarePen,
   Users,
 } from "lucide-react";
@@ -34,6 +35,7 @@ import { PersonalPeerStatus } from "../components/PersonalPeerStatus";
 import { PersonalPeerPresenceProvider } from "../usePersonalPeerPresence";
 import { MessageThread } from "../components/ChatPanel";
 import { PersonalChatSearchModal } from "../components/PersonalChatSearch";
+import { WorkspaceHeaderActions } from "../components/WorkspaceHeader";
 import { ItemActions } from "../components/ItemActions";
 import { NewDirectChatModal } from "../components/NewDirectChatModal";
 import { UnreadMessageCount } from "../components/UnreadMessageCount";
@@ -205,6 +207,31 @@ export function PersonalPage() {
     <PersonalPeerPresenceProvider
       conversation={selected?.type === "direct" ? selected : undefined}
     >
+      <WorkspaceHeaderActions>
+        <div className="chat-new-action">
+          <ItemActions
+            label="Новый чат"
+            triggerIcon={
+              <>
+                <Plus size={17} aria-hidden="true" />
+                <span>Новый чат</span>
+              </>
+            }
+            actions={[
+              {
+                label: "Личный чат",
+                icon: <MessageCircle size={18} />,
+                run: () => setNewDirect(true),
+              },
+              {
+                label: "Создать группу",
+                icon: <Users size={18} />,
+                run: () => setCreating(true),
+              },
+            ]}
+          />
+        </div>
+      </WorkspaceHeaderActions>
       <section
         className={`personal-page ${id ? "personal-selected" : ""}`}
         data-keyboard-open={keyboardOpen || undefined}
@@ -212,35 +239,6 @@ export function PersonalPage() {
         aria-label="Чаты"
       >
         <aside className="personal-sidebar">
-          <div className="section-heading">
-            <h1>Чаты</h1>
-            <ItemActions
-              label="Новый чат"
-              triggerIcon={<SquarePen size={20} aria-hidden="true" />}
-              actions={[
-                {
-                  label: "Личный чат",
-                  icon: <MessageCircle size={18} />,
-                  run: () => setNewDirect(true),
-                },
-                {
-                  label: "Создать группу",
-                  icon: <Users size={18} />,
-                  run: () => setCreating(true),
-                },
-              ]}
-            />
-          </div>
-          <label className="personal-search">
-            <Search size={18} />
-            <input
-              type="search"
-              aria-label="Поиск переписок"
-              value={search}
-              placeholder="Найти чат"
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </label>
           <div
             className="personal-filters"
             role="group"
@@ -268,7 +266,18 @@ export function PersonalPage() {
                 {label}
               </button>
             ))}
+            <Link to="/folders">Папки</Link>
           </div>
+          <label className="personal-search">
+            <Search size={18} />
+            <input
+              type="search"
+              aria-label="Поиск переписок"
+              value={search}
+              placeholder="Найти человека или чат"
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
           <ErrorNotice error={list.error} />
           {list.isError && (
             <Button variant="outline" onClick={() => void list.refetch()}>
@@ -288,6 +297,9 @@ export function PersonalPage() {
                   <ConversationAvatar conversation={c} />
                   <span className="personal-preview">
                     <strong>{conversationName(c)}</strong>
+                    {c.type === "group" && (
+                      <small>Группа · {c.memberCount} участн.</small>
+                    )}
                     <span>
                       {c.type === "group" && c.preview && c.lastSender
                         ? `${c.lastSender.id === user?.id ? "Вы" : c.lastSender.displayName}: `
@@ -343,131 +355,149 @@ export function PersonalPage() {
           )}
         </aside>
         <div className="personal-content">
-          {!id ? (
-            <div className="personal-placeholder">
-              <MessagesSquare size={40} />
-              <h2>Разговор начинается здесь</h2>
-              <p>
-                Выберите переписку или начните новую.
-                <br />
-                Команда всегда рядом.
-              </p>
-              <Button onClick={() => setNewDirect(true)}>
-                <SquarePen size={18} />
-                Новый чат
-              </Button>
-              <small>Личные разговоры и группы в одном месте</small>
-            </div>
-          ) : (
-            <>
-              <header className="personal-header">
-                <Link
-                  className="personal-back"
-                  to={`/personal${location.search}`}
-                  aria-label="Назад к перепискам"
-                >
-                  <ArrowLeft />
-                </Link>
-                {selected?.type === "direct" ? (
-                  <button
-                    ref={userInfoTrigger}
-                    type="button"
-                    className="personal-peer-button"
-                    aria-label={`Информация о пользователе: ${selected.peer.displayName}`}
-                    onClick={() => setUserInfoOpen(true)}
+          <div
+            className="personal-thread-surface"
+            hidden={userInfoOpen || infoOpen}
+          >
+            {!id ? (
+              <div className="personal-placeholder">
+                <MessagesSquare size={40} />
+                <h2>Выберите чат</h2>
+                <p>Откройте переписку из списка или начните новую.</p>
+                <Button onClick={() => setNewDirect(true)}>
+                  <SquarePen size={18} />
+                  Новый чат
+                </Button>
+              </div>
+            ) : (
+              <>
+                <header className="personal-header">
+                  <Link
+                    className="personal-back"
+                    to={`/personal${location.search}`}
+                    aria-label="Назад к перепискам"
                   >
-                    <ConversationAvatar conversation={selected} />
-                    <span className="personal-header-copy">
-                      <strong>{selected.peer.displayName}</strong>
-                      <PersonalPeerStatus
-                        conversation={selected}
-                        onAccessDenied={revoke}
-                      />
-                    </span>
-                  </button>
-                ) : (
-                  <button
-                    ref={infoTrigger}
-                    type="button"
-                    className="personal-peer-button"
-                    aria-label="Информация о группе"
-                    disabled={!selected}
-                    onClick={() => setInfoOpen(true)}
-                  >
-                    {selected && <ConversationAvatar conversation={selected} />}
-                    <span className="personal-header-copy">
-                      <strong>
-                        {selected ? conversationName(selected) : "Переписка"}
-                      </strong>
-                      {selected?.type === "group" && (
-                        <small>{selected.memberCount} участн.</small>
+                    <ArrowLeft />
+                  </Link>
+                  {selected?.type === "direct" ? (
+                    <button
+                      ref={userInfoTrigger}
+                      type="button"
+                      className="personal-peer-button"
+                      aria-label={`Информация о пользователе: ${selected.peer.displayName}`}
+                      onClick={() => setUserInfoOpen(true)}
+                    >
+                      <ConversationAvatar conversation={selected} />
+                      <span className="personal-header-copy">
+                        <strong>{selected.peer.displayName}</strong>
+                        <PersonalPeerStatus
+                          conversation={selected}
+                          onAccessDenied={revoke}
+                        />
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      ref={infoTrigger}
+                      type="button"
+                      className="personal-peer-button"
+                      aria-label="Информация о группе"
+                      disabled={!selected}
+                      onClick={() => setInfoOpen(true)}
+                    >
+                      {selected && (
+                        <ConversationAvatar conversation={selected} />
                       )}
-                    </span>
-                    <ChevronDown
-                      className="personal-peer-chevron"
-                      size={15}
-                      aria-hidden="true"
+                      <span className="personal-header-copy">
+                        <strong>
+                          {selected ? conversationName(selected) : "Переписка"}
+                        </strong>
+                        {selected?.type === "group" && (
+                          <small>Группа · {selected.memberCount} участн.</small>
+                        )}
+                      </span>
+                      <ChevronDown
+                        className="personal-peer-chevron"
+                        size={15}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  )}
+                  {selected?.type === "direct" && (
+                    <DirectCallButton
+                      userId={selected.peer.id}
+                      name={selected.peer.displayName}
                     />
-                  </button>
+                  )}
+                  {selected && (
+                    <button
+                      ref={messageSearchTrigger}
+                      type="button"
+                      className="icon-button"
+                      aria-label="Найти в чате"
+                      title="Найти в чате"
+                      onClick={() => setMessageSearchOpen(true)}
+                    >
+                      <Search size={20} aria-hidden="true" />
+                    </button>
+                  )}
+                  {selected && (
+                    <ConversationActions
+                      conversation={selected}
+                      onGroupInfo={() => setInfoOpen(true)}
+                    />
+                  )}
+                </header>
+                {connection.data === "reconnecting" && (
+                  <div className="personal-reconnect" role="status">
+                    <RefreshCw size={16} aria-hidden="true" />
+                    Переподключаемся… Сообщения обновятся автоматически.
+                  </div>
                 )}
-                {selected?.type === "direct" && (
-                  <DirectCallButton
-                    userId={selected.peer.id}
-                    name={selected.peer.displayName}
-                  />
+                <ErrorNotice error={detail.error} />
+                {detail.isPending ? (
+                  <MessagingSkeleton rows={4} />
+                ) : (
+                  selected && (
+                    <MessageThread
+                      key={`${id}:${selected.type === "direct" ? selected.historyClearedThrough || 0 : 0}:${threadVersion.data}`}
+                      scopeId={id}
+                      transport={personalChatAPI}
+                      personal
+                      visible={!messageSearchOpen && !infoOpen && !userInfoOpen}
+                      focusMessageId={messageFocus?.id}
+                      focusRequest={messageFocus?.request}
+                      onLatest={() => setMessageFocus(undefined)}
+                      composerPlaceholder={
+                        selected.type === "group"
+                          ? "Напишите в группу…"
+                          : "Напишите сообщение…"
+                      }
+                      requireAuthenticatedDownloads={selected.type === "group"}
+                      onAccessDenied={
+                        selected.type === "group" ? revoke : undefined
+                      }
+                    />
+                  )
                 )}
-                {selected && (
-                  <button
-                    ref={messageSearchTrigger}
-                    type="button"
-                    className="icon-button"
-                    aria-label="Найти в чате"
-                    title="Найти в чате"
-                    onClick={() => setMessageSearchOpen(true)}
-                  >
-                    <Search size={20} aria-hidden="true" />
-                  </button>
-                )}
-                {selected && (
-                  <ConversationActions
-                    conversation={selected}
-                    onGroupInfo={() => setInfoOpen(true)}
-                  />
-                )}
-              </header>
-              {connection.data === "reconnecting" && (
-                <div className="personal-reconnect" role="status">
-                  <RefreshCw size={16} aria-hidden="true" />
-                  Переподключаемся… Сообщения обновятся автоматически.
-                </div>
-              )}
-              <ErrorNotice error={detail.error} />
-              {detail.isPending ? (
-                <MessagingSkeleton rows={4} />
-              ) : (
-                selected && (
-                  <MessageThread
-                    key={`${id}:${selected.type === "direct" ? selected.historyClearedThrough || 0 : 0}:${threadVersion.data}`}
-                    scopeId={id}
-                    transport={personalChatAPI}
-                    personal
-                    visible={!messageSearchOpen}
-                    focusMessageId={messageFocus?.id}
-                    focusRequest={messageFocus?.request}
-                    onLatest={() => setMessageFocus(undefined)}
-                    composerPlaceholder={
-                      selected.type === "group"
-                        ? "Напишите в группу…"
-                        : "Напишите сообщение…"
-                    }
-                    requireAuthenticatedDownloads={selected.type === "group"}
-                    onAccessDenied={
-                      selected.type === "group" ? revoke : undefined
-                    }
-                  />
-                )
-              )}
-            </>
+              </>
+            )}
+          </div>
+          {userInfoOpen && selected?.type === "direct" && (
+            <DirectUserInfoModal
+              embedded
+              conversation={selected}
+              onClose={() => setUserInfoOpen(false)}
+              returnFocus={() => userInfoTrigger.current}
+            />
+          )}
+          {infoOpen && selected?.type === "group" && (
+            <GroupInfoModal
+              embedded
+              group={selected}
+              onClose={() => setInfoOpen(false)}
+              returnFocus={() => infoTrigger.current}
+            />
           )}
         </div>
         {messageSearchOpen && selected && id && (
@@ -490,20 +520,6 @@ export function PersonalPage() {
         {creating && <GroupCreateModal onClose={() => setCreating(false)} />}
         {newDirect && (
           <NewDirectChatModal onClose={() => setNewDirect(false)} />
-        )}
-        {userInfoOpen && selected?.type === "direct" && (
-          <DirectUserInfoModal
-            conversation={selected}
-            onClose={() => setUserInfoOpen(false)}
-            returnFocus={() => userInfoTrigger.current}
-          />
-        )}
-        {infoOpen && selected?.type === "group" && (
-          <GroupInfoModal
-            group={selected}
-            onClose={() => setInfoOpen(false)}
-            returnFocus={() => infoTrigger.current}
-          />
         )}
       </section>
     </PersonalPeerPresenceProvider>

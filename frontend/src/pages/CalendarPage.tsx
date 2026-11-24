@@ -4,12 +4,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
   CalendarDays,
+  Clock3,
   ChevronLeft,
   ChevronRight,
   Plus,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { isDesktopBuild } from "../platform/build";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Modal } from "../components/ui";
 import { EditSchedule } from "../components/ConferenceModals";
@@ -20,6 +22,7 @@ import { toLocalInput } from "../collaboration";
 import type { Conference } from "../types";
 import "./calendar.css";
 import "./collections-redesign.css";
+import "./calendar-agenda.css";
 
 type CalendarView = "week" | "month";
 const weekdays = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -191,6 +194,107 @@ function CalendarMeetingDetails({
   );
 }
 
+function DayAgenda({
+  days,
+  date,
+  byDay,
+  onDay,
+  onMeeting,
+}: {
+  days: Date[];
+  date: Date;
+  byDay: Map<string, Conference[]>;
+  onDay: (date: Date) => void;
+  onMeeting: (meeting: Conference) => void;
+}) {
+  const dayKey = calendarDayKey(date);
+  const meetings = byDay.get(dayKey) || [];
+  const byHour = new Map<number, Conference[]>();
+  for (const meeting of meetings) {
+    const hour = scheduledMeetingDate(meeting)!.getHours();
+    const group = byHour.get(hour);
+    if (group) group.push(meeting);
+    else byHour.set(hour, [meeting]);
+  }
+  const firstHour = Math.min(9, ...byHour.keys());
+  const lastHour = Math.max(18, ...byHour.keys());
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return (
+    <div className="agenda-layout">
+      <section className="agenda-day">
+        <div className="agenda-week" role="group" aria-label="Дни недели">
+          {days.map((day, index) => {
+            const key = calendarDayKey(day);
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={key === dayKey}
+                aria-label={day.toLocaleDateString("ru-RU", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+                onClick={() => onDay(day)}
+              >
+                <small>{weekdays[index]}</small>
+                <strong>{day.getDate()}</strong>
+                <i aria-hidden="true" data-events={byDay.has(key)} />
+              </button>
+            );
+          })}
+        </div>
+        <h3>
+          {date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+        </h3>
+        {meetings.length ? (
+          <div className="agenda-timeline">
+            {hours
+              .filter((hour) => hour >= firstHour && hour <= lastHour)
+              .map((hour) => (
+                <div className="agenda-time" key={hour}>
+                  <span>{String(hour).padStart(2, "0")}:00</span>
+                  <div>
+                    {byHour.get(hour)?.map((meeting) => (
+                      <CalendarMeeting
+                        key={meeting.id}
+                        meeting={meeting}
+                        onSelect={onMeeting}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <p className="agenda-empty">На этот день встреч пока нет.</p>
+        )}
+      </section>
+      <aside className="agenda-summary">
+        <h3>На этой неделе</h3>
+        <ul>
+          {days.map((day, index) => {
+            const key = calendarDayKey(day);
+            const count = byDay.get(key)?.length;
+            return count ? (
+              <li key={key}>
+                <button type="button" onClick={() => onDay(day)}>
+                  <span>{weekdayNames[index]}</span>
+                  <strong>{count}</strong>
+                </button>
+              </li>
+            ) : null;
+          })}
+        </ul>
+        <small>
+          <Clock3 size={15} aria-hidden="true" />
+          {timeZone}
+        </small>
+      </aside>
+    </div>
+  );
+}
+
 /**
  * CalendarPage показывает недельное расписание и месяц из того же API, что список встреч.
  * @return Адаптивный календарь с явной пагинацией, местным временем, созданием и управлением встречами.
@@ -205,12 +309,15 @@ export function CalendarPage() {
       ? parsed
       : new Date();
   });
-  const [view, setView] = useState<CalendarView>("month");
+  const [view, setView] = useState<CalendarView | "agenda">("agenda");
   const [selected, setSelected] = useState<Conference | null>(null);
   const [editing, setEditing] = useState<Conference | null>(null);
   const [agendaDay, setAgendaDay] = useState(() => calendarDayKey(new Date()));
   const scroll = useRef<HTMLDivElement>(null);
-  const range = useMemo(() => calendarRange(anchor, view), [anchor, view]);
+  const range = useMemo(
+    () => calendarRange(anchor, view === "agenda" ? "week" : view),
+    [anchor, view],
+  );
   const query = useConferences({
     view: "upcoming",
     scope: "all",
@@ -239,7 +346,9 @@ export function CalendarPage() {
     const grouped = new Map<string, Conference[]>();
     for (const meeting of meetings) {
       const key = calendarDayKey(scheduledMeetingDate(meeting)!);
-      grouped.set(key, [...(grouped.get(key) || []), meeting]);
+      const group = grouped.get(key);
+      if (group) group.push(meeting);
+      else grouped.set(key, [meeting]);
     }
     return grouped;
   }, [meetings]);
@@ -250,7 +359,7 @@ export function CalendarPage() {
   /** @args direction — предыдущий или следующий период. Сохраняет локальные границы при смене месяца и DST. */
   function move(direction: number) {
     setAnchor((date) =>
-      view === "week"
+      view !== "month"
         ? new Date(
             date.getFullYear(),
             date.getMonth(),
@@ -261,7 +370,7 @@ export function CalendarPage() {
   }
 
   const label =
-    view === "month"
+    view !== "week"
       ? anchor.toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
       : `${range.days[0].toLocaleDateString("ru-RU", { day: "numeric", month: "short" })} — ${range.days[6].toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}`;
   const today = calendarDayKey(new Date());
@@ -272,18 +381,38 @@ export function CalendarPage() {
   const agendaDays =
     view === "week" ? range.days : calendarRange(agendaDate, "week").days;
   return (
-    <div className="calendar-page">
+    <div className="calendar-page agenda-page">
+      {!isDesktopBuild && <h1>Календарь</h1>}
       <section className="page-heading">
-        <div>
-          <h1>Календарь</h1>
-          <p>Время для важных разговоров.</p>
+        <div
+          className="calendar-view-switch"
+          role="group"
+          aria-label="Вид календаря"
+        >
+          {(
+            [
+              ["agenda", "День"],
+              ["week", "Неделя"],
+              ["month", "Месяц"],
+            ] as const
+          ).map(([id, title]) => (
+            <button
+              type="button"
+              key={id}
+              aria-pressed={view === id}
+              onClick={() => setView(id)}
+            >
+              {title}
+            </button>
+          ))}
         </div>
         <Link
-          className="button button-primary"
+          className="icon-button agenda-schedule"
+          aria-label="Запланировать встречу"
+          title="Запланировать встречу"
           to="/meetings/new?scheduled=1&returnTo=calendar"
         >
           <Plus size={18} aria-hidden="true" />
-          Запланировать встречу
         </Link>
       </section>
       <section className="calendar-card" aria-label="Календарь встреч">
@@ -314,29 +443,6 @@ export function CalendarPage() {
               Сегодня
             </Button>
           </div>
-          <span className="calendar-toolbar-zone">
-            {Intl.DateTimeFormat().resolvedOptions().timeZone}
-          </span>
-          <div
-            className="calendar-view-switch"
-            role="group"
-            aria-label="Вид календаря"
-          >
-            <button
-              type="button"
-              aria-pressed={view === "week"}
-              onClick={() => setView("week")}
-            >
-              Неделя
-            </button>
-            <button
-              type="button"
-              aria-pressed={view === "month"}
-              onClick={() => setView("month")}
-            >
-              Месяц
-            </button>
-          </div>
         </div>
         <ErrorNotice error={query.error} />
         {query.isError && (
@@ -348,7 +454,15 @@ export function CalendarPage() {
           <MeetingSkeleton rows={4} label="Загрузка календаря" />
         ) : (
           <>
-            {
+            {view === "agenda" ? (
+              <DayAgenda
+                days={range.days}
+                date={anchor}
+                byDay={byDay}
+                onDay={setAnchor}
+                onMeeting={setSelected}
+              />
+            ) : (
               <div
                 className={`calendar-grid-scroll ${view === "week" ? "calendar-week-scroll" : ""}`}
                 ref={scroll}
@@ -465,8 +579,8 @@ export function CalendarPage() {
                   </div>
                 )}
               </div>
-            }
-            {!!meetings.length && (
+            )}
+            {view !== "agenda" && !!meetings.length && (
               <div
                 className="calendar-mobile-agenda"
                 aria-label="Встречи выбранного периода списком"
@@ -511,7 +625,7 @@ export function CalendarPage() {
                 )}
               </div>
             )}
-            {!meetings.length && !query.isError && (
+            {view !== "agenda" && !meetings.length && !query.isError && (
               <div className="calendar-empty">
                 <span>
                   <CalendarDays size={28} aria-hidden="true" />

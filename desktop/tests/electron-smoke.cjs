@@ -52,10 +52,10 @@ const { startApp } = require("../dist/main.js");
       }
       assert.fail(`Expected application screen: ${text}`);
     };
-    await waitForText("Начнём с подключения");
+    await waitForText("Команда ближе.");
     await window.webContents.executeJavaScript(`
       const continueButton = [...document.querySelectorAll('button')]
-        .find(button => button.textContent.trim() === 'Продолжить');
+        .find(button => button.matches('[data-onboarding=connect]'));
       if (!continueButton) throw new Error('Welcome continue button is missing');
       continueButton.click();
     `);

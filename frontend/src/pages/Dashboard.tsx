@@ -1,11 +1,12 @@
 import { isDesktopBuild } from "../platform/build";
-import { Fragment, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Link, useSearchParams } from "react-router";
 import {
   ArrowUpRight,
   CalendarDays,
   Clock,
-  Info,
+  Ellipsis,
+  RotateCcw,
   CalendarClock,
   Link2,
   UserRound,
@@ -47,7 +48,10 @@ function MeetingRow({ conference }: { conference: Conference }) {
   const [details, setDetails] = useState(false);
   const past = ["finished", "cancelled"].includes(conference.status);
   const timestamp =
-    conference.startedAt || conference.scheduledAt || conference.createdAt;
+    conference.finishedAt ||
+    conference.startedAt ||
+    conference.scheduledAt ||
+    conference.createdAt;
   const date = new Date(timestamp);
   const target = past
     ? `/history/${conference.id}`
@@ -56,31 +60,35 @@ function MeetingRow({ conference }: { conference: Conference }) {
     <>
       <span className="dashboard-meeting-time" aria-hidden="true">
         <strong>
-          {conference.status !== "created" && Number.isFinite(date.getTime())
-            ? date.toLocaleTimeString("ru-RU", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "∞"}
+          {conference.status !== "created" &&
+          Number.isFinite(date.getTime()) ? (
+            date.toLocaleTimeString("ru-RU", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          ) : (
+            <Video size={23} aria-hidden="true" />
+          )}
         </strong>
         <small>
-          {conference.plannedDurationMin
-            ? `${conference.plannedDurationMin} мин`
-            : conference.status === "created"
-              ? "Без даты"
-              : Number.isFinite(date.getTime())
-                ? date.toLocaleDateString("ru-RU", {
-                    day: "numeric",
-                    month: "short",
-                  })
-                : ""}
+          {conference.status === "created"
+            ? "Без даты"
+            : Number.isFinite(date.getTime())
+              ? date.toLocaleDateString("ru-RU", {
+                  day: "numeric",
+                  month: "short",
+                })
+              : ""}
         </small>
       </span>
       <span className="conference-row-copy">
         <StatusBadge status={conference.status} />
         <strong className="dashboard-meeting-title">{conference.title}</strong>
         <span className="dashboard-meeting-meta">
-          <UserRound size={11} aria-hidden="true" />
+          {conference.plannedDurationMin ? (
+            <span>{conference.plannedDurationMin} мин · </span>
+          ) : null}
+          <UserRound size={12} aria-hidden="true" />
           <span>
             {conference.ownerId === user?.id ? "Вы организатор" : "Вы участник"}
           </span>
@@ -127,7 +135,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
             aria-label={`Подробнее: ${conference.title}`}
             aria-haspopup="dialog"
           >
-            <Info size={17} aria-hidden="true" />
+            <Ellipsis size={19} aria-hidden="true" />
           </button>
         </div>
       </article>
@@ -221,48 +229,12 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
   }
 
   const conferences = query.data?.pages.flatMap((page) => page.items) || [];
-  const filtered = conferences.filter((item) =>
+  const visible = conferences.filter((item) =>
     item.title.toLocaleLowerCase("ru").includes(search.toLocaleLowerCase("ru")),
   );
-  const visible = filtered;
-  const grouped = new Map<string, { label: string; items: Conference[] }>();
-  const today = new Date();
-  const tomorrow = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 1,
-  );
-  for (const meeting of visible) {
-    const value =
-      meeting.status === "created"
-        ? null
-        : meeting.finishedAt || meeting.startedAt || meeting.scheduledAt;
-    const date = value ? new Date(value) : null;
-    const valid = date && Number.isFinite(date.getTime());
-    const key = valid ? date.toDateString() : "unscheduled";
-    const label = !valid
-      ? "Без даты"
-      : `${key === today.toDateString() ? "Сегодня · " : key === tomorrow.toDateString() ? "Завтра · " : ""}${date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}`;
-    const group = grouped.get(key) || { label, items: [] };
-    group.items.push(meeting);
-    grouped.set(key, group);
-  }
   return (
-    <div className="dashboard-page dashboard-all meetings-reference-page">
-      <section className="page-heading dashboard-heading">
-        <div>
-          <h1>Встречи</h1>
-        </div>
-        <span className="meetings-date">
-          <CalendarDays size={17} aria-hidden="true" />
-          {new Date().toLocaleDateString("ru-RU", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })}
-        </span>
-      </section>
+    <div className="meetings-reference-page">
+      {!isDesktopBuild && <h1>Встречи</h1>}
       <div
         className="meetings-quick-actions"
         aria-label="Действия со встречами"
@@ -279,217 +251,208 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             <strong>Новая встреча</strong>
             <small>Начать разговор сейчас</small>
           </span>
-          <ArrowUpRight size={17} aria-hidden="true" />
         </button>
         <Link className="meetings-quick-action" to="/meetings/new?scheduled=1">
           <span className="meetings-quick-symbol">
             <CalendarClock size={22} aria-hidden="true" />
           </span>
           <span>
-            <strong>Запланировать</strong>
-            <small>Выбрать удобное время</small>
+            <strong>Запланировать встречу</strong>
+            <small>Выбрать дату и время</small>
           </span>
-          <ArrowUpRight size={17} aria-hidden="true" />
         </Link>
         <button
           type="button"
-          className="meetings-quick-action"
+          className="meetings-quick-action meetings-join-action"
           onClick={() => setJoining(true)}
         >
           <span className="meetings-quick-symbol">
             <Link2 size={22} aria-hidden="true" />
           </span>
-          <span>
-            <strong>Подключиться</strong>
-            <small>По ссылке или коду встречи</small>
-          </span>
-          <ArrowUpRight size={17} aria-hidden="true" />
+          <span>Подключиться по ссылке</span>
         </button>
       </div>
-      <div className="dashboard-columns">
-        <section className="conferences-panel">
-          <div className="meetings-section-heading">
-            <h2>Мои встречи</h2>
-            <CollectionViewToggle
-              value={layout}
-              onChange={setLayout}
-              label="Вид списка встреч"
-            />
-          </div>
-          <div className="list-toolbar">
-            <div
-              className="tabs"
-              role="tablist"
-              aria-label="Статус конференций"
-            >
-              {views.map((item) => (
-                <button
-                  key={item.id}
-                  id={`tab-${item.id}`}
-                  data-view={item.id}
-                  className={tab === item.id ? "tab tab-active" : "tab"}
-                  role="tab"
-                  aria-selected={tab === item.id}
-                  aria-controls="conference-list"
-                  tabIndex={tab === item.id ? 0 : -1}
-                  onKeyDown={onTabKeyDown}
-                  onClick={() => selectView(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="dashboard-search-row">
-              <label className="search-field">
-                <Search size={17} aria-hidden="true" />
-                <input
-                  aria-label="Поиск конференции по названию"
-                  placeholder="Найти встречу"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                />
-              </label>
-              <select
-                aria-label="Моё участие"
-                value={scope}
-                onChange={(event) =>
-                  setScope(
-                    event.target.value as NonNullable<
-                      ConferenceFilters["scope"]
-                    >,
-                  )
-                }
+      <section aria-label="Список встреч">
+        <div className="meetings-section-heading">
+          <h2>Мои встречи</h2>
+          <span className="meeting-list-zone">
+            <Clock size={13} aria-hidden="true" />
+            {Intl.DateTimeFormat().resolvedOptions().timeZone}
+          </span>
+          <CollectionViewToggle
+            value={layout}
+            onChange={setLayout}
+            label="Вид списка встреч"
+          />
+        </div>
+        <div className="list-toolbar">
+          <div className="tabs" role="tablist" aria-label="Статус конференций">
+            {views.map((item) => (
+              <button
+                key={item.id}
+                id={`tab-${item.id}`}
+                data-view={item.id}
+                className={tab === item.id ? "tab tab-active" : "tab"}
+                role="tab"
+                aria-selected={tab === item.id}
+                aria-controls="conference-list"
+                tabIndex={tab === item.id ? 0 : -1}
+                onKeyDown={onTabKeyDown}
+                onClick={() => selectView(item.id)}
               >
-                <option value="all">Все мои встречи</option>
-                <option value="owned">Я организатор</option>
-                <option value="participating">Я участник</option>
-              </select>
-              <Button
-                variant="outline"
-                className="dashboard-mobile-filter"
-                aria-label="Фильтры встреч"
-                aria-expanded={filtersOpen}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-              >
-                <SlidersHorizontal size={18} />
-                Фильтры
-              </Button>
-            </div>
+                {item.label}
+              </button>
+            ))}
           </div>
-          <div
-            className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
-          >
-            <label className="field">
-              С даты
+          <div className="dashboard-search-row">
+            <label className="search-field">
+              <Search size={17} aria-hidden="true" />
               <input
-                type="date"
-                aria-label="Встречи с даты"
-                value={from}
-                max={to || undefined}
-                onChange={(event) => setFrom(event.target.value)}
+                aria-label="Поиск конференции по названию"
+                placeholder="Найти встречу"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
               />
             </label>
-            <label className="field">
-              По дату
-              <input
-                type="date"
-                aria-label="Встречи по дату"
-                value={to}
-                min={from || undefined}
-                onChange={(event) => setTo(event.target.value)}
-              />
-            </label>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setFrom("");
-                setTo("");
-                setSearch("");
-                setScope("all");
-              }}
-            >
-              Сбросить
-            </Button>
-          </div>
-          <ErrorNotice error={query.error} />
-          {query.isError && (
-            <Button variant="outline" onClick={() => void query.refetch()}>
-              Попробовать снова
-            </Button>
-          )}
-          <div
-            id="conference-list"
-            role="tabpanel"
-            aria-labelledby={`tab-${tab}`}
-            tabIndex={0}
-          >
-            {query.isPending ? (
-              <MeetingSkeleton rows={4} />
-            ) : visible.length ? (
-              <div className={`conference-list meeting-layout-${layout}`}>
-                {[...grouped].map(([key, group]) => (
-                  <Fragment key={key}>
-                    <h3 className="meetings-day-heading">{group.label}</h3>
-                    {group.items.map((item) => (
-                      <MeetingRow key={item.id} conference={item} />
-                    ))}
-                  </Fragment>
-                ))}
-              </div>
-            ) : (
-              !query.isError && (
-                <div className="empty-state">
-                  <span className="empty-icon">
-                    <CalendarDays size={29} aria-hidden="true" />
-                  </span>
-                  <h3>
-                    {search
-                      ? "Встречи не найдены"
-                      : tab === "upcoming"
-                        ? "Самое время для первой встречи"
-                        : tab === "active"
-                          ? "Сейчас нет активных встреч"
-                          : "Здесь будет история встреч"}
-                  </h3>
-                  <p>
-                    {search
-                      ? "Поиск работает по загруженным встречам. Попробуйте другое название или загрузите ещё."
-                      : tab === "upcoming"
-                        ? "Создайте конференцию и пригласите коллег по ссылке."
-                        : "Конференции появятся здесь, когда изменится их статус."}
-                  </p>
-                  {tab === "upcoming" && !search && (
-                    <button
-                      type="button"
-                      className="text-button text-link"
-                      onClick={() => setCreating(true)}
-                    >
-                      <Plus size={16} aria-hidden="true" />
-                      Создать конференцию
-                    </button>
-                  )}
-                </div>
-              )
-            )}
-          </div>
-          <div className="meetings-page-note">
-            <span>
-              <Clock size={12} aria-hidden="true" />
-              {Intl.DateTimeFormat().resolvedOptions().timeZone}
-            </span>
-            <span>Ваше пространство для совместной работы</span>
-          </div>
-          {query.hasNextPage && (
+
             <Button
               variant="outline"
-              busy={query.isFetchingNextPage}
-              onClick={() => void query.fetchNextPage()}
+              className="dashboard-mobile-filter"
+              aria-label="Фильтры встреч"
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen(!filtersOpen)}
             >
-              Загрузить ещё встречи
+              <SlidersHorizontal size={18} />
+              Фильтры
             </Button>
+          </div>
+        </div>
+        <div
+          className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
+        >
+          <label className="field">
+            Моё участие
+            <select
+              aria-label="Моё участие"
+              value={scope}
+              onChange={(event) =>
+                setScope(
+                  event.target.value as NonNullable<ConferenceFilters["scope"]>,
+                )
+              }
+            >
+              <option value="all">Все мои встречи</option>
+              <option value="owned">Я организатор</option>
+              <option value="participating">Я участник</option>
+            </select>
+          </label>
+          <label className="field">
+            С даты
+            <input
+              type="date"
+              aria-label="Встречи с даты"
+              value={from}
+              max={to || undefined}
+              onChange={(event) => setFrom(event.target.value)}
+            />
+          </label>
+          <label className="field">
+            По дату
+            <input
+              type="date"
+              aria-label="Встречи по дату"
+              value={to}
+              min={from || undefined}
+              onChange={(event) => setTo(event.target.value)}
+            />
+          </label>
+          <Button
+            variant="secondary"
+            aria-label="Сбросить фильтры"
+            title="Сбросить фильтры"
+            onClick={() => {
+              setFrom("");
+              setTo("");
+              setSearch("");
+              setScope("all");
+            }}
+          >
+            <RotateCcw size={18} aria-hidden="true" />
+          </Button>
+        </div>
+        <p className="meeting-list-caption">
+          {tab === "upcoming"
+            ? "Предстоящие и без даты"
+            : tab === "active"
+              ? "Встречи в эфире"
+              : "Завершённые и отменённые"}
+        </p>
+        <ErrorNotice error={query.error} />
+        {query.isError && (
+          <Button variant="outline" onClick={() => void query.refetch()}>
+            Попробовать снова
+          </Button>
+        )}
+        <div
+          id="conference-list"
+          role="tabpanel"
+          aria-labelledby={`tab-${tab}`}
+          tabIndex={0}
+        >
+          {query.isPending ? (
+            <MeetingSkeleton rows={4} />
+          ) : visible.length ? (
+            <div className={`conference-list meeting-layout-${layout}`}>
+              {visible.map((meeting) => (
+                <MeetingRow key={meeting.id} conference={meeting} />
+              ))}
+            </div>
+          ) : (
+            !query.isError && (
+              <div className="empty-state">
+                <span className="empty-icon">
+                  <CalendarDays size={29} aria-hidden="true" />
+                </span>
+                <h3>
+                  {search
+                    ? "Встречи не найдены"
+                    : tab === "upcoming"
+                      ? "Самое время для первой встречи"
+                      : tab === "active"
+                        ? "Сейчас нет активных встреч"
+                        : "Здесь будет история встреч"}
+                </h3>
+                <p>
+                  {search
+                    ? "Поиск работает по загруженным встречам. Попробуйте другое название или загрузите ещё."
+                    : tab === "upcoming"
+                      ? "Создайте конференцию и пригласите коллег по ссылке."
+                      : "Конференции появятся здесь, когда изменится их статус."}
+                </p>
+                {tab === "upcoming" && !search && (
+                  <button
+                    type="button"
+                    className="text-button text-link"
+                    onClick={() => setCreating(true)}
+                  >
+                    <Plus size={16} aria-hidden="true" />
+                    Создать конференцию
+                  </button>
+                )}
+              </div>
+            )
           )}
-        </section>
-      </div>
+        </div>
+        {query.hasNextPage && (
+          <Button
+            variant="outline"
+            busy={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            Загрузить ещё встречи
+          </Button>
+        )}
+      </section>
       {create ? (
         <CreateConference />
       ) : (

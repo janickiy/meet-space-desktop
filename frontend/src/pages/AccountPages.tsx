@@ -17,20 +17,18 @@ import {
   UserRound,
   UsersRound,
   Monitor,
-  ChevronsUpDown,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth";
-import { UserAvatar } from "../components/UserAvatar";
 import { ProfileAvatarEditor } from "../components/ProfileAvatarEditor";
 import { AccountManagement } from "../components/AccountManagement";
 import { BRAND_ASSET_VERSION, PRODUCT_NAME } from "../brand";
+import { appBuild } from "../buildInfo";
 import { formatDate } from "../utils";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import { IntegrationsSettings } from "../components/IntegrationsSettings";
 import { DeviceSettings } from "../components/DeviceSettings";
-import { serviceOrigin } from "../platform/urls";
 import { TEXT_SIZE_OPTIONS, useAppearance } from "../appearance";
 import type { TextSize } from "../appearance";
 import { isDesktopBuild } from "../platform/build";
@@ -189,42 +187,13 @@ export function SettingsPage() {
     <div
       className={`account-dialog-layout ${mobileSectionOpen ? "account-mobile-section" : "account-mobile-categories"}`}
     >
-      {!guest && user && (
-        <section
-          className="account-current-identity"
-          aria-label="Текущий аккаунт"
-        >
-          <UserAvatar
-            id={user.id}
-            name={user.displayName || user.email}
-            version={user.avatarVersion}
-            className="account-current-avatar"
-          />
-          <div>
-            <strong>{user.displayName || user.email}</strong>
-            <span>
-              Активный аккаунт · {user.email} · {new URL(serviceOrigin()).host}
-            </span>
-          </div>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setActiveSection("accounts");
-              setMobileSectionOpen(true);
-              requestAnimationFrame(() => panel.current?.focus());
-            }}
-          >
-            <ChevronsUpDown size={16} aria-hidden="true" />
-            Сменить аккаунт
-          </Button>
-        </section>
-      )}
       <div
         className="account-dialog-tabs"
         role="tablist"
         aria-label="Разделы настроек"
         aria-orientation="vertical"
       >
+        <span className="account-menu-label">Настройки аккаунта</span>
         {tabs.map(({ id, label, Icon }, index) => (
           <button
             type="button"
@@ -263,7 +232,7 @@ export function SettingsPage() {
           />
           <span>
             {PRODUCT_NAME}
-            <small>{import.meta.env.VITE_BUILD_VERSION || "0.1.10-beta"}</small>
+            <small>{appBuild.version}</small>
           </span>
         </div>
       </div>
@@ -297,7 +266,7 @@ export function SettingsPage() {
           >
             <div className="profile-section-heading">
               <div>
-                <h2 id="profile-heading">Мой профиль</h2>
+                <h2 id="profile-heading">Ваш профиль</h2>
                 <p className="field-hint">
                   Так вас видят участники рабочего пространства.
                 </p>
@@ -391,7 +360,7 @@ export function SettingsPage() {
             <fieldset className="appearance-theme-block">
               <legend>Тема</legend>
               <div className="appearance-theme-options">
-                {(["light", "dark"] as const).map((theme) => (
+                {(["light", "dark", "system"] as const).map((theme) => (
                   <label
                     key={theme}
                     className={`appearance-theme-option ${appearance.theme === theme ? "appearance-theme-selected" : ""}`}
@@ -414,10 +383,16 @@ export function SettingsPage() {
                     <span className="appearance-theme-name">
                       {theme === "light" ? (
                         <Sun size={18} aria-hidden="true" />
+                      ) : theme === "system" ? (
+                        <Monitor size={18} aria-hidden="true" />
                       ) : (
                         <Moon size={18} aria-hidden="true" />
                       )}
-                      {theme === "light" ? "Светлая тема" : "Тёмная тема"}
+                      {theme === "light"
+                        ? "Светлая тема"
+                        : theme === "dark"
+                          ? "Тёмная тема"
+                          : "Системная тема"}
                     </span>
                     <input
                       type="radio"
@@ -483,13 +458,15 @@ export function HistoryPage() {
       .includes(search.trim().toLocaleLowerCase("ru-RU")),
   );
   return (
-    <>
-      <section className="page-heading">
-        <div>
-          <h1>История встреч</h1>
-          <p>Завершённые встречи, записи и материалы — в одном месте.</p>
-        </div>
-      </section>
+    <div className="history-reference-page">
+      {!isDesktopBuild && (
+        <section className="page-heading">
+          <div>
+            <h1>История встреч</h1>
+            <p>Завершённые встречи, записи и материалы — в одном месте.</p>
+          </div>
+        </section>
+      )}
       <section
         className="content-card history-library"
         aria-labelledby="history-list-heading"
@@ -572,6 +549,6 @@ export function HistoryPage() {
           </Link>
         </div>
       </section>
-    </>
+    </div>
   );
 }

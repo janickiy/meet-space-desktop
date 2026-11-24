@@ -10,7 +10,10 @@ import {
   type InfiniteData,
 } from "@tanstack/react-query";
 import {
+  ArrowUp,
   Check,
+  Forward,
+  ListChecks,
   CircleAlert,
   Clock3,
   Download,
@@ -19,7 +22,6 @@ import {
   Paperclip,
   Pencil,
   Reply,
-  Send,
   Star,
   Trash2,
   X,
@@ -40,6 +42,8 @@ import type {
   ChatPage,
   Participant,
 } from "../types";
+import { deleteChatMessages } from "../chatDeletion";
+import { ForwardMessagesDialog } from "./ForwardMessagesDialog";
 import { AttachmentUploader } from "./AttachmentUploader";
 import { EmojiPicker } from "./EmojiPicker";
 import { ItemActions, type ItemAction } from "./ItemActions";
@@ -47,7 +51,7 @@ import { Button, ErrorNotice, Modal } from "./ui";
 import { MessagingSkeleton } from "./MessagingSkeleton";
 import { CallHistoryMessage } from "./CallHistoryMessage";
 import "./chat-design.css";
-import "./chat-redesign.css";
+import "./message-thread.css";
 
 function isAccessDenied(error: unknown) {
   return error instanceof ApiError && [403, 404].includes(error.status);
@@ -130,6 +134,12 @@ export function MessageThread({
   const [reply, setReply] = useState<ChatMessage | null>(null);
   const [editing, setEditing] = useState<ChatMessage | null>(null);
   const [deleting, setDeleting] = useState<ChatMessage | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string> | null>(null);
+  const [forwarding, setForwarding] = useState<ChatMessage[] | null>(null);
+  const [confirmSelection, setConfirmSelection] = useState(false);
+  const [selectionNotice, setSelectionNotice] = useState("");
+  const batch = useRef<AbortController | null>(null);
+  const selectionHeader = useRef<HTMLButtonElement>(null);
   const [editText, setEditText] = useState("");
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [uploadBusy, setUploadBusy] = useState(false);
@@ -264,6 +274,46 @@ export function MessageThread({
     setDeleting(null);
     setEditText("");
   }, [historyUnavailable]);
+  const canForward = !!user && !user.guestConferenceId && !historyUnavailable;
+  const canDelete = (message: ChatMessage) =>
+    !readOnly &&
+    !historyUnavailable &&
+    !message.call &&
+    !message.deletedAt &&
+    (message.senderId === user?.id || mayModerate);
+  const selectable = messages.filter(
+    (message) =>
+      !message.deletedAt && !message.call && (canForward || canDelete(message)),
+  );
+  const selectedItems = selectable.filter((message) =>
+    selectedIds?.has(message.id),
+  );
+  const canDeleteSelection =
+    selectedItems.length > 0 && selectedItems.every(canDelete);
+  const selecting = selectedIds !== null;
+
+  useEffect(() => {
+    setSelectedIds(null);
+    setForwarding(null);
+    setConfirmSelection(false);
+    setSelectionNotice("");
+    return () => {
+      batch.current?.abort();
+      batch.current = null;
+    };
+  }, [scopeId, user?.id, readOnly, historyUnavailable, mayModerate]);
+  useEffect(() => {
+    if (selecting) selectionHeader.current?.focus();
+  }, [selecting]);
+  function toggleSelected(id: string) {
+    if (batch.current) return;
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
   const confirmedRequests = new Set(
     messages
       .filter((message) => message.senderId === user?.id)
@@ -353,6 +403,52 @@ export function MessageThread({
       invalidate();
     },
     onError: invalidate,
+  });
+  const removeSelected = useMutation({
+    retry: false,
+    mutationFn: async () => {
+      if (batch.current || !canDeleteSelection) return;
+      const controller = new AbortController();
+      batch.current = controller;
+      try {
+        const result = await deleteChatMessages(
+          selectedItems.map((message) => message.id),
+          (id, signal) => transport.deleteMessage(scopeId, id, signal),
+          controller.signal,
+          (id, { item }) => {
+            if (controller.signal.aborted) return;
+            client.setQueriesData<InfiniteData<ChatPage>>(
+              { queryKey: [historyKey, scopeId, user?.id] },
+              (current) =>
+                current && {
+                  ...current,
+                  pages: current.pages.map((page) => ({
+                    ...page,
+                    items: page.items.map((message) =>
+                      message.id === id ? item : message,
+                    ),
+                  })),
+                },
+            );
+            setReply((current) => (current?.id === id ? null : current));
+          },
+        );
+        if (controller.signal.aborted) return;
+        invalidate();
+        setDownload(null);
+        setConfirmSelection(false);
+        setSelectedIds(
+          result.remaining.length ? new Set(result.remaining) : null,
+        );
+        setSelectionNotice(
+          result.error
+            ? `Удалено: ${result.deleted.length}. Осталось: ${result.remaining.length}. ${errorMessage(result.error)}`
+            : `Удалено сообщений: ${result.deleted.length}.`,
+        );
+      } finally {
+        if (batch.current === controller) batch.current = null;
+      }
+    },
   });
   const bookmark = useMutation({
     mutationFn: (value: { messageId: string; important: boolean }) =>
@@ -784,7 +880,7 @@ export function MessageThread({
   if (accessDenied) return <ErrorNotice error={query.error || read.error} />;
   return (
     <section
-      className={`content-card chat-panel ${personal ? "personal-thread" : "meeting-thread"}`}
+      className={`content-card chat-panel ${personal ? "personal-thread" : "meeting-thread"}${selecting ? " chat-selecting" : ""}`}
       aria-label={personal ? "Личная переписка" : "Чат конференции"}
     >
       <div className="section-heading chat-panel-heading" hidden={personal}>
@@ -806,6 +902,52 @@ export function MessageThread({
         </Button>
       </div>
       <div className="chat-panel-body" hidden={!open}>
+        {selecting && (
+          <div
+            className="chat-selection-heading"
+            role="group"
+            aria-label="Выбранные сообщения"
+          >
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Отменить выбор"
+              ref={selectionHeader}
+              disabled={removeSelected.isPending}
+              onClick={() => {
+                setSelectedIds(null);
+                setConfirmSelection(false);
+                composer.current?.focus();
+              }}
+            >
+              <X size={19} />
+            </button>
+            <strong role="status">Выбрано: {selectedItems.length}</strong>
+            <button
+              type="button"
+              className="button button-ghost"
+              disabled={removeSelected.isPending || !selectable.length}
+              onClick={() =>
+                setSelectedIds(
+                  new Set(
+                    selectedItems.length === selectable.length
+                      ? []
+                      : selectable.map((item) => item.id),
+                  ),
+                )
+              }
+            >
+              {selectable.length && selectedItems.length === selectable.length
+                ? "Снять выделение"
+                : "Выбрать все"}
+            </button>
+          </div>
+        )}
+        {selectionNotice && (
+          <div className="chat-selection-notice" role="status">
+            {selectionNotice}
+          </div>
+        )}
         {focused && onLatest && (
           <Button variant="outline" onClick={onLatest}>
             К последним сообщениям
@@ -851,6 +993,13 @@ export function MessageThread({
             aria-live="polite"
           >
             {olderMessagesButton}
+            {personal && !!messages.length && (
+              <p className="chat-gesture-hint">
+                {selecting
+                  ? "Нажмите на сообщения для выбора"
+                  : "Правый клик по сообщению — действия"}
+              </p>
+            )}
             {!messages.length && !pendingMessages.length && !query.isError && (
               <div className="messaging-empty">
                 <MessageCircle aria-hidden="true" />
@@ -866,6 +1015,11 @@ export function MessageThread({
             )}
             {messages.map((message, index) => {
               const own = message.senderId === user?.id;
+              const eligible =
+                !message.deletedAt &&
+                !message.call &&
+                (canForward || canDelete(message));
+              const selected = eligible && !!selectedIds?.has(message.id);
               const day = chatDayKey(message.createdAt);
               return (
                 <Fragment key={message.id}>
@@ -878,6 +1032,29 @@ export function MessageThread({
                     )}
                   <article
                     className={`chat-message ${own ? "chat-message-own" : ""} ${message.id === focused ? "chat-message-focused" : ""}`}
+                    data-selected={selected || undefined}
+                    onClick={(event) => {
+                      if (
+                        selecting &&
+                        eligible &&
+                        !(event.target as Element).closest(
+                          "button,a,input,label",
+                        )
+                      )
+                        toggleSelected(message.id);
+                    }}
+                    onContextMenu={(event) => {
+                      const menu =
+                        event.currentTarget.querySelector<HTMLButtonElement>(
+                          ".chat-message-tools [aria-haspopup=menu]",
+                        );
+                      if (menu && !selecting) {
+                        event.preventDefault();
+                        menu.focus();
+                        if (menu.getAttribute("aria-expanded") !== "true")
+                          menu.click();
+                      }
+                    }}
                     data-testid={`chat-message-${message.id}`}
                     tabIndex={message.id === focused ? -1 : undefined}
                     aria-current={message.id === focused ? "true" : undefined}
@@ -886,15 +1063,21 @@ export function MessageThread({
                       {initials(message.senderName)}
                     </span>
                     <div className="chat-message-content">
-                      <header>
-                        <strong>
-                          {personal && own ? "Вы" : message.senderName}
-                        </strong>
-                        {own && !personal && (
-                          <span className="chat-message-self">вы</span>
-                        )}
-                      </header>
                       <div className="chat-message-bubble">
+                        {(!personal || !own) && (
+                          <header>
+                            <strong>{message.senderName}</strong>
+                            {own && (
+                              <span className="chat-message-self">вы</span>
+                            )}
+                          </header>
+                        )}
+                        {message.forwardedFrom && !message.deletedAt && (
+                          <span className="chat-forwarded">
+                            <Forward size={14} />
+                            Переслано от {message.forwardedFrom.senderName}
+                          </span>
+                        )}
                         {message.replyPreview && (
                           <blockquote>
                             <strong>{message.replyPreview.senderName}</strong>
@@ -1008,9 +1191,24 @@ export function MessageThread({
                         </footer>
                       </div>
                     </div>
-                    {!message.deletedAt &&
+                    {selecting && eligible && (
+                      <label className="chat-message-select">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          disabled={removeSelected.isPending}
+                          aria-label={`Выбрать сообщение от ${message.senderName}: ${message.text || "Вложение"}`}
+                          onChange={() => toggleSelected(message.id)}
+                        />
+                        <span aria-hidden="true">
+                          <Check size={15} />
+                        </span>
+                      </label>
+                    )}
+                    {!selecting &&
+                      !message.deletedAt &&
                       !message.call &&
-                      (!readOnly || mayBookmark) && (
+                      (!readOnly || mayBookmark || canForward) && (
                         <div className="chat-message-tools">
                           <ItemActions
                             label={`Действия с сообщением: ${message.senderName}, ${chatTime(message.createdAt)}`}
@@ -1055,7 +1253,31 @@ export function MessageThread({
                                       },
                                     ]
                                   : []),
-                                ...(!readOnly && own
+                                ...(canForward
+                                  ? [
+                                      {
+                                        label: "Переслать",
+                                        icon: <Forward size={16} />,
+                                        run: () => {
+                                          setSelectionNotice("");
+                                          setForwarding([message]);
+                                        },
+                                      },
+                                    ]
+                                  : []),
+                                ...(eligible
+                                  ? [
+                                      {
+                                        label: "Выбрать",
+                                        icon: <ListChecks size={16} />,
+                                        run: () => {
+                                          setSelectionNotice("");
+                                          setSelectedIds(new Set([message.id]));
+                                        },
+                                      },
+                                    ]
+                                  : []),
+                                ...(!readOnly && own && !message.forwardedFrom
                                   ? [
                                       {
                                         label: "Изменить",
@@ -1111,8 +1333,36 @@ export function MessageThread({
           </Button>
         )}
         <ErrorNotice error={downloadError || null} />
+        {selecting && (
+          <div className="chat-selection-actions">
+            {canForward && (
+              <Button
+                variant="outline"
+                disabled={
+                  !selectedItems.length ||
+                  selectedItems.length > 30 ||
+                  removeSelected.isPending
+                }
+                onClick={() => setForwarding(selectedItems)}
+              >
+                <Forward size={17} />
+                Переслать
+              </Button>
+            )}
+            <Button
+              variant="danger"
+              aria-label="Удалить выбранные сообщения"
+              disabled={!canDeleteSelection || removeSelected.isPending}
+              onClick={() => setConfirmSelection(true)}
+            >
+              <Trash2 size={17} />
+              Удалить
+            </Button>
+          </div>
+        )}
         {!readOnly && (
           <form
+            hidden={selecting}
             className="chat-composer"
             onSubmit={(event) => {
               event.preventDefault();
@@ -1191,9 +1441,7 @@ export function MessageThread({
                 />
               </label>
               <EmojiPicker onSelect={addEmoji} disabled={send.isPending} />
-              <span className="chat-compose-keyhint" aria-hidden="true">
-                Enter — отправить
-              </span>
+
               <Button
                 type="submit"
                 className="chat-send-button"
@@ -1202,7 +1450,7 @@ export function MessageThread({
                 aria-label="Отправить"
                 title="Отправить"
               >
-                {!send.isPending && <Send size={17} />}
+                {!send.isPending && <ArrowUp size={20} />}
               </Button>
             </div>
             <p className="chat-compose-caption" aria-hidden="true">
@@ -1215,6 +1463,50 @@ export function MessageThread({
           </form>
         )}
       </div>
+      {forwarding && (
+        <ForwardMessagesDialog
+          sourceType={personal ? "conversation" : "conference"}
+          sourceId={scopeId}
+          messages={forwarding}
+          onClose={() => setForwarding(null)}
+          onForwarded={(target, count) => {
+            setSelectedIds(null);
+            setSelectionNotice(
+              `Переслано: ${count}. Получатель: ${target.type === "group" ? target.name : target.peer.displayName}.`,
+            );
+          }}
+        />
+      )}
+      {confirmSelection && selecting && (
+        <Modal
+          title="Удалить выбранные сообщения?"
+          onClose={() => {
+            if (!removeSelected.isPending) setConfirmSelection(false);
+          }}
+        >
+          <p className="modal-description">
+            Сообщения ({selectedItems.length}) и их вложения станут недоступны
+            всем участникам чата.
+          </p>
+          <div className="chat-selection-actions">
+            <Button
+              variant="outline"
+              disabled={removeSelected.isPending}
+              onClick={() => setConfirmSelection(false)}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant="danger"
+              busy={removeSelected.isPending}
+              disabled={!canDeleteSelection}
+              onClick={() => removeSelected.mutate()}
+            >
+              Удалить для всех
+            </Button>
+          </div>
+        </Modal>
+      )}
       {editing && (
         <Modal
           title="Изменить сообщение"

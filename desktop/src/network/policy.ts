@@ -5,7 +5,8 @@ export const validId = (value: unknown): value is string => typeof value === "st
 export const validRequestId = (value: unknown): value is string => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
 const rules: Array<[string, RegExp]> = [];
 const allow = (methods: string, route: string) => rules.push([methods, new RegExp(`^/api/v1${route}$`)]);
-allow("POST", "/auth/(register|login|refresh|session|logout|accounts/list|accounts/switch)");
+allow("POST", "/auth/(register|login|password-recovery|refresh|session|logout|accounts/list|accounts/switch)");
+allow("GET", "/auth/providers");
 allow("GET PATCH DELETE", "/auth/me");
 allow("PUT DELETE", "/auth/me/avatar");
 allow("GET", `/users/${ID}/avatar/content`);
@@ -24,6 +25,7 @@ allow("GET", "/conference-invites/[A-Za-z0-9_-]{32}");
 allow("POST", "/conference-invites/[A-Za-z0-9_-]{32}/(join|guest)");
 allow("GET", "/conversations");
 allow("POST", "/conversations/(direct|group)");
+allow("POST", `/conversations/${ID}/messages/forward`);
 allow("GET PATCH DELETE", `/conversations/${ID}`);
 allow("GET", `/conversations/${ID}/(peer-presence|avatar/content)`);
 allow("GET POST", `/conversations/${ID}/members`);
@@ -81,10 +83,11 @@ export function validateApiPath(method: string, raw: string): string {
 }
 
 export function publicOperation(method: string, pathname: string): boolean {
-  return (method === "POST" && /^\/api\/v1\/auth\/(register|login|refresh|accounts\/list|accounts\/switch|logout)$/.test(pathname)) ||
+  return (method === "GET" && pathname === "/api/v1/auth/providers") ||
+    (method === "POST" && /^\/api\/v1\/auth\/(register|login|password-recovery|refresh|accounts\/list|accounts\/switch|logout)$/.test(pathname)) ||
     /^\/api\/v1\/conference-invites\/[A-Za-z0-9_-]{32}(\/guest)?$/.test(pathname);
 }
-export const cookieOperation = (pathname: string) => pathname.startsWith("/api/v1/auth/");
+export const cookieOperation = (pathname: string) => pathname.startsWith("/api/v1/auth/") && pathname !== "/api/v1/auth/providers" && pathname !== "/api/v1/auth/password-recovery";
 export const authResponse = (pathname: string) => /^\/api\/v1\/auth\/(login|refresh|session|accounts\/switch)$/.test(pathname) || /\/conference-invites\/[A-Za-z0-9_-]{32}\/guest$/.test(pathname);
 export const binaryPath = (method: string, pathname: string) => (method === "GET" && new RegExp(`^/api/v1/users/${ID}/avatar/content$`).test(pathname)) ||
   (method === "PUT" && pathname === "/api/v1/auth/me/avatar") ||

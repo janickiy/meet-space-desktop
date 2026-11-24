@@ -199,3 +199,24 @@ html[data-large-text="true"] .admin-health-list {
     grid-template-columns: 1fr;
   }
 }
+.admin-page {
+  width: 100%;
+  max-width: 1140px;
+  gap: 18px;
+  margin-inline: auto;
+}
+.admin-page .content-card,
+.admin-denied.content-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.admin-heading .button {
+  min-height: 40px;
+}
+.admin-page .admin-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+}
+.admin-page .admin-metric dd {
+  color: var(--primary);
+}

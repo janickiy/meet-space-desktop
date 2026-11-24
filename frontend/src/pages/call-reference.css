@@ -285,14 +285,14 @@
 }
 
 .conference-room-page.call-reference-room {
-  --room-bg: #181f2d;
-  --room-surface: #2a3546;
-  --room-surface-raised: #303d50;
-  --room-border: #3a4658;
-  --room-text: #edf1f8;
-  --room-muted: #a4b2c5;
-  --room-speaking-accent: #adbf98;
-  padding: 0 28px;
+  --room-bg: #19151f;
+  --room-surface: #282230;
+  --room-surface-raised: #39303f;
+  --room-border: #494052;
+  --room-text: #f4eff7;
+  --room-muted: #bcb0c7;
+  --room-speaking-accent: #88dbb4;
+  padding: 0 22px;
 }
 .call-reference-room .room-header {
   min-height: 104px;
@@ -322,9 +322,9 @@
   padding: 12px 16px;
   border-radius: 13px;
   font-size: calc(12px * var(--text-scale));
-  background: #293446;
-  border-color: #4b596e;
-  color: #edf1f8;
+  background: var(--room-surface);
+  border-color: var(--room-border);
+  color: var(--room-text);
 }
 .call-reference-room .room-header-action > svg {
   width: 18px;
@@ -391,8 +391,8 @@
 }
 .call-reference-room .media-tile {
   border-radius: 16px;
-  background: #2a3546;
-  border-color: #3a4658;
+  background: var(--room-surface);
+  border-color: var(--room-border);
 }
 .call-reference-room .media-grid.media-grid-pair {
   container-type: normal;
@@ -426,7 +426,7 @@
 .call-reference-room .media-tile-label {
   inset: auto 13px 11px;
   font-size: calc(11px * var(--text-scale));
-  color: #c2cddd;
+  color: var(--room-muted);
 }
 .call-reference-room .media-tile-screen {
   padding: 30px 50px 48px;
@@ -567,7 +567,7 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #c6d0df;
+  color: var(--room-muted);
   box-shadow: none;
   font: inherit;
   font-weight: 500;
@@ -1304,5 +1304,379 @@
   }
   .call-reference-room .conference-stage-rail .chat-compose-keyhint {
     display: none;
+  }
+}
+
+/* Gallery and spotlight share one keyed media subtree. */
+.desktop-workbench .call-reference-room {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: auto;
+}
+.call-reference-room .room-header {
+  min-height: 64px;
+  padding: 10px 0 15px;
+  gap: 12px;
+  border-bottom: 1px solid var(--room-border);
+}
+.call-reference-room .room-header h1 {
+  font-size: calc(18px * var(--text-scale));
+  margin: 0 0 4px;
+}
+.call-reference-room .room-header .room-back {
+  border: 0;
+  width: 44px;
+  justify-content: center;
+}
+.call-reference-room .room-back > span {
+  display: none;
+}
+.call-reference-room .room-header-action {
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.call-reference-room .room-viewbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0 12px;
+  flex-wrap: wrap;
+}
+.room-view-options {
+  display: inline-flex;
+  background: var(--room-surface);
+  border: 1px solid var(--room-border);
+  border-radius: 8px;
+  padding: 3px;
+}
+.room-view-options button {
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 10px;
+  color: var(--room-muted);
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+}
+.room-view-options button[aria-pressed="true"] {
+  color: var(--room-text);
+  background: #4c375b;
+}
+.room-pin-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  color: var(--room-muted);
+}
+.room-pin-picker select {
+  max-width: 240px;
+  min-height: 32px;
+  border: 1px solid var(--room-border);
+  border-radius: 6px;
+  background: var(--room-surface);
+  color: inherit;
+}
+.call-reference-room .media-grid[data-layout="speaker"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(132px, 100%), 1fr));
+  align-content: start;
+  grid-auto-rows: minmax(92px, 16vh);
+  overflow: auto;
+  gap: 10px;
+}
+.call-reference-room .media-grid[data-layout="speaker"] > .media-tile {
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  aspect-ratio: auto;
+  align-self: stretch;
+}
+.call-reference-room
+  .media-grid[data-layout="speaker"]
+  > .media-tile[data-featured="true"] {
+  order: -1;
+  grid-column: 1/-1;
+  grid-row: span 3;
+}
+.call-reference-room .media-tile {
+  border-radius: 12px;
+  background: radial-gradient(
+    ellipse at 50% 42%,
+    #3d3443,
+    var(--room-surface) 80%
+  );
+}
+.call-reference-room .room-footer {
+  border-top: 1px solid var(--room-border);
+}
+
+/* Desktop preparation follows the two-column preview and identity form in the prototype. */
+.prejoin-page.prejoin-reference-page {
+  display: flex;
+  flex-direction: column;
+  min-height: min(100dvh, 760px);
+  padding: 0 32px 30px;
+  max-width: 1440px;
+  margin-inline: auto;
+}
+.workspace-main .prejoin-page.prejoin-reference-page {
+  width: 100%;
+  max-width: 1440px;
+  padding: 0 0 24px;
+}
+.prejoin-reference-page .prejoin-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-block: 15px;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.prejoin-reference-page .prejoin-brand > strong {
+  margin-right: auto;
+  color: var(--text);
+  font-size: calc(22px * var(--text-scale));
+}
+.prejoin-reference-page .prejoin-brand .prejoin-back {
+  min-width: 40px;
+  min-height: 40px;
+  justify-content: center;
+}
+.prejoin-reference-page .prejoin-grid {
+  display: grid;
+  flex: 1;
+  width: 100%;
+  margin: 0;
+  padding-block: 38px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(250px, 1fr);
+  gap: 32px;
+  align-items: center;
+}
+.prejoin-reference-page .prejoin-video-frame {
+  aspect-ratio: 4/3;
+  border-radius: 20px;
+  border: none;
+  background: #222c3e;
+}
+.prejoin-reference-page .prejoin-video-frame::before {
+  content: none;
+}
+.prejoin-reference-page .prejoin-camera-off {
+  padding: 50px 16px;
+  gap: 12px;
+}
+.prejoin-reference-page .prejoin-initials {
+  width: 96px;
+  height: 96px;
+  background: #e2e8ff;
+  color: #5271b6;
+  box-shadow: none;
+  margin: 0;
+}
+.prejoin-reference-page .prejoin-toggles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.prejoin-reference-page .prejoin-toggles .button {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: none;
+}
+.prejoin-reference-page .prejoin-grid > .prejoin-settings {
+  align-self: center;
+  display: grid;
+  gap: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.prejoin-reference-page .prejoin-settings .prejoin-heading {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+}
+.prejoin-reference-page .prejoin-heading .status-badge {
+  display: inline-flex;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.prejoin-reference-page .prejoin-heading h1 {
+  color: var(--text);
+  margin: 9px 0 6px;
+  font-size: calc(26px * var(--text-scale));
+}
+.prejoin-reference-page .prejoin-heading p {
+  margin: 0;
+  color: var(--muted);
+}
+.prejoin-reference-page .prejoin-grid > .prejoin-settings > .field,
+.prejoin-reference-page .prejoin-grid > .prejoin-settings .prejoin-signed-in {
+  margin: 0;
+}
+.prejoin-reference-page .prejoin-settings .prejoin-device-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: calc(12px * var(--text-scale));
+  text-align: left;
+  cursor: pointer;
+}
+.prejoin-reference-page .prejoin-device-trigger span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.prejoin-reference-page .prejoin-device-trigger:hover {
+  background: var(--surface-soft);
+}
+.prejoin-reference-page .prejoin-return {
+  justify-self: center;
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: calc(12px * var(--text-scale));
+}
+.prejoin-reference-page .prejoin-settings .prejoin-join {
+  min-height: 40px;
+  margin: 0;
+}
+.prejoin-reference-page .prejoin-privacy {
+  justify-content: center;
+  text-align: center;
+  margin: 0;
+}
+@media (max-width: 780px) {
+  .prejoin-page.prejoin-reference-page {
+    padding: 0 16px 20px;
+  }
+  .prejoin-reference-page .prejoin-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding-block: 16px;
+  }
+  .prejoin-reference-page .prejoin-video-frame {
+    aspect-ratio: 16/9;
+  }
+}
+.workspace-main .prejoin-page.prejoin-reference-page {
+  min-height: 100%;
+  max-width: none;
+}
+.workspace-main .prejoin-reference-page .prejoin-brand {
+  min-height: 80px;
+  padding: 12px 32px;
+  background: var(--surface);
+}
+.workspace-main .prejoin-reference-page .prejoin-grid {
+  width: min(100%, 1540px);
+  padding-inline: 32px;
+  margin-inline: auto;
+}
+@media (max-width: 780px) {
+  .workspace-main .prejoin-reference-page .prejoin-brand {
+    min-height: 54px;
+    padding: 8px 16px;
+  }
+  .workspace-main .prejoin-reference-page .prejoin-grid {
+    padding-inline: 16px;
+  }
+}
+.conference-room-page.call-reference-room .room-footer {
+  --room-control-icon-size: 18px;
+  min-height: 0;
+  padding: 9px 0;
+  background: transparent;
+  border-top: 1px solid var(--room-border);
+}
+.conference-room-page.call-reference-room .conference-control-bar {
+  display: grid;
+  grid-template-columns: repeat(7, max-content);
+  width: max-content;
+  max-width: 100%;
+  gap: 5px;
+  padding: 5px;
+  border: 1px solid var(--room-border);
+  border-radius: 13px;
+  background: #241e2c;
+}
+.conference-room-page.call-reference-room
+  .conference-control-bar
+  > .conference-room-control {
+  flex: 0 1 auto;
+  gap: 5px;
+  min-width: min(76px, 100%);
+  min-height: 55px;
+  padding: 5px 9px;
+  justify-content: center;
+  border: 1px solid var(--room-border);
+  border-radius: 9px;
+  color: var(--room-text);
+  background: var(--room-surface);
+}
+.call-reference-room
+  .conference-control-bar
+  .conference-room-control
+  > .conference-room-control-icon {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+}
+.call-reference-room .conference-control-bar .conference-room-control-label {
+  font-size: calc(11px * var(--text-scale));
+}
+.conference-room-page.call-reference-room
+  .conference-control-bar
+  > .conference-room-control:is([aria-pressed="true"], [aria-expanded="true"]) {
+  background: #4e3d59;
+  border-color: #9370a6;
+}
+.conference-room-page.call-reference-room
+  .conference-control-bar
+  > .conference-room-control-danger {
+  margin-left: 0;
+  color: white;
+  background: #bc213a;
+  border-color: #bc213a;
+}
+@media (max-width: 767px) {
+  .conference-room-page.call-reference-room .conference-control-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .conference-room-page.call-reference-room
+    .conference-control-bar
+    > .conference-room-control {
+    min-width: 42px;
+    padding: 4px;
   }
 }

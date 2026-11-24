@@ -49,61 +49,6 @@
   margin: auto;
   padding: 28px 0;
 }
-.auth-business-story {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid #23354c;
-  border-radius: 12px;
-  background: #17283d;
-  color: #ffffff;
-}
-.auth-business-story-copy {
-  padding: 30px 32px 26px;
-}
-.auth-story-kicker {
-  display: block;
-  color: #b7c7da;
-  font-size: calc(10px * var(--text-scale));
-  font-weight: 500;
-  line-height: 1.6;
-  letter-spacing: 0.1em;
-}
-.auth-business-story h2 {
-  margin: 12px 0 16px;
-  font-size: calc(clamp(28px, 2.6vw, 34px) * var(--text-scale));
-  font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.035em;
-  overflow-wrap: anywhere;
-}
-.auth-story-description {
-  max-width: 500px;
-  margin: 0;
-  color: #c5d1df;
-  font-size: var(--text-base);
-  line-height: 1.7;
-}
-.auth-story-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 22px;
-  margin: 22px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid #3b4d63;
-  list-style: none;
-}
-.auth-story-features li {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #dce5ef;
-  font-size: var(--text-xs);
-  line-height: 1.5;
-}
-.auth-story-features svg {
-  flex: none;
-  color: #a8c5e6;
-}
 .auth-business-page .auth-card {
   width: 100%;
   max-width: none;
@@ -344,18 +289,12 @@
   .auth-business-page .auth-card {
     padding: 28px;
   }
-  .auth-business-story-copy {
-    padding: 24px;
-  }
 }
 @media (max-width: 1023px) {
   .auth-business-layout {
     grid-template-columns: minmax(0, 1fr);
     max-width: 480px;
     padding: 24px 0 48px;
-  }
-  .auth-business-story {
-    display: none;
   }
   .auth-business-page .auth-footer {
     justify-content: center;
@@ -396,9 +335,6 @@
   grid-template-columns: minmax(0, 1fr);
   max-width: 640px;
 }
-:root[data-large-text="true"] .auth-business-story {
-  display: none;
-}
 
 /* Archive 2 welcome palette and illustrated team card. */
 .auth-page.auth-business-page {
@@ -407,43 +343,6 @@
 .auth-business-layout {
   gap: 64px;
   max-width: 1120px;
-}
-.auth-business-story {
-  background: #eaf0ff;
-  color: #263657;
-  border: 0;
-  border-radius: 18px;
-}
-.auth-business-story-copy {
-  position: relative;
-  z-index: 1;
-  padding: 40px 38px 6px;
-}
-.auth-story-kicker {
-  color: #6e82b4;
-  font-size: calc(10px * var(--text-scale));
-  letter-spacing: 0.15em;
-}
-.auth-business-story h2 {
-  font-size: calc(clamp(32px, 3vw, 45px) * var(--text-scale));
-  line-height: 1.13;
-  letter-spacing: -0.045em;
-  margin: 22px 0;
-}
-.auth-story-description {
-  color: #6f7f9f;
-  font-size: calc(13px * var(--text-scale));
-}
-.auth-story-features {
-  gap: 12px 16px;
-  border-color: #d7e1f7;
-}
-.auth-story-features li {
-  color: #6f7f9f;
-  font-size: calc(11px * var(--text-scale));
-}
-.auth-story-features svg {
-  color: #6e82b4;
 }
 .auth-business-page .auth-card {
   border: 0;
@@ -469,28 +368,9 @@
   min-height: 44px;
   font-size: calc(13px * var(--text-scale));
 }
-:root[data-theme="dark"] .auth-business-story {
-  background: #202e47;
-  color: #e4ebfa;
-}
-:root[data-theme="dark"]
-  :is(
-    .auth-story-kicker,
-    .auth-story-description,
-    .auth-story-features li,
-    .auth-story-features svg
-  ) {
-  color: #a5b5d3;
-}
-:root[data-theme="dark"] .auth-story-features {
-  border-color: #3b4b68;
-}
 @media (max-width: 1199px) {
   .auth-business-layout {
     gap: 38px;
-  }
-  .auth-business-story-copy {
-    padding: 30px 30px 0;
   }
 }
 @media (max-width: 1023px) {
