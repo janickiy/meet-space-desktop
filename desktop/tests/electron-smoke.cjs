@@ -2,7 +2,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
-const { app, Menu, nativeTheme } = require("electron");
+const { app, BrowserWindow, Menu, nativeTheme } = require("electron");
+const { devToolsAreBlocked } = require("../dist/acceptance.js");
 const { startApp } = require("../dist/main.js");
 
 (async () => {
@@ -42,6 +43,16 @@ const { startApp } = require("../dist/main.js");
       webviewTag: false,
     }))
       assert.equal(preferences[name], value, name);
+    for (const devTools of [false, true]) {
+      const probe = new BrowserWindow({ show: false, webPreferences: { devTools } });
+      try {
+        await probe.loadURL("about:blank");
+        assert.equal(devToolsAreBlocked(probe.webContents), !devTools,
+          "the installed acceptance check detects whether Electron permits opening DevTools");
+      } finally {
+        probe.destroy();
+      }
+    }
     const waitForText = async (text) => {
       const deadline = Date.now() + 15000;
       while (Date.now() < deadline) {

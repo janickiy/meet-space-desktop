@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, type WebContents } from "electron";
 import { lstatSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -22,6 +22,22 @@ function directory(value: string): void {
   mkdirSync(value, { recursive: true, mode: 0o700 });
   const stat = lstatSync(value);
   if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error("Acceptance directory is not safe");
+}
+
+// Electron 44 omits devTools from getLastWebPreferences(). The inspector's
+// WebContents is created during openDevTools(), before its frontend reports open.
+export function devToolsAreBlocked(contents: WebContents): boolean {
+  if (contents.isDevToolsOpened() || contents.devToolsWebContents) return false;
+  let created = false;
+  const onCreate = () => { created = true; };
+  app.on("web-contents-created", onCreate);
+  try {
+    contents.openDevTools({ mode: "detach", activate: false });
+    return !created && !contents.isDevToolsOpened() && !contents.devToolsWebContents;
+  } finally {
+    app.off("web-contents-created", onCreate);
+    if (created || contents.isDevToolsOpened()) contents.closeDevTools();
+  }
 }
 
 /** Included only in unsigned test installers; release packaging excludes this module. */
@@ -68,7 +84,7 @@ export function prepareWindowsAcceptance(build: AcceptanceBuild): { run(window: 
       const preferences = diagnosticContents.getLastWebPreferences();
       checks.sandbox = preferences.sandbox === true && preferences.contextIsolation === true &&
         preferences.nodeIntegration === false && preferences.webSecurity === true &&
-        preferences.allowRunningInsecureContent !== true && preferences.webviewTag !== true && preferences.devTools === false;
+        preferences.allowRunningInsecureContent !== true && preferences.webviewTag !== true && devToolsAreBlocked(window.webContents);
       checks.localOrigin = window.webContents.getURL().startsWith("app://meetspace/");
       // These are fixed, local tests. No selected server, login, or backend request is created.
       const renderer = await window.webContents.executeJavaScript(`(async () => {
