@@ -133,7 +133,10 @@ export function Button({
  *
  * @returns JSX-представление компонента для текущих свойств и состояния.
  */
-export function PasswordInput(props: InputHTMLAttributes<HTMLInputElement>) {
+export function PasswordInput({
+  visibilityLabel = "пароль",
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { visibilityLabel?: string }) {
   const [visible, setVisible] = useState(false);
   return (
     <div className="password-input">
@@ -142,7 +145,7 @@ export function PasswordInput(props: InputHTMLAttributes<HTMLInputElement>) {
         type="button"
         className="eye-toggle"
         disabled={props.disabled}
-        aria-label={visible ? "Скрыть пароль" : "Показать пароль"}
+        aria-label={`${visible ? "Скрыть" : "Показать"} ${visibilityLabel}`}
         aria-pressed={visible}
         aria-controls={props.id}
         onClick={

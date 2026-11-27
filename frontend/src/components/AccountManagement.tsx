@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Info, Plus, Trash2, UserRound } from "lucide-react";
+import {
+  ArrowRight,
+  CircleCheck,
+  Info,
+  Plus,
+  Server,
+  Trash2,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { initials, passwordLength } from "../utils";
-import { Button, ErrorNotice, Loading } from "./ui";
+import { serviceOrigin } from "../platform/urls";
+import { Button, ErrorNotice, Loading, PasswordInput } from "./ui";
 import "./account-management.css";
 
 export function AccountManagement() {
@@ -23,10 +31,22 @@ export function AccountManagement() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
   const [validation, setValidation] = useState("");
+  const adding = mode === "login" || mode === "register";
+  const heading = useRef<HTMLHeadingElement>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
+  const wasAdding = useRef(false);
+  const fieldId = useId();
+  const server = serviceOrigin();
+  useEffect(() => {
+    if (adding) heading.current?.focus();
+    else if (wasAdding.current) addButton.current?.focus();
+    wasAdding.current = adding;
+  }, [adding]);
   const items = accounts.data?.items || [];
   // Include the current identity even while a pre-existing cookie is being upgraded.
   const visible =
@@ -35,7 +55,12 @@ export function AccountManagement() {
       : items;
   function choose(next: typeof mode) {
     setMode(next);
+    if (next === null) {
+      setEmail("");
+      setName("");
+    }
     setPassword("");
+    setRepeatPassword("");
     setError(undefined);
     setValidation("");
     setConfirmed(false);
@@ -63,41 +88,170 @@ export function AccountManagement() {
       setValidation("Пароль должен содержать от 8 до 128 символов.");
       return;
     }
+    if (mode === "register" && password !== repeatPassword) {
+      setValidation("Пароли не совпадают.");
+      return;
+    }
     if (mode === "delete" && !confirmed) return;
     setBusy(true);
     try {
       if (mode === "delete") await auth.deleteAccount(password);
       else {
-        if (mode === "register") await api.register(email, password, name);
-        await auth.login(email, password);
+        if (mode === "register")
+          await api.register(email.trim(), password, name.trim());
+        await auth.login(email.trim(), password);
       }
-      setPassword("");
+      choose(null);
       navigate("/app/settings#accounts", { replace: true });
     } catch (error) {
       setError(error);
       setPassword("");
+      setRepeatPassword("");
     } finally {
       setBusy(false);
     }
   }
+  if (adding) {
+    const registering = mode === "register";
+    return (
+      <section
+        className="account-management account-add"
+        aria-labelledby="accounts-heading"
+      >
+        <header className="account-management-heading">
+          <h2 id="accounts-heading" ref={heading} tabIndex={-1}>
+            Добавить аккаунт
+          </h2>
+          <p className="field-hint">
+            {registering
+              ? "Создайте аккаунт на подключённом сервере."
+              : "Войдите в существующий аккаунт."}
+          </p>
+        </header>
+        <div
+          className="account-add-modes"
+          role="group"
+          aria-label="Способ добавления аккаунта"
+        >
+          <button
+            type="button"
+            aria-pressed={!registering}
+            disabled={busy}
+            onClick={() => {
+              if (registering) choose("login");
+            }}
+          >
+            Войти
+          </button>
+          <button
+            type="button"
+            aria-pressed={registering}
+            disabled={busy}
+            onClick={() => {
+              if (!registering) choose("register");
+            }}
+          >
+            Создать аккаунт
+          </button>
+        </div>
+        <form
+          className="account-add-form"
+          onSubmit={(event) => void submit(event)}
+        >
+          <label className="account-add-field account-add-server">
+            <span>Адрес сервера</span>
+            <input type="url" value={server} readOnly />
+          </label>
+          {registering && (
+            <label className="account-add-field">
+              <span>Имя для встреч</span>
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Как вас зовут"
+                required
+                maxLength={100}
+                autoComplete="name"
+                disabled={busy}
+              />
+            </label>
+          )}
+          <label className="account-add-field">
+            <span>Электронная почта</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@company.ru"
+              required
+              maxLength={254}
+              autoComplete="username"
+              disabled={busy}
+            />
+          </label>
+          <div className="account-add-field">
+            <label htmlFor={`${fieldId}-password`}>Пароль</label>
+            <PasswordInput
+              key={mode}
+              id={`${fieldId}-password`}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder={
+                registering ? "Минимум 8 символов" : "Введите пароль"
+              }
+              autoComplete={registering ? "new-password" : "current-password"}
+              aria-describedby={
+                registering ? `${fieldId}-password-hint` : undefined
+              }
+              required
+              maxLength={128}
+              disabled={busy}
+            />
+            {registering && (
+              <small id={`${fieldId}-password-hint`}>
+                От 8 до 128 символов.
+              </small>
+            )}
+          </div>
+          {registering && (
+            <div className="account-add-field">
+              <label htmlFor={`${fieldId}-repeat`}>Повторите пароль</label>
+              <PasswordInput
+                id={`${fieldId}-repeat`}
+                visibilityLabel="повтор пароля"
+                value={repeatPassword}
+                onChange={(event) => setRepeatPassword(event.target.value)}
+                placeholder="Повторите пароль"
+                autoComplete="new-password"
+                required
+                maxLength={128}
+                disabled={busy}
+              />
+            </div>
+          )}
+          <ErrorNotice error={error}>{validation || null}</ErrorNotice>
+          <Button type="submit" busy={busy}>
+            {registering ? "Создать и добавить" : "Войти и добавить"}
+            <ArrowRight size={16} aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => choose(null)}
+          >
+            Отмена
+          </Button>
+        </form>
+      </section>
+    );
+  }
+
   return (
     <section className="account-management" aria-labelledby="accounts-heading">
       <header className="account-management-heading">
-        <div>
-          <h2 id="accounts-heading">Аккаунты</h2>
-          <p className="field-hint">
-            Переключайтесь между аккаунтами. У каждого — свой профиль, настройки
-            и переписки.
-          </p>
-        </div>
-        {!mode && (
-          <Button
-            disabled={busy || visible.length >= 5}
-            onClick={() => choose("login")}
-          >
-            <Plus size={18} aria-hidden="true" /> Добавить аккаунт
-          </Button>
-        )}
+        <h2 id="accounts-heading">Аккаунты</h2>
+        <p className="field-hint">Выберите аккаунт для встреч и общения.</p>
       </header>
       {accounts.isPending && <Loading />}
       <ErrorNotice error={accounts.error} />
@@ -120,10 +274,13 @@ export function AccountManagement() {
             <span className="connected-account-name">
               <strong>{item.displayName || item.email}</strong>
               <small>{item.email}</small>
+              <small className="connected-account-server">
+                <Server size={13} aria-hidden="true" /> {new URL(server).host}
+              </small>
             </span>
             {item.id === auth.user?.id ? (
               <span className="connected-account-active">
-                <Check size={16} aria-hidden="true" /> Текущий
+                <CircleCheck size={19} aria-hidden="true" /> Текущий
               </span>
             ) : (
               <Button
@@ -137,6 +294,17 @@ export function AccountManagement() {
           </li>
         ))}
       </ul>
+      {!mode && (
+        <button
+          ref={addButton}
+          type="button"
+          className="button button-primary account-add-button"
+          disabled={busy || visible.length >= 5}
+          onClick={() => choose("login")}
+        >
+          <Plus size={17} aria-hidden="true" /> Добавить аккаунт
+        </button>
+      )}
       <p className="account-management-note">
         <Info size={15} aria-hidden="true" />
         <span>
@@ -157,117 +325,53 @@ export function AccountManagement() {
           </Button>
         </div>
       )}
-      {mode && (
+      {mode === "delete" && (
         <form
           className="account-management-form"
           onSubmit={(event) => void submit(event)}
         >
-          <h3>
-            {mode === "delete"
-              ? "Удалить аккаунт с сервера"
-              : mode === "register"
-                ? "Создать новый аккаунт"
-                : "Войти в другой аккаунт"}
-          </h3>
-          {mode !== "delete" && (
-            <>
-              <div className="account-add-modes">
-                <Button
-                  variant="secondary"
-                  disabled={busy || mode === "login"}
-                  onClick={() => choose("login")}
-                >
-                  <UserRound size={16} aria-hidden="true" /> Войти
-                </Button>
-                <Button
-                  variant="secondary"
-                  disabled={busy || mode === "register"}
-                  onClick={() => choose("register")}
-                >
-                  Создать аккаунт
-                </Button>
-              </div>
-              {mode === "register" && (
-                <label className="field">
-                  <span>Имя</span>
-                  <input
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    maxLength={100}
-                    autoComplete="name"
-                    disabled={busy}
-                  />
-                </label>
-              )}
-              <label className="field">
-                <span>Email</span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  maxLength={254}
-                  autoComplete="username"
-                  disabled={busy}
-                />
-              </label>
-            </>
-          )}
-          {mode === "delete" && (
-            <>
-              <p>
-                Аккаунт <strong>{auth.user?.email}</strong> будет удалён. Данные
-                входа и личные настройки будут очищены, все сессии завершены.
-                Общая история встреч и переписки останется с именем «Удалённый
-                аккаунт».
-              </p>
-              <p className="field-hint">
-                Перед удалением передайте владение группами или удалите их,
-                завершите или отмените созданные встречи и выйдите из звонков.
-              </p>
-            </>
-          )}
+          <h3>Удалить аккаунт с сервера</h3>
+          <p>
+            Аккаунт <strong>{auth.user?.email}</strong> будет удалён. Данные
+            входа и личные настройки будут очищены, все сессии завершены. Общая
+            история встреч и переписки останется с именем «Удалённый аккаунт».
+          </p>
+          <p className="field-hint">
+            Перед удалением передайте владение группами или удалите их,
+            завершите или отмените созданные встречи и выйдите из звонков.
+          </p>
           <label className="field">
-            <span>
-              {mode === "delete" ? "Пароль текущего аккаунта" : "Пароль"}
-            </span>
+            <span>Пароль текущего аккаунта</span>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
               maxLength={128}
-              autoComplete={
-                mode === "register" ? "new-password" : "current-password"
-              }
+              autoComplete="current-password"
               disabled={busy}
             />
           </label>
-          {mode === "delete" && (
-            <label className="account-delete-confirm">
-              <input
-                type="checkbox"
-                checked={confirmed}
-                onChange={(event) => setConfirmed(event.target.checked)}
-                disabled={busy}
-              />{" "}
-              Я понимаю, что удаление нельзя отменить
-            </label>
-          )}
+          <label className="account-delete-confirm">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(event) => setConfirmed(event.target.checked)}
+              disabled={busy}
+            />
+            Я понимаю, что удаление нельзя отменить
+          </label>
           <div className="account-management-actions">
             <Button
-              variant={mode === "delete" ? "danger" : "primary"}
+              variant="danger"
               type="submit"
               busy={busy}
-              disabled={mode === "delete" && !confirmed}
+              disabled={!confirmed}
             >
-              {mode === "delete"
-                ? "Удалить аккаунт навсегда"
-                : mode === "register"
-                  ? "Создать и войти"
-                  : "Войти и добавить"}
+              Удалить аккаунт навсегда
             </Button>
             <Button
+              type="button"
               variant="secondary"
               disabled={busy}
               onClick={() => choose(null)}
