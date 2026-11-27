@@ -76,6 +76,15 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     }
     if (route === "/notifications/preferences") return reply({ invitation: true, reminder: true, recording: true, summary: true });
     if (route === "/capabilities" && controls.capabilityError) return reply({ status: "failed", message: "fixture capability unavailable" }, 503);
+    if (controls.libraryExamples) {
+      const examples = controls.libraryExamples;
+      if (route === "/me/conferences" && url.searchParams.get("view") === "active") return reply({ items: [examples.live], nextCursor: null });
+      if (route === "/me/conferences" && url.searchParams.get("view") === "past") return reply({ items: [finished, examples.past], nextCursor: null });
+      for (const {meeting, record} of [{meeting:examples.live, record:examples.activeRecord}, {meeting:examples.past, record:examples.olderRecord}]) {
+        if (route === `/conferences/${meeting.id}/recordings`) return reply({ items: [record] });
+        if (route === `/conferences/${meeting.id}/history`) return reply({ status: "failed" }, 404);
+      }
+    }
     if (route === "/me/conferences") return reply({ items: [url.searchParams.get("view") === "past" ? finished : conference], nextCursor: null });
     if (route === `/conferences/${CONFERENCE}`) return reply({ item: controls.activeConference ? { ...conference, status: "active", startedAt: now } : finished });
     if (route === `/conferences/${CONFERENCE}/participants/me`) return controls.activeConference || controls.actionThreads?.has(CONFERENCE) ? reply({ item: membership }) : reply({ status: "failed", message: "not a participant" }, 404);

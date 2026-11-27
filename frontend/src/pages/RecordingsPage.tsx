@@ -24,9 +24,9 @@ import { RecordingActions } from "../components/RecordingActions";
 import {
   formatRecordingDuration,
   formatRecordingSize,
-  playableRecordings,
   recordingDate,
   recordingDetailPath,
+  recordingFileAvailable,
   recordingMediaFile,
   recordingPreviewFile,
 } from "../recordingPresentation";
@@ -43,7 +43,24 @@ import {
 } from "../recordingLibrary";
 import "./recording-library-reference.css";
 
-/** RecordingCard показывает одну реальную готовую запись выбранной встречи.
+const modeLabels = {
+  audio_only: "Аудиозапись",
+  composite: "Видеозапись",
+  screen_focus: "Видеозапись",
+  individual_tracks: "Дорожки участников",
+} as const;
+
+const recordingProgress: Partial<
+  Record<ConferenceRecording["status"], string>
+> = {
+  starting: "Подготовка записи",
+  recording: "Идёт запись",
+  degraded: "Идёт запись с ограничениями",
+  stopping: "Завершение записи",
+  processing: "Запись обрабатывается",
+};
+
+/** RecordingCard показывает доступную запись или её текущее состояние.
  * @args record — запись; conference — встреча; history — доступная историческая сводка.
  * @return компактная строка с превью, метаданными и поддерживаемыми действиями.
  */
@@ -64,83 +81,96 @@ export function RecordingCard({
   const hasPreview = !!preview?.url && brokenPreview !== preview.url;
   const audioOnly = record.mode === "audio_only";
   const tracks = record.mode === "individual_tracks";
-  const modeLabel = tracks
-    ? "Аудиомикс и дорожки"
-    : audioOnly
-      ? "Аудиозапись"
-      : "Видеозапись";
+  const progress = recordingProgress[record.status];
+  const listen = audioOnly ? "Слушать" : "Смотреть";
   const ModeIcon = tracks ? FileArchive : audioOnly ? AudioLines : Video;
-  return (
-    <article className="recordings-row" data-testid="recordings-row">
-      <Link
-        to={path}
-        className={`recordings-thumbnail${hasPreview ? "" : " recordings-thumbnail-placeholder"}${audioOnly ? " recordings-thumbnail-audio" : ""}${tracks ? " recordings-thumbnail-tracks" : ""}`}
-        aria-label={`Смотреть запись: ${conference.title}`}
-      >
-        {hasPreview ? (
-          <img
-            src={preview!.url}
-            alt=""
-            loading="lazy"
-            onError={() => setBrokenPreview(preview!.url!)}
-          />
-        ) : (
-          <>
-            {audioOnly ? (
-              <span className="recordings-thumbnail-wave" aria-hidden="true">
-                {Array.from({ length: 19 }, (_, index) => (
-                  <i
-                    key={index}
-                    style={{ height: `${12 + ((index * 13) % 37)}px` }}
-                  />
-                ))}
-              </span>
-            ) : tracks ? (
-              <span
-                className="recordings-thumbnail-tracks-art"
-                aria-hidden="true"
-              >
-                <FileArchive size={25} />
-                <span>
-                  {[0, 1, 2].map((row) => (
-                    <i key={row}>
-                      <b />
-                      <b />
-                      <b />
-                      <b />
-                      <b />
-                      <b />
-                    </i>
-                  ))}
-                </span>
-              </span>
-            ) : (
-              <span className="recordings-thumbnail-tiles" aria-hidden="true">
-                {[0, 1, 2, 3].map((tile) => (
-                  <i key={tile}>
-                    <Users size={19} strokeWidth={1.4} />
+  const thumbnailClass = `recordings-thumbnail${hasPreview ? "" : " recordings-thumbnail-placeholder"}${audioOnly ? " recordings-thumbnail-audio" : ""}${tracks ? " recordings-thumbnail-tracks" : ""}`;
+  const cover = (
+    <>
+      {hasPreview ? (
+        <img
+          src={preview!.url}
+          alt=""
+          loading="lazy"
+          onError={() => setBrokenPreview(preview!.url!)}
+        />
+      ) : (
+        <>
+          {audioOnly ? (
+            <span className="recordings-thumbnail-wave" aria-hidden="true">
+              {Array.from({ length: 19 }, (_, index) => (
+                <i
+                  key={index}
+                  style={{ height: `${12 + ((index * 13) % 37)}px` }}
+                />
+              ))}
+            </span>
+          ) : tracks ? (
+            <span
+              className="recordings-thumbnail-tracks-art"
+              aria-hidden="true"
+            >
+              <FileArchive size={25} />
+              <span>
+                {[0, 1, 2].map((row) => (
+                  <i key={row}>
+                    <b />
+                    <b />
+                    <b />
+                    <b />
+                    <b />
+                    <b />
                   </i>
                 ))}
               </span>
-            )}
-          </>
-        )}
+            </span>
+          ) : (
+            <span className="recordings-thumbnail-tiles" aria-hidden="true">
+              {[0, 1, 2, 3].map((tile) => (
+                <i key={tile}>
+                  <Users size={19} strokeWidth={1.4} />
+                </i>
+              ))}
+            </span>
+          )}
+        </>
+      )}
+      {!progress && (
         <span className="recordings-thumbnail-play" aria-hidden="true">
           <Play size={19} />
         </span>
-        {record.durationSec !== undefined && (
-          <span className="recordings-thumbnail-duration">
-            {formatRecordingDuration(record.durationSec)}
-          </span>
-        )}
-      </Link>
+      )}
+      {!progress && record.durationSec !== undefined && (
+        <span className="recordings-thumbnail-duration">
+          {formatRecordingDuration(record.durationSec)}
+        </span>
+      )}
+    </>
+  );
+  return (
+    <article className="recordings-row" data-testid="recordings-row">
+      {progress ? (
+        <div className={thumbnailClass}>{cover}</div>
+      ) : (
+        <Link
+          to={path}
+          className={thumbnailClass}
+          aria-label={`${listen} запись: ${conference.title}`}
+        >
+          {cover}
+        </Link>
+      )}
       <div className="recordings-row-info">
         <span className="recordings-kind">
-          <ModeIcon size={13} aria-hidden="true" /> {modeLabel}
+          <ModeIcon size={13} aria-hidden="true" /> {modeLabels[record.mode]}
         </span>
-        <Link to={path} className="recordings-row-title">
-          {conference.title}
-        </Link>
+        {progress ? (
+          <strong className="recordings-row-title">{conference.title}</strong>
+        ) : (
+          <Link to={path} className="recordings-row-title">
+            {conference.title}
+          </Link>
+        )}
         <p className="recordings-meta">
           <time
             dateTime={record.startedAt || record.createdAt}
@@ -151,11 +181,15 @@ export function RecordingCard({
               { day: "numeric", month: "long", year: "numeric" },
             )}
           </time>
-          <span aria-hidden="true">·</span>
+          {(history || file?.sizeBytes !== undefined) && (
+            <span aria-hidden="true">·</span>
+          )}
           {history ? (
             <span>{history.participantCount} участников</span>
           ) : (
-            <span>{formatRecordingSize(file?.sizeBytes)}</span>
+            file?.sizeBytes !== undefined && (
+              <span>{formatRecordingSize(file.sizeBytes)}</span>
+            )
           )}
         </p>
         {history?.owner.displayName && (
@@ -166,33 +200,39 @@ export function RecordingCard({
         )}
       </div>
       <div className="recordings-row-actions">
-        <Link
-          to={path}
-          className="button button-outline recordings-watch"
-          aria-label={`Смотреть запись: ${conference.title}`}
-        >
-          {tracks ? (
-            <FolderOpen size={17} aria-hidden="true" />
-          ) : (
-            <Play size={17} aria-hidden="true" />
-          )}
-          {tracks ? "Материалы" : "Смотреть"}
-        </Link>
-        <RecordingActions
-          title={conference.title}
-          path={path}
-          downloadUrl={file?.url}
-          asset={
-            file?.uuid
-              ? {
-                  kind: "recording",
-                  conferenceId: conference.id,
-                  recordingId: record.uuid,
-                  fileId: file.uuid,
-                }
-              : undefined
-          }
-        />
+        {progress ? (
+          <span className="recordings-progress">{progress}</span>
+        ) : (
+          <>
+            <Link
+              to={path}
+              className="button button-outline recordings-watch"
+              aria-label={`${tracks ? "Материалы" : listen}: ${conference.title}`}
+            >
+              {tracks ? (
+                <FolderOpen size={17} aria-hidden="true" />
+              ) : (
+                <Play size={17} aria-hidden="true" />
+              )}
+              {tracks ? "Материалы" : listen}
+            </Link>
+            <RecordingActions
+              title={conference.title}
+              path={path}
+              downloadUrl={file?.url}
+              asset={
+                file?.uuid
+                  ? {
+                      kind: "recording",
+                      conferenceId: conference.id,
+                      recordingId: record.uuid,
+                      fileId: file.uuid,
+                    }
+                  : undefined
+              }
+            />
+          </>
+        )}
       </div>
     </article>
   );
@@ -201,17 +241,22 @@ export function RecordingCard({
 /** A flat catalogue using the same cards, toolbar and empty state as decs_maket. */
 export function RecordingsPage() {
   const { user } = useAuth();
+  const [view, setView] = useState<"past" | "active">("past");
+  const [meeting, setMeeting] = useState("");
+  const [days, setDays] = useState("");
+  const [sort, setSort] = useState("newest");
   const [search, setSearch] = useState("");
   const [layout, setLayout] = useState<CollectionView>("list");
   const library = useInfiniteQuery({
-    queryKey: ["recording-library", user?.id],
+    queryKey: ["recording-library", user?.id, view],
+    refetchInterval: view === "active" ? 15000 : false,
     enabled: !!user,
     initialPageParam: { pending: [] } as RecordingLibraryCursor,
     queryFn: ({ pageParam, signal }) =>
       loadRecordingLibraryPage(
         {
           conferences: (cursor, signal) =>
-            api.myConferences({ view: "past" }, cursor, signal),
+            api.myConferences({ view }, cursor, signal),
           recordings: (id, offset, signal) =>
             api.recordings(id, signal, { limit: 20, offset }),
           history: (id, signal) => api.history(id, signal),
@@ -229,42 +274,135 @@ export function RecordingsPage() {
       ),
     ).values(),
   ];
-  const ready = entries.filter(
-    ({ record }) => playableRecordings([record]).length,
+  const catalogue = entries.filter(
+    ({ record, conference }) =>
+      (view === "past" || conference.status === "active") &&
+      (record.status === "ready"
+        ? !!recordingMediaFile(record) ||
+          record.files?.some(
+            (file) =>
+              file.fileType === "tracks_archive" &&
+              recordingFileAvailable(file),
+          )
+        : view === "active" && !!recordingProgress[record.status]),
   );
-  const visible = ready
-    .filter((entry) =>
-      entry.conference.title
-        .toLocaleLowerCase("ru-RU")
-        .includes(search.trim().toLocaleLowerCase("ru-RU")),
-    )
+  const meetings = new Map(
+    catalogue.map(({ conference }) => [conference.id, conference.title]),
+  );
+  const term = search.trim().toLocaleLowerCase("ru-RU");
+  const since = new Date();
+  since.setDate(since.getDate() - Number(days));
+  since.setHours(0, 0, 0, 0);
+  const timestamp = (r: ConferenceRecording) =>
+    Date.parse(r.startedAt || r.createdAt);
+  const visible = catalogue
+    .filter(({ conference, record, history }) => {
+      const text = [
+        conference.title,
+        history?.owner.displayName,
+        modeLabels[record.mode],
+      ]
+        .join(" ")
+        .toLocaleLowerCase("ru-RU");
+      return (
+        (!meeting || conference.id === meeting) &&
+        (!days || timestamp(record) >= since.getTime()) &&
+        text.includes(term)
+      );
+    })
     .sort(
       (a, b) =>
-        Date.parse(b.record.startedAt || b.record.createdAt) -
-        Date.parse(a.record.startedAt || a.record.createdAt),
+        (timestamp(a.record) - timestamp(b.record)) *
+        (sort === "oldest" ? 1 : -1),
     );
+  const filtered = Boolean(term || days || meeting);
   const failed = library.data?.pages.some((page) => page.failed.length);
   return (
     <div className="recordings-page recordings-reference-library">
       <section className="recordings-library-intro">
         {!isDesktopBuild && <h1>Записи встреч</h1>}
-        <h2>Библиотека встреч</h2>
-        <p>Записи и материалы ваших встреч.</p>
+        <span className="recordings-eyebrow">Библиотека встреч</span>
+        <h2>Важное остаётся с вами</h2>
+        <p>Видео, аудио и материалы ваших встреч.</p>
       </section>
+      <div
+        className="recordings-status-tabs"
+        role="group"
+        aria-label="Состояние встречи"
+      >
+        {(["past", "active"] as const).map((status) => (
+          <button
+            type="button"
+            key={status}
+            aria-pressed={view === status}
+            onClick={() => {
+              setView(status);
+              setMeeting("");
+            }}
+          >
+            {status === "past" ? (
+              "Завершённые"
+            ) : (
+              <>
+                В эфире
+                <i aria-hidden="true" />
+              </>
+            )}
+          </button>
+        ))}
+      </div>
       <section
         className="recordings-catalogue-toolbar"
-        aria-label="Поиск и вид записей"
+        aria-label="Поиск записей"
       >
         <label className="recordings-search">
           <Search size={17} aria-hidden="true" />
           <input
             type="search"
-            aria-label="Найти запись"
-            placeholder="Найти запись"
+            aria-label="Найти запись встречи"
+            placeholder="Найти запись встречи"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
+        <label className="recordings-meeting-filter">
+          <span>Встреча</span>
+          <select value={meeting} onChange={(e) => setMeeting(e.target.value)}>
+            <option value="">Все встречи</option>
+            {[...meetings].map(([id, title]) => (
+              <option key={id} value={id}>
+                {title}
+              </option>
+            ))}
+          </select>
+        </label>
+      </section>
+      <section
+        className="recordings-list-toolbar"
+        aria-label="Фильтры и вид записей"
+      >
+        <div className="recordings-period-sort">
+          <select
+            aria-label="Период записей"
+            value={days}
+            onChange={(e) => setDays(e.target.value)}
+          >
+            <option value="">Всё время</option>
+            {["7", "30", "90"].map((n) => (
+              <option key={n} value={n}>
+                За {n} дней
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Сортировка записей"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
+            <option value="newest">Сначала новые</option>
+            <option value="oldest">Сначала старые</option>
+          </select>
+        </div>
         <CollectionViewToggle
           value={layout}
           onChange={setLayout}
@@ -301,20 +439,31 @@ export function RecordingsPage() {
               <h2>
                 {library.hasNextPage
                   ? "В загруженных записях ничего не найдено"
-                  : search.trim()
+                  : filtered
                     ? "Записи не найдены"
-                    : "Записей пока нет"}
+                    : view === "active"
+                      ? "Сейчас нет записей в эфире"
+                      : "Записей пока нет"}
               </h2>
               <p>
                 {library.hasNextPage
                   ? "Загрузите ещё записи, чтобы продолжить поиск."
-                  : search.trim()
-                    ? "Попробуйте другое название встречи."
-                    : "Здесь появятся доступные записи ваших встреч."}
+                  : filtered
+                    ? "Попробуйте другую встречу или измените условия поиска."
+                    : view === "active"
+                      ? "Здесь появятся записи текущих встреч."
+                      : "Здесь появятся доступные записи ваших встреч."}
               </p>
-              {search.trim() && (
-                <Button variant="secondary" onClick={() => setSearch("")}>
-                  Сбросить поиск
+              {filtered && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setSearch("");
+                    setDays("");
+                    setMeeting("");
+                  }}
+                >
+                  Сбросить фильтры
                 </Button>
               )}
             </section>
@@ -323,10 +472,10 @@ export function RecordingsPage() {
       )}
       {library.hasNextPage && (
         <div className="recordings-load-more">
-          {!!visible.length && !!search.trim() && (
+          {(filtered || sort === "oldest") && (
             <p className="field-hint">
-              Поиск выполнен по загруженным записям. Загрузите ещё, чтобы
-              расширить список.
+              Показаны загруженные записи. Загрузите ещё, чтобы расширить
+              список.
             </p>
           )}
           <Button

@@ -74,7 +74,10 @@ export async function loadRecordingLibraryPage(
           );
           signal.throwIfAborted();
           let history: ConferenceHistory | undefined;
-          if (page.items.some((record) => record.status === "ready")) {
+          if (
+            task.conference.status !== "active" &&
+            page.items.some((record) => record.status === "ready")
+          ) {
             try {
               const candidate = (
                 await source.history(task.conference.id, signal)

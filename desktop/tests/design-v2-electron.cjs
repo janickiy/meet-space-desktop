@@ -213,7 +213,35 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         }
       }
       if(name==='recordings'){
-        assert.equal(await execute('document.querySelectorAll(".recordings-conference-selector,.recordings-meeting-view").length'),0,'Library has no obsolete meeting-selection toolbar');
+        assert.deepEqual(await execute(`[...document.querySelectorAll('.recordings-status-tabs button')].map(e=>e.textContent.trim())`), ['Завершённые','В эфире'], 'Library filters by meeting status');
+        if (theme === 'light') {
+          const activeId = '30303030-3030-4030-8030-303030303030', pastId = '40404040-4040-4040-8040-404040404040';
+          const now = new Date(), older = new Date(now.getTime()-15*86400000).toISOString();
+          fixture.product.controls.libraryExamples = {
+            live: {...fixture.product.conference, id:activeId, status:'active', title:'Live recording meeting'},
+            past: {...fixture.product.conference, id:pastId, status:'finished', title:'Older audio meeting'},
+            activeRecord: {...fixture.product.recording, conferenceId:activeId, status:'recording', files:[]},
+            olderRecord: {...fixture.product.recording, conferenceId:pastId, startedAt:older, mode:'audio_only'}
+          };
+          await reload();await visible('Older audio meeting');
+          const select = (query, value) => execute(`(()=>{const e=document.querySelector(${JSON.stringify(query)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
+          const titles = () => execute(`[...document.querySelectorAll('.recordings-row-title')].map(e=>e.textContent)`);
+          assert.deepEqual(await titles(),['Product finished meeting','Older audio meeting']);
+          await select('[aria-label="Сортировка записей"]','oldest');
+          assert.deepEqual(await titles(),['Older audio meeting','Product finished meeting']);
+          await select('[aria-label="Период записей"]','7');
+          assert.deepEqual(await titles(),['Product finished meeting']);
+          await select('[aria-label="Период записей"]','30');
+          await select('.recordings-meeting-filter select',pastId);
+          assert.deepEqual(await titles(),['Older audio meeting']);
+          await click('.recordings-status-tabs button:last-child');await visible('Live recording meeting');
+          assert.deepEqual(await titles(),['Live recording meeting']);
+          assert.equal(await execute("document.querySelector('.recordings-row a') === null"),true,'Recording in progress has no playback or download action');
+          await capture('recordings-live-light');
+          await click('.recordings-status-tabs button:first-child');await visible('Product finished meeting');
+          delete fixture.product.controls.libraryExamples;
+          await reload();await visible('Product finished meeting');
+        }
         assert.equal(await execute(`document.querySelectorAll('.recordings-count,.recordings-catalogue-footer,.recordings-page a[href="/conferences?view=past"]').length`),0,'Recording library omits the count and completed-meeting links');
         await field('.recordings-search input','No matching recording');
         await until(()=>execute('!!document.querySelector(".recordings-empty")'),'empty recording search appears');
