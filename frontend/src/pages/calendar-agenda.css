@@ -59,16 +59,16 @@
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   padding: 12px;
-  gap: 6px;
+  gap: 7px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--surface);
 }
 .agenda-week button {
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 6px;
+  gap: 8px;
   min-width: 0;
   min-height: 74px;
   padding: 4px;
@@ -104,23 +104,31 @@
 }
 .agenda-time {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  gap: 7px;
-  min-height: 52px;
-  padding: 6px 0;
-  border-top: 1px solid var(--border);
+  grid-template-columns: 43px minmax(0, 1fr);
+  min-height: 78px;
+}
+.agenda-day > h3 span {
+  color: var(--muted);
+  font-weight: 400;
 }
 .agenda-time > span {
+  padding-top: 4px;
   color: var(--muted);
   font-size: calc(11px * var(--text-scale));
 }
 .agenda-time > div {
+  padding: 6px 0;
+  border-top: 1px solid var(--border);
   display: grid;
   align-content: start;
   gap: 4px;
 }
 .agenda-page .agenda-time .calendar-event {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  min-height: 65px;
   width: 100%;
   margin: 0;
   border: 0;
@@ -145,8 +153,23 @@
   border-radius: 20px;
   background: var(--surface);
 }
+.agenda-eyebrow {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: var(--text-xs);
+}
+.agenda-summary header p {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.agenda-page .agenda-time .agenda-event-range {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
 .agenda-summary h3 {
-  margin: 0;
+  margin: 12px 0 0;
   font-size: calc(16px * var(--text-scale));
 }
 .agenda-summary ul {
@@ -180,11 +203,6 @@
   border: 1px dashed var(--border);
   border-radius: 10px;
   padding: 12px;
-  color: var(--muted);
-}
-.agenda-empty {
-  padding-block: 16px;
-  border-block: 1px solid var(--border);
   color: var(--muted);
 }
 @container (max-width: 800px) {

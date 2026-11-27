@@ -35,6 +35,11 @@ const weekdayNames = [
   "Суббота",
   "Воскресенье",
 ];
+const meetingPlurals = new Intl.PluralRules("ru-RU");
+function meetingCount(count: number) {
+  const form = meetingPlurals.select(count);
+  return `${count} ${form === "one" ? "встреча" : form === "few" ? "встречи" : "встреч"}`;
+}
 const hours = Array.from({ length: 24 }, (_, hour) => hour);
 
 /**
@@ -99,15 +104,21 @@ export function scheduledMeetingDate(conference: Conference) {
 function CalendarMeeting({
   meeting,
   onSelect,
+  agenda = false,
 }: {
   meeting: Conference;
   onSelect: (meeting: Conference) => void;
+  agenda?: boolean;
 }) {
   const date = scheduledMeetingDate(meeting)!;
   const time = date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const end =
+    agenda && meeting.plannedDurationMin && meeting.plannedDurationMin > 0
+      ? new Date(date.getTime() + meeting.plannedDurationMin * 60_000)
+      : null;
   return (
     <button
       type="button"
@@ -116,8 +127,30 @@ function CalendarMeeting({
       aria-label={`${meeting.title}, ${formatDate(date.toISOString())}`}
     >
       <strong>
-        <time dateTime={date.toISOString()}>{time}</time> {meeting.title}
+        {!agenda && (
+          <>
+            <time dateTime={date.toISOString()}>{time}</time>{" "}
+          </>
+        )}
+        {meeting.title}
       </strong>
+      {agenda && (
+        <span className="agenda-event-range">
+          <time dateTime={date.toISOString()}>{time}</time>
+          {end && (
+            <>
+              {" "}
+              —{" "}
+              <time dateTime={end.toISOString()}>
+                {end.toLocaleTimeString("ru-RU", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </time>
+            </>
+          )}
+        </span>
+      )}
       {meeting.status === "cancelled" && <span>Отменена</span>}
       {meeting.status === "active" && <span>Идёт сейчас</span>}
     </button>
@@ -245,33 +278,37 @@ function DayAgenda({
           })}
         </div>
         <h3>
-          {date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}
+          {date.toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}{" "}
+          <span>
+            · {meetings.length ? meetingCount(meetings.length) : "Нет встреч"}
+          </span>
         </h3>
-        {meetings.length ? (
-          <div className="agenda-timeline">
-            {hours
-              .filter((hour) => hour >= firstHour && hour <= lastHour)
-              .map((hour) => (
-                <div className="agenda-time" key={hour}>
-                  <span>{String(hour).padStart(2, "0")}:00</span>
-                  <div>
-                    {byHour.get(hour)?.map((meeting) => (
-                      <CalendarMeeting
-                        key={meeting.id}
-                        meeting={meeting}
-                        onSelect={onMeeting}
-                      />
-                    ))}
-                  </div>
+        <div className="agenda-timeline">
+          {hours
+            .filter((hour) => hour >= firstHour && hour <= lastHour)
+            .map((hour) => (
+              <div className="agenda-time" key={hour}>
+                <span>{String(hour).padStart(2, "0")}:00</span>
+                <div>
+                  {byHour.get(hour)?.map((meeting) => (
+                    <CalendarMeeting
+                      key={meeting.id}
+                      meeting={meeting}
+                      onSelect={onMeeting}
+                      agenda
+                    />
+                  ))}
                 </div>
-              ))}
-          </div>
-        ) : (
-          <p className="agenda-empty">На этот день встреч пока нет.</p>
-        )}
+              </div>
+            ))}
+        </div>
       </section>
       <aside className="agenda-summary">
-        <h3>На этой неделе</h3>
+        <header>
+          <span className="agenda-eyebrow">На этой неделе</span>
+          <h3>Хороший ритм</h3>
+          <p>Все встречи команды в вашем часовом поясе.</p>
+        </header>
         <ul>
           {days.map((day, index) => {
             const key = calendarDayKey(day);
