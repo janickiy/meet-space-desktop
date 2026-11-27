@@ -178,6 +178,7 @@ test("offline logout removes local authorization and retries revocation without 
   const restored = await c.http("POST", "/auth/refresh", { userId: c.alpha.users[0].id }).catch(() => null);
   assert.ok(restored === null || restored.status === 401, "offline logout cannot silently sign the account back in");
   await until(() => c.alpha.sessions.size === 0, "queued remote revocation was completed");
+  await until(() => !c.broker.revoking.has(c.alphaId), "encrypted revocation queue finished writing before fixture cleanup");
 });
 
 test("invalid server metadata is rejected before a profile is saved", async (t) => {
