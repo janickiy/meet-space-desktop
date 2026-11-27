@@ -10,6 +10,10 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
+  ChevronRight,
+  MessageCircle,
+  Users,
+  Video,
   Folder,
   FolderPlus,
   LockKeyhole,
@@ -91,6 +95,65 @@ function folderSummary(folder: PersonalFolder) {
   );
 }
 
+function FolderCardPreview({
+  folder,
+  userId,
+}: {
+  folder: PersonalFolder;
+  userId: string;
+}) {
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const element = anchor.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { rootMargin: "100px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const preview = useInfiniteQuery({
+    queryKey: ["folder-items", userId, folder.id, "card-preview"],
+    enabled: inView,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ signal }) =>
+      api.folderItems(folder.id, { type: "all" }, undefined, signal, 2),
+    getNextPageParam: () => undefined,
+    staleTime: 15000,
+    refetchInterval: inView ? 15000 : false,
+    retry: (count, error) => !folderAccessDenied(error) && count < 1,
+  });
+  const items = preview.isError
+    ? []
+    : preview.data?.pages[0]?.items.slice(0, 2) || [];
+  return (
+    <span ref={anchor} className="pf-preview-anchor">
+      {items.length > 0 && (
+        <span className="pf-card-preview">
+          {items.map((entry) => {
+            const Icon =
+              entry.type === "conference"
+                ? Video
+                : entry.item.type === "group"
+                  ? Users
+                  : MessageCircle;
+            return (
+              <span
+                className="pf-preview-line"
+                key={entry.type + entry.item.id}
+              >
+                <Icon size={15} aria-hidden="true" />
+                <span>{folderItemName(entry)}</span>
+              </span>
+            );
+          })}
+        </span>
+      )}
+    </span>
+  );
+}
 function FolderList() {
   const { user } = useAuth();
   const client = useQueryClient();
@@ -173,6 +236,9 @@ function FolderList() {
               <span className="pf-card-body">
                 <strong>{folder.name}</strong>
                 <small>{folderSummary(folder)}</small>
+                {layout === "grid" && folder.itemCount > 0 && user && (
+                  <FolderCardPreview folder={folder} userId={user.id} />
+                )}
               </span>
             </Link>
             <div className="pf-card-menu">
@@ -377,7 +443,7 @@ function FolderDetail({ id }: { id: string }) {
       )}
       {meta.isPending && <MessagingSkeleton />}
       {folder && (
-        <>
+        <div className="pf-detail-panel">
           <div className="folder-toolbar">
             <div
               className="folder-candidate-filters"
@@ -430,75 +496,60 @@ function FolderDetail({ id }: { id: string }) {
             </Button>
           )}
           {entries.isPending && <MessagingSkeleton />}
-          {(["conference", "conversation"] as const).map((kind) => {
-            const section = items.filter((entry) => entry.type === kind);
-            return (
-              section.length > 0 && (
-                <section
-                  className="folder-item-section"
-                  key={kind}
-                  aria-label={
-                    kind === "conference" ? "Встречи в папке" : "Чаты в папке"
-                  }
-                >
-                  <h2>
-                    {kind === "conference" ? "Встречи" : "Чаты"}{" "}
-                    <span>{section.length}</span>
-                  </h2>
-                  <div
-                    className={`folder-list folder-contents folder-layout-${layout}`}
-                  >
-                    {section.map((entry) => (
-                      <div
-                        className="folder-row"
-                        key={`${entry.type}:${entry.item.id}`}
-                      >
-                        <Link
-                          className="folder-link"
-                          to={folderItemHref(entry)}
-                        >
-                          <FolderItemLabel entry={entry} />
-                        </Link>
-                        <ItemActions
-                          label={`Действия с элементом: ${folderItemName(entry)}`}
-                          actions={[
-                            {
-                              label: "Добавить в папку",
-                              icon: <FolderPlus size={18} aria-hidden="true" />,
-                              run: () => setMapping(entry),
-                              disabled: remove.isPending,
-                            },
-                            {
-                              label: "Удалить из папки",
-                              icon: <Trash2 size={18} aria-hidden="true" />,
-                              danger: true,
-                              disabled: remove.isPending,
-                              run: () => {
-                                if (gate.current) return;
-                                gate.current = true;
-                                remove.mutate(entry);
-                              },
-                            },
-                          ]}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )
-            );
-          })}
+          <div
+            className={`folder-list folder-contents folder-layout-${layout}`}
+            aria-label="Элементы папки"
+            aria-live="polite"
+          >
+            {items.map((entry) => (
+              <div
+                className="folder-row"
+                key={`${entry.type}:${entry.item.id}`}
+              >
+                <Link className="folder-link" to={folderItemHref(entry)}>
+                  <FolderItemLabel entry={entry} />
+                  <ChevronRight
+                    className="folder-row-chevron"
+                    size={16}
+                    aria-hidden="true"
+                  />
+                </Link>
+                <ItemActions
+                  label={`Действия с элементом: ${folderItemName(entry)}`}
+                  actions={[
+                    {
+                      label: "Добавить в папку",
+                      icon: <FolderPlus size={18} aria-hidden="true" />,
+                      run: () => setMapping(entry),
+                      disabled: remove.isPending,
+                    },
+                    {
+                      label: "Удалить из папки",
+                      icon: <Trash2 size={18} aria-hidden="true" />,
+                      danger: true,
+                      disabled: remove.isPending,
+                      run: () => {
+                        if (gate.current) return;
+                        gate.current = true;
+                        remove.mutate(entry);
+                      },
+                    },
+                  ]}
+                />
+              </div>
+            ))}
+          </div>
           {!entries.isPending && !entries.isError && !items.length && (
             <div className="folder-empty">
               <Folder size={48} aria-hidden="true" />
               <h2>
-                {params.get("search")
+                {params.get("search") || type !== "all"
                   ? "Ничего не найдено"
                   : "В этой папке пока ничего нет"}
               </h2>
               <p>
-                {params.get("search")
-                  ? "Попробуйте другое название."
+                {params.get("search") || type !== "all"
+                  ? "Измените поиск или выберите другой тип."
                   : "Добавьте чаты или встречи с помощью кнопки выше."}
               </p>
             </div>
@@ -512,7 +563,7 @@ function FolderDetail({ id }: { id: string }) {
               Ещё элементы
             </Button>
           )}
-        </>
+        </div>
       )}
       {manage && (
         <FolderManageModal

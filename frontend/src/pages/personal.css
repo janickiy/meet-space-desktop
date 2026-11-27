@@ -491,3 +491,67 @@
   font-size: var(--text-base);
   font-weight: 600;
 }
+
+.personal-search[hidden] {
+  display: none;
+}
+.personal-filters > a {
+  gap: 3px;
+  white-space: nowrap;
+}
+.personal-team-invite {
+  position: relative;
+  flex: none;
+  margin: 4px 0 14px;
+  border-radius: 9px;
+  background: var(--surface-soft);
+}
+.personal-team-invite button {
+  border: 0;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.personal-team-invite button:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  width: 100%;
+  min-height: 84px;
+  padding: 19px 15px;
+  text-align: left;
+  border-radius: inherit;
+  background: transparent;
+}
+.personal-team-invite button:first-child > svg {
+  flex: none;
+  color: var(--primary);
+}
+.personal-team-invite strong,
+.personal-team-invite small {
+  display: block;
+}
+.personal-team-invite strong {
+  font-size: calc(14px * var(--text-scale));
+  font-weight: 600;
+}
+.personal-team-invite small {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.4;
+}
+.personal-team-invite button:last-child {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}

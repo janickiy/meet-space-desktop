@@ -25,6 +25,8 @@ import {
   Plus,
   SquarePen,
   Users,
+  UserPlus,
+  X,
 } from "lucide-react";
 import { api, ApiError, personalChatAPI } from "../api";
 import { useAuth } from "../auth";
@@ -40,7 +42,7 @@ import { WorkspaceHeaderActions } from "../components/WorkspaceHeader";
 import { ItemActions } from "../components/ItemActions";
 import { NewDirectChatModal } from "../components/NewDirectChatModal";
 import { UnreadMessageCount } from "../components/UnreadMessageCount";
-import { Button, ErrorNotice } from "../components/ui";
+import { Button, ErrorNotice, CopyLink, Modal } from "../components/ui";
 import { MessagingSkeleton } from "../components/MessagingSkeleton";
 import {
   ConversationAvatar,
@@ -49,6 +51,7 @@ import {
 } from "../components/GroupChats";
 import type { ConversationFilters, PersonalConversation } from "../types";
 import { revokePersonalConversation } from "../personalRealtime";
+import { serviceOrigin } from "../platform/urls";
 import "./personal.css";
 
 export function PersonalPage() {
@@ -141,6 +144,26 @@ export function PersonalPage() {
   }, [client, id, user, navigate, location.search]);
   const paramSearch = params.get("search") || "";
   const [search, setSearch] = useState(paramSearch);
+  const [searchOpen, setSearchOpen] = useState(!!paramSearch);
+  const searchInput = useRef<HTMLInputElement>(null);
+  function toggleSearch() {
+    if (searchOpen || paramSearch) {
+      setSearchOpen(false);
+      setSearch("");
+      if (paramSearch) {
+        const next = new URLSearchParams(params);
+        next.delete("search");
+        setParams(next, { replace: true });
+      }
+    } else {
+      const sidebar =
+        root.current?.querySelector<HTMLElement>(".personal-sidebar");
+      if (id && sidebar && !sidebar.getClientRects().length)
+        navigate("/personal" + location.search);
+      setSearchOpen(true);
+      requestAnimationFrame(() => searchInput.current?.focus());
+    }
+  }
   useEffect(() => setSearch(paramSearch), [paramSearch]);
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -232,6 +255,17 @@ export function PersonalPage() {
             ]}
           />
         </div>
+        <button
+          type="button"
+          className="icon-button personal-search-trigger"
+          aria-label="Поиск чатов"
+          title="Поиск чатов"
+          aria-controls="conversation-search"
+          aria-expanded={searchOpen || !!paramSearch}
+          onClick={toggleSearch}
+        >
+          <Search size={20} aria-hidden="true" />
+        </button>
       </WorkspaceHeaderActions>
       <section
         className={`personal-page ${id ? "personal-selected" : ""}`}
@@ -248,8 +282,8 @@ export function PersonalPage() {
             {(
               [
                 ["all", "Все"],
-                ["unread", "Новые"],
                 ["direct", "Личные"],
+                ["unread", "Новые"],
                 ["group", "Группы"],
               ] as const
             ).map(([value, label]) => (
@@ -267,18 +301,28 @@ export function PersonalPage() {
                 {label}
               </button>
             ))}
-            <Link to="/folders">Папки</Link>
+            <Link to="/folders">
+              Папки <ChevronDown size={13} aria-hidden="true" />
+            </Link>
           </div>
-          <label className="personal-search">
+          <label
+            className="personal-search"
+            id="conversation-search"
+            hidden={!searchOpen && !paramSearch}
+          >
             <Search size={18} />
             <input
               type="search"
+              ref={searchInput}
               aria-label="Поиск переписок"
               value={search}
               placeholder="Найти человека или чат"
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
+          {user && (
+            <ChatTeamInvite key={user.id + serviceOrigin()} userId={user.id} />
+          )}
           <ErrorNotice error={list.error} />
           {list.isError && (
             <Button variant="outline" onClick={() => void list.refetch()}>
@@ -519,6 +563,62 @@ export function PersonalPage() {
         )}
       </section>
     </PersonalPeerPresenceProvider>
+  );
+}
+
+function ChatTeamInvite({ userId }: { userId: string }) {
+  const origin = serviceOrigin();
+  const dismissalKey = `meetspace.team-invite.dismissed/${encodeURIComponent(origin)}/${encodeURIComponent(userId)}`;
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(dismissalKey) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const [open, setOpen] = useState(false);
+  if (dismissed) return null;
+  return (
+    <>
+      <div className="personal-team-invite">
+        <button type="button" onClick={() => setOpen(true)}>
+          <span>
+            <strong>Пригласите свою команду</strong>
+            <small>Общайтесь и встречайтесь в MeetSpace</small>
+          </span>
+          <UserPlus size={30} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          aria-label="Скрыть приглашение"
+          onClick={() => {
+            setDismissed(true);
+            try {
+              sessionStorage.setItem(dismissalKey, "1");
+            } catch {
+              /* Keep the current view dismissed if storage is unavailable. */
+            }
+          }}
+        >
+          <X size={15} aria-hidden="true" />
+        </button>
+      </div>
+      {open && (
+        <Modal
+          title="Ссылка на рабочее пространство"
+          onClose={() => setOpen(false)}
+        >
+          <p>
+            Отправьте ссылку коллегам, чтобы они могли войти в MeetSpace вашей
+            команды.
+          </p>
+          <CopyLink value={origin + "/"} />
+          <div className="modal-actions">
+            <Button onClick={() => setOpen(false)}>Готово</Button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import {
 import { CalendarDays } from "lucide-react";
 import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
+import { useHiddenChatMessages } from "../hiddenChatMessages";
 import { chatTime } from "../chatPresentation";
 import {
   folderAccessDenied,
@@ -41,6 +42,15 @@ export function folderItemHref(entry: FolderItem) {
 }
 export function FolderItemLabel({ entry }: { entry: FolderItem }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    entry.type === "conversation" ? user?.id : undefined,
+    "conversation",
+    entry.item.id,
+  );
+  const preview =
+    entry.type === "conversation" && !hidden.has(entry.item.lastMessageId || "")
+      ? entry.item.preview
+      : undefined;
   return (
     <>
       {entry.type === "conversation" ? (
@@ -55,12 +65,12 @@ export function FolderItemLabel({ entry }: { entry: FolderItem }) {
         <small>
           {entry.type === "conversation" &&
           entry.item.type === "group" &&
-          entry.item.preview &&
+          preview &&
           entry.item.lastSender
             ? `${entry.item.lastSender.id === user?.id ? "Вы" : entry.item.lastSender.displayName}: `
             : ""}
           {entry.type === "conversation"
-            ? entry.item.preview ||
+            ? preview ||
               (entry.item.type === "group"
                 ? "Групповая переписка"
                 : "Личная переписка")

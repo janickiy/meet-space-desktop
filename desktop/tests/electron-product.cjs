@@ -157,9 +157,26 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     await require("./product-attachment-checks.cjs")({ execute, until, visible, click, route, fixture, saves, checks, sendDraft });
     await require("./product-message-action-checks.cjs")({ execute, until, visible, click, clickText, field, route, fixture, window, checks, directory:process.argv[3] });
 
+    const captureCollection = async (filename) => {
+      if (process.argv[3]) await fs.writeFile(path.join(process.argv[3], filename), (await window.webContents.capturePage()).toPNG());
+    };
     await route("/folders"); await visible("Product personal folder");
-    await click(`a[href="/folders/${FOLDER}"]`); await visible("Product direct peer"); await visible("Product scheduled meeting");
-    checks.push("existing personal folder list/detail combines authorized chat and meeting entries");
+    await until(() => execute("document.querySelectorAll('.pf-card-preview .pf-preview-line').length === 2"), "Folder tiles preview their first two authorized entries");
+    assert.deepEqual(await execute("[...document.querySelectorAll('.pf-preview-line')].map(line => line.textContent)"), ["Product direct peer", "Product scheduled meeting"]);
+    await captureCollection("folders-with-preview.png");
+    await click(`.pf-card-open[href="/folders/${FOLDER}"]`); await visible("Product direct peer"); await visible("Product scheduled meeting");
+    assert.deepEqual(await execute("[...document.querySelectorAll('.pf-detail-panel .folder-link strong')].map(line => line.textContent)"), ["Product direct peer", "Product scheduled meeting"]);
+    await captureCollection("folder-with-items.png");
+    await route("/personal"); await click('[aria-label="Поиск чатов"]');
+    await until(() => execute("document.querySelector('.personal-search input') === document.activeElement"), "Chat search toggle focuses the input");
+    await click('[aria-label="Поиск чатов"]');
+    await until(() => execute("document.querySelector('.personal-search').hidden"), "Chat search can close without leaving the list");
+    await captureCollection("chat-list-with-invitation.png");
+    await click(".personal-team-invite > button"); await visible("Ссылка на рабочее пространство");
+    assert.equal(await execute("document.querySelector('.copy-link input').value"), fixture.origin + "/");
+    await clickText("Готово"); await click('[aria-label="Скрыть приглашение"]');
+    assert.equal(await execute("!!document.querySelector('.personal-team-invite')"), false);
+    checks.push("Folder tiles preview two authorized entries and the detail panel preserves their server order. Chat search opens on demand and the dismissible team invitation uses the actual workspace origin.");
     await route("/conferences"); await until(() => execute("!!document.querySelector('section[aria-label=\"Список встреч\"]')"), "Existing meetings screen mounts"); await visible("Product scheduled meeting");
     await route("/calendar");
     await until(() => fixture.requests.some(request => request.path === "/api/v1/me/conferences" && request.query.includes("from=") && request.query.includes("to=")), "Calendar requests server range");

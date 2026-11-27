@@ -392,3 +392,114 @@
   gap: 7px;
   margin-bottom: 18px;
 }
+
+.pf-preview-anchor {
+  display: block;
+  min-height: 1px;
+}
+.pf-card-preview {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-top: 14px;
+  color: var(--pf-secondary);
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.5;
+}
+.pf-preview-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
+}
+.pf-preview-line svg {
+  flex: none;
+}
+.pf-preview-line > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-detail-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+.pf-detail .pf-detail-panel .folder-toolbar {
+  margin: 0;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.pf-detail .pf-detail-panel .folder-candidate-filters {
+  flex: 0 1 auto;
+  width: auto;
+  padding: 3px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-soft);
+  gap: 2px;
+}
+.pf-detail .pf-detail-panel .folder-candidate-filters button {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: var(--pf-secondary);
+  font-size: var(--text-sm);
+}
+.pf-detail
+  .pf-detail-panel
+  .folder-candidate-filters
+  button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px #33203918;
+}
+.pf-detail .pf-detail-panel .folder-contents.folder-layout-list {
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+}
+.pf-detail .pf-detail-panel .folder-contents.folder-layout-list .folder-row {
+  min-height: 56px;
+  padding: 6px 16px;
+  background: transparent;
+}
+.pf-detail .pf-detail-panel .folder-row:hover {
+  background: var(--surface-soft);
+}
+.pf-detail .pf-detail-panel .folder-item-copy strong {
+  font-size: calc(14px * var(--text-scale));
+}
+.pf-detail .pf-detail-panel .folder-item-copy small {
+  font-size: calc(12px * var(--text-scale));
+}
+.folder-row-chevron {
+  flex: none;
+  color: var(--pf-secondary);
+}
+.pf-detail .pf-detail-panel .folder-empty {
+  border: 0;
+}
+.pf-detail .pf-detail-panel .folder-layout-grid {
+  margin: 12px;
+}
+@container (max-width:510px) {
+  .pf-preview-anchor {
+    grid-column: 1 / -1;
+  }
+  .pf-detail .pf-detail-panel .folder-toolbar {
+    padding: 12px;
+    gap: 10px;
+  }
+  .pf-detail .pf-detail-panel .folder-candidate-filters button {
+    flex: 1;
+  }
+  .pf-detail .pf-detail-panel .folder-row {
+    flex-wrap: nowrap;
+  }
+}

@@ -476,9 +476,10 @@ export const api = {
     filters: FolderItemFilters,
     before?: string,
     signal?: AbortSignal,
+    limit = 50,
   ) =>
     request<FolderPage>(
-      `/folders/${encodeURIComponent(id)}/items?${new URLSearchParams({ limit: "50", type: filters.type, ...(filters.search ? { search: filters.search } : {}), ...(before ? { before } : {}) })}`,
+      `/folders/${encodeURIComponent(id)}/items?${new URLSearchParams({ limit: String(limit), type: filters.type, ...(filters.search ? { search: filters.search } : {}), ...(before ? { before } : {}) })}`,
       { signal },
     ),
   folderCandidates: (
