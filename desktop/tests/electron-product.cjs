@@ -155,7 +155,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     checks.push("existing personal chat renders server message and downloads attachment by authorized IDs without renderer signed URL fetch");
 
     await require("./product-attachment-checks.cjs")({ execute, until, visible, click, route, fixture, saves, checks, sendDraft });
-    await require("./product-message-action-checks.cjs")({ execute, until, visible, click, clickText, route, fixture, window, checks, directory:process.argv[3] });
+    await require("./product-message-action-checks.cjs")({ execute, until, visible, click, clickText, field, route, fixture, window, checks, directory:process.argv[3] });
 
     await route("/folders"); await visible("Product personal folder");
     await click(`a[href="/folders/${FOLDER}"]`); await visible("Product direct peer"); await visible("Product scheduled meeting");

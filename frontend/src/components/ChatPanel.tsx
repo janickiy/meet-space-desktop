@@ -42,6 +42,8 @@ import type {
   ChatPage,
   Participant,
 } from "../types";
+import { useHiddenChatMessages } from "../hiddenChatMessages";
+import { useNavigate } from "react-router";
 import { deleteChatMessages } from "../chatDeletion";
 import { ForwardMessagesDialog } from "./ForwardMessagesDialog";
 import { AttachmentUploader } from "./AttachmentUploader";
@@ -126,6 +128,12 @@ export function MessageThread({
   const historyKey = personal ? "personal-chat" : "chat";
   const readKey = personal ? "personal-chat-read" : "chat-read";
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { hidden, hide } = useHiddenChatMessages(
+    user?.id,
+    personal ? "conversation" : "conference",
+    scopeId,
+  );
   const mayBookmark = !personal && !!user && !user.guestConferenceId;
   const focused = focusMessageId || undefined;
   const client = useQueryClient();
@@ -137,6 +145,7 @@ export function MessageThread({
   const [selectedIds, setSelectedIds] = useState<Set<string> | null>(null);
   const [forwarding, setForwarding] = useState<ChatMessage[] | null>(null);
   const [confirmSelection, setConfirmSelection] = useState(false);
+  const [hideError, setHideError] = useState("");
   const [selectionNotice, setSelectionNotice] = useState("");
   const batch = useRef<AbortController | null>(null);
   const selectionHeader = useRef<HTMLButtonElement>(null);
@@ -262,9 +271,10 @@ export function MessageThread({
   }, [accessDenied, onAccessDenied]);
   const historyUnavailable =
     isAccessDenied(query.error) || isAccessDenied(read.error);
-  const messages = historyUnavailable
+  const history = historyUnavailable
     ? []
     : mergeChatPages(query.data?.pages || []);
+  const messages = history.filter((message) => !hidden.has(message.id));
   useEffect(() => {
     if (!historyUnavailable) return;
     downloadController.current?.abort();
@@ -315,14 +325,14 @@ export function MessageThread({
     });
   }
   const confirmedRequests = new Set(
-    messages
+    history
       .filter((message) => message.senderId === user?.id)
       .map((message) => message.clientRequestId),
   );
   const unconfirmed = pending.filter(
     (message) => !confirmedRequests.has(message.clientRequestId),
   );
-  const latest = messages.at(-1)?.id;
+  const latest = history.at(-1)?.id;
 
   /** Обновляет историю и счётчик непрочитанных сообщений после изменения на сервере. */
   const invalidate = () => {
@@ -922,7 +932,10 @@ export function MessageThread({
             >
               <X size={19} />
             </button>
-            <strong role="status">Выбрано: {selectedItems.length}</strong>
+            <div className="chat-selection-title">
+              <strong role="status">Выбрано: {selectedItems.length}</strong>
+              <small>Выберите сообщения</small>
+            </div>
             <button
               type="button"
               className="button button-ghost"
@@ -938,7 +951,7 @@ export function MessageThread({
               }
             >
               {selectable.length && selectedItems.length === selectable.length
-                ? "Снять выделение"
+                ? "Снять выбор"
                 : "Выбрать все"}
             </button>
           </div>
@@ -1062,7 +1075,10 @@ export function MessageThread({
                     <span className="chat-message-avatar" aria-hidden="true">
                       {initials(message.senderName)}
                     </span>
-                    <div className="chat-message-content">
+                    <div
+                      className="chat-message-content"
+                      inert={selecting || undefined}
+                    >
                       <div className="chat-message-bubble">
                         {(!personal || !own) && (
                           <header>
@@ -1078,16 +1094,17 @@ export function MessageThread({
                             Переслано от {message.forwardedFrom.senderName}
                           </span>
                         )}
-                        {message.replyPreview && (
-                          <blockquote>
-                            <strong>{message.replyPreview.senderName}</strong>
-                            <span>
-                              {message.replyPreview.deleted
-                                ? "Сообщение удалено"
-                                : message.replyPreview.text || "Вложение"}
-                            </span>
-                          </blockquote>
-                        )}
+                        {message.replyPreview &&
+                          !hidden.has(message.replyPreview.id) && (
+                            <blockquote>
+                              <strong>{message.replyPreview.senderName}</strong>
+                              <span>
+                                {message.replyPreview.deleted
+                                  ? "Сообщение удалено"
+                                  : message.replyPreview.text || "Вложение"}
+                              </span>
+                            </blockquote>
+                          )}
                         {message.call && !message.deletedAt && (
                           <CallHistoryMessage call={message.call} />
                         )}
@@ -1212,6 +1229,26 @@ export function MessageThread({
                         <div className="chat-message-tools">
                           <ItemActions
                             label={`Действия с сообщением: ${message.senderName}, ${chatTime(message.createdAt)}`}
+                            renderPreview={() => (
+                              <div
+                                className="chat-action-preview"
+                                aria-hidden="true"
+                              >
+                                <strong>{message.senderName}</strong>
+                                {message.text && <p>{message.text}</p>}
+                                {message.attachments.length > 0 && (
+                                  <span>
+                                    <Paperclip size={14} />
+                                    {message.attachments[0].filename}
+                                    {message.attachments.length > 1 &&
+                                      ` · ещё ${message.attachments.length - 1}`}
+                                  </span>
+                                )}
+                                <time dateTime={message.createdAt}>
+                                  {chatTime(message.createdAt)}
+                                </time>
+                              </div>
+                            )}
                             actions={
                               [
                                 ...(mayBookmark
@@ -1335,6 +1372,9 @@ export function MessageThread({
         <ErrorNotice error={downloadError || null} />
         {selecting && (
           <div className="chat-selection-actions">
+            <span className="chat-selection-count">
+              Выбрано: {selectedItems.length}
+            </span>
             {canForward && (
               <Button
                 variant="outline"
@@ -1352,11 +1392,14 @@ export function MessageThread({
             <Button
               variant="danger"
               aria-label="Удалить выбранные сообщения"
-              disabled={!canDeleteSelection || removeSelected.isPending}
-              onClick={() => setConfirmSelection(true)}
+              disabled={!selectedItems.length || removeSelected.isPending}
+              onClick={() => {
+                setHideError("");
+                setConfirmSelection(true);
+              }}
             >
               <Trash2 size={17} />
-              Удалить
+              Удалить ({selectedItems.length})
             </Button>
           </div>
         )}
@@ -1471,6 +1514,10 @@ export function MessageThread({
           onClose={() => setForwarding(null)}
           onForwarded={(target, count) => {
             setSelectedIds(null);
+            if (personal) {
+              void navigate(`/personal/${target.id}`);
+              return;
+            }
             setSelectionNotice(
               `Переслано: ${count}. Получатель: ${target.type === "group" ? target.name : target.peer.displayName}.`,
             );
@@ -1485,24 +1532,53 @@ export function MessageThread({
           }}
         >
           <p className="modal-description">
-            Сообщения ({selectedItems.length}) и их вложения станут недоступны
-            всем участникам чата.
+            Выбрано сообщений: <strong>{selectedItems.length}</strong>.
           </p>
-          <div className="chat-selection-actions">
+          <p className="modal-description">
+            «Удалить у меня» скроет их из вашей истории на этом устройстве.
+            Другие участники продолжат их видеть.
+          </p>
+          <ErrorNotice error={hideError || null} />
+          <div className="chat-delete-choices">
+            <Button
+              variant="danger"
+              disabled={!selectedItems.length || removeSelected.isPending}
+              onClick={() => {
+                const ids = selectedItems.map((message) => message.id);
+                try {
+                  hide(ids);
+                  setConfirmSelection(false);
+                  setSelectedIds(null);
+                  setDownload(null);
+                  if (reply && ids.includes(reply.id)) setReply(null);
+                  setSelectionNotice(
+                    `Удалено на этом устройстве: ${ids.length}.`,
+                  );
+                } catch {
+                  setHideError(
+                    "Не удалось сохранить изменение на этом устройстве. Попробуйте ещё раз.",
+                  );
+                }
+              }}
+            >
+              <Trash2 size={17} /> Удалить у меня ({selectedItems.length})
+            </Button>
+            {canDeleteSelection && (
+              <Button
+                variant="outline"
+                className="chat-delete-everywhere"
+                busy={removeSelected.isPending}
+                onClick={() => removeSelected.mutate()}
+              >
+                Удалить для всех
+              </Button>
+            )}
             <Button
               variant="outline"
               disabled={removeSelected.isPending}
               onClick={() => setConfirmSelection(false)}
             >
               Отмена
-            </Button>
-            <Button
-              variant="danger"
-              busy={removeSelected.isPending}
-              disabled={!canDeleteSelection}
-              onClick={() => removeSelected.mutate()}
-            >
-              Удалить для всех
             </Button>
           </div>
         </Modal>

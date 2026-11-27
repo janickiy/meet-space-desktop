@@ -4,15 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import {
-  Check,
-  Forward,
-  MessageCircle,
-  Paperclip,
-  Search,
-  UserRound,
-  X,
-} from "lucide-react";
+import { ChevronRight, Paperclip } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import type { ChatMessage, PersonalConversation, PersonalPeer } from "../types";
@@ -75,10 +67,11 @@ function ForwardMessagesForm({
 }: ForwardMessagesDialogProps & { actorId: string }) {
   const client = useQueryClient();
   const searchId = useId();
-  const radioName = useId();
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Recipient | null>(null);
+  const [failedRecipient, setFailedRecipient] = useState<Recipient | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const controller = useRef<AbortController | null>(null);
@@ -158,19 +151,13 @@ function ForwardMessagesForm({
     conversations.isPending ||
     (searchingPeople && users.isPending);
 
-  function choose(recipient: Recipient) {
-    if (controller.current) return;
-    setSelected(recipient);
-    setError(null);
-  }
-
-  async function send() {
-    if (!selected || invalid || controller.current) return;
-    const recipient = selected;
+  async function send(recipient: Recipient) {
+    if (invalid || controller.current) return;
     const operation = new AbortController();
     controller.current = operation;
     setBusy(true);
     setError(null);
+    setFailedRecipient(null);
     const key = recipientKey(recipient);
     let retry = retries.current.get(key);
     if (!retry) {
@@ -206,7 +193,10 @@ function ForwardMessagesForm({
       onForwarded(conversation, result.items.length);
       onClose();
     } catch (caught) {
-      if (!operation.signal.aborted) setError(caught);
+      if (!operation.signal.aborted) {
+        setError(caught);
+        setFailedRecipient(recipient);
+      }
     } finally {
       if (!operation.signal.aborted && controller.current === operation) {
         controller.current = null;
@@ -216,79 +206,49 @@ function ForwardMessagesForm({
   }
 
   function recipientRow(recipient: Recipient) {
-    const checked =
-      !!selected && recipientKey(selected) === recipientKey(recipient);
     const label = recipientName(recipient);
     const subtitle =
       recipient.kind === "user"
         ? "Пользователь"
         : recipient.item.type === "group"
-          ? `Группа · ${recipient.item.memberCount} участн.`
+          ? `Групповой чат`
           : "Личный чат";
     return (
-      <label
-        className={`forward-recipient${checked ? " is-selected" : ""}`}
+      <button
+        type="button"
+        className="forward-recipient"
         key={recipientKey(recipient)}
+        disabled={busy || invalid}
+        aria-label={`Переслать в ${label}, ${subtitle}`}
+        onClick={() => void send(recipient)}
       >
         <RecipientAvatar recipient={recipient} />
         <span className="forward-recipient-copy">
           <strong>{label}</strong>
           <small>{subtitle}</small>
         </span>
-        <input
-          type="radio"
-          name={radioName}
-          checked={checked}
-          disabled={busy}
-          aria-label={`${label}, ${subtitle}`}
-          onChange={() => choose(recipient)}
-        />
-        <span className="forward-recipient-check" aria-hidden="true">
-          <Check size={14} />
-        </span>
-      </label>
+        <ChevronRight size={17} aria-hidden="true" />
+      </button>
     );
   }
 
   return (
     <Modal
-      title="Переслать сообщения"
+      title={
+        messages.length === 1 ? "Переслать сообщение" : "Переслать сообщения"
+      }
       className="forward-messages-dialog"
       onClose={() => {
         if (!controller.current) onClose();
       }}
     >
-      <details className="forward-preview" open={messages.length === 1}>
-        <summary>
-          <Forward size={17} aria-hidden="true" />
-          Сообщения: {messageIds.length}
-        </summary>
-        <ol className="forward-preview-list">
-          {messages.map((message) => (
-            <li key={message.id}>
-              <strong>
-                {message.forwardedFrom?.senderName || message.senderName}
-              </strong>
-              {message.text && <p>{message.text}</p>}
-              {message.attachments.map((file) => (
-                <span className="forward-preview-file" key={file.id}>
-                  <Paperclip size={14} aria-hidden="true" />
-                  {file.filename}
-                </span>
-              ))}
-            </li>
-          ))}
-        </ol>
-      </details>
-      <ErrorNotice>{validation || null}</ErrorNotice>
-      <label className="forward-search" htmlFor={searchId}>
-        <Search size={18} aria-hidden="true" />
-        <span className="sr-only">Найти чат или пользователя</span>
+      <label className="field forward-search" htmlFor={searchId}>
+        Получатель
         <input
           data-autofocus
           id={searchId}
           type="search"
-          placeholder="Найти чат или пользователя"
+          placeholder="Найти чат или группу"
           autoComplete="off"
           maxLength={100}
           value={text}
@@ -296,12 +256,26 @@ function ForwardMessagesForm({
           onChange={(event) => setText(event.target.value)}
         />
       </label>
-      <p className="forward-search-hint">
-        Выберите чат или найдите пользователя по имени: минимум 2 символа.
-      </p>
+      <ol className="forward-preview-list" aria-label="Выбранные сообщения">
+        {messages.map((message) => (
+          <li key={message.id}>
+            <strong>
+              {message.forwardedFrom?.senderName || message.senderName}
+            </strong>
+            {message.text && <p>{message.text}</p>}
+            {message.attachments.map((file) => (
+              <span className="forward-preview-file" key={file.id}>
+                <Paperclip size={14} aria-hidden="true" />
+                {file.filename}
+              </span>
+            ))}
+          </li>
+        ))}
+      </ol>
+      <ErrorNotice>{validation || null}</ErrorNotice>
       <div
         className="forward-recipient-list"
-        role="radiogroup"
+        role="group"
         aria-label="Получатели"
         aria-busy={loading}
       >
@@ -312,12 +286,6 @@ function ForwardMessagesForm({
         )}
         {currentSearch && (
           <>
-            {!!destinations.length && (
-              <h3>
-                <MessageCircle size={15} aria-hidden="true" />
-                Чаты
-              </h3>
-            )}
             {destinations.map((item) =>
               recipientRow({ kind: "conversation", item }),
             )}
@@ -341,12 +309,7 @@ function ForwardMessagesForm({
                 Ещё чаты
               </Button>
             )}
-            {!!people.length && (
-              <h3>
-                <UserRound size={15} aria-hidden="true" />
-                Пользователи
-              </h3>
-            )}
+            {!!people.length && <h3>Пользователи</h3>}
             {people.map((item) => recipientRow({ kind: "user", item }))}
             {searchingPeople && <ErrorNotice error={users.error} />}
             {searchingPeople && users.isError && (
@@ -372,41 +335,21 @@ function ForwardMessagesForm({
           </>
         )}
       </div>
-      {selected && (
-        <div className="forward-selected" role="status">
-          <RecipientAvatar recipient={selected} />
-          <span>
-            <small>Получатель</small>
-            <strong>{recipientName(selected)}</strong>
-          </span>
-          <button
-            className="icon-button"
-            type="button"
-            aria-label="Снять выбор получателя"
-            disabled={busy}
-            onClick={() => {
-              setSelected(null);
-              setError(null);
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-      )}
       <ErrorNotice error={error} />
-      <div className="forward-dialog-actions">
-        <Button variant="outline" disabled={busy} onClick={onClose}>
-          Отмена
-        </Button>
+      {failedRecipient && (
         <Button
-          disabled={!selected || invalid}
-          busy={busy}
-          onClick={() => void send()}
+          variant="outline"
+          onClick={() => void send(failedRecipient)}
+          disabled={busy}
         >
-          <Forward size={18} />
-          {error ? "Повторить пересылку" : "Переслать"}
+          Повторить пересылку
         </Button>
-      </div>
+      )}
+      {busy && (
+        <p className="forward-empty" role="status">
+          Пересылаем сообщения…
+        </p>
+      )}
     </Modal>
   );
 }

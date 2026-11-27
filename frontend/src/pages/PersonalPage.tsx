@@ -1,3 +1,4 @@
+import { useHiddenChatMessages } from "../hiddenChatMessages";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Link,
@@ -300,12 +301,7 @@ export function PersonalPage() {
                     {c.type === "group" && (
                       <small>Группа · {c.memberCount} участн.</small>
                     )}
-                    <span>
-                      {c.type === "group" && c.preview && c.lastSender
-                        ? `${c.lastSender.id === user?.id ? "Вы" : c.lastSender.displayName}: `
-                        : ""}
-                      {c.preview || "Начните переписку"}
-                    </span>
+                    <ConversationPreview conversation={c} userId={user?.id} />
                   </span>
                   <span className="personal-meta">
                     <time>
@@ -530,4 +526,30 @@ export function conversationName(conversation: PersonalConversation) {
   return conversation.type === "group"
     ? conversation.name
     : conversation.peer.displayName;
+}
+
+function ConversationPreview({
+  conversation,
+  userId,
+}: {
+  conversation: PersonalConversation;
+  userId?: string;
+}) {
+  const { hidden } = useHiddenChatMessages(
+    userId,
+    "conversation",
+    conversation.id,
+  );
+  if (conversation.lastMessageId && hidden.has(conversation.lastMessageId))
+    return null;
+  return (
+    <span>
+      {conversation.type === "group" &&
+      conversation.preview &&
+      conversation.lastSender
+        ? `${conversation.lastSender.id === userId ? "Вы" : conversation.lastSender.displayName}: `
+        : ""}
+      {conversation.preview || "Начните переписку"}
+    </span>
+  );
 }

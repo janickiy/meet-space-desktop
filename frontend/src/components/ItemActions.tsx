@@ -23,10 +23,12 @@ export function ItemActions({
   label,
   actions,
   triggerIcon,
+  renderPreview,
 }: {
   label: string;
   actions: ItemAction[];
   triggerIcon?: ReactNode;
+  renderPreview?: () => ReactNode;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null),
@@ -140,6 +142,7 @@ export function ItemActions({
           aria-label={label}
           style={position || { visibility: "hidden" }}
         >
+          {renderPreview?.()}
           {actions.map((action) => (
             <button
               key={action.label}

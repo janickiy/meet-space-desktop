@@ -81,7 +81,7 @@ module.exports = async function avatarEditorChecks({execute,until,visible,click,
   await click('.avatar-delete-actions .button-danger');await visible('Фото удалено.');
   await until(()=>execute("!document.querySelector('.sidebar .profile .user-avatar img')"),'Delete restores initials');
 
-  await route(`/personal/${GROUP}`);await visible('Product group chat');await click('.personal-peer-button');await visible('Управление группой');
+  await route(`/personal/${GROUP}`);await visible('Product group chat');await until(() => execute("!!document.querySelector('.personal-peer-button:not(:disabled)')"), "Group detail is ready");await click('.personal-peer-button');await visible('Управление группой');
   await click('button[aria-label="Настройки группы"]');await until(()=>execute("!!document.querySelector('.group-avatar-editor')"),'Group photo card');
   await open('.group-avatar-editor .avatar-settings-actions .button');await choose();await loaded();await range(0,1.7);await range(1,-100);
   await fs.writeFile(path.join(directory,'avatar-editor-group-light.png'),await capture());

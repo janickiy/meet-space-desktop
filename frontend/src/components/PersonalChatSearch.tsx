@@ -1,3 +1,4 @@
+import { useHiddenChatMessages } from "../hiddenChatMessages";
 import { Fragment, useEffect, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
@@ -57,6 +58,11 @@ export function PersonalChatSearchModal({
   returnFocus: () => HTMLElement | null;
 }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    user?.id,
+    "conversation",
+    conversationId,
+  );
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   useEffect(() => {
@@ -83,7 +89,12 @@ export function PersonalChatSearchModal({
       ? [
           ...new Map(
             (query.data?.pages.flatMap((page) => page.items) || [])
-              .filter((message) => !message.deletedAt && !message.call)
+              .filter(
+                (message) =>
+                  !hidden.has(message.id) &&
+                  !message.deletedAt &&
+                  !message.call,
+              )
               .map((message) => [message.id, message]),
           ).values(),
         ]

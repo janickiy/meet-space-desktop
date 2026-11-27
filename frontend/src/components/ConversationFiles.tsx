@@ -1,3 +1,4 @@
+import { useHiddenChatMessages } from "../hiddenChatMessages";
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Download, FileText, Files } from "lucide-react";
@@ -22,6 +23,11 @@ export function ConversationFiles({
   requireAuthenticated?: boolean;
 }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    user?.id,
+    "conversation",
+    conversationId,
+  );
   const query = useInfiniteQuery({
     queryKey: ["personal-profile-files", user?.id, conversationId],
     initialPageParam: undefined as string | undefined,
@@ -42,7 +48,7 @@ export function ConversationFiles({
     ? [
         ...new Map(
           (query.data?.pages.flatMap((page) => page.items) || [])
-            .filter((message) => !message.deletedAt)
+            .filter((message) => !hidden.has(message.id) && !message.deletedAt)
             .flatMap((message) =>
               message.attachments.map(
                 (file) =>

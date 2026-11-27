@@ -372,3 +372,114 @@
     padding-inline: 10px;
   }
 }
+
+.personal-thread-surface:has(.chat-selecting) .personal-header {
+  display: none;
+}
+.chat-selection-heading {
+  min-height: 76px;
+  gap: 12px;
+  padding-inline: 24px;
+}
+.chat-selection-title {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+.chat-selection-title strong {
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.chat-selection-title small {
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+.chat-selection-count {
+  flex: 1;
+  color: var(--muted);
+  font-size: calc(12px * var(--text-scale));
+  font-variant-numeric: tabular-nums;
+}
+.chat-panel .chat-selection-actions {
+  min-height: 80px;
+  padding: 15px 24px;
+}
+.chat-panel .chat-selection-actions .button-danger {
+  min-width: 146px;
+}
+.chat-message-select {
+  align-self: center;
+}
+.chat-delete-choices {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+.chat-delete-choices .chat-delete-everywhere {
+  color: var(--danger);
+}
+@media (max-width: 779px) {
+  .chat-selection-heading,
+  .chat-panel .chat-selection-actions {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .chat-panel .chat-selection-actions .button-danger {
+    min-width: auto;
+  }
+}
+
+.chat-message-tools .item-action-menu {
+  width: min(320px, calc(100vw - 32px));
+  padding: 5px;
+  border-radius: 16px;
+}
+.chat-message-tools .item-action-menu > button {
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+.chat-message-tools .item-action-menu > button + button {
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+.chat-action-preview {
+  min-width: 0;
+  margin-bottom: 5px;
+  padding: 12px 15px 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 5px;
+  background: var(--canvas);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.chat-message-own .chat-action-preview {
+  background: var(--primary-soft);
+  border-radius: 14px 14px 5px 14px;
+}
+.chat-action-preview strong,
+.chat-action-preview time {
+  display: block;
+  color: var(--muted);
+  font-size: calc(11px * var(--text-scale));
+}
+.chat-action-preview p,
+.chat-action-preview span {
+  margin: 5px 0 7px;
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.55;
+}
+.chat-action-preview p {
+  white-space: pre-wrap;
+  max-height: 100px;
+  overflow: auto;
+}
+.chat-action-preview span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.chat-action-preview time {
+  text-align: right;
+}

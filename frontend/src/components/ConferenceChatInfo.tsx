@@ -1,3 +1,4 @@
+import { useHiddenChatMessages } from "../hiddenChatMessages";
 import {
   useEffect,
   useId,
@@ -771,6 +772,11 @@ function ConferenceChatSearch({
   onNavigate: () => void;
 }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    user?.id,
+    "conference",
+    conference.id,
+  );
   const [text, setText] = useState("");
   const [search, setSearch] = useState("");
   useEffect(() => {
@@ -787,7 +793,9 @@ function ConferenceChatSearch({
     retry: false,
   });
   const current = text.trim() === search;
-  const messages = query.data?.pages.flatMap((page) => page.items) || [];
+  const messages = (
+    query.data?.pages.flatMap((page) => page.items) || []
+  ).filter((item) => !hidden.has(item.id));
   return (
     <div className="conference-chat-info-panel">
       <label className="field">
@@ -844,6 +852,11 @@ function ConferenceChatImportant({
   onNavigate: () => void;
 }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    user?.id,
+    "conference",
+    conference.id,
+  );
   const query = useInfiniteQuery({
     queryKey: ["conference-chat-pins", conference.id, user?.id],
     initialPageParam: undefined as string | undefined,
@@ -852,7 +865,9 @@ function ConferenceChatImportant({
     getNextPageParam: (page) => page.nextCursor || undefined,
     retry: false,
   });
-  const messages = query.data?.pages.flatMap((page) => page.items) || [];
+  const messages = (
+    query.data?.pages.flatMap((page) => page.items) || []
+  ).filter((item) => !hidden.has(item.id));
   return (
     <div className="conference-chat-info-panel">
       <p className="field-hint">
@@ -901,6 +916,11 @@ function ConferenceChatMaterials({
   onNavigate: () => void;
 }) {
   const { user } = useAuth();
+  const { hidden } = useHiddenChatMessages(
+    user?.id,
+    "conference",
+    conference.id,
+  );
   const [kind, setKind] = useState<"image" | "file" | "link">("image");
   const query = useInfiniteQuery({
     queryKey: ["conference-chat-materials", conference.id, user?.id, kind],
@@ -910,7 +930,9 @@ function ConferenceChatMaterials({
     getNextPageParam: (page) => page.nextCursor || undefined,
     retry: false,
   });
-  const items = query.data?.pages.flatMap((page) => page.items) || [];
+  const items = (query.data?.pages.flatMap((page) => page.items) || []).filter(
+    (item) => !hidden.has(item.message.id),
+  );
   return (
     <div className="conference-chat-info-panel">
       <div className="tabs" aria-label="Вид материалов">

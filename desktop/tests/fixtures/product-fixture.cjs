@@ -78,9 +78,9 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     if (route === "/capabilities" && controls.capabilityError) return reply({ status: "failed", message: "fixture capability unavailable" }, 503);
     if (route === "/me/conferences") return reply({ items: [url.searchParams.get("view") === "past" ? finished : conference], nextCursor: null });
     if (route === `/conferences/${CONFERENCE}`) return reply({ item: controls.activeConference ? { ...conference, status: "active", startedAt: now } : finished });
-    if (route === `/conferences/${CONFERENCE}/participants/me`) return controls.activeConference ? reply({ item: membership }) : reply({ status: "failed", message: "not a participant" }, 404);
+    if (route === `/conferences/${CONFERENCE}/participants/me`) return controls.activeConference || controls.actionThreads?.has(CONFERENCE) ? reply({ item: membership }) : reply({ status: "failed", message: "not a participant" }, 404);
     if (route === `/conferences/${CONFERENCE}/participants`) return reply({ items: controls.activeConference ? [membership] : [] });
-    if (route === `/conferences/${CONFERENCE}/messages` && request.method === "GET") return reply({ items: controls.sentMessages.filter(message => message.route === route).map(message => message.item), nextCursor: null, unreadCount: 0 });
+    if (route === `/conferences/${CONFERENCE}/messages` && request.method === "GET") return reply({ items: controls.actionThreads?.get(CONFERENCE) || controls.sentMessages.filter(message => message.route === route).map(message => message.item), nextCursor: null, unreadCount: 0 });
     if (route === `/conferences/${CONFERENCE}/chat/read`) return reply({ item: { conferenceId: CONFERENCE, unreadCount: 0, lastReadSequence: "0", lastReadMessageId: null } });
     if (route === `/conferences/${CONFERENCE}/recordings`) return reply({ items: [recording] });
     if (route === `/conferences/${CONFERENCE}/recordings/${RECORDING}`) return reply({ item: recording });
