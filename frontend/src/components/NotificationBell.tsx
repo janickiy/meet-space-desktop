@@ -165,7 +165,11 @@ export function NotificationBell() {
       >
         <span className="notification-bell-glyph" aria-hidden="true">
           <Bell size={22} strokeWidth={1.8} />
-          {unread > 0 && <span className="notification-dot" />}
+          {unread > 0 && (
+            <span className="notification-count">
+              {unread > 99 ? "99+" : unread}
+            </span>
+          )}
         </span>
         {unread > 0 && (
           <span id={unreadDescriptionId} className="sr-only">

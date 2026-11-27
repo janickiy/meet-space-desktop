@@ -31,7 +31,6 @@ import {
   Ellipsis,
   Menu,
   CirclePlay,
-  Plus,
   Settings,
   ShieldCheck,
   Video,
@@ -232,6 +231,7 @@ export function Layout() {
         >
           <div
             className="app-shell desktop-workbench"
+            data-desktop={isDesktopBuild || undefined}
             data-focus={focused || undefined}
             inert={settingsOpen || helpOpen}
           >
@@ -317,6 +317,7 @@ export function Layout() {
                   <NavLink
                     key={to}
                     aria-label={label}
+                    title={label}
                     to={to}
                     {...props}
                     onClick={(event) =>
@@ -342,14 +343,7 @@ export function Layout() {
                 ))}
               </nav>
               <div className="sidebar-caption sidebar-personal-caption">
-                <span>Личное пространство</span>
-                <Link
-                  to="/folders"
-                  aria-label="Управление папками"
-                  title="Управление папками"
-                >
-                  <Plus size={16} />
-                </Link>
+                Личное пространство
               </div>
               <nav
                 className="sidebar-nav sidebar-folders"
@@ -357,6 +351,8 @@ export function Layout() {
               >
                 <NavLink
                   to="/folders"
+                  aria-label="Папки"
+                  title="Папки"
                   end
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
@@ -368,7 +364,9 @@ export function Layout() {
                 </NavLink>
                 {Boolean(folders.data?.items.length) && (
                   <details className="desktop-folder-shortcuts">
-                    <summary>Мои папки</summary>
+                    <summary title="Мои папки" aria-label="Показать мои папки">
+                      <ChevronsUpDown size={14} aria-hidden="true" />
+                    </summary>
                     {(folders.data?.items || []).slice(0, 3).map((folder) => (
                       <NavLink
                         key={folder.id}
@@ -407,6 +405,7 @@ export function Layout() {
                   <NavLink
                     key={to}
                     aria-label={label}
+                    title={label}
                     to={to}
                     onClick={(event) =>
                       to === "/app/settings"

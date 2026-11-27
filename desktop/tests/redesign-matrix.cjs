@@ -32,6 +32,16 @@ module.exports = async ({ window, route, visible, click, tab, execute, until, ou
     assert.equal(view.rail,width<1200 ? 68 : 216);
     assert.equal(view.chrome,56);
     assert.equal(view.footer,28);
+    if (width === 1440 && height === 900) {
+      const bounds = await execute(`[".meetings-quick-primary", ".meetings-section-heading", ".tabs", ".search-field", ".conference-filters", ".dashboard-meeting-row"].map(selector => {
+        const {x,y,width,height} = document.querySelector(".meetings-reference-page " + selector).getBoundingClientRect();
+        return [x,y,width,height].map(Math.round);
+      })`);
+      assert.deepEqual(bounds, [
+        [248,164,390,106], [248,327,1160,33], [248,374,430,47],
+        [1088,376,320,38], [248,441,1160,96], [248,584,1160,105],
+      ], "Meetings workspace matches the desktop design at its reference viewport");
+    }
     const name = `meetings-${theme}-${width}x${height}-${scale}.jpg`;
     const {data} = await cdp.sendCommand("Page.captureScreenshot",{format:"jpeg",quality:70,captureBeyondViewport:false});
     await fs.writeFile(path.join(dir,name),Buffer.from(data,"base64"));

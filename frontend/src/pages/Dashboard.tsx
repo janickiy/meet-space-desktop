@@ -4,12 +4,11 @@ import { Link, useSearchParams } from "react-router";
 import {
   ArrowUpRight,
   CalendarDays,
-  Clock,
+  UsersRound,
+  X,
   Ellipsis,
   RotateCcw,
-  CalendarClock,
   Link2,
-  UserRound,
   Plus,
   MessageCircle,
   DoorOpen,
@@ -35,6 +34,25 @@ import {
   CollectionViewToggle,
   type CollectionView,
 } from "./CollectionViewToggle";
+
+const participantsPlural = new Intl.PluralRules("ru-RU");
+const participantsLabels: Record<string, string> = {
+  one: "участник",
+  few: "участника",
+  many: "участников",
+  other: "участника",
+};
+
+function localTimeZoneLabel() {
+  const zone = (timeZoneName: "shortGeneric" | "shortOffset") =>
+    new Intl.DateTimeFormat("ru-RU", { timeZoneName })
+      .formatToParts()
+      .find((part) => part.type === "timeZoneName")
+      ?.value.replace("GMT", "UTC");
+  return [...new Set([zone("shortGeneric"), zone("shortOffset")])]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 const views: { id: NonNullable<ConferenceFilters["view"]>; label: string }[] = [
   { id: "upcoming", label: "Предстоящие" },
@@ -76,7 +94,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
             : Number.isFinite(date.getTime())
               ? date.toLocaleDateString("ru-RU", {
                   day: "numeric",
-                  month: "short",
+                  month: "long",
                 })
               : ""}
         </small>
@@ -88,15 +106,19 @@ function MeetingRow({ conference }: { conference: Conference }) {
           {conference.plannedDurationMin ? (
             <span>{conference.plannedDurationMin} мин · </span>
           ) : null}
-          <UserRound size={12} aria-hidden="true" />
           <span>
             {conference.ownerId === user?.id ? "Вы организатор" : "Вы участник"}
           </span>
           {conference.participantCount !== undefined && (
-            <>
-              <span>·</span>
-              <span>{conference.participantCount} участников</span>
-            </>
+            <span className="meeting-attendees">
+              <UsersRound size={13} aria-hidden="true" />
+              {conference.participantCount}{" "}
+              {
+                participantsLabels[
+                  participantsPlural.select(conference.participantCount)
+                ]
+              }
+            </span>
           )}
           <span className="sr-only"> · {formatDate(timestamp)}</span>
         </span>
@@ -254,10 +276,13 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
         </button>
         <Link className="meetings-quick-action" to="/meetings/new?scheduled=1">
           <span className="meetings-quick-symbol">
-            <CalendarClock size={22} aria-hidden="true" />
+            <CalendarDays size={25} aria-hidden="true" />
           </span>
           <span>
-            <strong>Запланировать встречу</strong>
+            <strong>
+              Запланировать
+              <span className="meeting-desktop-word"> встречу</span>
+            </strong>
             <small>Выбрать дату и время</small>
           </span>
         </Link>
@@ -275,15 +300,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
       <section aria-label="Список встреч">
         <div className="meetings-section-heading">
           <h2>Мои встречи</h2>
-          <span className="meeting-list-zone">
-            <Clock size={13} aria-hidden="true" />
-            {Intl.DateTimeFormat().resolvedOptions().timeZone}
-          </span>
-          <CollectionViewToggle
-            value={layout}
-            onChange={setLayout}
-            label="Вид списка встреч"
-          />
+          <span className="meeting-list-zone">{localTimeZoneLabel()}</span>
         </div>
         <div className="list-toolbar">
           <div className="tabs" role="tablist" aria-label="Статус конференций">
@@ -309,12 +326,26 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
               <Search size={17} aria-hidden="true" />
               <input
                 aria-label="Поиск конференции по названию"
+                id="meeting-search"
+                type="search"
                 placeholder="Найти встречу"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </label>
-
+            {search && (
+              <button
+                type="button"
+                className="meeting-search-clear"
+                aria-label="Очистить поиск"
+                onClick={() => {
+                  setSearch("");
+                  document.getElementById("meeting-search")?.focus();
+                }}
+              >
+                <X size={15} aria-hidden="true" />
+              </button>
+            )}
             <Button
               variant="outline"
               className="dashboard-mobile-filter"
@@ -331,7 +362,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
           className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
         >
           <label className="field">
-            Моё участие
+            <span>Моё участие</span>
             <select
               aria-label="Моё участие"
               value={scope}
@@ -347,7 +378,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             </select>
           </label>
           <label className="field">
-            С даты
+            <span>С даты</span>
             <input
               type="date"
               aria-label="Встречи с даты"
@@ -357,7 +388,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             />
           </label>
           <label className="field">
-            По дату
+            <span>По дату</span>
             <input
               type="date"
               aria-label="Встречи по дату"
@@ -386,6 +417,13 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             : tab === "active"
               ? "Встречи в эфире"
               : "Завершённые и отменённые"}
+          {query.isSuccess && (
+            <>
+              {" "}
+              · {visible.length}
+              {query.hasNextPage ? "+" : ""}
+            </>
+          )}
         </p>
         <ErrorNotice error={query.error} />
         {query.isError && (
@@ -443,6 +481,15 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             )
           )}
         </div>
+        {visible.length > 0 && (
+          <div className="meeting-view-options">
+            <CollectionViewToggle
+              value={layout}
+              onChange={setLayout}
+              label="Вид списка встреч"
+            />
+          </div>
+        )}
         {query.hasNextPage && (
           <Button
             variant="outline"

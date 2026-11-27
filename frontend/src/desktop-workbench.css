@@ -43,6 +43,8 @@
   object-fit: contain;
 }
 .desktop-titlebar .workspace-search-trigger {
+  gap: 10px;
+  font-size: calc(12px * var(--text-scale));
   width: min(360px, 33vw);
   height: 32px;
   min-height: 32px;
@@ -50,6 +52,22 @@
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
+  color: var(--muted);
+}
+.desktop-titlebar .workspace-search-trigger > span {
+  display: block;
+  flex: 1;
+  text-align: start;
+}
+.desktop-titlebar .workspace-search-trigger kbd {
+  font:
+    calc(10px * var(--text-scale)) "Segoe UI",
+    Inter,
+    sans-serif;
+  padding: 2px 5px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface-soft);
   color: var(--muted);
 }
 .desktop-icon {
@@ -91,13 +109,15 @@
   letter-spacing: 0;
   font-size: calc(11px * var(--text-scale));
   font-weight: 400;
+  line-height: 1.5;
+  min-height: 0;
   color: var(--muted);
   margin: 0;
   padding: 9px 10px 12px;
 }
 .desktop-workbench .sidebar-personal-caption {
   margin-top: 22px;
-  padding-top: 16px;
+  padding-top: 25px;
   border-top: 1px solid var(--line);
 }
 .desktop-workbench .sidebar .sidebar-nav {
@@ -125,7 +145,8 @@
   left: 0;
   border-radius: 4px;
 }
-.desktop-workbench .sidebar-service-nav {
+.desktop-workbench .sidebar .sidebar-service-nav {
+  gap: 0;
   margin-top: auto;
   padding-top: 24px;
 }
@@ -135,7 +156,22 @@
   margin-top: 15px;
 }
 .desktop-workbench .profile.profile-button {
+  min-height: 44px;
+  gap: 10px;
   padding: 5px;
+}
+.desktop-workbench .profile .avatar {
+  width: 33px;
+  height: 33px;
+  font-size: calc(11px * var(--text-scale));
+}
+.desktop-workbench .profile strong {
+  font-weight: 600;
+}
+.desktop-workbench .profile div > span {
+  margin-top: 2px;
+  line-height: 1.5;
+  font-size: calc(10px * var(--text-scale));
 }
 .desktop-workbench .profile > div {
   min-width: 0;
@@ -146,14 +182,40 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.sidebar-folders {
+  position: relative;
+}
+.desktop-folder-shortcuts:not([open]) {
+  height: 0;
+}
 .desktop-folder-shortcuts {
-  margin: 2px 0 0 13px;
+  margin-inline-start: 13px;
   font-size: var(--text-xs);
   color: var(--muted);
 }
 .desktop-folder-shortcuts summary {
+  position: absolute;
+  inset-inline-end: 2px;
+  top: 6px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
   cursor: pointer;
-  padding: 4px 0;
+  opacity: 0;
+}
+.sidebar-folders:is(:hover, :focus-within) summary,
+.desktop-folder-shortcuts[open] summary {
+  opacity: 1;
+}
+@media (hover: none) {
+  .desktop-folder-shortcuts summary {
+    opacity: 1;
+  }
+}
+.desktop-folder-shortcuts summary:hover {
+  background: var(--surface-soft);
 }
 .desktop-workbench .workspace {
   grid-row: 2;
@@ -285,7 +347,7 @@
 @media (min-width: 768px) and (max-width: 1199px) {
   :root {
     --sidebar-width: 68px;
-    --workspace-gutter: 24px;
+    --workspace-gutter: 32px;
   }
   .desktop-workbench .sidebar {
     padding: 24px 9px 12px;
@@ -343,6 +405,140 @@
   .desktop-workbench .sidebar-head {
     display: flex;
     justify-content: flex-end;
+  }
+}
+@media (max-width: 779px) {
+  .desktop-workbench[data-desktop] {
+    --sidebar-width: 68px;
+    --workspace-gutter: 24px;
+    --workspace-shell-height: 144px;
+    grid-template: 50px minmax(0, 1fr) 26px / var(--sidebar-width) minmax(
+        0,
+        1fr
+      );
+  }
+  .desktop-workbench[data-desktop] .desktop-titlebar {
+    display: flex;
+    height: auto;
+    gap: 12px;
+    padding: 0 15px;
+  }
+  .desktop-workbench[data-desktop] .desktop-brand {
+    gap: 8px;
+  }
+  .desktop-workbench[data-desktop] .desktop-brand img {
+    width: 23px;
+  }
+  .desktop-workbench[data-desktop] .desktop-brand strong {
+    font-size: calc(15px * var(--text-scale));
+  }
+  .desktop-workbench[data-desktop] .workspace-search-trigger {
+    display: flex;
+    flex: 1;
+    width: auto;
+    max-width: 300px;
+  }
+  .desktop-workbench[data-desktop] .desktop-title-actions {
+    gap: 0;
+  }
+  .desktop-workbench[data-desktop]:not([data-focus])
+    .desktop-title-actions
+    > :last-child {
+    display: none;
+  }
+  .desktop-workbench[data-desktop] .sidebar {
+    position: relative;
+    inset: auto;
+    grid-area: 2 / 1;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    transform: none;
+    visibility: visible;
+    padding: 24px 9px 12px;
+  }
+  .desktop-workbench[data-desktop]
+    .sidebar
+    :is(
+      .sidebar-caption,
+      .nav-label-text,
+      .profile > div,
+      .profile-chevron,
+      .desktop-folder-shortcuts,
+      .sidebar-head
+    ),
+  .desktop-workbench[data-desktop] .mobile-bottom-nav,
+  .desktop-workbench[data-desktop] .workspace-top > .mobile-only,
+  .desktop-workbench[data-desktop] .desktop-status > :nth-child(2) {
+    display: none;
+  }
+  .desktop-workbench[data-desktop] .sidebar .nav-item,
+  .desktop-workbench[data-desktop] .profile.profile-button {
+    justify-content: center;
+    padding: 0;
+    min-height: 45px;
+  }
+  .desktop-workbench[data-desktop] .sidebar-folders {
+    display: flex;
+    margin-top: 22px;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .desktop-workbench[data-desktop] .workspace {
+    grid-area: 2 / 2;
+    min-height: 0;
+    height: 100%;
+    padding: 0;
+  }
+  .desktop-workbench[data-desktop] .workspace-top {
+    min-height: 68px;
+    padding: 0 var(--workspace-gutter);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .desktop-workbench[data-desktop] .workspace-main {
+    padding: var(--workspace-gutter);
+  }
+  .desktop-workbench[data-desktop] .desktop-status {
+    display: flex;
+  }
+  .desktop-workbench[data-desktop]:is(
+      [data-focus],
+      :has(.conference-room-page, .conference-waiting-page, .prejoin-page)
+    ) {
+    grid-template-columns: 0 minmax(0, 1fr);
+  }
+  .desktop-workbench[data-desktop]:has(
+      .conference-room-page,
+      .conference-waiting-page,
+      .prejoin-page
+    )
+    .workspace-main {
+    padding: 0;
+  }
+}
+@media (max-width: 599px) {
+  .desktop-workbench[data-desktop] {
+    --sidebar-width: 56px;
+    --workspace-gutter: 20px;
+  }
+  .desktop-workbench[data-desktop] .sidebar {
+    padding: 18px 6px 10px;
+  }
+  .desktop-workbench[data-desktop] .desktop-titlebar,
+  .desktop-workbench[data-desktop] .desktop-status {
+    padding-inline: 10px;
+  }
+  .desktop-workbench[data-desktop] .desktop-brand strong,
+  .desktop-workbench[data-desktop] .workspace-search-trigger kbd,
+  .desktop-workbench[data-desktop] .desktop-status > :last-child {
+    display: none;
+  }
+  .desktop-workbench[data-desktop] .workspace-page-title {
+    font-size: calc(23px * var(--text-scale));
+  }
+  .desktop-workbench[data-desktop] .workspace-search-trigger {
+    max-width: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

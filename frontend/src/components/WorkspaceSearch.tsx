@@ -1,3 +1,4 @@
+import { PRODUCT_NAME } from "../brand";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
@@ -81,7 +82,7 @@ export function WorkspaceSearch() {
         aria-keyshortcuts={shortcut.ariaKeyShortcuts}
       >
         <Search size={16} aria-hidden="true" />
-        <span>Поиск в пространстве</span>
+        <span>Поиск по {PRODUCT_NAME}</span>
         <kbd>{shortcut.label}</kbd>
       </button>
       {open && (
