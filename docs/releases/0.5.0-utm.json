@@ -1,0 +1,27 @@
+{
+  "version": "0.5.0",
+  "sourceCommit": "9290b6ca09f119b282344ac800a679adea9ef5d0",
+  "windows": {
+    "arch": "arm64",
+    "upgradedFrom": "0.3.4-beta",
+    "persistent": true,
+    "installerWelcome": "Вас приветствует мастер установки MeetSpace Test",
+    "registeredVersion": "0.5.0",
+    "launchedAfterReboot": true,
+    "exeSha256": "ff819e78ab7bea8f78f99a592d7f6c08b0fe390fc6381b54de38b41884cd1f8f",
+    "appAsarSha256": "d35a6f4aa56f9cb4abe964afdb2429ed2694e34d3fcf83283cd2b89a788c2489",
+    "retainedProfile": true,
+    "serverHttpsStatusAfterReboot": 200,
+    "visibleScreenAfterReboot": "С возвращением"
+  },
+  "linux": {
+    "os": "Ubuntu 24.04",
+    "arch": "arm64",
+    "persistent": true,
+    "installedVersion": "0.5.0",
+    "packageFormat": "DEB",
+    "activeWindow": true,
+    "appAsarSha256": "8644dd793e1385c5b2a477303c98e9696b37570a81b1520ba325ced16f447f28",
+    "retainedProfile": true
+  }
+}

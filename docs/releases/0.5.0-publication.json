@@ -1,0 +1,70 @@
+{
+  "version": "0.5.0",
+  "page": "https://meet-space.janickiy.com/download",
+  "sourceCommit": "9290b6ca09f119b282344ac800a679adea9ef5d0",
+  "sourceTreeSha256": "76c2808ecd453414ccc118c2f880a468c1769a40624cf993ba08f5d3962b75b8",
+  "catalogCommit": "06940137454444b9b47754397296813ed1920457",
+  "checkedAt": "2026-11-27T17:37:20.503867+00:00",
+  "testBuild": true,
+  "publicBrowserVerifiedLinks": 8,
+  "fullDownloadsVerified": [
+    {
+      "name": "MeetSpace-0.5.0-win-x64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-x64-test-setup.exe",
+      "sizeBytes": 122346486,
+      "sha256": "77db199c16ffcc402737e30dcbe98a8f2b29dbe2cd93c96b6f0d52e4b07ebcae",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-win-arm64-test-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-arm64-test-setup.exe",
+      "sizeBytes": 116887753,
+      "sha256": "6ce1277734fd63091efc976138f19823cd29ad7eead1979927731a7feb25fff0",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-amd64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-amd64-test.deb",
+      "sizeBytes": 100745648,
+      "sha256": "19e3c539fb7db525d3458bb609a2b60f55e055718f8037f178e678720e0e52d5",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-x86_64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.rpm",
+      "sizeBytes": 90328205,
+      "sha256": "14ceed6157f87e9eb8379bc67238307d20d1f567c2a0ec26de2a7da66912e0e9",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-x86_64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.AppImage",
+      "sizeBytes": 127413676,
+      "sha256": "c2e960a759c9a463dfa35d0fd104a116f58d58da68498e5769babb9c77fcc4bb",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-arm64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-arm64-test.deb",
+      "sizeBytes": 95811024,
+      "sha256": "b3b7e345c7fd97590089ac0ed417b29ad0ee8ef98cd0794e7eb8287751b9b803",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-aarch64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-aarch64-test.rpm",
+      "sizeBytes": 85953013,
+      "sha256": "dbb16e60677c625cc5881cb6783203f7b846ed5afcc83a7d4e01d39f57f6e519",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-linux-arm64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-arm64-test.AppImage",
+      "sizeBytes": 119428564,
+      "sha256": "bd5999fb95f53c9842bf08266e4fef0f2247079d6206cf17fe013861100d69a9",
+      "publicFullGET": true
+    }
+  ],
+  "publicJavaScript": "https://meet-space.janickiy.com/assets/desktop-050-76c2808e/index-eKUardRc.js",
+  "publicJavaScriptSHA256": "f08050b9db0299a5bd51d2f7f96961e489fe3ff3e2ed6fa75ee3ad2610dc11e6"
+}
