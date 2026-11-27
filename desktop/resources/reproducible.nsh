@@ -37,6 +37,8 @@ Function migrateLegacyMeetSpaceShortcut
     Push $1
     Push $2
     Push $3
+    Push $4
+    Push $5
     !insertmacro ComHlpr_CreateInProcInstance ${CLSID_ShellLink} ${IID_IShellLink} r0 ""
     ${If} $0 P<> 0
       ${IUnknown::QueryInterface} $0 '("${IID_IPersistFile}",.r1)'
@@ -45,11 +47,18 @@ Function migrateLegacyMeetSpaceShortcut
         ${If} $2 = 0
           ${IShellLink::GetPath} $0 '(.r3,${NSIS_MAX_STRLEN},0,0).r2'
           ${If} $2 = 0
-          ${AndIf} $3 == "$INSTDIR\${PRODUCT_FILENAME}.exe"
-            ${If} ${FileExists} "$R0\${SHORTCUT_NAME}.lnk"
-              Delete "$R0\MeetSpace Test.lnk"
-            ${Else}
-              Rename "$R0\MeetSpace Test.lnk" "$R0\${SHORTCUT_NAME}.lnk"
+            ; The shell can return a long path even when NSIS has an 8.3 path.
+            System::Call 'kernel32::GetLongPathNameW(w r3, w .r3, i ${NSIS_MAX_STRLEN}) i.r2'
+            System::Call 'kernel32::GetLongPathNameW(w "$INSTDIR\${PRODUCT_FILENAME}.exe", w .r4, i ${NSIS_MAX_STRLEN}) i.r5'
+            ${If} $2 > 0
+            ${AndIf} $2 < ${NSIS_MAX_STRLEN}
+            ${AndIf} $2 = $5
+            ${AndIf} $3 == $4
+              ${If} ${FileExists} "$R0\${SHORTCUT_NAME}.lnk"
+                Delete "$R0\MeetSpace Test.lnk"
+              ${Else}
+                Rename "$R0\MeetSpace Test.lnk" "$R0\${SHORTCUT_NAME}.lnk"
+              ${EndIf}
             ${EndIf}
           ${EndIf}
         ${EndIf}
@@ -57,6 +66,8 @@ Function migrateLegacyMeetSpaceShortcut
       ${EndIf}
       ${IUnknown::Release} $0 ""
     ${EndIf}
+    Pop $5
+    Pop $4
     Pop $3
     Pop $2
     Pop $1
