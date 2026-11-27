@@ -3,6 +3,7 @@ module.exports = {
   appId: "com.janickiy.meetspace.desktop.test",
   productName: "MeetSpace",
   executableName: "MeetSpace",
+  extraMetadata: { description: "MeetSpace" },
   copyright: "Copyright © 2026 MeetSpace",
   protocols: [{ name: "MeetSpace meeting link", schemes: ["meetspace"] }],
   asar: true,
