@@ -379,20 +379,20 @@ export function DesktopSshInstaller({
   const expired = !!plan && plan.expiresAt * 1000 <= now;
   const needsDockerConsent =
     !!plan && (plan.installDocker || plan.installDockerPluginsOnly);
+  const completed = status?.state === "completed";
   const currentStep = !identity
     ? 0
     : !identity.trusted
       ? 1
-      : ticket
+      : completed
         ? 4
-        : plan
+        : ticket || plan || state?.preflight
           ? 3
           : 2;
   const observedEndpointMatches =
     state?.endpoint?.host === host.trim() &&
     state.endpoint.port === Number(port) &&
     state.endpoint.user === user.trim();
-  const completed = status?.state === "completed";
   const pageHeading = showSavedEntry
     ? {
         kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
@@ -438,7 +438,7 @@ export function DesktopSshInstaller({
                   kicker: "СОБСТВЕННАЯ ИНФРАСТРУКТУРА",
                   title: "Начнём с сервера.",
                   description:
-                    "Укажите Linux-хост, на котором будет работать MeetSpace.",
+                    "Нужен отдельный удалённый Linux VPS с публичным IP-адресом.",
                 };
   const HostFormContainer =
     identity && observedEndpointMatches ? "details" : "div";
@@ -630,34 +630,22 @@ export function DesktopSshInstaller({
         <span>Подключение сервера</span>
         <strong>{String(currentStep + 1).padStart(2, "0")} / 05</strong>
       </div>
-      <ol className="desktop-ssh-steps" aria-label="Этапы установки">
-        {["Сервер", "Ключ сервера", "Доступ SSH", "План", "Установка"].map(
-          (label, index) => (
-            <li
-              key={label}
-              aria-current={
-                index === currentStep && status?.state !== "completed"
-                  ? "step"
-                  : undefined
-              }
-              className={
-                index < currentStep || status?.state === "completed"
-                  ? "is-complete"
-                  : ""
-              }
-            >
-              <span aria-hidden="true">
-                {index < currentStep || status?.state === "completed" ? (
-                  <Check size={12} />
-                ) : (
-                  index + 1
-                )}
-              </span>
-              <strong>{label}</strong>
-            </li>
-          ),
-        )}
-      </ol>
+      <div
+        className="desktop-ssh-steps"
+        role="progressbar"
+        aria-label="Этап установки"
+        aria-valuemin={1}
+        aria-valuemax={5}
+        aria-valuenow={currentStep + 1}
+        aria-valuetext={`Шаг ${currentStep + 1} из 5`}
+      >
+        {[0, 1, 2, 3, 4].map((step) => (
+          <i
+            key={step}
+            className={step <= currentStep ? "is-done" : undefined}
+          />
+        ))}
+      </div>
       <header className="desktop-ssh-heading">
         {completed && (
           <div className="desktop-ssh-state-icon is-success" aria-hidden="true">
@@ -816,7 +804,7 @@ export function DesktopSshInstaller({
             >
               <div className="desktop-ssh-endpoint">
                 <div>
-                  <label htmlFor="desktop-ssh-host">SSH-адрес хоста</label>
+                  <label htmlFor="desktop-ssh-host">IP-адрес или имя VPS</label>
                   <input
                     id="desktop-ssh-host"
                     required
@@ -833,7 +821,7 @@ export function DesktopSshInstaller({
                   />
                 </div>
                 <div>
-                  <label htmlFor="desktop-ssh-port">Порт</label>
+                  <label htmlFor="desktop-ssh-port">SSH-порт</label>
                   <input
                     id="desktop-ssh-port"
                     type="number"
@@ -849,20 +837,40 @@ export function DesktopSshInstaller({
                   />
                 </div>
               </div>
-              <label htmlFor="desktop-ssh-user">SSH-пользователь</label>
+              <label htmlFor="desktop-ssh-deploy-domain">
+                Домен будущего MeetSpace
+              </label>
               <input
-                id="desktop-ssh-user"
-                required
-                maxLength={64}
-                value={user}
-                disabled={disabled || !!ticket}
+                id="desktop-ssh-deploy-domain"
+                value={domain}
+                placeholder="meet.example.org"
                 autoComplete="off"
                 spellCheck={false}
-                onChange={(event) => {
-                  setUser(event.target.value);
-                  setTrustConfirmed(false);
-                }}
+                maxLength={253}
+                disabled={disabled || !!ticket}
+                onChange={(event) => setDomain(event.target.value)}
               />
+              <details className="desktop-ssh-login-option">
+                <summary>Пользователь SSH · {user || "укажите имя"}</summary>
+                <label htmlFor="desktop-ssh-user">SSH-пользователь</label>
+                <input
+                  id="desktop-ssh-user"
+                  onInvalid={(event) => {
+                    const details = event.currentTarget.closest("details");
+                    if (details) details.open = true;
+                  }}
+                  required
+                  maxLength={64}
+                  value={user}
+                  disabled={disabled || !!ticket}
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(event) => {
+                    setUser(event.target.value);
+                    setTrustConfirmed(false);
+                  }}
+                />
+              </details>
               <p className="field-hint">
                 Ubuntu 22.04 / 24.04, root или sudo без пароля. Пароль и ключ
                 ещё не передаются.

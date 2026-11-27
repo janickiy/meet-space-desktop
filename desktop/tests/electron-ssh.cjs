@@ -212,7 +212,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await clickText('Установить сервер по SSH');await openSaved();
     await assertProgress(null,'unknown');
     assert.match(await execute(`document.querySelector('.desktop-ssh-saved-plan').textContent`),/8\.8\.8\.8/,'A saved legacy plan keeps its confirmed IP without reopening an IP input');
-    assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/05 \/ 05/);
+    assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/04 \/ 05/);
     assert.equal(await isDisabled('Проверить состояние'),true);
     assert.equal(calls.some(c=>['status','resume','apply','cancel','forget'].includes(c.action)),false,'Opening a saved job is a local view transition');
     await captureProgress('ssh-saved-open-unknown-1280-light');
@@ -231,18 +231,20 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     await clickText('Новая установка');
     assert.equal(await isDisabled('Начать с первого шага'),true,'New-install consent resets on every wizard entry');
     await click('#desktop-ssh-new-install-consent');await clickText('Начать с первого шага');
-    await visible('SSH-адрес хоста');
+    await visible('IP-адрес или имя VPS');
     assert.equal(state.ticket,undefined);
     assert.equal(calls.filter(c=>c.action==='forget').length,1);
     assert.equal(calls.filter(c=>c.action==='forget')[0].input.confirm,true);
     assert.deepEqual(await execute(`['desktop-ssh-host','desktop-ssh-port','desktop-ssh-user'].map(id=>document.getElementById(id).value)`),['','22','root']);
     assert.equal(calls.some(c=>['status','resume','apply','cancel','discover'].includes(c.action)),false,'A fresh local form never alters the prior remote installation');
-    checks.push('Saved jobs start at 01/05 without polling or progress; explicit opening reveals unknown 05/05, closing preserves recovery, completed and running snapshots stay hidden without autopolling, and only confirmed new-install selection removes the local card and resets the form');
+    checks.push('Saved jobs start at 01/05 without polling or progress; explicit opening reveals unknown 04/05, closing preserves recovery, completed and running snapshots stay hidden without autopolling, and only confirmed new-install selection removes the local card and resets the form');
     await capture('ssh-host-1280-light');
     await capture('ssh-host-1920-dark',{width:1920,height:1080,theme:'dark'});
+    await field('desktop-ssh-deploy-domain','meet.example.com');
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
     assert.equal(await isDisabled('Доверять этому ключу'),true);assert.equal(calls.some(c=>c.input.credentials),false);
     await click('.desktop-ssh-trust input[type=checkbox]');await clickText('Доверять этому ключу');await visible('Домен MeetSpace');
+    assert.equal(await execute("document.getElementById('desktop-ssh-domain').value"),'meet.example.com','The public domain from the first screen carries through trust confirmation');
     assert.match(await execute(`document.querySelector('.desktop-ssh-step-caption').textContent`),/03 \/ 05/);
     assert.equal(await execute(`!!document.getElementById('desktop-ssh-public-ip')`),false,'Step 03 asks for the domain, not a manually supplied IPv4');
     assert.equal(await execute(`document.querySelector('input[name="desktop-ssh-image-mode"]:checked').value`),'images','Ready Docker images are the default');
@@ -445,7 +447,7 @@ const output = path.resolve(__dirname,'../artifacts/ssh-installer-images-2026102
     // A second, explicit source selection must change the real plan request;
     // it must not silently fall back to ready images or retain the prior archive.
     statusReply='running';
-    await visible('SSH-адрес хоста');
+    await visible('IP-адрес или имя VPS');
     await field('desktop-ssh-host','vps.example.com');await clickText('Проверить ключ хоста');await visible('Подтвердите ключ хоста');
     await click('.desktop-ssh-trust input[type=checkbox]');await clickText('Доверять этому ключу');await visible('Домен MeetSpace');
     await click('input[name="desktop-ssh-image-mode"][value="source"]');

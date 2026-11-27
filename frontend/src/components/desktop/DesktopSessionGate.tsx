@@ -13,6 +13,10 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Link as LinkIcon,
+  MessageCircle,
+  ShieldCheck,
+  Video,
+  Info,
   LockKeyhole,
   Server,
 } from "lucide-react";
@@ -439,7 +443,9 @@ function ServerSettings({
         <em>Идей больше.</em>
       </h1>
       <p className="desktop-foundation-description">
-        MeetSpace — единое пространство для встреч и общения.
+        MeetSpace — единое пространство
+        <br />
+        для встреч и общения.
       </p>
       <div className="on-choice-stack">
         <button
@@ -475,6 +481,17 @@ function ServerSettings({
           <ArrowUpRight />
         </button>
       </div>
+      <div className="on-feature-strip">
+        <span>
+          <Video aria-hidden="true" /> Встречи
+        </span>
+        <span>
+          <MessageCircle aria-hidden="true" /> Сообщения
+        </span>
+        <span>
+          <ShieldCheck aria-hidden="true" /> Ваш сервер
+        </span>
+      </div>
     </div>
   ) : (
     <>
@@ -487,13 +504,15 @@ function ServerSettings({
           >
             <ArrowLeft size={14} /> Назад
           </button>
-          <span className="desktop-foundation-label">
-            ШАГ 1 ИЗ 2 · ПОДКЛЮЧЕНИЕ
-          </span>
-          <h1 id="desktop-title">Подключиться к серверу</h1>
+          <span className="desktop-foundation-label">01 / ПОДКЛЮЧЕНИЕ</span>
+          <h1 id="desktop-title" className="on-connect-title">
+            Где ваша
+            <br />
+            команда?
+          </h1>
           <p className="desktop-foundation-description">
-            Укажите адрес вашего MeetSpace. Затем войдите в аккаунт этого
-            сервера.
+            Введите адрес сервера MeetSpace. Его можно узнать у администратора
+            команды.
           </p>
         </>
       )}
@@ -574,7 +593,7 @@ function ServerSettings({
         {probe && <p role="status">Сервер доступен · версия {probe.version}</p>}
         <div className="desktop-server-actions">
           <Button type="submit" busy={busy}>
-            Подключиться
+            Подключиться к серверу
           </Button>
           <Button
             type="button"
@@ -591,6 +610,15 @@ function ServerSettings({
           </Button>
         </div>
       </form>
+      {!embedded && (
+        <div className="on-info-card">
+          <Info aria-hidden="true" />
+          <p>
+            Каждый сервер — отдельное пространство. Аккаунт вашей команды
+            работает на её сервере.
+          </p>
+        </div>
+      )}
       <div className="desktop-ssh-entry">
         <div>
           <strong>Нужен свой сервер?</strong>

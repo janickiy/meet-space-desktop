@@ -54,9 +54,11 @@ export function WelcomePanel({ installer = false }: { installer?: boolean }) {
           <div className="on-video-tile">
             <div className="on-person on-person-one">
               <span>АК</span>
+              <i />
             </div>
             <div className="on-person on-person-two">
               <span>МИ</span>
+              <i />
             </div>
             <div className="on-mini-call">
               <span>

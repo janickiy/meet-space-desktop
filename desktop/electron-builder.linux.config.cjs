@@ -59,6 +59,9 @@ module.exports = () => {
       desktop: {
         entry: {
           Name: "MeetSpace Test",
+          GenericName: "Meetings and team chat",
+          "GenericName[ru]": "Встречи и командные чаты",
+          "Comment[ru]": "Встречи, сообщения и файлы на сервере вашей команды",
           Terminal: "false",
           StartupNotify: "true",
           "X-MeetSpace-Build": "internal-test",

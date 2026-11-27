@@ -457,3 +457,70 @@
 :root[data-theme="dark"] .on-choice-main :is(small, svg) {
   color: #242031;
 }
+
+:root
+  .desktop-foundation:not(.desktop-foundation-installing)
+  > .desktop-foundation-card
+  > .reference-onboarding-intro {
+  width: min(100%, 418px);
+}
+:root .reference-onboarding-intro h1 {
+  margin: 13px 0 14px;
+  font-size: calc(43px * var(--text-scale));
+  letter-spacing: -1.9px;
+  line-height: 1.13;
+}
+:root .reference-onboarding-intro .desktop-foundation-description {
+  font-size: calc(15px * var(--text-scale));
+  line-height: 1.7;
+}
+.on-feature-strip,
+.on-feature-strip span,
+.on-info-card {
+  display: flex;
+  align-items: center;
+}
+.on-feature-strip {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 20px;
+  margin-top: 26px;
+}
+.on-feature-strip span {
+  gap: 6px;
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
+}
+.on-feature-strip svg {
+  width: 14px;
+  height: 14px;
+}
+.on-info-card {
+  gap: 12px;
+  padding: 15px;
+  border-radius: 12px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: calc(12px * var(--text-scale));
+  line-height: 1.6;
+}
+.on-info-card p {
+  margin: 0;
+}
+.on-info-card svg {
+  width: 17px;
+  flex: none;
+  color: var(--primary);
+}
+
+@media (max-width: 759px) {
+  :root .reference-onboarding-intro h1 {
+    font-size: calc(34px * var(--text-scale));
+  }
+}
+:root .desktop-foundation-card .on-connect-title {
+  font-size: calc(37px * var(--text-scale));
+  line-height: 1.14;
+  letter-spacing: -1.7px;
+  margin-block: 13px 14px;
+}

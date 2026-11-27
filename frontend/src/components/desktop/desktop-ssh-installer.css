@@ -88,51 +88,6 @@
   border-radius: 16px;
   background: var(--surface-soft);
 }
-.desktop-ssh-steps li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 8px;
-  min-width: 0;
-  border-radius: 10px;
-  color: var(--muted);
-  font-size: calc(12px * var(--text-scale));
-}
-.desktop-ssh-steps li > span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 50%;
-  font-weight: 600;
-  font-variant-numeric: lining-nums tabular-nums;
-  line-height: 1;
-  text-align: center;
-  letter-spacing: 0;
-  background: var(--surface);
-}
-.desktop-ssh-steps li > strong {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.desktop-ssh-steps li[aria-current] {
-  color: var(--primary);
-  background: var(--surface);
-  box-shadow: 0 2px 6px rgb(15 23 42 / 6%);
-}
-.desktop-ssh-steps li[aria-current] > span {
-  background: var(--primary);
-  color: var(--primary-contrast);
-  border-color: var(--primary);
-}
-.desktop-ssh-steps li.is-complete > span {
-  color: var(--success);
-  background: var(--success-soft);
-  border-color: transparent;
-}
 .desktop-ssh-form,
 .desktop-ssh-auth {
   display: grid;
@@ -769,13 +724,6 @@
     flex-direction: column;
     gap: 14px;
   }
-  .desktop-ssh-steps li {
-    flex-direction: column;
-    align-items: center;
-    padding: 8px 3px;
-    text-align: center;
-    font-size: calc(11px * var(--text-scale));
-  }
 }
 @media (max-width: 900px) {
   .desktop-foundation.desktop-foundation-installing:has(> .desktop-welcome) {
@@ -930,49 +878,6 @@
   border-radius: 0;
   background: transparent;
   gap: 7px;
-}
-:root .desktop-ssh-steps li {
-  position: relative;
-  padding: 15px 0 0;
-  border-radius: 0;
-  gap: 5px;
-  background: transparent;
-  box-shadow: none;
-  font-size: calc(9px * var(--text-scale));
-  line-height: 1.4;
-  color: #a2aabd;
-  flex-direction: row;
-  text-align: left;
-}
-.desktop-ssh-steps li::before {
-  content: "";
-  height: 3px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  border-radius: 3px;
-  background: var(--ssh-border);
-}
-:root .desktop-ssh-steps li:is([aria-current], .is-complete) {
-  color: var(--primary);
-}
-.desktop-ssh-steps li:is([aria-current], .is-complete)::before {
-  background: var(--primary);
-}
-:root .desktop-ssh-steps li > span {
-  width: 17px;
-  height: 17px;
-  border: 1px solid currentColor;
-  background: transparent;
-  color: inherit;
-  font-size: calc(8px * var(--text-scale));
-}
-.desktop-ssh-steps li > strong {
-  font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 :root .desktop-ssh-heading {
   display: block;
@@ -1958,12 +1863,6 @@
   :root .desktop-ssh-installer h1 {
     font-size: calc(29px * var(--text-scale));
   }
-  :root .desktop-ssh-steps li {
-    font-size: calc(8px * var(--text-scale));
-  }
-  :root .desktop-ssh-steps li > span {
-    display: none;
-  }
   .desktop-ssh-endpoint {
     grid-template-columns: minmax(0, 1fr) 90px;
     gap: 10px;
@@ -2310,4 +2209,109 @@
   bottom: 0;
   z-index: 1;
   background: var(--surface);
+}
+
+/* Supplied desktop VPS wizard. */
+@media (min-width: 1001px) {
+  :root:not([data-large-text="true"])
+    .desktop-foundation.desktop-foundation-installing:has(
+      > .reference-welcome
+    ) {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);
+  }
+  :root:not([data-large-text="true"])
+    .desktop-foundation.desktop-foundation-installing
+    > .reference-welcome {
+    display: flex;
+    padding: 32px clamp(24px, 2.7vw, 40px);
+    background: var(--primary-soft);
+  }
+  :root .desktop-foundation-installing .on-side h2 {
+    font-size: clamp(30px, 3vw, 38px);
+    line-height: 1.15;
+    letter-spacing: -1.2px;
+  }
+}
+:root
+  .entry-frame
+  .desktop-foundation.desktop-foundation-installing:has(> .reference-welcome)
+  > .desktop-foundation-card {
+  background: var(--canvas);
+  padding: 24px clamp(20px, 4vw, 56px) 28px;
+}
+:root .desktop-ssh-installer {
+  max-width: 648px;
+  font-size: calc(15px * var(--text-scale));
+  line-height: 1.6;
+}
+.desktop-ssh-step-caption {
+  font-size: calc(11px * var(--text-scale));
+  letter-spacing: 1.2px;
+  margin-bottom: 10px;
+}
+:root .desktop-ssh-installer > .desktop-ssh-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  height: 4px;
+  gap: 6px;
+  margin: 0 0 32px;
+  padding: 0;
+}
+.desktop-ssh-steps i {
+  border-radius: 4px;
+  background: var(--ssh-border);
+}
+.desktop-ssh-steps i.is-done {
+  background: var(--primary);
+}
+:root .desktop-ssh-installer .desktop-ssh-heading {
+  margin-bottom: 28px;
+}
+:root .desktop-ssh-installer .desktop-ssh-heading h1 {
+  font-size: calc(32px * var(--text-scale));
+  line-height: 1.2;
+}
+:root .desktop-ssh-installer .desktop-foundation-description {
+  font-size: calc(15px * var(--text-scale));
+  line-height: 1.65;
+}
+:root .desktop-ssh-installer label {
+  font-size: calc(14px * var(--text-scale));
+}
+:root
+  .desktop-ssh-installer
+  :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  min-height: 48px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: calc(16px * var(--text-scale));
+}
+:root .desktop-ssh-installer .password-input input {
+  padding-right: 52px;
+}
+.desktop-ssh-login-option {
+  margin: 12px 0 0;
+}
+.desktop-ssh-login-option summary {
+  color: var(--primary);
+  cursor: pointer;
+}
+.desktop-ssh-login-option[open] > label {
+  display: block;
+  margin: 14px 0 6px;
+}
+:root .desktop-ssh-installer .field-hint {
+  font-size: calc(13px * var(--text-scale));
+}
+:root .desktop-ssh-installer .desktop-ssh-setup-group {
+  padding: 20px;
+  border: 1px solid var(--ssh-border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+@container (max-width: 450px) {
+  :root .desktop-ssh-installer .desktop-ssh-setup-group {
+    padding: 14px;
+  }
 }

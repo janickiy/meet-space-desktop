@@ -31,6 +31,13 @@ export async function verifyMacDmg(filename, receipt, pkg) {
     const canonicalMount = await realpath(mount);
     if (!(await Promise.all(mountedPoints.map(value => realpath(value)))).includes(canonicalMount))
       throw new Error("DMG mounted at an unexpected location");
+    if (!command("/usr/bin/GetFileInfo", ["-a", mount]).stdout.includes("C"))
+      throw new Error("Mounted DMG volume icon flag missing");
+    for (const [mountedFile, resource] of [[".DS_Store", "installer/finder-layout.dat"], [".VolumeIcon.icns", "macos/icon.icns"]]) {
+      const bytes = await readFile(path.join(mount, mountedFile));
+      if (!bytes.equals(await readFile(path.join(desktop, "resources", resource))))
+        throw new Error(`Mounted DMG has unexpected Finder artwork: ${mountedFile}`);
+    }
     const app = path.join(mount, "MeetSpace.app");
     const actual = await verifyMacApp(app, receipt.arch, pkg, receipt.provenance);
     if (actual.asarSha256 !== receipt.asarSha256 || await realpath(path.join(mount, "Applications")) !== "/Applications")
@@ -84,12 +91,30 @@ export async function packageMacDmg(args) {
     await writeFile(path.join(volume, "Установка.txt"), args.release
       ? "MeetSpace\nПеретащите MeetSpace.app в Applications. Перед заменой завершите приложение.\nУдаление приложения не удаляет ваши настройки и данные.\n"
       : "MeetSpace — внутренняя тестовая сборка, без Developer ID и нотариализации.\nНе является готовым публичным релизом. Gatekeeper может отказать в запуске.\nПеретащите MeetSpace.app в Applications. Перед заменой завершите приложение.\nЗамена или удаление приложения не удаляет настройки пользователя.\n");
+    await cp(path.join(desktop, "resources/installer/finder-layout.dat"), path.join(volume, ".DS_Store"));
+    await cp(path.join(desktop, "resources/macos/icon.icns"), path.join(volume, ".VolumeIcon.icns"));
     const epoch = receipt.provenance.sourceDateEpoch;
+    await utimes(path.join(volume, ".DS_Store"), epoch, epoch);
+    await utimes(path.join(volume, ".VolumeIcon.icns"), epoch, epoch);
     await utimes(path.join(volume, "Установка.txt"), epoch, epoch);
     await utimes(volume, epoch, epoch);
     const dmg = path.join(temporary, identity.filename);
+    // Finder reads the custom-icon flag from the HFS volume root. The create
+    // operation copies directory contents, but does not copy this root flag.
+    const writable = path.join(temporary, "layout.dmg");
+    const mountpoint = path.join(temporary, "layout-mount");
+    await mkdir(mountpoint);
     command("/usr/bin/hdiutil", ["create", "-srcfolder", volume, "-volname", `MeetSpace ${pkg.version}${args.release ? "" : " Test"} ${args.arch}`,
-      "-format", "UDZO", "-fs", "HFS+", dmg]);
+      "-format", "UDRW", "-fs", "HFS+", writable]);
+    command("/usr/bin/hdiutil", ["attach", "-readwrite", "-nobrowse", "-noautoopen", "-mountpoint", mountpoint, writable]);
+    try {
+      command("/usr/bin/SetFile", ["-a", "C", mountpoint]);
+    } finally {
+      command("/usr/bin/hdiutil", ["detach", mountpoint]);
+    }
+    await rmdir(mountpoint);
+    command("/usr/bin/hdiutil", ["convert", writable, "-format", "UDZO", "-o", dmg]);
+    await rm(writable);
     if (args.release) {
       await signing.signMacDmg({ dmg, config, keychainPath });
       notarizedDmg = await signing.notarizeMacArtifact({ artifact: dmg, kind: "dmg", config, keychainPath });
