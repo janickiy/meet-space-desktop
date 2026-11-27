@@ -202,6 +202,10 @@
   font-weight: 400;
 }
 
+.account-add-field input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
 .account-add-field .password-input input {
   padding-right: 44px;
 }
@@ -229,7 +233,7 @@
   justify-content: center;
 }
 
-.account-add-form > .error-notice {
+.account-add-error .error-notice {
   margin: 0;
   overflow-wrap: anywhere;
 }
@@ -240,7 +244,7 @@
   }
 
   .account-add-server,
-  .account-add-form > .error-notice {
+  .account-add-error {
     grid-column: 1 / -1;
   }
 }

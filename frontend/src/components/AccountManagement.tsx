@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   ArrowRight,
   CircleCheck,
   Info,
@@ -17,7 +18,13 @@ import { serviceOrigin } from "../platform/urls";
 import { Button, ErrorNotice, Loading, PasswordInput } from "./ui";
 import "./account-management.css";
 
-export function AccountManagement() {
+const accountFieldErrors = {
+  name: "Введите имя для встреч.",
+  password: "Пароль должен содержать от 8 до 128 символов.",
+  repeatPassword: "Пароли не совпадают.",
+};
+
+export function AccountManagement({ onBack }: { onBack: () => void }) {
   const auth = useAuth();
   const navigate = useNavigate();
   const accounts = useQuery({
@@ -35,7 +42,9 @@ export function AccountManagement() {
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>();
-  const [validation, setValidation] = useState("");
+  const [invalidField, setInvalidField] = useState<
+    keyof typeof accountFieldErrors | null
+  >(null);
   const adding = mode === "login" || mode === "register";
   const heading = useRef<HTMLHeadingElement>(null);
   const addButton = useRef<HTMLButtonElement>(null);
@@ -62,7 +71,7 @@ export function AccountManagement() {
     setPassword("");
     setRepeatPassword("");
     setError(undefined);
-    setValidation("");
+    setInvalidField(null);
     setConfirmed(false);
   }
   async function changeAccount(id: string) {
@@ -77,20 +86,26 @@ export function AccountManagement() {
       setBusy(false);
     }
   }
-  async function submit(event: FormEvent) {
+  function validateField(
+    form: HTMLFormElement,
+    field: keyof typeof accountFieldErrors,
+  ) {
+    setInvalidField(field);
+    const input = form.elements.namedItem(field);
+    if (input instanceof HTMLInputElement) input.focus();
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
-    setValidation("");
-    if (
-      mode === "register" &&
-      (passwordLength(password) < 8 || passwordLength(password) > 128)
-    ) {
-      setValidation("Пароль должен содержать от 8 до 128 символов.");
-      return;
-    }
-    if (mode === "register" && password !== repeatPassword) {
-      setValidation("Пароли не совпадают.");
-      return;
+    setInvalidField(null);
+    if (mode === "register") {
+      if (!name.trim()) return validateField(event.currentTarget, "name");
+      const length = passwordLength(password);
+      if (length < 8 || length > 128)
+        return validateField(event.currentTarget, "password");
+      if (password !== repeatPassword)
+        return validateField(event.currentTarget, "repeatPassword");
     }
     if (mode === "delete" && !confirmed) return;
     setBusy(true);
@@ -118,6 +133,14 @@ export function AccountManagement() {
         className="account-management account-add"
         aria-labelledby="accounts-heading"
       >
+        <button
+          className="account-settings-back"
+          type="button"
+          disabled={busy}
+          onClick={() => choose(null)}
+        >
+          <ArrowLeft size={18} aria-hidden="true" /> Аккаунты
+        </button>
         <header className="account-management-heading">
           <h2 id="accounts-heading" ref={heading} tabIndex={-1}>
             Добавить аккаунт
@@ -157,6 +180,10 @@ export function AccountManagement() {
         <form
           className="account-add-form"
           onSubmit={(event) => void submit(event)}
+          onChange={() => {
+            setError(undefined);
+            setInvalidField(null);
+          }}
         >
           <label className="account-add-field account-add-server">
             <span>Адрес сервера</span>
@@ -166,8 +193,13 @@ export function AccountManagement() {
             <label className="account-add-field">
               <span>Имя для встреч</span>
               <input
+                name="name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
+                aria-invalid={invalidField === "name" || undefined}
+                aria-describedby={
+                  invalidField === "name" ? `${fieldId}-error` : undefined
+                }
                 placeholder="Как вас зовут"
                 required
                 maxLength={100}
@@ -193,6 +225,7 @@ export function AccountManagement() {
             <label htmlFor={`${fieldId}-password`}>Пароль</label>
             <PasswordInput
               key={mode}
+              name="password"
               id={`${fieldId}-password`}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -200,8 +233,13 @@ export function AccountManagement() {
                 registering ? "Минимум 8 символов" : "Введите пароль"
               }
               autoComplete={registering ? "new-password" : "current-password"}
+              aria-invalid={invalidField === "password" || undefined}
               aria-describedby={
-                registering ? `${fieldId}-password-hint` : undefined
+                invalidField === "password"
+                  ? `${fieldId}-error`
+                  : registering
+                    ? `${fieldId}-password-hint`
+                    : undefined
               }
               required
               maxLength={128}
@@ -218,6 +256,13 @@ export function AccountManagement() {
               <label htmlFor={`${fieldId}-repeat`}>Повторите пароль</label>
               <PasswordInput
                 id={`${fieldId}-repeat`}
+                name="repeatPassword"
+                aria-invalid={invalidField === "repeatPassword" || undefined}
+                aria-describedby={
+                  invalidField === "repeatPassword"
+                    ? `${fieldId}-error`
+                    : undefined
+                }
                 visibilityLabel="повтор пароля"
                 value={repeatPassword}
                 onChange={(event) => setRepeatPassword(event.target.value)}
@@ -229,7 +274,13 @@ export function AccountManagement() {
               />
             </div>
           )}
-          <ErrorNotice error={error}>{validation || null}</ErrorNotice>
+          {(Boolean(error) || invalidField) && (
+            <div className="account-add-error" id={`${fieldId}-error`}>
+              <ErrorNotice error={error}>
+                {invalidField && accountFieldErrors[invalidField]}
+              </ErrorNotice>
+            </div>
+          )}
           <Button type="submit" busy={busy}>
             {registering ? "Создать и добавить" : "Войти и добавить"}
             <ArrowRight size={16} aria-hidden="true" />
@@ -249,6 +300,14 @@ export function AccountManagement() {
 
   return (
     <section className="account-management" aria-labelledby="accounts-heading">
+      <button
+        className="account-settings-back"
+        type="button"
+        disabled={busy}
+        onClick={onBack}
+      >
+        <ArrowLeft size={18} aria-hidden="true" /> Все настройки
+      </button>
       <header className="account-management-heading">
         <h2 id="accounts-heading">Аккаунты</h2>
         <p className="field-hint">Выберите аккаунт для встреч и общения.</p>
@@ -313,7 +372,6 @@ export function AccountManagement() {
         </span>
       </p>
       <ErrorNotice error={error} />
-      <ErrorNotice>{validation || null}</ErrorNotice>
       {!mode && (
         <div className="account-management-actions">
           <Button

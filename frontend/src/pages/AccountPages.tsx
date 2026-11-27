@@ -113,6 +113,7 @@ export function SettingsPage() {
     }
   }, [location.hash, guest]);
   const prefix = useId();
+  const [accountPanelKey, setAccountPanelKey] = useState(0);
   const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);
   const [horizontalTabs, setHorizontalTabs] = useState(
     () => window.matchMedia?.("(max-width: 767px)").matches ?? false,
@@ -133,6 +134,15 @@ export function SettingsPage() {
     media.addEventListener?.("change", update);
     return () => media.removeEventListener?.("change", update);
   }, []);
+
+  function showSettingsSections() {
+    setMobileSectionOpen(false);
+    requestAnimationFrame(() =>
+      tabButtons.current[
+        tabs.findIndex((tab) => tab.id === activeSection)
+      ]?.focus(),
+    );
+  }
 
   /** Переключает доступные вкладки стрелками, Home и End, не меняя адрес фоновой страницы.
    * @args event — клавиатурное событие кнопки; index — позиция текущей вкладки.
@@ -207,6 +217,8 @@ export function SettingsPage() {
               tabButtons.current[index] = node;
             }}
             onClick={() => {
+              if (id === "accounts" && activeSection === "accounts")
+                setAccountPanelKey((previous) => previous + 1);
               setActiveSection(id);
               setMobileSectionOpen(true);
               if (horizontalTabs)
@@ -244,20 +256,15 @@ export function SettingsPage() {
         tabIndex={0}
         ref={panel}
       >
-        <button
-          className="account-settings-back"
-          type="button"
-          onClick={() => {
-            setMobileSectionOpen(false);
-            requestAnimationFrame(() =>
-              tabButtons.current[
-                tabs.findIndex((tab) => tab.id === activeSection)
-              ]?.focus(),
-            );
-          }}
-        >
-          <ArrowLeft size={18} aria-hidden="true" /> Все настройки
-        </button>
+        {activeSection !== "accounts" && (
+          <button
+            className="account-settings-back"
+            type="button"
+            onClick={showSettingsSections}
+          >
+            <ArrowLeft size={18} aria-hidden="true" /> Все настройки
+          </button>
+        )}
         {activeSection === "profile" && (
           <section
             className="content-card account-card"
@@ -338,7 +345,14 @@ export function SettingsPage() {
             </p>
           </section>
         )}
-        {activeSection === "accounts" && !guest && <AccountManagement />}
+        {activeSection === "accounts" &&
+          !guest &&
+          (!horizontalTabs || mobileSectionOpen) && (
+            <AccountManagement
+              key={accountPanelKey}
+              onBack={showSettingsSections}
+            />
+          )}
         {(activeSection === "audio" || activeSection === "video") && (
           <DeviceSettings key={activeSection} section={activeSection} />
         )}
