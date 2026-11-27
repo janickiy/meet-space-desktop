@@ -1,7 +1,7 @@
 // Stage 06: unsigned internal test installers. Trusted candidates use a separate configuration.
 module.exports = {
   appId: "com.janickiy.meetspace.desktop.test",
-  productName: "MeetSpace Test",
+  productName: "MeetSpace",
   executableName: "MeetSpace",
   copyright: "Copyright © 2026 MeetSpace",
   protocols: [{ name: "MeetSpace meeting link", schemes: ["meetspace"] }],
@@ -58,7 +58,7 @@ module.exports = {
     uninstallerSidebar: "resources/installer/sidebar.bmp",
     installerIcon: "resources/icon.ico",
     uninstallerIcon: "resources/icon.ico",
-    uninstallDisplayName: "MeetSpace Test",
+    uninstallDisplayName: "MeetSpace",
     license: "resources/TEST-LICENSE.txt",
   },
 };
