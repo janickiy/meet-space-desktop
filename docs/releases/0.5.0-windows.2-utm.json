@@ -1,0 +1,21 @@
+{
+  "version": "0.5.0",
+  "windowsInstallerRevision": 2,
+  "os": "Windows 11 ARM64",
+  "persistentVM": true,
+  "sourceCommit": "7b648e661fe8528c18afd11c4fd0833697ec286a",
+  "installerSha256": "48fbbc04b2730f2432527531e2cfc58a12e97f038670818f4b19760e68441b8f",
+  "welcomeText": "Вас приветствует мастер установки MeetSpace",
+  "screenshot": "0.5.0-windows.2-welcome.png",
+  "displayName": "MeetSpace",
+  "startMenuShortcut": "MeetSpace.lnk",
+  "desktopShortcut": "MeetSpace.lnk",
+  "removedOldOfficialShortcut": true,
+  "retainedInstallationDirectory": true,
+  "retainedProfile": true,
+  "launched": true,
+  "installedExeSHA256": "d1b9fd555a608ab623cff33bc36654f92acf014104f3ed59c45d58816ab78c23",
+  "installedAsarSHA256": "8bef08c71efe64e51c1fe81aea719d616d3327757893698a89743363c80fa4e0",
+  "launchedFromBothShortcuts": true,
+  "installerFileDescription": "MeetSpace"
+}

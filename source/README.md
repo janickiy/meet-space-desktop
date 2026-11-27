@@ -2,11 +2,11 @@
 
 ## Windows и Linux 0.5.0
 
-В [релизе MeetSpace Desktop 0.5.0](https://github.com/janickiy/meet-space-desktop/releases/tag/0.5.0) доступны восемь установочных пакетов. Это тестовые сборки без цифровой подписи. [Изменения](../docs/releases/0.5.0.md) · [Контрольные суммы для загруженных пакетов](releases/0.5.0/SHA256SUMS).
+Для Windows доступны установщики редакции 2 с названием MeetSpace в мастере установки и ярлыках. Все пакеты тестовые, без цифровой подписи. [Изменения в 0.5.0](../docs/releases/0.5.0.md) · [SHA-256 для Windows](releases/0.5.0-windows.2/SHA256SUMS) · [SHA-256 первоначального выпуска с пакетами Linux](releases/0.5.0/SHA256SUMS).
 
 | Пакет | x64 | ARM64 |
 |---|---|---|
-| Windows — EXE | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-x64-test-setup.exe) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-arm64-test-setup.exe) |
+| Windows — EXE | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-x64-setup.exe) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-arm64-setup.exe) |
 | Ubuntu/Debian — DEB | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-amd64-test.deb) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-arm64-test.deb) |
 | Fedora — RPM | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.rpm) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-aarch64-test.rpm) |
 | Linux — AppImage | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.AppImage) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-arm64-test.AppImage) |
@@ -183,8 +183,8 @@ Ubuntu 24.04 ARM64 в UTM обновлена до 0.1.12-beta: подтверж�
 | Linux | 0.3.4-beta | DEB / arm64 | [MeetSpace-0.3.4-beta-linux-arm64-test.deb](linux/0.3.4-beta/DEB/MeetSpace-0.3.4-beta-linux-arm64-test.deb) |
 | Linux | 0.3.4-beta | RPM / arm64 | [MeetSpace-0.3.4-beta-linux-aarch64-test.rpm](linux/0.3.4-beta/RPM/MeetSpace-0.3.4-beta-linux-aarch64-test.rpm) |
 | Linux | 0.3.4-beta | AppImage / arm64 | [MeetSpace-0.3.4-beta-linux-arm64-test.AppImage](linux/0.3.4-beta/AppImage/MeetSpace-0.3.4-beta-linux-arm64-test.AppImage) |
-| Windows | 0.5.0 | NSIS / x64 | [MeetSpace-0.5.0-win-x64-test-setup.exe](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-x64-test-setup.exe) |
-| Windows | 0.5.0 | NSIS / arm64 | [MeetSpace-0.5.0-win-arm64-test-setup.exe](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-win-arm64-test-setup.exe) |
+| Windows | 0.5.0 | NSIS / x64 | [MeetSpace-0.5.0-win-x64-setup.exe](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-x64-setup.exe) |
+| Windows | 0.5.0 | NSIS / arm64 | [MeetSpace-0.5.0-win-arm64-setup.exe](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-arm64-setup.exe) |
 | Linux | 0.5.0 | DEB / x64 | [MeetSpace-0.5.0-linux-amd64-test.deb](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-amd64-test.deb) |
 | Linux | 0.5.0 | RPM / x64 | [MeetSpace-0.5.0-linux-x86_64-test.rpm](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.rpm) |
 | Linux | 0.5.0 | AppImage / x64 | [MeetSpace-0.5.0-linux-x86_64-test.AppImage](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0/MeetSpace-0.5.0-linux-x86_64-test.AppImage) |

@@ -1,0 +1,29 @@
+{
+  "version": "0.5.0",
+  "windowsRevision": 2,
+  "landing": "https://meet-space.janickiy.com/download",
+  "publicRelease": "https://github.com/janickiy/meet-space-desktop/releases/tag/0.5.0-windows.2",
+  "sourceCommit": "7b648e661fe8528c18afd11c4fd0833697ec286a",
+  "sourceTreeSha256": "0b4612ae072502cb3766c66cd68a37c6bc678328290cea3356c32325c2188ee0",
+  "testBuild": true,
+  "defaultWindows": "x64",
+  "anonymousFullDownloadsFromLiveUI": [
+    {
+      "name": "MeetSpace-0.5.0-win-x64-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-x64-setup.exe",
+      "sizeBytes": 122346914,
+      "sha256": "7285b0a7c3df67a32ad4a46b59dcf649ed5129df5bc7c50e1a848fab7c5db2c4",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.0-win-arm64-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.0-windows.2/MeetSpace-0.5.0-win-arm64-setup.exe",
+      "sizeBytes": 116888284,
+      "sha256": "48fbbc04b2730f2432527531e2cfc58a12e97f038670818f4b19760e68441b8f",
+      "publicFullGET": true
+    }
+  ],
+  "publicJavaScript": "https://meet-space.janickiy.com/assets/desktop-050-win2-7b648e66/index-eKUardRc.js",
+  "publicJavaScriptSHA256": "234ffaeb446434109468a7d4a44edff5593251e20c23308c3fe05214316ad57a",
+  "checkedAt": "2026-11-27T18:46:41.082128+00:00"
+}
