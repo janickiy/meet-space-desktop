@@ -3,15 +3,7 @@ import { subscribeCaptureRelease } from "../platform/captureLifecycle";
 import { isDesktopBuild } from "../platform/build";
 import { useDesktopRuntime } from "../platform/runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Bell,
-  Mic,
-  Play,
-  Square,
-  Video,
-  VideoOff,
-  Volume2,
-} from "lucide-react";
+import { Mic, Play, Square, Video, VideoOff, Volume2 } from "lucide-react";
 import { UserAvatar } from "./UserAvatar";
 import { useAuth } from "../auth";
 import {
@@ -388,6 +380,7 @@ export function DeviceSettings({
   const [cameraPreview, setCameraPreview] = useState(false);
   const [checking, setChecking] = useState(false);
   const [speakerPlaying, setSpeakerPlaying] = useState(false);
+  const [signalPlaying, setSignalPlaying] = useState(false);
   const camera = usePreview(
     "video",
     section === "video" && available && cameraPreview,
@@ -479,7 +472,6 @@ export function DeviceSettings({
             aria-labelledby="microphone-title"
           >
             <header>
-              <Mic size={18} />
               <h3 id="microphone-title">Микрофон</h3>
               <LevelMeter
                 stream={microphone.stream}
@@ -508,7 +500,7 @@ export function DeviceSettings({
                 {checking && !microphone.error ? (
                   <Square size={16} />
                 ) : (
-                  <Play size={16} />
+                  <Mic size={16} />
                 )}
                 {checking && !microphone.error ? "Остановить" : "Проверить"}
               </button>
@@ -554,7 +546,6 @@ export function DeviceSettings({
             aria-labelledby="speaker-title"
           >
             <header>
-              <Volume2 size={18} />
               <h3 id="speaker-title">Динамик</h3>
               <LevelMeter
                 playing={speakerPlaying && preferences.outputVolume > 0}
@@ -589,36 +580,39 @@ export function DeviceSettings({
             aria-labelledby="signals-title"
           >
             <header>
-              <Bell size={18} />
               <h3 id="signals-title">Звонки и уведомления</h3>
+              <LevelMeter
+                playing={signalPlaying && preferences.signalVolume > 0}
+                label="Уровень сигналов"
+              />
             </header>
             <p className="device-hint">
               Громкость сигнала вызова и уведомлений о сообщениях, приглашениях
               и скором начале встречи.
             </p>
-            <label className="settings-device-field">
-              <span>Источник звука</span>
+            <div className="device-select-row">
               <DeviceSelect
                 devices={devices}
                 kind="audiooutput"
-                label="Источник звука"
+                label="Динамик для сигналов"
                 value={preferences.notificationOutputId}
                 onChange={(notificationOutputId) =>
                   update({ notificationOutputId })
                 }
                 disabled={!outputSupported}
               />
-            </label>
+              <SpeakerTest
+                sinkId={preferences.notificationOutputId}
+                label="звонки и уведомления"
+                volume={signalGain(preferences.signalVolume) * 100}
+                onPlaying={setSignalPlaying}
+              />
+            </div>
             {outputPicker("notificationOutputId")}
             <Volume
               label="Громкость сигналов"
               value={preferences.signalVolume}
               onChange={(signalVolume) => update({ signalVolume })}
-            />
-            <SpeakerTest
-              sinkId={preferences.notificationOutputId}
-              label="звонки и уведомления"
-              volume={signalGain(preferences.signalVolume) * 100}
             />
           </section>
         </div>

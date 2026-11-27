@@ -84,15 +84,8 @@ module.exports = async ({execute,until,visible,click,clickText,field,route,fixtu
         assert.equal(layout.cards.length,3);
         assert.equal(layout.overflow,false,'Audio card must not overflow');
         assert.deepEqual(layout.clippedControls,[],'Audio controls must not clip');
-        if (layout.panelWidth>=840) {
-          assert.ok(layout.cards.every(c=>Math.abs(c.top-layout.cards[0].top)<1),'All three audio cards share one row');
-          assert.ok(layout.cards.every(c=>Math.abs(c.width-layout.cards[0].width)<1),'Audio cards have equal widths');
-          assert.ok(layout.cards.every(c=>Math.abs(c.bottom-layout.cards[0].bottom)<1),'Audio card bottoms align');
-          assert.ok(layout.cards[0].right+17<=layout.cards[1].left && layout.cards[1].right+17<=layout.cards[2].left,'Audio cards keep their gaps');
-        } else {
-          assert.ok(layout.cards[0].bottom+17<=layout.cards[1].top && layout.cards[1].bottom+17<=layout.cards[2].top,'Narrow audio panel stacks cards without overlap');
-        }
-        if (width===1920) assert.ok(layout.panelWidth>=840,'Wide desktop must show the requested single row');
+        assert.ok(layout.cards.every(card=>Math.abs(card.width-layout.grid.width)<1),'Every audio section spans the settings panel');
+        assert.ok(layout.cards[0].bottom+15<=layout.cards[1].top && layout.cards[1].bottom+15<=layout.cards[2].top,'The reference stacks audio sections with a gap at all window sizes');
         audioLayouts.push({theme,scale,...layout});
         await fs.writeFile(path.join(directory,`audio-row-${theme}-${width}-${scale}.png`),(await window.webContents.capturePage()).toPNG());
       }
@@ -100,7 +93,7 @@ module.exports = async ({execute,until,visible,click,clickText,field,route,fixtu
   }
   await execute("document.documentElement.style.removeProperty('--text-scale');void 0");
   await fs.writeFile(path.join(directory,'audio-row-layout.json'),JSON.stringify(audioLayouts,null,2)+'\n');
-  checks.push('Shared Audio layout: three equal cards in a single row when content fits; narrow panels stack; light/dark at 1024/1440/1662/1920 with 100%/125% text; no clipped controls');
+  checks.push('Audio settings follow the reference: three full-width sections; light/dark at 1024/1440/1662/1920 with 100%/125% text; no clipped controls');
   await clickText('Внешний вид'); await click('input[value=light][type=radio]');
   return checks;
 };

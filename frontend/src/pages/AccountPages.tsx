@@ -360,7 +360,7 @@ export function SettingsPage() {
             <fieldset className="appearance-theme-block">
               <legend>Тема</legend>
               <div className="appearance-theme-options">
-                {(["light", "dark", "system"] as const).map((theme) => (
+                {(["light", "dark"] as const).map((theme) => (
                   <label
                     key={theme}
                     className={`appearance-theme-option ${appearance.theme === theme ? "appearance-theme-selected" : ""}`}
@@ -383,16 +383,10 @@ export function SettingsPage() {
                     <span className="appearance-theme-name">
                       {theme === "light" ? (
                         <Sun size={18} aria-hidden="true" />
-                      ) : theme === "system" ? (
-                        <Monitor size={18} aria-hidden="true" />
                       ) : (
                         <Moon size={18} aria-hidden="true" />
                       )}
-                      {theme === "light"
-                        ? "Светлая тема"
-                        : theme === "dark"
-                          ? "Тёмная тема"
-                          : "Системная тема"}
+                      {theme === "light" ? "Светлая" : "Тёмная"}
                     </span>
                     <input
                       type="radio"
@@ -404,6 +398,16 @@ export function SettingsPage() {
                   </label>
                 ))}
               </div>
+              <label className="appearance-system-theme">
+                <input
+                  type="radio"
+                  name={`${prefix}-theme`}
+                  value="system"
+                  checked={appearance.theme === "system"}
+                  onChange={() => appearance.setTheme("system")}
+                />
+                Использовать системную тему
+              </label>
             </fieldset>
             <section className="appearance-text-block">
               <label className="field appearance-text-size">

@@ -473,13 +473,13 @@
 }
 
 /* Audio/video cards and notification choices from decs_maket 7248a87. */
-.reference-audio {
-  container: settings-audio / inline-size;
+.reference-video {
+  container-type: inline-size;
 }
 .settings-audio-cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
+  gap: 16px;
   align-items: stretch;
 }
 .account-dialog-panel .settings-device-card {
@@ -569,19 +569,6 @@
 .settings-device-card > .device-test {
   margin-top: 14px;
 }
-@container settings-audio (min-width: 840px) {
-  .settings-audio-cards {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-  .settings-audio-cards > .settings-device-card > header {
-    min-height: 42px;
-    flex-wrap: wrap;
-  }
-  .settings-audio-cards > .settings-device-card > header > h3 {
-    min-width: 0;
-    overflow-wrap: anywhere;
-  }
-}
 .account-dialog-panel .settings-video-card .settings-camera-preview {
   min-height: 220px;
   height: 260px;
@@ -590,6 +577,35 @@
 }
 .settings-video-card > .settings-device-field {
   max-width: 460px;
+}
+@media (min-width: 1100px) {
+  @container (min-width: 530px) {
+    .settings-video-card {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-areas: "preview options" "error options" "camera options";
+      align-items: start;
+      column-gap: 24px;
+    }
+    .account-dialog-panel .settings-video-card .settings-camera-preview {
+      grid-area: preview;
+      width: 100%;
+      height: auto;
+      min-height: 0;
+      margin: 0;
+    }
+    .settings-video-card > .device-error {
+      grid-area: error;
+    }
+    .settings-video-card > .settings-device-field {
+      grid-area: camera;
+      margin-top: 18px;
+    }
+    .settings-video-card > .settings-device-toggles {
+      grid-area: options;
+      margin: 0;
+    }
+  }
 }
 .settings-autosave {
   margin-top: 22px;
@@ -771,11 +787,22 @@
 }
 .reference-settings-page .appearance-theme-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  max-width: 720px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: none;
 }
-.appearance-preview-system {
-  background: linear-gradient(100deg, #f7f8fc 50%, #24252f 50%);
+.appearance-system-theme {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  margin-top: 10px;
+  font-size: calc(13px * var(--text-scale));
+  cursor: pointer;
+}
+.appearance-system-theme input {
+  margin: 0;
+  accent-color: var(--primary);
 }
 .reference-settings-page .account-dialog-panel .preferences-form {
   display: grid;
