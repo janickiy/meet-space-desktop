@@ -63,18 +63,40 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     await fs.writeFile(path.join(output,name+'.png'),(await window.webContents.capturePage()).toPNG());
     captures.push({name,...metrics});
   };
-  const checkMeetingFilters=async name=>{
-    const compact=await execute("document.querySelector('.dashboard-mobile-filter').getClientRects().length>0");
-    if(compact) await click('.dashboard-mobile-filter');
-    await until(()=>execute("document.querySelector('.conference-filters').getClientRects().length>0"),'meeting filters visible');
-    const controls=await execute(`(()=>{const root=document.querySelector('.conference-filters');return [...root.querySelectorAll('input[type=date],:scope > button')].map(e=>{const r=e.getBoundingClientRect();return {height:r.height,top:r.top,bottom:r.bottom};});})()`);
-    assert.equal(controls.length,3,'Meeting filters contain two dates and reset');
-    for(const control of controls) {
-      assert.ok(Math.abs(control.height-controls[0].height)<1,'Date and reset controls have equal heights');
-      if(!compact) assert.ok(Math.abs(control.bottom-controls[0].bottom)<1,'Date and reset controls share a baseline');
+  const checkMeetingFilters = async name => {
+    const compact = await execute("document.querySelector('.dashboard-mobile-filter').getClientRects().length > 0");
+    if (compact) await click('.dashboard-mobile-filter');
+    const root = compact ? '.meeting-filter-form' : '.conference-filters';
+    await until(() => execute(`!!document.querySelector(${JSON.stringify(root)})?.getClientRects().length`), 'Meeting filters visible');
+    const scope = root + ' select', from = root + ' input[aria-label="Встречи с даты"]', to = root + ' input[aria-label="Встречи по дату"]';
+    const values = () => execute(`[...document.querySelector(${JSON.stringify(root)}).querySelectorAll('select, input[type=date]')].map(e=>e.value)`);
+    assert.deepEqual(await values(), ['all', '', ''], 'Attendance and both dates initially show the full list');
+    if (!compact) {
+      const [participation, start, end, reset] = await execute(`[...document.querySelector('.conference-filters').querySelectorAll('select,input[type=date],button')].map(e=>{
+        const {left, right, width, height, bottom} = e.getBoundingClientRect();
+        return {left, right, width, height, bottom};
+      })`);
+      assert.equal(participation.height,40);
+      assert.equal(start.height,40);
+      assert.equal(end.height,40);
+      assert.deepEqual([reset.width,reset.height],[36,36],'Reference reset is a square icon');
+      for (const control of [participation,start,end]) assert.ok(Math.abs(control.bottom - reset.bottom - 1) < 1, 'Filter fields align with the 1px reset inset');
+      for (const [left,right] of [[participation,start],[start,end],[end,reset]]) assert.ok(Math.abs(right.left-left.right-14)<1, 'Adjacent filters have the reference 14px gutter');
     }
+    await execute(`(()=>{const e=document.querySelector(${JSON.stringify(scope)});e.value='owned';e.dispatchEvent(new Event('change',{bubbles:true}))})()`);
+    await field(from,'2026-01-01');
+    await field(to,'2026-12-31');
+    assert.deepEqual(await values(),['owned','2026-01-01','2026-12-31']);
     await capture(name);
-    if(compact) await click('.dashboard-mobile-filter');
+    if (compact) {
+      await click(root+' button[type=submit]');
+      await until(() => execute("document.querySelector('.meeting-filter-count')?.textContent==='3' && !document.querySelector('.meeting-filter-form')"),'Compact filters applied');
+      await click('.meeting-chip-reset');
+      await click('.dashboard-mobile-filter');
+    } else await click(root+' button[aria-label="Сбросить фильтры"]');
+    assert.deepEqual(await values(),['all','',''],'Reset restores attendance and both dates');
+    if (compact) await click('.meeting-filter-form button[type=button]');
+    await visible('Product scheduled meeting');
   };
   const checkIncomingCall=async theme=>{
     await route(`/personal/${DIRECT}`);await visible('Product server message');
@@ -166,6 +188,10 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       if(name==='meetings'){
         await checkMeetingFilters('meeting-filters-'+theme);
         assert.equal(await execute(`document.querySelector('[role=tab][id=tab-past]')?.textContent.trim()`),'Завершённые','Completed meetings tab remains available');
+        const row=await execute(`(() => {const row=document.querySelector('.dashboard-meeting-row'), open=row.querySelector('.dashboard-meeting-open');
+          return {path:open.pathname, title:open.querySelector('.dashboard-meeting-title').textContent,
+            attendees:open.querySelector('.meeting-attendees').textContent.trim(), info:row.querySelector('.meeting-info-trigger').getAttribute('aria-haspopup')};})()`);
+        assert.deepEqual(row,{path:'/meetings/'+CONFERENCE,title:fixture.product.conference.title,attendees:'2 участника',info:'dialog'},'The meeting card exposes separate room and details actions and the actual participant count');
         await click('.dashboard-meeting-row .meeting-info-trigger');
         await until(()=>execute('!!document.querySelector(".meeting-reference-info .meeting-info-facts")'),'meeting information dialog');
         await capture('meeting-info-'+theme);
@@ -174,16 +200,36 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       }
       if(name==='calendar'){
         assert.equal(await execute("document.querySelectorAll('.agenda-week button').length"),7,'Agenda displays all seven days');
+        const agenda = await execute(`(() => {
+          const event=document.querySelector('.agenda-time .calendar-event'), times=[...event.querySelectorAll('time')];
+          const day=document.querySelector('.agenda-day').getBoundingClientRect(), legend=document.querySelector('.agenda-summary').getBoundingClientRect();
+          return {role:event.dataset.agendaRole, minutes:(Date.parse(times[1].dateTime)-Date.parse(times[0].dateTime))/60000,
+            legendAlongside:legend.left>=day.right && Math.abs(legend.top-day.top)<1};
+        })()`);
+        assert.deepEqual(agenda,{role:'owner',minutes:fixture.product.conference.plannedDurationMin,legendAlongside:true},'Agenda shows the real meeting range and legend next to the timeline');
         await click('.agenda-time .calendar-event');
         await until(()=>execute('!!document.querySelector(".meeting-reference-info .meeting-info-facts")'),'calendar meeting information dialog');
         await capture('calendar-meeting-'+theme);
         await click('.meeting-reference-info button[aria-label="Закрыть окно"]');
         await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'calendar meeting dialog closes');
+        await click('.agenda-week button[aria-pressed=false]');
+        const selectedDay = await execute("document.querySelector('.agenda-week button[aria-pressed=true]').getAttribute('aria-label')");
         await click('.agenda-schedule');
         await until(()=>execute('!!document.querySelector(".meeting-create-modal #scheduled-date")'),'calendar schedules over its selected day');
         assert.equal(await execute('!!document.querySelector(".agenda-week") && new URL(location.href).pathname === "/calendar"'),true,'calendar remains under the scheduling dialog');
+        const schedule = await execute(`(() => {
+          const dialog=document.querySelector('.meeting-create-modal'), box=dialog.getBoundingClientRect();
+          const date=dialog.querySelector('#scheduled-date'), time=dialog.querySelector('#scheduled-time'), duration=dialog.querySelector('#planned-duration');
+          const d=date.getBoundingClientRect(), t=time.getBoundingClientRect(), p=duration.getBoundingClientRect();
+          return {day:new Date(date.value+'T12:00').toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}),
+            width:box.width, sameRow:d.top===t.top && d.right<t.left, fullDuration:p.top>=d.bottom && Math.abs(p.left-d.left)<1 && Math.abs(p.right-t.right)<1,
+            scheduleEnabled:dialog.querySelector('[role=switch][aria-label="Запланировать встречу"]').checked};
+        })()`);
+        assert.deepEqual(schedule,{day:selectedDay,width:440,sameRow:true,fullDuration:true,scheduleEnabled:true},'Planning uses the chosen calendar date in the desktop reference editor');
+        await capture('calendar-schedule-'+theme);
         await click('.meeting-create-modal button[aria-label="Закрыть окно"]');
-        await execute(`const view=document.querySelector('select[aria-label="Вид календаря"]');view.value='month';view.dispatchEvent(new Event('change',{bubbles:true}));`);
+        await click('.calendar-navigation .button');
+        await execute(`(()=>{const view=document.querySelector('select[aria-label="Вид календаря"]');view.value='month';view.dispatchEvent(new Event('change',{bubbles:true}));})()`);
         await until(()=>execute("!!document.querySelector('.calendar-month-grid .calendar-event')"),'month view retains scheduled meeting');
         await capture('calendar-month-'+theme);
       }
@@ -305,12 +351,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-compact');
   // Override the production minimum window size only in this test to verify web narrow layouts.
   window.setMinimumSize(320,500);window.setContentSize(390,844);
-  await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-mobile');
+  await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-mobile');await checkMeetingFilters('meeting-filters-mobile');
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-mobile');
   await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
   await tab('Мой профиль');await visible('Электронная почта');await capture('profile-mobile');
   checks.push('onboarding introduction leads to server connection; settings render as a page with combined devices; meeting and calendar information dialogs close without mutation; recording information and native download actions sit beside the player');
-  checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; meeting filter reset matches date height and baseline including 150% text; recordings omit count and completed links while completed meetings remain available');
+  checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; the 36px filter reset aligns with the 40px date and participation fields at the reference spacing, including 150% text; mobile filter chips apply and reset all three controls; recordings omit count and completed links while completed meetings remain available');
   checks.push('shared routes render in both themes; 1280x800 and 1920x1080 workspace and meeting editors, 1280x800 onboarding/login and 150% settings/meetings; desktop/compact/mobile have no document or content-region horizontal overflow, clipped button content, out-of-viewport dialog or missing image');
   assert.deepEqual(await execute('window.__designErrors'),[]);
   await fs.writeFile(path.join(output,'result.json'),JSON.stringify({ok:true,checks,captures,platform:process.platform,arch:process.arch,source:'shared production React; synthetic local TLS API data',windowsRuntimeTested:false},null,2)+'\n');
