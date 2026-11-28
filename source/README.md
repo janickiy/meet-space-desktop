@@ -1,5 +1,16 @@
 # Дистрибутивы MeetSpace Desktop
 
+## Windows и Linux 0.5.6
+
+Тестовые сборки без цифровой подписи. [Изменения в 0.5.6](../docs/releases/0.5.6.md) · [Контрольные суммы](releases/0.5.6/SHA256SUMS).
+
+| Пакет | x64 | ARM64 |
+|---|---|---|
+| Windows — EXE | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-win-x64-setup.exe) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-win-arm64-setup.exe) |
+| Ubuntu/Debian — DEB | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-amd64-test.deb) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-arm64-test.deb) |
+| Fedora — RPM | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-x86_64-test.rpm) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-aarch64-test.rpm) |
+| Linux — AppImage | [x64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-x86_64-test.AppImage) | [ARM64](https://github.com/janickiy/meet-space-desktop/releases/download/0.5.6/MeetSpace-0.5.6-linux-arm64-test.AppImage) |
+
 ## Windows и Linux 0.5.1
 
 Тестовые сборки без цифровой подписи. [Изменения в 0.5.1](../docs/releases/0.5.1.md) · [Контрольные суммы](releases/0.5.1/SHA256SUMS).
@@ -24,7 +35,7 @@
 
 ## Последние сборки каждой версии
 
-В [каталоге](catalog.json) 172 пакета. Для версий 0.5.0 и 0.5.1 приведены прямые ссылки на файлы GitHub Releases. Архив предыдущих сборок хранится в Git LFS. [Контрольные суммы архива](SHA256SUMS).
+В [каталоге](catalog.json) 180 пакетов. Для версий 0.5.0, 0.5.1 и 0.5.6 приведены прямые ссылки на файлы GitHub Releases. Архив предыдущих сборок хранится в Git LFS. [Контрольные суммы архива](SHA256SUMS).
 
 | ОС | Версия | Формат / архитектура | Пакет |
 |---|---|---|---|
