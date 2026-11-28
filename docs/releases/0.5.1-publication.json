@@ -1,0 +1,92 @@
+{
+  "version": "0.5.1",
+  "landing": "https://meet-space.janickiy.com/download",
+  "publicRelease": "https://github.com/janickiy/meet-space-desktop/releases/tag/0.5.1",
+  "sourceCommit": "83dcc5804893e4a3c4146778509a3e385e6019e6",
+  "sourceTreeSha256": "419e496295226ee13d100a3dcd8142bdd1e1ae4c2eccee81b649d884a160b153",
+  "testBuild": true,
+  "checkedAt": "2026-11-28T00:09:44.324176+00:00",
+  "fullDownloadsVerified": [
+    {
+      "name": "MeetSpace-0.5.1-win-x64-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-win-x64-setup.exe",
+      "sizeBytes": 122348148,
+      "sha256": "3146a701f6baf71b47a5cf9f0c32cab68d2232c51ce7c949f28a5383d126444e",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-win-arm64-setup.exe",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-win-arm64-setup.exe",
+      "sizeBytes": 116889470,
+      "sha256": "77c7390e68da76a84432ba2526d880d2120cb977739611ebbe90f4ebe478c3d2",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-amd64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-amd64-test.deb",
+      "sizeBytes": 100747008,
+      "sha256": "2327bc271ac2f9b18c5ce3d81e894e8e327c511231831a5b1a853fedd03045f1",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-x86_64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-x86_64-test.rpm",
+      "sizeBytes": 90321085,
+      "sha256": "fabde19a52721640d6abf2421cdd75d309142407cf3617150297bfd765647a63",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-x86_64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-x86_64-test.AppImage",
+      "sizeBytes": 127413564,
+      "sha256": "91470ad3926d27461cba8a535999b13fc700b5a1ac1ca63e7205f03aaf041dc6",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-arm64-test.deb",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-arm64-test.deb",
+      "sizeBytes": 95812012,
+      "sha256": "eee96b5f9401ef68bf04c4811448805f926257e8ff435c67392689d1fa41db87",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-aarch64-test.rpm",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-aarch64-test.rpm",
+      "sizeBytes": 85962377,
+      "sha256": "60d68dca250a2464128f271faa41d52ecf3f7625492aec90951fe879360021b1",
+      "publicFullGET": true
+    },
+    {
+      "name": "MeetSpace-0.5.1-linux-arm64-test.AppImage",
+      "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/MeetSpace-0.5.1-linux-arm64-test.AppImage",
+      "sizeBytes": 119436544,
+      "sha256": "8e1a911232dffe6f9751aadcc92c8def69bebb1edb83feb7411df37e9924482c",
+      "publicFullGET": true
+    }
+  ],
+  "checksums": {
+    "bytes": 834,
+    "sha256": "50dd7b201fbbc1ab965a533bde703a462508e3a57ce97ccfbb5d5e810368da10",
+    "url": "https://github.com/janickiy/meet-space-desktop/releases/download/0.5.1/SHA256SUMS",
+    "publicFullGET": true
+  },
+  "publicPagesVerified": [
+    {
+      "url": "https://meet-space.janickiy.com/download",
+      "sha256": "89df38693324d4aa709457a7926d564224a2d27013693a4830b0532443141527",
+      "exactMatch": true
+    },
+    {
+      "url": "https://meet-space.janickiy.com/",
+      "sha256": "a06495307ade88b6e795113bc14d58bac0fadecb9a35960f0690310f0301f8e7",
+      "exactMatch": true
+    },
+    {
+      "url": "https://meet-space.janickiy.com/welcome",
+      "sha256": "6ffb67d661c4ec72faaccb2c238c353bd26238bf559ff50c8fc426cf743468cf",
+      "exactMatch": true
+    }
+  ],
+  "publicJavaScript": "https://meet-space.janickiy.com/assets/desktop-051-83dcc580/index-eKUardRc.js",
+  "publicJavaScriptSHA256": "5715cfad85bb3b0d34f12349c28884dc8700ba5bc6f178e9c570a06a6207883a"
+}
