@@ -143,7 +143,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
           receiveOnlyInside:!!bar.querySelector('.room-media-connection'),
           buttons:[...bar.children].map(e=>{const icon=e.querySelector(':scope > .conference-room-control-icon');const label=e.querySelector(':scope > .conference-room-control-label');
             const ir=icon?.getBoundingClientRect(),lr=label?.getBoundingClientRect(),r=e.getBoundingClientRect();
-            return {tag:e.tagName,label:label?.textContent.trim(),compact:e.matches('button.conference-room-control'),disabled:e.disabled,left:r.left,top:r.top,
+            const glyph=icon?.querySelector('svg');
+            const glyphRect=glyph?.getBoundingClientRect();
+            const drawing=glyph&&{names:[...glyph.classList],width:glyphRect.width,height:glyphRect.height,strokeWidth:parseFloat(getComputedStyle(glyph).strokeWidth)};
+            return {tag:e.tagName,label:label?.textContent.trim(),compact:e.matches('button.conference-room-control'),disabled:e.disabled,left:r.left,top:r.top,drawing,pressed:e.getAttribute('aria-pressed')==='true',
               icon:!!icon,labelBelowIcon:!!ir&&!!lr&&lr.top>=ir.bottom-1,
               singleLine:!!lr&&lr.height<=parseFloat(getComputedStyle(label).lineHeight)+1,
               withinViewport:r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1,
@@ -192,6 +195,17 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
           assert.ok(metrics.toolbar.buttons.every(button => button.singleLine), `${name}: desktop labels stay on one line`);
         }
         assert.ok(metrics.toolbar.buttons.every(button => button.tag === 'BUTTON' && button.compact && button.icon && button.labelBelowIcon && button.labelCentered && button.withinViewport), `${name}: each compact icon tile has its own centered label below it and fits the viewport`);
+        const glyphSize = metrics.width >= 780 ? 20 : 19;
+        const glyphNames = [
+          metrics.toolbar.buttons[0].pressed ? 'mic' : 'mic-off',
+          metrics.toolbar.buttons[1].pressed ? 'video' : 'video-off',
+          metrics.toolbar.buttons[2].pressed ? 'screen-share-off' : 'monitor-up',
+          'users', 'message-circle', 'settings', 'log-out',
+        ];
+        metrics.toolbar.buttons.forEach(({ drawing }, index) => {
+          assert.ok(drawing?.names.includes('lucide-'+glyphNames[index]), `${name}: expected ${glyphNames[index]} glyph`);
+          assert.deepEqual([drawing.width, drawing.height, drawing.strokeWidth], [glyphSize, glyphSize, 1.75], `${name}: reference glyph dimensions and stroke`);
+        });
         assert.equal(metrics.toolbar.background, metrics.width >= 780 ? 'rgb(36, 30, 44)' : 'rgba(0, 0, 0, 0)', `${name}: room controls use the reference surface at the current width`);
         assert.equal(metrics.toolbar.backgroundImage, 'none', `${name}: no enclosing toolbar background image`);
         assert.equal(metrics.toolbar.boxShadow, 'none', `${name}: no enclosing toolbar shadow`);
@@ -340,6 +354,12 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       const tile = document.querySelector('.room-video-stage .media-tile').getBoundingClientRect();
       return tile.width > stage.width / 2 && Math.abs(tile.width / tile.height - 16/9) < .01;
     })()`), true, 'A single desktop video tile uses the available stage height');
+    assert.equal(await execute(`(() => {
+      const grid = document.querySelector('.room-view-options button:first-child svg');
+      return grid.classList.contains('lucide-layout-grid') &&
+        grid.querySelectorAll('rect').length === 4 &&
+        parseFloat(getComputedStyle(grid).strokeWidth) === 1.75;
+    })()`), true, 'The gallery switch uses the four-square reference glyph');
     await capture('active-room-before-media', 'before-media');
     await sendPresence(true, ['Мария Полякова', 'Дмитрий Волков', 'Максим Петров'].map((name, index) => ({
       ...membership, displayName:name, role:'participant', online:true, connections:1,

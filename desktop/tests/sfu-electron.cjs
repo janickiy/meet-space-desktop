@@ -89,9 +89,13 @@ const { startApp } = require("../dist/main.js");
         });
       };
       s.stats = async (ids) => Promise.all(ids.map(async id => {
-        // Associate PCs by the real local sender tracks, not private client fields.
-        const own = new Set(s.views[id]?.localStream?.getTracks().map(t => t.id) || []);
-        const pc = s.peers.find(p => p.connectionState !== "closed" && p.getSenders().some(sender => sender.track && own.has(sender.track.id)));
+        // Use actual sender or receiver tracks to find the connection, including a peer with no outgoing media.
+        const view = s.views[id];
+        const own = new Set(view?.localStream?.getTracks() || []);
+        const remote = new Set(view?.remoteStreams.flatMap(item => item.stream.getTracks()) || []);
+        const pc = s.peers.find(peer => peer.connectionState !== "closed" &&
+          (peer.getSenders().some(sender => own.has(sender.track)) ||
+           peer.getReceivers().some(receiver => remote.has(receiver.track))));
         if (!pc) return { id, state: "missing", incoming: [] };
         const report = await pc.getStats(), items = [...report.values()];
         const transport = items.find(item => item.type === "transport" && item.selectedCandidatePairId);
@@ -100,7 +104,8 @@ const { startApp } = require("../dist/main.js");
           id: item.id, kind: item.kind, bytes: item.bytesReceived || 0, packets: item.packetsReceived || 0,
           frames: item.framesDecoded || 0, samples: item.totalSamplesReceived || 0, codec: report.get(item.codecId)?.mimeType || ""
         }));
-        return { id, state: pc.connectionState, ice: pc.iceConnectionState, route: local?.candidateType, mediaPeerId: s.views[id]?.mediaPeerId, incoming };
+        return { id, state: pc.connectionState, ice: pc.iceConnectionState, route: local?.candidateType,
+          mediaPeerId: view?.mediaPeerId, localSenders: pc.getSenders().filter(sender => sender.track).length, incoming };
       }));
     };
     await js("(" + setup.toString() + ")()");
@@ -284,17 +289,74 @@ const { startApp } = require("../dist/main.js");
     }
     screenSwitchChecks.captureMethodRestored = await js("window.__sfu.screenFixture.restored");
     assert.equal(screenSwitchChecks.captureMethodRestored, true);
-    await js("Object.values(window.__sfu.clients).forEach(client=>client.stop());void 0");
-    const finalEngine = await waitFor(async () => {
-      const s = await rpc("stats");
-      return s.peers === 0 && s.rooms === 0 && s.tracks === 0 && s.subscriptions === 0 && s.turnAllocations === 0 ? s : null;
-    }, "Final SFU peers/rooms/tracks/subscriptions and TURN allocations must all be zero");
+    const stopAndVerifyCleanup = async () => {
+      await js("Object.values(window.__sfu.clients).forEach(client=>client.stop());void 0");
+      return waitFor(async () => {
+        const state = await rpc("stats");
+        return state.peers === 0 && state.rooms === 0 && state.tracks === 0 &&
+          state.subscriptions === 0 && state.turnAllocations === 0 ? state : null;
+      }, "SFU peers/rooms/tracks/subscriptions and TURN allocations must all be zero");
+    };
+    await stopAndVerifyCleanup();
+    // The publisher acquires the regular synthetic devices first. The receiver requests
+    // both devices but has none. SDP, ICE, RTP and video decoding are still real.
+    const startWithoutDevices = async () => {
+      const s = window.__sfu;
+      const devices = navigator.mediaDevices;
+      const capture = devices.getUserMedia;
+      const requests = [];
+      s.noDeviceRequests = requests;
+      s.make("available-publisher");
+      await s.clients["available-publisher"].start(true);
+      s.make("missing-device-receiver");
+      devices.getUserMedia = async (constraints) => {
+        requests.push({ audio: Boolean(constraints?.audio), video: Boolean(constraints?.video) });
+        throw new DOMException("No microphone or camera", "NotFoundError");
+      };
+      try {
+        await s.clients["missing-device-receiver"].start(true, {
+          microphoneEnabled: true, cameraEnabled: true,
+        });
+      } finally {
+        devices.getUserMedia = capture;
+      }
+    };
+    await js("(" + startWithoutDevices.toString() + ")()");
+    const receiveWithoutDevices = await waitFor(async () => {
+      const snapshot = await js(`(async () => {
+        const s = window.__sfu;
+        const id = "missing-device-receiver";
+        const view = s.views[id];
+        const video = [...s.videos].find(([key, element]) =>
+          key.startsWith(id + ":") && element.readyState >= 2 && element.videoWidth > 0
+        )?.[1];
+        const [peer] = await s.stats([id]);
+        return { peer, active: view?.active, error: view?.error, requests: s.noDeviceRequests,
+          localTracks: view?.localStream?.getTracks().length ?? 0,
+          videoWidth: video?.videoWidth ?? 0, videoHeight: video?.videoHeight ?? 0 };
+      })()`);
+      if (!snapshot.active && snapshot.error)
+        throw new Error("Missing local devices prevented SFU reception: " + snapshot.error);
+      const { peer } = snapshot;
+      const expectedRoute = config.relay ? peer.route === "relay" : peer.route !== "relay";
+      return snapshot.active && peer.state === "connected" && expectedRoute &&
+        snapshot.videoWidth > 0 && snapshot.videoHeight > 0 &&
+        activeTracks(peer, "video").length === 1 && activeTracks(peer, "audio").length === 1 ? snapshot : null;
+    }, "The peer without local devices must render video and receive audio over WebRTC");
+    assert.ok(receiveWithoutDevices.requests.some(request => request.audio && request.video));
+    assert.equal(receiveWithoutDevices.localTracks, 0);
+    assert.equal(receiveWithoutDevices.peer.localSenders, 0);
+    const receiveOnlyEngine = await rpc("stats");
+    assert.equal(receiveOnlyEngine.peers, 2);
+    assert.equal(receiveOnlyEngine.tracks, 2);
+    assert.equal(receiveOnlyEngine.subscriptions, 2);
+    const finalEngine = await stopAndVerifyCleanup();
     const resources = await js("({capturedTracks:window.__sfu.tracks.length,localTracksEnded:window.__sfu.tracks.every(t=>t.readyState==='ended'),createdPeers:window.__sfu.peers.length,peerConnectionsClosed:window.__sfu.peers.every(pc=>pc.connectionState==='closed'),retainedVideoElements:window.__sfu.videos.size})");
     assert.equal(resources.localTracksEnded, true); assert.equal(resources.peerConnectionsClosed, true); assert.equal(resources.retainedVideoElements, 0);
     const result = { result: "PASS", participants: ids.length, relay: config.relay, elapsedMs: Date.now() - started,
       electron: process.versions.electron, platform: process.platform, arch: process.arch, session: process.env.XDG_SESSION_TYPE || "unknown",
-      ...config.fixtureEvidence, mediaStats, activeEngine, leaveState, rejoinedEngine, growingStats, screenSwitchChecks, finalEngine, resources,
-      checks: ["all n-1 remote Opus and decoded VP8 streams per current peer", "selected relay and real TURN allocations when forced", "late join", "stop/leave/fresh-client rejoin", "new mediaPeerId and all-stream counter growth after rejoin", "active screen source replacement with distinct decoded remote colors, old-track release and stop-to-baseline", "complete PC/capture/SFU/TURN cleanup"],
+      ...config.fixtureEvidence, mediaStats, activeEngine, leaveState, rejoinedEngine, growingStats, screenSwitchChecks, receiveWithoutDevices, receiveOnlyEngine, finalEngine, resources,
+      checks: ["all n-1 remote Opus and decoded VP8 streams per current peer", "selected relay and real TURN allocations when forced", "late join", "stop/leave/fresh-client rejoin", "new mediaPeerId and all-stream counter growth after rejoin", "active screen source replacement with distinct decoded remote colors, old-track release and stop-to-baseline", "getUserMedia NotFoundError still permits real incoming video and audio without local senders", "complete PC/capture/SFU/TURN cleanup"],
       syntheticDevices: true, syntheticScreenCapture: true, nativeScreenCaptureTested: false, physicalDevicesTested: false, physicalSleepTested: false, productionApiAuthenticationTested: false,
       scope: "Independent ConferenceMediaClient instances in one owned sandboxed renderer; production Pion engine, local signaling driver, no production service" };
     fs.writeFileSync(config.reportPath, JSON.stringify(result, null, 2) + "\n");

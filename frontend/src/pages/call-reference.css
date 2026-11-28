@@ -620,6 +620,9 @@
   color: inherit;
   filter: none;
 }
+.call-reference-room .conference-control-bar .conference-room-control-icon svg {
+  stroke-width: 1.75;
+}
 .conference-room-control > .conference-room-control-label {
   display: block;
   max-width: 100%;
@@ -1608,7 +1611,7 @@
   }
 }
 .conference-room-page.call-reference-room .room-footer {
-  --room-control-icon-size: 18px;
+  --room-control-icon-size: 20px;
   min-height: 0;
   padding: 9px 0;
   background: transparent;
@@ -1643,8 +1646,8 @@
   .conference-control-bar
   .conference-room-control
   > .conference-room-control-icon {
-  width: 20px;
-  height: 20px;
+  width: var(--room-control-icon-size);
+  height: var(--room-control-icon-size);
   min-height: 0;
   border: 0;
   color: inherit;

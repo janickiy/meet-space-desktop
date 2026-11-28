@@ -1468,7 +1468,32 @@ await test("default fallback also rejects a device that ends during its permissi
   assert.equal(camera.stops, 1);
 });
 
-await test("a lost initial capture never joins or reports enabled devices", async () => {
+await test("missing local devices do not block receiving a conference", async () => {
+  let captures = 0;
+  install(async () => {
+    captures++;
+    throw new DOMException("missing", "NotFoundError");
+  });
+  const { client, pc, commands } = await joined({
+    platform: "win32",
+    options: { microphoneEnabled: true, cameraEnabled: true },
+  });
+  try {
+    const state = client.snapshot();
+    assert.equal(captures, 1);
+    assert.equal(state.active, true);
+    assert.equal(state.microphoneEnabled, false);
+    assert.equal(state.cameraEnabled, false);
+    assert.equal(state.localStream, null);
+    assert.match(state.error, /не найдены/);
+    assert.ok(commands.some((command) => command.type === "media.offer"));
+    assert.ok(pc.getTransceivers().every(({ sender }) => !sender.track));
+  } finally {
+    client.stop();
+  }
+});
+
+await test("lost initial capture joins with all local devices off", async () => {
   const microphone = new Track("audio");
   const camera = new Track("video");
   camera.unplug();
@@ -1481,14 +1506,14 @@ await test("a lost initial capture never joins or reports enabled devices", asyn
   );
   try {
     await client.start();
-    assert.equal(client.snapshot().active, false);
+    assert.equal(client.snapshot().active, true);
     assert.equal(client.snapshot().cameraEnabled, false);
     assert.equal(client.snapshot().microphoneEnabled, false);
     assert.equal(client.snapshot().localStream, null);
     assert.match(client.snapshot().error, /устройство отключено/);
     assert.equal(microphone.stops, 1);
     assert.equal(camera.stops, 1);
-    assert.equal(sent.includes("media.join"), false);
+    assert.equal(sent.filter((type) => type === "media.join").length, 1);
     assert.equal(Peer.all.length, peers);
   } finally {
     client.stop();
@@ -1526,7 +1551,7 @@ await test("denied macOS capture explains only requested privacy controls withou
       assert.match(message, /⌘Q/);
       assert.doesNotMatch(message, /fixture-private-device-label/);
       assert.equal(requests, 1);
-      assert.equal(sent.includes("media.join"), false);
+      assert.equal(sent.filter((type) => type === "media.join").length, 1);
     } finally {
       client.stop();
     }
@@ -2045,6 +2070,77 @@ await test("unavailable remote output stays muted and an autoplay retry cannot b
   }
 });
 
+await test("an unavailable sink plays a live remote video muted and a verified sink restores sound", async () => {
+  const element = { ...playbackElement(), tagName: "VIDEO" };
+  const stream = new Stream([new Track("audio"), new Track("video")]);
+  const outputs = [];
+  const blocked = [];
+  let failRoute = true;
+  let blockPlay = true;
+  element.setSinkId = async (id) => {
+    if (failRoute) throw new Error("no output");
+    element.sinkId = id;
+  };
+  const play = element.play.bind(element);
+  element.play = async () => {
+    assert.equal(element.muted, failRoute);
+    if (blockPlay) {
+      blockPlay = false;
+      throw new DOMException("interaction required", "NotAllowedError");
+    }
+    await play();
+  };
+  const playback = createRemotePlayback(element, stream, "headset", {
+    onOutput: (result) => outputs.push(result),
+    onBlocked: (value) => blocked.push(value),
+  });
+  try {
+    await playback.refreshOutput();
+    assert.deepEqual(outputs, ["unavailable"]);
+    assert.equal(element.muted, true);
+    assert.deepEqual(blocked, [true]);
+    await playback.retry();
+    assert.deepEqual(element.plays, [{ muted: true, sinkId: "", stream }]);
+    assert.deepEqual(blocked, [true, false]);
+    failRoute = false;
+    await playback.refreshOutput();
+    assert.equal(element.muted, false);
+    assert.deepEqual(outputs, ["unavailable", "selected"]);
+    assert.deepEqual(element.plays.at(-1), {
+      muted: false,
+      sinkId: "headset",
+      stream,
+    });
+  } finally {
+    playback.dispose();
+  }
+});
+
+await test("failed output never starts audio-only playback or a video element with no live video", async () => {
+  for (const tagName of ["AUDIO", "VIDEO"]) {
+    const element = { ...playbackElement(), tagName };
+    const video = new Track("video");
+    if (tagName === "VIDEO") video.stop();
+    element.setSinkId = async () => {
+      throw new Error("output unavailable");
+    };
+    const playback = createRemotePlayback(
+      element,
+      new Stream([new Track("audio"), video]),
+      "",
+      { onOutput() {}, onBlocked() {} },
+    );
+    try {
+      await playback.refreshOutput();
+      await playback.retry();
+      assert.deepEqual(element.plays, []);
+      assert.equal(element.muted, true);
+    } finally {
+      playback.dispose();
+    }
+  }
+});
+
 await test("remote playback may use an explicit successful fallback and retains autoplay-blocked retry", async () => {
   const element = playbackElement();
   let routes = 0;
@@ -2091,18 +2187,19 @@ await test("remote playback may use an explicit successful fallback and retains 
 await test("a stale remote route and late cleanup cannot play or detach a newer stream", async () => {
   const pending = deferred();
   const entered = deferred();
-  const element = playbackElement();
+  const element = { ...playbackElement(), tagName: "VIDEO" };
   element.setSinkId = async (id) => {
     if (id === "old") {
       entered.resolve();
       await pending.promise;
+      throw new Error("old sink unavailable");
     }
     element.sinkId = id;
   };
   const oldEvents = [];
   const old = createRemotePlayback(
     element,
-    new Stream([new Track("audio")]),
+    new Stream([new Track("audio"), new Track("video")]),
     "old",
     {
       onOutput: (result) => oldEvents.push(result),

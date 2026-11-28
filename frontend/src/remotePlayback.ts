@@ -2,12 +2,12 @@ import { routeAudioOutput, type AudioOutputResult } from "./mediaDevices";
 
 type PlaybackElement = Pick<
   HTMLMediaElement,
-  "muted" | "srcObject" | "play" | "pause"
+  "tagName" | "muted" | "srcObject" | "play" | "pause"
 > & { setSinkId?: (sinkId: string) => Promise<void> };
 
 const owners = new WeakMap<PlaybackElement, symbol>();
 
-/** Attach incoming media silently; only a current successful output route may play it. */
+/** Start incoming video silently when sound cannot be routed. */
 export function createRemotePlayback(
   element: PlaybackElement,
   stream: MediaStream,
@@ -24,7 +24,7 @@ export function createRemotePlayback(
   owners.set(element, owner);
   let disposed = false;
   let revision = 0;
-  let routed = false;
+  let output: AudioOutputResult | undefined;
   const current = (expected: number) =>
     !disposed && owners.get(element) === owner && revision === expected;
   element.muted = true;
@@ -32,7 +32,14 @@ export function createRemotePlayback(
   element.srcObject = stream;
 
   const play = async (expected: number) => {
-    if (!current(expected) || !routed) return;
+    if (!current(expected)) return;
+    const hasAudioOutput = output === "selected" || output === "fallback";
+    const silentVideo =
+      output === "unavailable" &&
+      element.tagName === "VIDEO" &&
+      stream.getVideoTracks().some((track) => track.readyState === "live");
+    if (!hasAudioOutput && !silentVideo) return;
+    element.muted = !hasAudioOutput;
     try {
       await element.play();
       if (current(expected)) options.onBlocked(false);
@@ -44,7 +51,7 @@ export function createRemotePlayback(
     async refreshOutput() {
       if (disposed || owners.get(element) !== owner) return;
       const expected = ++revision;
-      routed = false;
+      output = undefined;
       element.muted = true;
       element.pause();
       const result = await routeAudioOutput(
@@ -55,23 +62,18 @@ export function createRemotePlayback(
       );
       if (!current(expected) || result === "superseded") return;
       options.onOutput(result);
-      if (
-        !current(expected) ||
-        (result !== "selected" && result !== "fallback")
-      )
-        return;
-      routed = true;
-      element.muted = false;
+      if (!current(expected)) return;
+      output = result;
       await play(expected);
     },
     retry() {
       // A user click can retry an autoplay rejection synchronously, but cannot
-      // bypass a failed/pending output route or revive a disposed stream.
+      // unmute a failed/pending route or revive a disposed stream.
       return play(revision);
     },
     dispose() {
       disposed = true;
-      routed = false;
+      output = undefined;
       revision++;
       if (owners.get(element) !== owner) return;
       owners.delete(element);

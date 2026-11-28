@@ -80,7 +80,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           to={user?.guestConferenceId ? "/" : "/conferences"}
           aria-label="К моим конференциям"
         >
-          <ArrowLeft size={19} />
+          <ArrowLeft size={20} />
           <span>К встречам</span>
         </Link>
         <div className="room-title">

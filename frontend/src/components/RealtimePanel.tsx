@@ -8,7 +8,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import {
-  Grid2X2,
+  LayoutGrid,
   UserRound,
   PinOff,
   AudioLines,
@@ -18,6 +18,7 @@ import {
   Settings,
   ShieldCheck,
   MonitorUp,
+  ScreenShareOff,
   Radio,
   RefreshCw,
   Video,
@@ -820,7 +821,13 @@ export function RealtimePanel({
                     ? media.stopScreen()
                     : media.startScreen())
                 }
-                icon={<MonitorUp size={24} />}
+                icon={
+                  media.view.screenSharing ? (
+                    <ScreenShareOff size={24} />
+                  ) : (
+                    <MonitorUp size={24} />
+                  )
+                }
                 label="Экран"
               />
               {media.view.screenSharing && (
@@ -1057,7 +1064,7 @@ export function RealtimePanel({
                 aria-pressed={layout === "gallery"}
                 onClick={() => setLayout("gallery")}
               >
-                <Grid2X2 size={15} />
+                <LayoutGrid size={15} />
                 Сетка
               </button>
               <button

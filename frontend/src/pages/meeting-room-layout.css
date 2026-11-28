@@ -57,6 +57,17 @@
   height: 19px;
 }
 
+.call-reference-room
+  :is(
+    .room-back,
+    .room-header-action,
+    .room-view-options,
+    .room-participant-count
+  )
+  svg {
+  stroke-width: 1.75;
+}
+
 .call-reference-room .room-header .room-header-reconnect {
   padding: 0;
 }
@@ -881,6 +892,7 @@
   }
 
   .conference-room-page.call-reference-room .room-footer {
+    --room-control-icon-size: 19px;
     margin-inline: calc(-1 * var(--meeting-gutter));
     padding: 9px var(--meeting-gutter);
   }

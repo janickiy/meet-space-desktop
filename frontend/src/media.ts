@@ -557,46 +557,76 @@ export class ConferenceMediaClient {
       error: null,
     });
     try {
-      if ((microphone || camera) && !navigator.mediaDevices?.getUserMedia)
-        throw new Error("secure_context");
       if (options?.audioInputId)
         this.preferredInputs.set("microphone", options.audioInputId);
       if (options?.videoInputId)
         this.preferredInputs.set("camera", options.videoInputId);
-      const constraints = (preferred: boolean): MediaStreamConstraints => ({
-        audio: microphone
-          ? inputTrackConstraints(
-              "audio",
-              preferred ? options?.audioInputId || "" : "",
-              this.noiseSuppression,
-            )
-          : false,
-        video: camera
-          ? inputTrackConstraints(
-              "video",
-              preferred ? options?.videoInputId || "" : "",
-              this.noiseSuppression,
-            )
-          : false,
-      });
-      let stream: MediaStream;
-      if (!microphone && !camera) {
-        stream = new MediaStream();
-      } else {
-        const captured = await captureWithDeviceFallback(
-          constraints(true),
-          options?.audioInputId || options?.videoInputId
-            ? constraints(false)
-            : undefined,
-          () => !this.disposed,
-        );
-        if (!captured) return;
-        stream = captured.stream;
-        if (captured.usedFallback) {
-          this.preferredInputs.delete("microphone");
-          this.preferredInputs.delete("camera");
+      let stream: MediaStream | undefined;
+      let captureError: string | null = null;
+      if (microphone || camera) {
+        const constraints = (preferred: boolean): MediaStreamConstraints => ({
+          audio: microphone
+            ? inputTrackConstraints(
+                "audio",
+                preferred ? options?.audioInputId || "" : "",
+                this.noiseSuppression,
+              )
+            : false,
+          video: camera
+            ? inputTrackConstraints(
+                "video",
+                preferred ? options?.videoInputId || "" : "",
+                this.noiseSuppression,
+              )
+            : false,
+        });
+        try {
+          if (!navigator.mediaDevices?.getUserMedia)
+            throw new Error("secure_context");
+          const captured = await captureWithDeviceFallback(
+            constraints(true),
+            options?.audioInputId || options?.videoInputId
+              ? constraints(false)
+              : undefined,
+            () => !this.disposed,
+          );
+          if (!captured) return;
+          stream = captured.stream;
+          if (captured.usedFallback) {
+            this.preferredInputs.delete("microphone");
+            this.preferredInputs.delete("camera");
+          }
+        } catch (error) {
+          if (this.disposed) return;
+          const info = record(error);
+          const name = typeof info?.name === "string" ? info.name : "";
+          // A local input failure must not block joining as a receiver.
+          captureError =
+            error instanceof Error && error.message === "secure_context"
+              ? isDesktopBuild
+                ? "Захват устройств недоступен. Перезапустите MeetSpace и повторите подключение."
+                : "Камера доступна только на HTTPS или localhost. Откройте защищённую страницу."
+              : name === "NotAllowedError" || name === "PermissionDeniedError"
+                ? capturePermissionMessage(
+                    microphone && camera
+                      ? "audio-video"
+                      : microphone
+                        ? "audio"
+                        : "video",
+                    this.platform,
+                  )
+                : name === "SecurityError"
+                  ? isDesktopBuild
+                    ? "Захват устройств недоступен. Перезапустите MeetSpace и проверьте разрешения системы."
+                    : "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost."
+                  : name === "NotFoundError"
+                    ? "Камера или микрофон не найдены. Подключите устройства, если хотите передавать звук или видео."
+                    : name === "NotReadableError"
+                      ? "Не удалось открыть камеру или микрофон. Возможно, устройство отключено или занято другим приложением."
+                      : "Не удалось включить локальные устройства. Проверьте подключение и разрешения.";
         }
       }
+      stream ??= new MediaStream();
       if (this.disposed) {
         stream.getTracks().forEach(
           /**
@@ -647,38 +677,16 @@ export class ConferenceMediaClient {
            * @returns true, если проверяемый элемент удовлетворяет условию; false в противном случае.
            */ (t) => t.kind === "video",
         ),
+        error: captureError,
         status: "Подключаемся к media-worker…",
       });
       this.deadline(
         "Media-worker не ответил. Проверьте сервис и повторите подключение.",
       );
       this.joinedRequest = this.send("media.join", {});
-    } catch (error) {
-      const info = record(error);
-      const name = typeof info?.name === "string" ? info.name : "";
+    } catch {
       this.fail(
-        error instanceof Error && error.message === "secure_context"
-          ? isDesktopBuild
-            ? "Захват устройств недоступен. Перезапустите MeetSpace и повторите подключение."
-            : "Камера доступна только на HTTPS или localhost. Откройте защищённую страницу."
-          : name === "NotAllowedError" || name === "PermissionDeniedError"
-            ? capturePermissionMessage(
-                microphone && camera
-                  ? "audio-video"
-                  : microphone
-                    ? "audio"
-                    : "video",
-                this.platform,
-              )
-            : name === "SecurityError"
-              ? isDesktopBuild
-                ? "Захват устройств недоступен. Перезапустите MeetSpace и проверьте разрешения системы."
-                : "Браузер запретил доступ к устройствам. Откройте страницу по HTTPS или через localhost."
-              : name === "NotFoundError"
-                ? "Камера или микрофон не найдены. Подключите устройства и повторите."
-                : name === "NotReadableError"
-                  ? "Не удалось открыть камеру или микрофон. Возможно, устройство отключено или занято другим приложением."
-                  : "Не удалось включить медиасвязь. Проверьте устройства и media-worker, затем повторите.",
+        "Не удалось подключиться к медиасервису. Повторите подключение.",
       );
     }
   }
