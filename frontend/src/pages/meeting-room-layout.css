@@ -723,45 +723,82 @@
   display: none;
 }
 
-.conference-room-page.call-reference-room .room-footer {
+.conference-room-page.call-reference-room
+  .room-footer:has(> .room-controls-slot) {
   flex-shrink: 0;
   padding: 11px 0;
   border-top: 1px solid var(--room-border);
 }
 
-.conference-room-page.call-reference-room .conference-control-bar {
+.call-reference-room .room-controls-slot {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  gap: 6px;
+  justify-content: center;
+  container-type: inline-size;
 }
 
 .conference-room-page.call-reference-room
+  .room-controls-slot
+  .conference-control-bar {
+  --room-control-gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--room-control-gap);
+  margin: 0;
+  border-color: #40364b;
+}
+
+.conference-room-page.call-reference-room
+  .room-controls-slot
   .conference-control-bar
   > .conference-room-control {
-  flex: 1 0 76px;
+  width: 100%;
   min-width: 0;
-  max-width: 115px;
+  max-width: none;
+  font-weight: 400;
 }
 
 .conference-room-page.call-reference-room
+  .room-controls-slot
   .conference-control-bar
   > .conference-room-control:is([aria-pressed="true"], [aria-expanded="true"]) {
   background: #4c375b;
   border-color: #a98bbd;
 }
 
+.call-reference-room .room-reconnect-slot {
+  gap: 8px;
+}
+
 @media (min-width: 780px) {
   .conference-room-page.call-reference-room
+    .room-controls-slot
+    .conference-control-bar {
+    --room-control-column: min(
+      max(76px, calc(76px * var(--text-scale))),
+      calc((100cqw - 42px) / 6)
+    );
+    /* Five gaps and the surrounding 5px padding and 1px border. */
+    --room-controls-width: calc(6 * var(--room-control-column) + 42px);
+    width: var(--room-controls-width);
+    /* The third button stays centered on the screen when there is space. */
+    margin-inline-start: min(
+      calc(var(--room-control-column) + var(--room-control-gap)),
+      max(0px, calc(100cqw - var(--room-controls-width)))
+    );
+  }
+
+  .conference-room-page.call-reference-room
+    .room-controls-slot
     .conference-control-bar
     > .conference-room-control {
-    flex: 0 0 76px;
-    min-width: max-content;
-    max-width: none;
     padding-inline: 5px;
   }
 
-  .call-reference-room .conference-control-bar .conference-room-control-label {
+  .call-reference-room
+    .room-controls-slot
+    .conference-control-bar
+    .conference-room-control-label {
     white-space: nowrap;
   }
 }
@@ -807,7 +844,7 @@
     display: none;
   }
 
-  .call-reference-room .room-header-actions {
+  .call-reference-room :is(.room-header-actions, .room-reconnect-slot) {
     gap: 5px;
   }
 
@@ -891,31 +928,47 @@
     font-size: calc(10px * var(--text-scale));
   }
 
-  .conference-room-page.call-reference-room .room-footer {
+  .conference-room-page.call-reference-room
+    .room-footer:has(> .room-controls-slot) {
     --room-control-icon-size: 19px;
     margin-inline: calc(-1 * var(--meeting-gutter));
     padding: 9px var(--meeting-gutter);
   }
 
-  .conference-room-page.call-reference-room .conference-control-bar {
+  .conference-room-page.call-reference-room
+    .room-controls-slot
+    .conference-control-bar {
+    --room-control-gap: 7px;
     width: min(100%, 540px);
-    gap: 4px;
     padding: 4px;
-    border-color: transparent;
+    border: 0;
+    border-radius: 18px;
     background: transparent;
   }
 
   .conference-room-page.call-reference-room
+    .room-controls-slot
     .conference-control-bar
     > .conference-room-control {
-    flex-basis: max(41px, calc((100% - 24px) / 7));
     min-height: 53px;
-    padding: 4px 2px;
+    padding: 4px 0;
     border-radius: 16px;
   }
 
-  .call-reference-room .conference-control-bar .conference-room-control-label {
-    font-size: calc(clamp(8px, 2.2vw, 11px) * var(--text-scale));
+  .call-reference-room
+    .room-controls-slot
+    .conference-control-bar
+    .conference-room-control-label {
+    font-size: calc(clamp(8px, 2.55vw, 11px) * var(--text-scale));
+  }
+}
+
+@media (max-width: 360px) {
+  .call-reference-room
+    .room-controls-slot
+    .conference-control-bar
+    .conference-room-control-label {
+    line-height: 1.15;
   }
 }
 

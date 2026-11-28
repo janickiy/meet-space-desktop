@@ -69,10 +69,11 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     const root = compact ? '.meeting-filter-form' : '.conference-filters';
     await until(() => execute(`!!document.querySelector(${JSON.stringify(root)})?.getClientRects().length`), 'Meeting filters visible');
     const scope = root + ' select', from = root + ' input[aria-label="Встречи с даты"]', to = root + ' input[aria-label="Встречи по дату"]';
-    const values = () => execute(`[...document.querySelector(${JSON.stringify(root)}).querySelectorAll('select, input[type=date]')].map(e=>e.value)`);
+    const values = () => execute(`[${[scope, from, to].map(selector => `document.querySelector(${JSON.stringify(selector)}).value`).join(',')}]`);
+    assert.equal(await execute(`document.querySelector(${JSON.stringify(from)}).placeholder`), 'дд . мм . гггг', 'Russian date format is shown in filters');
     assert.deepEqual(await values(), ['all', '', ''], 'Attendance and both dates initially show the full list');
     if (!compact) {
-      const [participation, start, end, reset] = await execute(`[...document.querySelector('.conference-filters').querySelectorAll('select,input[type=date],button')].map(e=>{
+      const [participation, start, end, reset] = await execute(`[...document.querySelector('.conference-filters').querySelectorAll('.field > select,.meeting-date-input,:scope > button')].map(e=>{
         const {left, right, width, height, bottom} = e.getBoundingClientRect();
         return {left, right, width, height, bottom};
       })`);
@@ -84,11 +85,52 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       for (const [left,right] of [[participation,start],[start,end],[end,reset]]) assert.ok(Math.abs(right.left-left.right-14)<1, 'Adjacent filters have the reference 14px gutter');
     }
     await execute(`(()=>{const e=document.querySelector(${JSON.stringify(scope)});e.value='owned';e.dispatchEvent(new Event('change',{bubbles:true}))})()`);
-    await field(from,'2026-01-01');
-    await field(to,'2026-12-31');
-    assert.deepEqual(await values(),['owned','2026-01-01','2026-12-31']);
+    await field(from,'01.01.2026');
+    if (!compact && name === 'meeting-filters-light') {
+      const trigger = root + ' .meeting-date-field:last-of-type .meeting-date-trigger';
+      const popup = root + ' .meeting-date-popup:popover-open';
+      await field(to,'31.12.2025');
+      assert.equal(await execute(`document.querySelector(${JSON.stringify(to)}).validity.customError`),true,'Typed date before the lower bound is rejected');
+      await field(to,'02012026');
+      await click(trigger);
+      await until(()=>execute(`!!document.querySelector(${JSON.stringify(popup)})`),'Russian calendar opens');
+      const calendar = await execute(`(() => {
+        const panel=document.querySelector(${JSON.stringify(popup)});
+        return {month:panel.querySelector('.meeting-date-period').textContent.trim(),
+          weekdays:[...panel.querySelectorAll('th')].map(day=>day.textContent.trim()),
+          dayButtons:panel.querySelectorAll('tbody button').length,
+          precedingDateIsDisabled:panel.querySelector('[data-day="2025-12-31"]').disabled,
+          focused:document.activeElement.dataset.day};
+      })()`);
+      assert.deepEqual(calendar,{month:'январь 2026 г.',weekdays:['пн','вт','ср','чт','пт','сб','вс'],
+        dayButtons:42,precedingDateIsDisabled:true,focused:'2026-01-02'});
+      await execute("document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));void 0");
+      await until(()=>execute("document.activeElement.dataset.day==='2026-01-03'"),'Keyboard moves between calendar dates');
+      await click(popup+' [data-day="2026-01-03"]');
+      await until(()=>execute(`!document.querySelector(${JSON.stringify(popup)})`),'Selecting a day closes the calendar');
+      assert.deepEqual(await values(),['owned','01.01.2026','03.01.2026']);
+      await click(trigger);
+      await until(()=>execute(`!!document.querySelector(${JSON.stringify(popup)})`),'Russian calendar reopens');
+      await capture('meeting-date-calendar-light');
+      await click(popup+' .meeting-date-period');
+      assert.equal(await execute(`document.querySelector(${JSON.stringify(popup+' select[aria-label="Месяц"]')}).selectedOptions[0].textContent`),'январь','Month chooser is localized');
+      const year = popup+' input[aria-label="Год"]';
+      await execute(`document.querySelector(${JSON.stringify(year)}).focus();void 0`);
+      await field(year,'2027');
+      await execute("document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));void 0");
+      await until(()=>execute("document.activeElement.dataset.day==='2027-01-03'"),'Year entry returns to the selected day on the new calendar grid');
+      await click(popup+' .meeting-date-clear');
+      assert.deepEqual(await values(),['owned','01.01.2026','']);
+    }
+    await field(to,'31.12.2026');
+    assert.deepEqual(await values(),['owned','01.01.2026','31.12.2026']);
     await capture(name);
     if (compact) {
+      await field(to,'31.02.2026');
+      await execute(`document.querySelector(${JSON.stringify(root+' button[type=submit]')}).focus();void 0`);
+      await click(root+' button[type=submit]');
+      assert.equal(await execute(`document.querySelector(${JSON.stringify(to)})?.validity.customError`),true,'Invalid date is retained across blur and blocks filter application');
+      await field(to,'31.12.2026');
       await click(root+' button[type=submit]');
       await until(() => execute("document.querySelector('.meeting-filter-count')?.textContent==='3' && !document.querySelector('.meeting-filter-form')"),'Compact filters applied');
       await click('.meeting-chip-reset');
@@ -97,6 +139,20 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     assert.deepEqual(await values(),['all','',''],'Reset restores attendance and both dates');
     if (compact) await click('.meeting-filter-form button[type=button]');
     await visible('Product scheduled meeting');
+  };
+  const checkMeetingViewPosition = async (tabId, mode) => {
+    const layout = await execute(`(() => {
+      const page = document.querySelector('.meetings-reference-page');
+      const [caption, toggle, results] = ['.meeting-list-caption', '.collection-view-toggle', '#conference-list'].map(selector => page.querySelector(selector));
+      if (!toggle) return null;
+      const bounds = toggle.getBoundingClientRect(), list = results.getBoundingClientRect(), count = caption.getBoundingClientRect();
+      return { tab: results.getAttribute('aria-labelledby'), beforeResults: bounds.bottom <= list.top,
+        besideCaption: Math.abs(bounds.top + bounds.bottom - count.top - count.bottom) <= 2,
+        rightAligned: Math.abs(bounds.right - list.right) <= 1,
+        mode: toggle.querySelector('[aria-pressed=true]')?.getAttribute('aria-label') };
+    })()`);
+    assert.deepEqual(layout, { tab: 'tab-' + tabId, beforeResults: true, besideCaption: true, rightAligned: true, mode },
+      'The view switch is at the top right of the same results toolbar in ' + tabId);
   };
   const checkIncomingCall=async theme=>{
     await route(`/personal/${DIRECT}`);await visible('Product server message');
@@ -186,6 +242,21 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await click('.collection-view-toggle button[aria-pressed=false]');
       }
       if(name==='meetings'){
+        fixture.product.controls.activeConference = true;
+        await checkMeetingViewPosition('upcoming', 'Список');
+        await click('.meetings-reference-page button[aria-label="Плитка"]');
+        for (const id of ['upcoming', 'active', 'past']) {
+          await click('#tab-' + id);
+          await checkMeetingViewPosition(id, 'Плитка');
+        }
+        await field('#meeting-search', 'No matching meetings');
+        await visible('Встречи не найдены');
+        await checkMeetingViewPosition('past', 'Плитка');
+        await click('.meeting-search-clear');
+        await click('#tab-upcoming');
+        await click('.meetings-reference-page button[aria-label="Список"]');
+        await checkMeetingViewPosition('upcoming', 'Список');
+        await visible('Product scheduled meeting');
         await checkMeetingFilters('meeting-filters-'+theme);
         assert.equal(await execute(`document.querySelector('[role=tab][id=tab-past]')?.textContent.trim()`),'Завершённые','Completed meetings tab remains available');
         const row=await execute(`(() => {const row=document.querySelector('.dashboard-meeting-row'), open=row.querySelector('.dashboard-meeting-open');
@@ -197,6 +268,32 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await capture('meeting-info-'+theme);
         await click('.meeting-reference-info button[aria-label="Закрыть окно"]');
         await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'meeting information dialog closes');
+        await click('#tab-active');
+        const ellipsis = '.dashboard-meeting-active .meeting-info-trigger';
+        await until(()=>execute(`!!document.querySelector(${JSON.stringify(ellipsis)})`),'Active meeting is listed');
+        await execute(`document.querySelector(${JSON.stringify(ellipsis)}).focus()`);
+        await click(ellipsis);
+        await visible('Допущен; членство активно');
+        const actions = await execute(`(() => {
+          const modal = document.querySelector('.meeting-reference-info');
+          return { title: modal.querySelector('h2').textContent, choices: [...modal.querySelectorAll('.meeting-info-actions > .button')].map(button => button.textContent.trim()) };
+        })()`);
+        assert.deepEqual(actions, {title:'О встрече', choices:['Подключиться к звонку','Пригласить по ссылке','Выйти из встречи','Добавить в папку','Записи и материалы','Завершить для всех']});
+        await capture('meeting-info-active-'+theme);
+        const previousRequests = fixture.requests.length;
+        await execute(`(() => {
+          const finish = [...document.querySelectorAll('.meeting-info-actions > .button')].find(button => button.textContent.trim() === 'Завершить для всех');
+          finish.focus(); finish.click();
+        })()`);
+        await visible('Завершить встречу для всех?');
+        const escape = () => execute(`document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}))`);
+        await escape();
+        await until(()=>execute("document.activeElement?.textContent.trim()==='Завершить для всех'"),'Cancelling the confirmation restores the finish action');
+        assert.ok(!fixture.requests.slice(previousRequests).some(request=>request.method==='POST' && request.path.endsWith('/finish')), 'Opening and cancelling the confirmation does not finish the meeting');
+        await escape();
+        await until(()=>execute(`!document.querySelector('.meeting-reference-info') && document.activeElement?.matches(${JSON.stringify(ellipsis)})`),'Escape closes details and returns focus to the active meeting');
+        fixture.product.controls.activeConference = false;
+        await click('#tab-upcoming');
       }
       if(name==='calendar'){
         assert.equal(await execute("document.querySelectorAll('.agenda-week button').length"),7,'Agenda displays all seven days');
@@ -221,7 +318,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
           const dialog=document.querySelector('.meeting-create-modal'), box=dialog.getBoundingClientRect();
           const date=dialog.querySelector('#scheduled-date'), time=dialog.querySelector('#scheduled-time'), duration=dialog.querySelector('#planned-duration');
           const d=date.getBoundingClientRect(), t=time.getBoundingClientRect(), p=duration.getBoundingClientRect();
-          return {day:new Date(date.value+'T12:00').toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}),
+          const isoDate=date.value.split('.').reverse().join('-');
+          return {day:new Date(isoDate+'T12:00').toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'}),
             width:box.width, sameRow:d.top===t.top && d.right<t.left, fullDuration:p.top>=d.bottom && Math.abs(p.left-d.left)<1 && Math.abs(p.right-t.right)<1,
             scheduleEnabled:dialog.querySelector('[role=switch][aria-label="Запланировать встречу"]').checked};
         })()`);
@@ -363,6 +461,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
       await until(()=>execute('!!document.querySelector(".meeting-reference-editor #scheduled-date") && !!document.querySelector("#scheduled-time")'),'scheduled meeting editor');
       await field('#conference-title','Обсуждение следующего выпуска MeetSpace');
       await capture(`scheduled-meeting-${width}x${height}-${theme}`);
+      if (width === 1280 && theme === 'light') {
+        await click('.meeting-create-modal .meeting-date-trigger');
+        await until(()=>execute('!!document.querySelector(".meeting-create-modal .meeting-date-popup:popover-open")'),'Calendar opens inside the scheduling dialog');
+        await execute("document.activeElement.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));void 0");
+        await until(()=>execute('!!document.querySelector(".meeting-create-modal") && !document.querySelector(".meeting-date-popup") && document.activeElement.id==="scheduled-date"'),'Escape closes the calendar and returns focus to the date inside the dialog');
+      }
       await click('.meeting-create-modal button[aria-label="Закрыть окно"]');
       await until(()=>execute('!document.querySelector(".meeting-create-modal")'),'scheduled meeting editor closes without submitting');
     }
@@ -391,7 +495,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-compact');
   // Override the production minimum window size only in this test to verify web narrow layouts.
   window.setMinimumSize(320,500);window.setContentSize(390,844);
-  await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-mobile');await checkMeetingFilters('meeting-filters-mobile');
+  await route('/conferences');await visible('Product scheduled meeting');await checkMeetingViewPosition('upcoming', 'Список');
+  await capture('meetings-mobile');await checkMeetingFilters('meeting-filters-mobile');
   await route(`/personal/${DIRECT}`);await visible('Product server message');await capture('chat-mobile');
   await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
   await tab('Мой профиль');await visible('Электронная почта');await capture('profile-mobile');

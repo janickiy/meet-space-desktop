@@ -7,10 +7,12 @@ export function CollectionViewToggle({
   value,
   onChange,
   label,
+  controls,
 }: {
   value: CollectionView;
   onChange: (value: CollectionView) => void;
   label: string;
+  controls?: string;
 }) {
   return (
     <div className="collection-view-toggle" role="group" aria-label={label}>
@@ -18,6 +20,7 @@ export function CollectionViewToggle({
         type="button"
         title="Список"
         aria-label="Список"
+        aria-controls={controls}
         aria-pressed={value === "list"}
         onClick={() => onChange("list")}
       >
@@ -27,6 +30,7 @@ export function CollectionViewToggle({
         type="button"
         title="Плитка"
         aria-label="Плитка"
+        aria-controls={controls}
         aria-pressed={value === "grid"}
         onClick={() => onChange("grid")}
       >

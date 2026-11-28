@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Mic,
   MicOff,
+  Settings,
   Square,
   Users,
   ShieldCheck,
@@ -17,6 +18,7 @@ import { RecordingNotice } from "../RecordingNotice";
 import { RecordingPanel } from "../RecordingPanel";
 import { ConferenceInvitationDialog } from "../ConferenceInvitations";
 import { Button, ErrorNotice, Modal } from "../ui";
+import { useAccountSettings } from "../AccountSettingsContext";
 import { MeetingClock } from "./MeetingClock";
 import { ConferenceRoomSidebar } from "./ConferenceRoomSidebar";
 import { ConferenceControlButton } from "./ConferenceControlButton";
@@ -29,6 +31,7 @@ import { initials } from "../../utils";
  * @return Представление раздела с прежними условиями доступа и монтирования панелей.
  */
 export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
+  const openSettings = useAccountSettings();
   const recordingOpener = useRef<HTMLElement | null>(null);
   const [controlsTarget, setControlsTarget] = useState<HTMLDivElement | null>(
     null,
@@ -166,6 +169,18 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
             <span>Пригласить</span>
           </button>
           <div className="room-reconnect-slot" ref={setReconnectTarget} />
+          {openSettings && (
+            <button
+              type="button"
+              className="room-header-action room-settings-control"
+              aria-label="Настройки"
+              aria-haspopup="dialog"
+              title="Настройки"
+              onClick={(event) => openSettings(event.currentTarget)}
+            >
+              <Settings size={19} aria-hidden="true" />
+            </button>
+          )}
         </div>
       </header>
       <RecordingNotice
@@ -277,7 +292,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
         <ConferenceRoomSidebar {...props} />
       </section>
       <footer className="room-footer">
-        <div ref={setControlsTarget} />
+        <div className="room-controls-slot" ref={setControlsTarget} />
         {conference.waitingRoomEnabled === true && (
           <div className="room-footer-meta">
             <span>

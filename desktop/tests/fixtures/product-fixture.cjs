@@ -14,6 +14,7 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     status: "scheduled", createdAt: now, updatedAt: now, startedAt: null, finishedAt: null,
     scheduledAt: now, plannedDurationMin: 30, participantCount: 2, waitingRoomEnabled: false,
   };
+  const active = { ...conference, status: "active", startedAt: now };
   const finished = { ...conference, title: "Product finished meeting", status: "finished", startedAt: now, finishedAt: now };
   const direct = { id: DIRECT, type: "direct", peer: { id: USER_B, displayName: "Product direct peer" }, createdAt: now,
     lastMessageAt: now, lastMessageId: MESSAGE, preview: "Product direct private message", unreadCount: 0, notificationsEnabled: true, historyClearedThrough: 0 };
@@ -96,8 +97,12 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
         if (route === `/conferences/${meeting.id}/history`) return reply({ status: "failed" }, 404);
       }
     }
-    if (route === "/me/conferences") return reply({ items: [url.searchParams.get("view") === "past" ? finished : conference], nextCursor: null });
-    if (route === `/conferences/${CONFERENCE}`) return reply({ item: controls.activeConference ? { ...conference, status: "active", startedAt: now } : finished });
+    if (route === "/me/conferences") {
+      const view = url.searchParams.get("view");
+      const item = view === "past" ? finished : view === "active" && controls.activeConference ? active : conference;
+      return reply({ items: [item], nextCursor: null });
+    }
+    if (route === `/conferences/${CONFERENCE}`) return reply({ item: controls.activeConference ? active : finished });
     if (route === `/conferences/${CONFERENCE}/participants/me`) return controls.activeConference || controls.actionThreads?.has(CONFERENCE) ? reply({ item: membership }) : reply({ status: "failed", message: "not a participant" }, 404);
     if (route === `/conferences/${CONFERENCE}/participants`) return reply({ items: controls.activeConference ? [membership] : [] });
     if (route === `/conferences/${CONFERENCE}/messages` && request.method === "GET") return reply({ items: controls.actionThreads?.get(CONFERENCE) || controls.sentMessages.filter(message => message.route === route).map(message => message.item), nextCursor: null, unreadCount: 0 });

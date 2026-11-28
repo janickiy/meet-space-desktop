@@ -23,6 +23,7 @@ import { formatDate } from "../utils";
 import { Button, ErrorNotice, Modal, StatusBadge } from "../components/ui";
 import { CreateConference, JoinByLink } from "../components/ConferenceModals";
 import { MeetingDetailsModal } from "../components/MeetingDetailsModal";
+import { MeetingDateField } from "../components/MeetingDateField";
 import { MeetingSkeleton } from "../components/MeetingSkeleton";
 import { NewDirectChatModal } from "../components/NewDirectChatModal";
 import type { Conference, ConferenceFilters } from "../types";
@@ -57,7 +58,7 @@ const views: { id: NonNullable<ConferenceFilters["view"]>; label: string }[] = [
 /** Открытие комнаты и сведения о встрече разделены, как в макете. */
 function MeetingRow({ conference }: { conference: Conference }) {
   const { user } = useAuth();
-  const [details, setDetails] = useState(false);
+  const [details, setDetails] = useState<HTMLButtonElement | null>(null);
   const past = ["finished", "cancelled"].includes(conference.status);
   const timestamp =
     conference.finishedAt ||
@@ -126,7 +127,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
           <button
             className="dashboard-meeting-open"
             type="button"
-            onClick={() => setDetails(true)}
+            onClick={(event) => setDetails(event.currentTarget)}
             aria-label={`Подробнее о завершённой встрече: ${conference.title}`}
             aria-haspopup="dialog"
           >
@@ -148,7 +149,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
               className="meeting-materials"
               aria-label={`Материалы встречи: ${conference.title}`}
               aria-haspopup="dialog"
-              onClick={() => setDetails(true)}
+              onClick={(event) => setDetails(event.currentTarget)}
             >
               <Folder size={14} aria-hidden="true" /> Материалы
             </Button>
@@ -156,7 +157,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
           <button
             className="icon-button meeting-info-trigger"
             type="button"
-            onClick={() => setDetails(true)}
+            onClick={(event) => setDetails(event.currentTarget)}
             aria-label={`Подробнее: ${conference.title}`}
             aria-haspopup="dialog"
           >
@@ -167,7 +168,8 @@ function MeetingRow({ conference }: { conference: Conference }) {
       {details && (
         <MeetingDetailsModal
           conference={conference}
-          onClose={() => setDetails(false)}
+          onClose={() => setDetails(null)}
+          returnFocus={() => details}
         />
       )}
     </>
@@ -234,26 +236,20 @@ function MeetingFilterFields({
           ))}
         </select>
       </label>
-      <label className="field">
-        <span>С даты</span>
-        <input
-          type="date"
-          aria-label="Встречи с даты"
-          value={value.from}
-          max={value.to || undefined}
-          onChange={(event) => onChange({ ...value, from: event.target.value })}
-        />
-      </label>
-      <label className="field">
-        <span>По дату</span>
-        <input
-          type="date"
-          aria-label="Встречи по дату"
-          value={value.to}
-          min={value.from || undefined}
-          onChange={(event) => onChange({ ...value, to: event.target.value })}
-        />
-      </label>
+      <MeetingDateField
+        label="С даты"
+        accessibleName="Встречи с даты"
+        value={value.from}
+        max={value.to || undefined}
+        onChange={(from) => onChange({ ...value, from })}
+      />
+      <MeetingDateField
+        label="По дату"
+        accessibleName="Встречи по дату"
+        value={value.to}
+        min={value.from || undefined}
+        onChange={(to) => onChange({ ...value, to })}
+      />
     </>
   );
 }
@@ -270,6 +266,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
         ? "past"
         : "upcoming";
   const [filters, setFilters] = useState(initialFilters);
+  const [filterReset, setFilterReset] = useState(0);
   const [draftFilters, setDraftFilters] = useState<MeetingFilters | null>(null);
   const { scope, from, to } = filters;
   const filterCount =
@@ -293,6 +290,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
     );
   function resetFilters() {
     setFilters(initialFilters);
+    setFilterReset((previous) => previous + 1);
     setSearch("");
     setDraftFilters(null);
   }
@@ -444,7 +442,11 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
           </div>
         </div>
         <div className="conference-filters">
-          <MeetingFilterFields value={filters} onChange={setFilters} />
+          <MeetingFilterFields
+            key={filterReset}
+            value={filters}
+            onChange={setFilters}
+          />
           <button
             type="button"
             className="icon-button"
@@ -510,20 +512,28 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             </form>
           </Modal>
         )}
-        <p className="meeting-list-caption">
-          {tab === "upcoming"
-            ? "Предстоящие и без даты"
-            : tab === "active"
-              ? "Встречи в эфире"
-              : "Завершённые и отменённые"}
-          {query.isSuccess && (
-            <>
-              {" "}
-              · {visible.length}
-              {query.hasNextPage ? "+" : ""}
-            </>
-          )}
-        </p>
+        <div className="meeting-results-toolbar">
+          <p className="meeting-list-caption">
+            {tab === "upcoming"
+              ? "Предстоящие и без даты"
+              : tab === "active"
+                ? "Встречи в эфире"
+                : "Завершённые и отменённые"}
+            {query.isSuccess && (
+              <>
+                {" "}
+                · {visible.length}
+                {query.hasNextPage ? "+" : ""}
+              </>
+            )}
+          </p>
+          <CollectionViewToggle
+            value={layout}
+            onChange={setLayout}
+            label="Вид списка встреч"
+            controls="conference-list"
+          />
+        </div>
         <ErrorNotice error={query.error} />
         {query.isError && (
           <Button variant="outline" onClick={() => void query.refetch()}>
@@ -581,15 +591,6 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             )
           )}
         </div>
-        {visible.length > 0 && (
-          <div className="meeting-view-options">
-            <CollectionViewToggle
-              value={layout}
-              onChange={setLayout}
-              label="Вид списка встреч"
-            />
-          </div>
-        )}
         {query.hasNextPage && (
           <Button
             variant="outline"

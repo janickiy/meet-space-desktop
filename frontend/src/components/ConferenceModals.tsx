@@ -179,7 +179,9 @@ export function CreateConference({
     }
     if (
       planned &&
-      (!localSchedule(scheduledAt) ||
+      (event.currentTarget.querySelector<HTMLInputElement>("#scheduled-date")
+        ?.validity.customError ||
+        !localSchedule(scheduledAt) ||
         new Date(localSchedule(scheduledAt)!).getTime() <= Date.now())
     ) {
       setValidation("Выберите корректную дату и время в будущем.");

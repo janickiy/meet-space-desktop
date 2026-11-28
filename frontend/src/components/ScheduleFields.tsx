@@ -1,4 +1,5 @@
 import { localSchedule, localTimeZoneLabel } from "../collaboration";
+import { MeetingDateField } from "./MeetingDateField";
 
 /**
  * ScheduleFields показывает управляемые поля локального времени и плановой длительности встречи.
@@ -38,8 +39,31 @@ export function ScheduleFields({
   layout?: "standard" | "editor";
 }) {
   const utc = localSchedule(value);
+  const [date = "", time = ""] = value.split("T");
+  const dateAndTime = (
+    <>
+      <MeetingDateField
+        id="scheduled-date"
+        label="Дата"
+        value={date}
+        onChange={(next) => onChange(`${next}T${time}`)}
+        disabled={disabled}
+        required
+      />
+      <div className="field">
+        <label htmlFor="scheduled-time">Время</label>
+        <input
+          id="scheduled-time"
+          type="time"
+          value={time}
+          onChange={(event) => onChange(`${date}T${event.target.value}`)}
+          disabled={disabled}
+          required
+        />
+      </div>
+    </>
+  );
   if (layout === "editor") {
-    const [date = "", time = ""] = value.split("T");
     const options = [
       ...new Set([
         15,
@@ -54,26 +78,7 @@ export function ScheduleFields({
     return (
       <div className="schedule-fields schedule-fields-editor">
         <div className="meeting-editor-time-grid">
-          <label className="field" htmlFor="scheduled-date">
-            Дата
-            <input
-              id="scheduled-date"
-              type="date"
-              value={date}
-              onChange={(event) => onChange(`${event.target.value}T${time}`)}
-              disabled={disabled}
-            />
-          </label>
-          <label className="field" htmlFor="scheduled-time">
-            Время
-            <input
-              id="scheduled-time"
-              type="time"
-              value={time}
-              onChange={(event) => onChange(`${date}T${event.target.value}`)}
-              disabled={disabled}
-            />
-          </label>
+          {dateAndTime}
           <label className="field" htmlFor="planned-duration">
             Длительность
             <select
@@ -103,25 +108,7 @@ export function ScheduleFields({
   }
   return (
     <div className="schedule-fields">
-      <label className="field" htmlFor="scheduled-at">
-        Дата и время
-        <input
-          id="scheduled-at"
-          type="datetime-local"
-          value={value}
-          onChange={
-            /**
-             * onChange обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-             *
-             * @args
-             *   - event — проверенный конверт события комнаты.
-             *
-             * @returns вычисленное значение: onChange(event.target.value).
-             */ (event) => onChange(event.target.value)
-          }
-          disabled={disabled}
-        />
-      </label>
+      <div className="meeting-editor-time-grid">{dateAndTime}</div>
       <p className="field-hint">
         Часовой пояс: {Intl.DateTimeFormat().resolvedOptions().timeZone}.{" "}
         {utc

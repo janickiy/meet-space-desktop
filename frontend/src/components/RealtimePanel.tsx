@@ -1,6 +1,7 @@
 import {
   memo,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type CSSProperties,
@@ -30,6 +31,7 @@ import { Button, ErrorNotice } from "./ui";
 import { ConferenceControlButton } from "./conference/ConferenceControlButton";
 import type { Participant } from "../types";
 import { useAuth } from "../auth";
+import { isAdmitted } from "../collaboration";
 import { useAccountSettings } from "./AccountSettingsContext";
 import {
   subscribeDevicePreferences,
@@ -413,20 +415,23 @@ export function RealtimePanel({
     media.view.mediaPeerId,
     preferences,
   ]);
+  const connectionId =
+    membership.status === "joined" &&
+    isAdmitted(membership) &&
+    live.state?.participantId === membership.id
+      ? live.state.connectionId
+      : undefined;
+  const startRoomMedia = useEffectEvent(() => {
+    // Only an explicit prejoin can enable local capture. Reopening an active
+    // room or getting a new realtime connection starts as a receiver.
+    const captureDevices = consumeMediaEntry(conferenceId);
+    if (captureDevices || compactControls) {
+      media.start(captureDevices, preferences);
+    }
+  });
   useEffect(() => {
-    if (
-      !live.state?.connectionId ||
-      membership.status !== "joined" ||
-      membership.admissionState !== "admitted"
-    )
-      return;
-    if (consumeMediaEntry(conferenceId)) media.start(true, preferences);
-  }, [
-    conferenceId,
-    live.state?.connectionId,
-    membership.status,
-    membership.admissionState,
-  ]);
+    if (connectionId) startRoomMedia();
+  }, [conferenceId, connectionId, compactControls]);
   const hasSelection = hasDevicePreferences(user?.id || "guest");
   const [selectedLayout, setLayout] = useState<"gallery" | "speaker">();
   const [compactViewport, setCompactViewport] = useState(
@@ -654,7 +659,27 @@ export function RealtimePanel({
           </span>
         </div>
       </div>
-      {reconnectTarget && createPortal(reconnectButton, reconnectTarget)}
+      {reconnectTarget &&
+        createPortal(
+          <>
+            {media.view.screenSharing && (
+              <button
+                type="button"
+                className="room-header-action room-screen-switch-control"
+                disabled={
+                  busy || membership.screenBlocked || membership.cameraBlocked
+                }
+                aria-label="Сменить источник демонстрации"
+                title="Сменить источник демонстрации"
+                onClick={() => void media.startScreen()}
+              >
+                <RefreshCw size={19} aria-hidden="true" />
+              </button>
+            )}
+            {reconnectButton}
+          </>,
+          reconnectTarget,
+        )}
       <ErrorNotice error={live.error} />
       {connectionProblem && (
         <div className="conference-connection-notice" role="status">
@@ -734,7 +759,7 @@ export function RealtimePanel({
             >
               {media.view.error
                 ? "Повторить подключение"
-                : "Подключить звук встречи"}
+                : "Подключить звук и видео"}
             </Button>
           </div>
         )}
@@ -830,28 +855,7 @@ export function RealtimePanel({
                 }
                 label="Экран"
               />
-              {media.view.screenSharing && (
-                <ConferenceControlButton
-                  className="room-screen-switch-control"
-                  disabled={
-                    busy || membership.screenBlocked || membership.cameraBlocked
-                  }
-                  onClick={() => void media.startScreen()}
-                  aria-label="Сменить источник демонстрации"
-                  icon={<RefreshCw size={24} />}
-                  label="Сменить источник"
-                />
-              )}
               {controls}
-              {openSettings && (
-                <ConferenceControlButton
-                  className="room-settings-control"
-                  aria-haspopup="dialog"
-                  onClick={(event) => openSettings(event.currentTarget)}
-                  icon={<Settings size={24} />}
-                  label="Настройки"
-                />
-              )}
               {endControls}
             </div>
           ) : (

@@ -93,11 +93,26 @@
   color: var(--muted);
   font-size: calc(11px * var(--text-scale));
 }
-.meetings-reference-page .collection-view-toggle button {
+.meetings-reference-page .meeting-results-toolbar .collection-view-toggle {
+  flex-shrink: 0;
+  gap: 0;
+  border-radius: 10px;
+}
+.meetings-reference-page
+  .meeting-results-toolbar
+  .collection-view-toggle
+  button {
   font-size: 0;
   gap: 0;
-  min-height: 32px;
-  padding: 6px;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 7px;
+  box-shadow: none;
+}
+.meetings-reference-page .meeting-results-toolbar .collection-view-toggle svg {
+  width: 18px;
+  height: 18px;
 }
 .meetings-reference-page .list-toolbar {
   display: flex;
@@ -188,19 +203,24 @@
   margin: 0;
   font-size: calc(11px * var(--text-scale));
 }
-.meetings-reference-page .conference-filters :is(select, input, button) {
+.meetings-reference-page
+  .conference-filters
+  :is(.field > select, .meeting-date-input),
+.meetings-reference-page .conference-filters > button {
   height: 40px;
   min-height: 40px;
   border-radius: 6px;
 }
-.meetings-reference-page .conference-filters :is(select, input) {
+.meetings-reference-page
+  .conference-filters
+  :is(.field > select, .meeting-date-input) {
   margin: 0;
   width: 100%;
   min-width: 0;
   padding: 0 10px;
   color-scheme: inherit;
 }
-.meetings-reference-page .conference-filters button {
+.meetings-reference-page .conference-filters > button {
   width: 36px;
   min-height: 36px;
   height: 36px;
@@ -214,9 +234,16 @@
 .meetings-reference-page .dashboard-mobile-filter {
   display: none;
 }
+.meetings-reference-page .meeting-results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 12px;
+}
 .meetings-reference-page .meeting-list-caption {
   line-height: 1.5;
-  margin: 21px 0 10px;
+  margin: 0;
   font-size: calc(11px * var(--text-scale));
   color: var(--muted);
 }
@@ -327,11 +354,6 @@
   gap: 4px;
   margin-inline-start: 8px;
   font-size: calc(10px * var(--text-scale));
-}
-.meeting-view-options {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 14px;
 }
 .meeting-search-clear {
   display: grid;
@@ -553,7 +575,6 @@
     margin-inline-start: auto;
   }
   .meetings-reference-page .meeting-list-caption {
-    margin-top: 16px;
     font-size: calc(10px * var(--text-scale));
   }
   .meetings-reference-page .meeting-layout-grid {

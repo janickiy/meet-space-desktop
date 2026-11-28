@@ -19,6 +19,8 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
   let certificates, fixture, window;
   const captures = [], checks = [], blockedDestinations = [];
   const conferenceSockets = [], mediaJoins = [], observedSockets = new WeakSet();
+  const connectionIDs = new WeakMap();
+  const mediaJoinServers = new Map();
   const output = path.resolve(__dirname, visualOnly ? '../artifacts/conference-chat-reference' : '../artifacts/conference-invitation-fix');
   const invitationPosts = [], invitationQueries = [];
   let holdInvitation = false, pendingInvitation = null, clipboardSnapshot = null;
@@ -37,7 +39,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     createdAt: now, updatedAt: now, microphoneEnabled: false, cameraEnabled: false, screenSharing: false,
     microphoneBlocked: false, cameraBlocked: false, screenBlocked: false, mediaPolicyVersion: 1,
     admissionState: 'admitted', admissionDecidedAt: null, admissionVersion: 1 };
-  let joined = false;
+  let joined = true;
   const recordingId = '77777777-7777-4777-8777-777777777777';
   const recordingModes = ['composite', 'audio_only', 'individual_tracks', 'screen_focus'];
   const recordingStarts = [];
@@ -138,7 +140,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         const controls=[...document.querySelectorAll('.prejoin-toggles button,.prejoin-join,.room-header button,.conference-control-bar button,.room-media-connection button,.call-share-modal button,.call-invite-modal button')].filter(visible);
         const bar=document.querySelector('.conference-control-bar');
         const barStyle=bar&&getComputedStyle(bar);
-        const toolbar=bar&&{background:barStyle.backgroundColor,backgroundImage:barStyle.backgroundImage,boxShadow:barStyle.boxShadow,
+        const toolbar=bar&&{background:barStyle.backgroundColor,backgroundImage:barStyle.backgroundImage,boxShadow:barStyle.boxShadow,gap:parseFloat(barStyle.columnGap),
           borders:['Top','Right','Bottom','Left'].map(side=>barStyle['border'+side+'Width']),
           receiveOnlyInside:!!bar.querySelector('.room-media-connection'),
           buttons:[...bar.children].map(e=>{const icon=e.querySelector(':scope > .conference-room-control-icon');const label=e.querySelector(':scope > .conference-room-control-label');
@@ -146,7 +148,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
             const glyph=icon?.querySelector('svg');
             const glyphRect=glyph?.getBoundingClientRect();
             const drawing=glyph&&{names:[...glyph.classList],width:glyphRect.width,height:glyphRect.height,strokeWidth:parseFloat(getComputedStyle(glyph).strokeWidth)};
-            return {tag:e.tagName,label:label?.textContent.trim(),compact:e.matches('button.conference-room-control'),disabled:e.disabled,left:r.left,top:r.top,drawing,pressed:e.getAttribute('aria-pressed')==='true',
+            return {tag:e.tagName,label:label?.textContent.trim(),compact:e.matches('button.conference-room-control'),disabled:e.disabled,left:r.left,top:r.top,width:r.width,height:r.height,drawing,pressed:e.getAttribute('aria-pressed')==='true',
               icon:!!icon,labelBelowIcon:!!ir&&!!lr&&lr.top>=ir.bottom-1,
               singleLine:!!lr&&lr.height<=parseFloat(getComputedStyle(label).lineHeight)+1,
               withinViewport:r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1,
@@ -188,8 +190,18 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       assert.equal(metrics.emptyRoomTextOverlaps, false, `${name}: empty room title and description need separate lines`);
       if (toolbarState) {
         assert.ok(metrics.toolbar, `${name}: room toolbar remains visible`);
-        assert.deepEqual(metrics.toolbar.buttons.map(button => button.label), ['Микрофон','Камера','Экран','Участники','Чат','Настройки','Выйти'], `${name}: exact reference control order`);
-        assert.deepEqual([...metrics.toolbar.buttons].sort((a,b) => Math.abs(a.top-b.top)>2 ? a.top-b.top : a.left-b.left).map(button => button.label), ['Микрофон','Камера','Экран','Участники','Чат','Настройки','Выйти'], `${name}: visual order matches DOM and reference order`);
+        const labels = ['Микрофон','Камера','Экран','Участники','Чат','Выйти'];
+        assert.deepEqual(metrics.toolbar.buttons.map(button => button.label), labels, `${name}: exact reference control order`);
+        assert.deepEqual([...metrics.toolbar.buttons].sort((a,b) => Math.abs(a.top-b.top)>2 ? a.top-b.top : a.left-b.left).map(button => button.label), labels, `${name}: visual order matches DOM and reference order`);
+        const desktop = metrics.width >= 780;
+        const firstButton = metrics.toolbar.buttons[0];
+        assert.ok(metrics.toolbar.buttons.every(button => Math.abs(button.width-firstButton.width) < .1 && Math.abs(button.height-firstButton.height) < .1), `${name}: every button has the same dimensions`);
+        if (metrics.textSize === '100') {
+          const referenceWidth = desktop ? 76 : (Math.min(metrics.width-24, 540)-43)/6;
+          assert.ok(Math.abs(firstButton.width-referenceWidth) < .1, `${name}: reference control width (${firstButton.width}px)`);
+          assert.equal(firstButton.height, desktop ? 55 : 53, `${name}: reference control height`);
+        }
+        assert.equal(metrics.toolbar.gap, desktop ? 6 : 7, `${name}: reference gap between controls`);
         if (metrics.width >= 1000) {
           assert.ok(Math.max(...metrics.toolbar.buttons.map(button => button.top))-Math.min(...metrics.toolbar.buttons.map(button => button.top)) <= 2, `${name}: desktop controls share one row`);
           assert.ok(metrics.toolbar.buttons.every(button => button.singleLine), `${name}: desktop labels stay on one line`);
@@ -200,7 +212,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
           metrics.toolbar.buttons[0].pressed ? 'mic' : 'mic-off',
           metrics.toolbar.buttons[1].pressed ? 'video' : 'video-off',
           metrics.toolbar.buttons[2].pressed ? 'screen-share-off' : 'monitor-up',
-          'users', 'message-circle', 'settings', 'log-out',
+          'users', 'message-circle', 'log-out',
         ];
         metrics.toolbar.buttons.forEach(({ drawing }, index) => {
           assert.ok(drawing?.names.includes('lucide-'+glyphNames[index]), `${name}: expected ${glyphNames[index]} glyph`);
@@ -209,12 +221,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         assert.equal(metrics.toolbar.background, metrics.width >= 780 ? 'rgb(36, 30, 44)' : 'rgba(0, 0, 0, 0)', `${name}: room controls use the reference surface at the current width`);
         assert.equal(metrics.toolbar.backgroundImage, 'none', `${name}: no enclosing toolbar background image`);
         assert.equal(metrics.toolbar.boxShadow, 'none', `${name}: no enclosing toolbar shadow`);
-        assert.deepEqual(metrics.toolbar.borders, ['1px','1px','1px','1px'], `${name}: room controls retain the toolbar outline`);
-        assert.equal(metrics.toolbar.receiveOnlyInside, false, `${name}: receive-only action is outside the seven controls`);
-        if (toolbarState === 'disconnected') {
-          assert.deepEqual(metrics.toolbar.buttons.map(button => button.disabled), [true,true,true,false,false,false,false], `${name}: capture and screen controls wait for authenticated room state; participant/chat/settings/leave remain available`);
-        } else if (toolbarState === 'before-media') {
-          assert.deepEqual(metrics.toolbar.buttons.map(button => button.disabled), [false,false,true,false,false,false,false], `${name}: mic and camera can start independently; screen waits for media`);
+        assert.deepEqual(metrics.toolbar.borders, Array(4).fill(desktop ? '1px' : '0px'), `${name}: room controls use the reference outline at the current width`);
+        assert.equal(metrics.toolbar.receiveOnlyInside, false, `${name}: receive-only action is outside the toolbar`);
+        if (toolbarState === 'disconnected' || toolbarState === 'media-starting') {
+          assert.deepEqual(metrics.toolbar.buttons.map(button => button.disabled), [true,true,true,false,false,false], `${name}: capture and screen controls wait for media; participant/chat/leave remain available`);
         }
       }
       if (metrics.invitationUI) {
@@ -254,9 +264,23 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await exists('#email');
     await field('#email', fixture.users[0].email); await field('#password', PASSWORD);
     await click('#auth-form button[type=submit]'); await exists('.sidebar');
-    await execute(`(()=>{window.__callUI={captures:0,requests:[],tracks:[],errors:[]};window.addEventListener('error',e=>window.__callUI.errors.push(e.message));const original=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async constraints=>{window.__callUI.requests.push(JSON.parse(JSON.stringify(constraints)));const stream=await original(constraints);window.__callUI.captures++;for(const track of stream.getTracks())window.__callUI.tracks.push(new WeakRef(track));return stream;};})()`);
     const prejoin = `/conferences/${CONFERENCE}/join`;
     const room = `/conferences/${CONFERENCE}`;
+    // The room and prejoin are lazy routes that both load shared call CSS.
+    // Check the direct route before any prejoin styles have been loaded.
+    await route(room);
+    await exists('.call-reference-room .conference-control-bar');
+    await capture('active-room-direct-route', 'disconnected');
+    joined = false;
+    await route('/conferences');
+    // Start the prejoin flow with a fresh membership cache after the direct
+    // route check used an already-admitted fixture member.
+    await new Promise(resolve => {
+      window.webContents.once('did-finish-load', resolve);
+      window.webContents.reload();
+    });
+    await exists('.sidebar');
+    await execute(`(()=>{window.__callUI={captures:0,requests:[],tracks:[],errors:[]};window.addEventListener('error',e=>window.__callUI.errors.push(e.message));const original=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async constraints=>{window.__callUI.requests.push(JSON.parse(JSON.stringify(constraints)));const stream=await original(constraints);window.__callUI.captures++;for(const track of stream.getTracks())window.__callUI.tracks.push(new WeakRef(track));return stream;};})()`);
     const setAppearance = async (theme, size = '100', destination = prejoin) => {
       await route('/app/settings'); await visible('Мой профиль');
       await execute(`(()=>{[...document.querySelectorAll('[role=tab]')].find(e=>e.textContent.trim()==='Внешний вид').click();})()`);
@@ -320,11 +344,15 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await capture('active-room-reconnecting', 'disconnected');
     // Model a real presence event from the local server, without pretending to
     // negotiate a media connection or publishing a synthetic remote video.
-    let stateRevision = 0;
+    let stateRevision = 0, connectionRevision = 0;
     const sendPresence = async (withPeer = false, extraPeers = []) => {
       await until(() => Promise.resolve(conferenceSockets.at(-1)?.readyState === WebSocket.OPEN), 'Conference realtime socket opens');
-      const connectionId = `fixture-connection-${++stateRevision}`;
-      const stateEvent = JSON.stringify({ id: `fixture-call-state-${stateRevision}`, version: 1, type: 'conference.state', userId: USER_A,
+      const clientSocket = conferenceSockets.at(-1);
+      const firstState = !connectionIDs.has(clientSocket);
+      const previousJoins = mediaJoins.length;
+      if (firstState) connectionIDs.set(clientSocket, `fixture-connection-${++connectionRevision}`);
+      const connectionId = connectionIDs.get(clientSocket);
+      const stateEvent = JSON.stringify({ id: `fixture-call-state-${++stateRevision}`, version: 1, type: 'conference.state', userId: USER_A,
         conferenceId: CONFERENCE, timestamp: now, data: { connectionId, participantId: membership.id,
           status: 'active', participants: [{ ...membership, online: true, connections: 1, connectionIds: [connectionId] },
             ...(withPeer ? [{...membership,id:'55555555-5555-4555-8555-555555555555',userId:USER_B,displayName:'Анна Кузнецова',role:'participant',online:true,connections:1,connectionIds:['fixture-peer']}] : []),
@@ -338,7 +366,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
           socket.removeAllListeners('message');
           socket.on('message', message => {
             const envelope = JSON.parse(message.toString());
-            if (envelope.type === 'media.join') mediaJoins.push(envelope);
+            if (envelope.type === 'media.join') {
+              mediaJoins.push(envelope);
+              mediaJoinServers.set(envelope.id, socket);
+            }
             if (!envelope.type?.startsWith('media.')) socket.send(message);
           });
         }
@@ -346,9 +377,16 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       }
       await visible('Встреча в эфире');
       await visible(extraPeers.length ? '5 участников' : withPeer ? '2 участника' : '1 участник');
-      await until(() => execute('!document.querySelector(".room-microphone-control")?.disabled'), 'Presence enables independent mic/camera start');
+      if (firstState) {
+        await until(() => Promise.resolve(mediaJoins.length > previousJoins), 'Opening an active room starts receive-only media automatically');
+        assert.equal(mediaJoins.length, previousJoins + 1, 'Exactly one media join when the realtime connection opens');
+      } else {
+        assert.equal(mediaJoins.length, previousJoins, 'Roster updates do not restart media on the same connection');
+      }
     };
+    const requestsBeforeAutoJoin = await execute('window.__callUI.requests.length');
     await sendPresence();
+    assert.equal(await execute('window.__callUI.requests.length'), requestsBeforeAutoJoin, 'Automatic media entry does not request local devices');
     assert.equal(await execute(`(() => {
       const stage = document.querySelector('.room-video-stage').getBoundingClientRect();
       const tile = document.querySelector('.room-video-stage .media-tile').getBoundingClientRect();
@@ -360,7 +398,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         grid.querySelectorAll('rect').length === 4 &&
         parseFloat(getComputedStyle(grid).strokeWidth) === 1.75;
     })()`), true, 'The gallery switch uses the four-square reference glyph');
-    await capture('active-room-before-media', 'before-media');
+    await capture('active-room-media-starting', 'media-starting');
     await sendPresence(true, ['Мария Полякова', 'Дмитрий Волков', 'Максим Петров'].map((name, index) => ({
       ...membership, displayName:name, role:'participant', online:true, connections:1,
       id:`77777777-7777-4777-8777-77777777777${index}`,
@@ -439,11 +477,11 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         await sendPresence();
         for (const [width,height] of sizes) {
           window.setContentSize(width,height);
-          await capture(`toolbar-${theme}-text${textSize}-${width}-before-media`, 'before-media');
+          await capture(`toolbar-${theme}-text${textSize}-${width}-media-starting`, 'media-starting');
         }
       }
     }
-    checks.push('The seven icon-and-label controls stay in reference order while disconnected and before media, in light/dark, 1440/1280/390 widths and 150% text; each label stays below its icon, all controls fit within the toolbar');
+    checks.push('The six controls use equal reference dimensions and reference order in light/dark at 1440/1280/390 widths and with 150% text; labels stay below icons and fit the toolbar');
     checks.push('Microphone, camera and screen are disabled before conference.state; local participants, chat, settings and leave remain available, and clicking disabled capture controls never requests devices');
 
     const shareOpener = '.room-header button[aria-label="Пригласить"]';
@@ -568,8 +606,17 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await setAppearance('light', '100', room);
     window.setContentSize(1440,1000);
     await sendPresence();
+    const rejectAutomaticJoin = async () => {
+      const join = mediaJoins.at(-1);
+      const socket = mediaJoinServers.get(join.id);
+      socket.send(JSON.stringify({ version: 1, id: `rejected-${join.id}`, type: 'error',
+        conferenceId: CONFERENCE, timestamp: now, replyTo: join.id, data: { code: 'media_unavailable' } }));
+      await visible('Медиасервис отклонил подключение');
+      await until(() => execute('!document.querySelector(".room-microphone-control")?.disabled'), 'Explicit device controls become available after a failed automatic connection');
+    };
     for (const [device,audio,video] of [['microphone',1,0],['camera',0,1]]) {
       if (device === 'camera') await openRoom();
+      await rejectAutomaticJoin();
       const requestsBefore = await execute('window.__callUI.requests.length');
       const joinsBefore = mediaJoins.length;
       await click(`.room-${device}-control`);
@@ -581,13 +628,15 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
       await exists(`.room-${device}-control[aria-pressed=true]`);
       await capture(`toolbar-${device}-started-without-sfu`, 'media-starting');
     }
-    await openRoom();
     const receiveOnlyBefore = await execute('window.__callUI.requests.length');
     const joinsBeforeReceiveOnly = mediaJoins.length;
-    await exists('.room-media-connection .button');
-    assert.equal(await execute('!!document.querySelector(".conference-control-bar .room-media-connection")'), false, 'Receive-only connection is separate from the toolbar');
-    await click('.room-media-connection .button');
-    await until(() => Promise.resolve(mediaJoins.length > joinsBeforeReceiveOnly), 'Receive-only start reaches the fixture media.join boundary');
+    await openRoom();
+    assert.equal(mediaJoins.length, joinsBeforeReceiveOnly + 1, 'Reopening the direct room route starts media without a click');
+    const connectionsBeforeReconnect = conferenceSockets.length;
+    await click('.room-header-reconnect');
+    await until(() => Promise.resolve(conferenceSockets.length > connectionsBeforeReconnect), 'Reconnect opens a new realtime socket');
+    await sendPresence();
+    assert.equal(mediaJoins.length, joinsBeforeReceiveOnly + 2, 'Explicit reconnect starts receive-only media again');
     await tracksAre(0,0);
     assert.equal(await execute('window.__callUI.requests.length'), receiveOnlyBefore, 'Receive-only start does not request camera or microphone');
     await capture('toolbar-receive-only-without-sfu', 'media-starting');
@@ -628,8 +677,8 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await capture('toolbar-explicit-chat-deep-link', 'disconnected');
     await route('/conferences'); await tracksAre(0,0);
     checks.push('Room side panel starts closed; participants/chat buttons each open and close their panel on repeated clicks, while an explicit ?chat=1 link opens chat');
-    checks.push('Before any media connection, microphone starts only audio and camera starts only video through production getUserMedia; each reaches media.join without requiring synthetic SDP, and room unmount stops all owned tracks');
-    checks.push('The separate receive-only action reaches media.join without getUserMedia or live local tracks; no SFU answer, connected peer or remote stream is fabricated');
+    checks.push('After an explicit media-service refusal, microphone starts only audio and camera starts only video through production getUserMedia; room unmount stops all owned tracks');
+    checks.push('First entry, direct room reopening and reconnect send media.join automatically without requesting device capture; roster updates on the same connection do not restart media');
     assert.deepEqual(blockedDestinations, []);
     assert.deepEqual(await execute('window.__callUI.errors'), []);
     assert.ok(fixture.requests.some(request => request.method === 'POST' && request.path.endsWith('/join')), 'Join went through the production broker');

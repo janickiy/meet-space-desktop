@@ -1,0 +1,198 @@
+.meeting-date-control {
+  position: relative;
+  min-width: 0;
+}
+
+.field.meeting-date-field .meeting-date-control > .meeting-date-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding-inline-end: 40px;
+}
+
+.meeting-date-input::placeholder {
+  color: var(--text);
+  opacity: 1;
+}
+
+.meeting-date-input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.meeting-date-control .meeting-date-trigger {
+  position: absolute;
+  inset: 1px 1px 1px auto;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.meeting-date-trigger:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.meeting-date-trigger:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.meeting-date-control:has(.meeting-date-trigger[aria-expanded="true"])
+  .meeting-date-input {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.meeting-date-popup {
+  --calendar-weekend: #b92136;
+  position: fixed;
+  inset: auto;
+  box-sizing: border-box;
+  width: min(calc(274px * var(--text-scale)), calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  margin: 0;
+  padding: calc(18px * var(--text-scale));
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: 0 4px 16px #17152240;
+  font: 400 calc(12px * var(--text-scale)) / 1.35
+    var(--font-ui, system-ui, sans-serif);
+}
+
+[data-theme="dark"] .meeting-date-popup {
+  --calendar-weekend: #ff9fab;
+}
+
+.meeting-date-popup button {
+  color: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+}
+
+.meeting-date-calendar-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 4px;
+  margin-block-end: calc(9px * var(--text-scale));
+}
+
+.meeting-date-calendar-header > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  min-height: calc(26px * var(--text-scale));
+  border-radius: 5px;
+}
+
+.meeting-date-calendar-header > button:first-child {
+  justify-self: start;
+}
+
+.meeting-date-calendar-header > button:last-child {
+  justify-self: end;
+}
+
+.meeting-date-popup :is(.meeting-date-period, .meeting-date-clear) {
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-subtle, var(--bg));
+}
+
+.meeting-date-calendar-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  text-align: center;
+}
+
+.meeting-date-calendar-grid th,
+.meeting-date-calendar-grid td {
+  padding: 0;
+  border: 0;
+}
+
+.meeting-date-calendar-grid th {
+  height: calc(25px * var(--text-scale));
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.meeting-date-calendar-grid :is(th, td):nth-child(n + 6) {
+  color: var(--calendar-weekend);
+}
+
+.meeting-date-calendar-grid button {
+  display: inline-grid;
+  place-items: center;
+  width: 100%;
+  height: calc(28px * var(--text-scale));
+  border-radius: 5px;
+}
+
+.meeting-date-calendar-grid button[data-outside],
+.meeting-date-popup button:disabled {
+  opacity: 0.5;
+}
+
+.meeting-date-calendar-grid button:disabled {
+  text-decoration: line-through;
+}
+
+.meeting-date-popup button:hover:not(:disabled),
+.meeting-date-calendar-grid button[aria-current="date"] {
+  background: var(--surface-subtle, var(--bg));
+}
+
+.meeting-date-calendar-grid [aria-selected="true"] button {
+  color: var(--primary);
+  background: var(--primary-soft, var(--surface-subtle, var(--bg)));
+  font-weight: 700;
+}
+
+.meeting-date-popup button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.meeting-date-clear {
+  margin-block-start: calc(8px * var(--text-scale));
+}
+
+.meeting-date-month-picker {
+  display: grid;
+  grid-template-columns: 1fr minmax(50px, 30%);
+  gap: 8px;
+}
+
+.meeting-date-field
+  .meeting-date-popup
+  .meeting-date-month-picker
+  :is(select, input) {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: inherit;
+}

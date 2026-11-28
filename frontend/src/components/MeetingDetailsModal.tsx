@@ -2,223 +2,355 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
-  CalendarDays,
-  CalendarClock,
-  Clock,
-  ShieldCheck,
-  UserRound,
-  Users,
-  Video,
+  CirclePlay,
+  FolderPlus,
+  Link as LinkIcon,
+  LogOut,
   Pencil,
-  Trash2,
+  PhoneOff,
+  Video,
+  X,
 } from "lucide-react";
-import { useAuth } from "../auth";
 import { api } from "../api";
-import { inviteCode, inviteLink } from "../utils";
-import type { Conference } from "../types";
-import { Button, Modal, StatusBadge } from "./ui";
+import { useAuth } from "../auth";
+import { isAdmitted } from "../collaboration";
+import { useConferenceCommands } from "../hooks/conference/useConferenceCommands";
+import { useMembership } from "../queries";
+import type { Conference, Participant } from "../types";
+import { inviteCode } from "../utils";
 import { ConferenceChatActions } from "./ConferenceChatActions";
+import { ConferenceInvitationDialog } from "./ConferenceInvitations";
 import { EditSchedule } from "./ConferenceModals";
-import { MeetingInvitationCard } from "./MeetingInvitationCard";
+import { FolderPicker } from "./FolderPicker";
+import { Button, ErrorNotice, Modal, StatusBadge } from "./ui";
 import "./meeting-modals.css";
 
-/** Сведения из доступной пользователю записи сервера, без демонстрационных участников. */
+const dateFormat = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZoneName: "longOffset",
+});
+
+function MeetingTime({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return null;
+  const formatted = dateFormat.format(date).replace(/GMT(?=[+-])/, "");
+  return (
+    <p>
+      {label}: <time dateTime={value}>{formatted}</time>
+    </p>
+  );
+}
+
+function membershipLabel(member: Participant | null | undefined) {
+  if (member?.status === "kicked" || member?.admissionState === "kicked")
+    return "Организатор исключил вас из встречи";
+  if (member?.status === "rejected" || member?.admissionState === "rejected")
+    return "Запрос на вход отклонён";
+  if (member?.status === "waiting" || member?.admissionState === "waiting")
+    return "Ожидаете допуска";
+  if (isAdmitted(member))
+    return member?.status === "joined"
+      ? "Допущен; членство активно"
+      : "Допущен; вы не подключены";
+  return null;
+}
+
+type DetailAction = "edit" | "invite" | "folder" | "leave" | "finish";
+
+/** Сведения и доступные серверные действия для встречи из списка или календаря. */
 export function MeetingDetailsModal({
   conference,
   onClose,
   onEdit,
   onCancel,
+  returnFocus,
 }: {
   conference: Conference;
   onClose: () => void;
   onEdit?: () => void;
   onCancel?: () => void;
+  returnFocus?: () => HTMLElement | null;
 }) {
   const { user } = useAuth();
-  const [editing, setEditing] = useState(false);
+  const [action, setAction] = useState<DetailAction | null>(null);
+  const { mutation } = useConferenceCommands(conference.id, onClose);
+  const active = conference.status === "active";
   const past = ["finished", "cancelled"].includes(conference.status);
+  const owner = !!user && user.id === conference.ownerId;
+  const self = useMembership(conference.id, active ? 3000 : false, active);
+  const membership = self.data;
+  const admitted = isAdmitted(membership);
+  const joined = admitted && membership?.status === "joined";
+  const memberLabel = membershipLabel(membership);
+  const canEdit = owner && ["created", "scheduled"].includes(conference.status);
+  const canLeave = active && joined;
+  const canFinish = active && owner;
+  const room = `/meetings/${conference.id}`;
+  const recordings = active
+    ? `/recordings?view=active&meeting=${encodeURIComponent(conference.id)}`
+    : `/history/${conference.id}`;
   const listedCode =
     inviteCode(conference.inviteCode || "") ||
     inviteCode(conference.inviteUrl || "");
   const details = useQuery({
     queryKey: ["conference", user?.id, conference.id],
     queryFn: ({ signal }) => api.conference(conference.id, signal),
-    enabled: !!user && !past && !listedCode && !editing,
+    enabled: !!user && !past && !listedCode,
     retry: false,
   });
   const code =
     listedCode ||
     inviteCode(details.data?.item.inviteCode || "") ||
     inviteCode(details.data?.item.inviteUrl || "");
-  const active = conference.status === "active";
-  const owner = user?.id === conference.ownerId;
-  const date = conference.startedAt || conference.scheduledAt;
-  const time = date ? new Date(date) : null;
-  const validDate = time && Number.isFinite(time.getTime());
-  if (editing)
-    return (
-      <EditSchedule conference={conference} onClose={() => setEditing(false)} />
-    );
+  const role = owner
+    ? "организатор"
+    : membership?.role === "co_host"
+      ? "соорганизатор"
+      : user?.guestConferenceId
+        ? "гость"
+        : "участник";
+  function openAction(next: DetailAction, trigger: HTMLButtonElement) {
+    trigger.focus();
+    setAction(next);
+  }
+  const closeAction = () => {
+    if (!mutation.isPending) {
+      mutation.reset();
+      setAction(null);
+    }
+  };
+
   return (
-    <Modal
-      title={conference.title}
-      className={`meeting-reference-info ${active ? "meeting-reference-info-active" : past ? "meeting-reference-info-past" : ""}`}
-      onClose={onClose}
-    >
-      <header className="meeting-info-header">
-        <span className="meeting-info-emblem">
-          {active ? (
-            <Video size={28} aria-hidden="true" />
-          ) : (
-            <CalendarClock size={28} aria-hidden="true" />
-          )}
-        </span>
-        <div>
-          <StatusBadge status={conference.status} />
-          <h3>{conference.title}</h3>
+    <>
+      <Modal
+        title="О встрече"
+        className="meeting-reference-info"
+        onClose={onClose}
+        returnFocus={returnFocus}
+      >
+        <div className="meeting-info-chat-tools">
+          <ConferenceChatActions conference={conference} />
         </div>
-      </header>
-      <div className="meeting-info-content">
-        <dl className="meeting-info-facts">
-          <div>
-            <span className="meeting-fact-icon">
-              <CalendarDays size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Дата встречи</dt>
-              <dd>
-                {validDate
-                  ? time.toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "Без даты"}
-                <small>
-                  {validDate
-                    ? time.toLocaleTimeString("ru-RU", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "Постоянная комната"}
-                </small>
-              </dd>
-            </div>
-          </div>
-          <div>
-            <span className="meeting-fact-icon">
-              <Clock size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Длительность</dt>
-              <dd>
-                {conference.plannedDurationMin
-                  ? `${conference.plannedDurationMin} минут`
-                  : "Не указана"}
-                <small>
-                  Часовой пояс:{" "}
-                  {Intl.DateTimeFormat().resolvedOptions().timeZone}
-                </small>
-              </dd>
-            </div>
-          </div>
-          <div>
-            <span className="meeting-fact-icon">
-              <UserRound size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Ваша роль</dt>
-              <dd>{owner ? "Организатор" : "Участник"}</dd>
-            </div>
-          </div>
-          <div>
-            <span className="meeting-fact-icon">
-              <Users size={17} aria-hidden="true" />
-            </span>
-            <div>
-              <dt>Участники</dt>
-              <dd>
-                {conference.participantCount === undefined
-                  ? "Состав в комнате"
-                  : conference.participantCount}
-              </dd>
-            </div>
-          </div>
-        </dl>
-        {!past &&
-          (code ? (
-            <MeetingInvitationCard link={inviteLink(code)} />
-          ) : (
-            <section
-              className="meeting-info-invitation-status"
-              aria-live="polite"
-            >
+        <div className="meeting-info-content">
+          <header className="meeting-info-header">
+            {active ? (
+              <span className="status-badge status-active">Активна</span>
+            ) : (
+              <StatusBadge status={conference.status} />
+            )}
+            <h3>{conference.title}</h3>
+            <p>Вы — {role}</p>
+          </header>
+          <div className="meeting-info-facts">
+            <MeetingTime label="Запланирована" value={conference.scheduledAt} />
+            <MeetingTime label="Началась" value={conference.startedAt} />
+            <MeetingTime label="Завершилась" value={conference.finishedAt} />
+            {!active && !!conference.plannedDurationMin && (
+              <p>Плановая длительность: {conference.plannedDurationMin} мин</p>
+            )}
+            {conference.waitingRoomEnabled !== undefined && (
               <p>
-                {details.isFetching
-                  ? "Загружаем ссылку-приглашение…"
-                  : "Ссылка-приглашение пока недоступна."}
+                {conference.waitingRoomEnabled
+                  ? "Зал ожидания включён."
+                  : "Зал ожидания отключён."}
               </p>
-              {!details.isFetching && (
-                <Button
-                  variant="secondary"
-                  onClick={() => void details.refetch()}
+            )}
+          </div>
+          {active && memberLabel && (
+            <p className="meeting-info-membership">{memberLabel}</p>
+          )}
+          {active && self.isError && <ErrorNotice error={self.error} />}
+          <div className="meeting-info-actions">
+            {!past && (
+              <>
+                <Link
+                  className="button button-primary"
+                  to={
+                    active && admitted && !joined && !user?.guestConferenceId
+                      ? `${room}/join`
+                      : room
+                  }
+                  onClick={onClose}
                 >
-                  Повторить
+                  <Video size={16} aria-hidden="true" />
+                  {active && (admitted || !membership)
+                    ? "Подключиться к звонку"
+                    : "Открыть встречу"}
+                </Link>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-haspopup="dialog"
+                  disabled={!code}
+                  onClick={(event) => openAction("invite", event.currentTarget)}
+                >
+                  <LinkIcon size={16} aria-hidden="true" />
+                  Пригласить по ссылке
                 </Button>
-              )}
-            </section>
-          ))}
-        {conference.waitingRoomEnabled && (
-          <p className="meeting-info-policy">
-            <ShieldCheck size={17} aria-hidden="true" />
-            Включён зал ожидания. Участники с действующим приглашением входят
-            без ожидания.
-          </p>
-        )}
-      </div>
-      <footer className="meeting-info-footer">
-        <div className="meeting-info-owner-actions">
-          {owner &&
-            (conference.status === "created" ||
-              conference.status === "scheduled") && (
-              <Button
-                variant="secondary"
-                onClick={() => (onEdit ? onEdit() : setEditing(true))}
+                {!code && (
+                  <div className="meeting-info-invitation-status">
+                    <p role="status">
+                      {details.isFetching
+                        ? "Загружаем ссылку-приглашение…"
+                        : "Ссылка-приглашение пока недоступна."}
+                    </p>
+                    {!details.isFetching && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => void details.refetch()}
+                      >
+                        Повторить
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {canLeave && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    aria-haspopup="dialog"
+                    onClick={(event) =>
+                      openAction("leave", event.currentTarget)
+                    }
+                  >
+                    <LogOut size={16} aria-hidden="true" />
+                    Выйти из встречи
+                  </Button>
+                )}
+                {!user?.guestConferenceId && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    aria-haspopup="dialog"
+                    onClick={(event) =>
+                      openAction("folder", event.currentTarget)
+                    }
+                  >
+                    <FolderPlus size={16} aria-hidden="true" />
+                    Добавить в папку
+                  </Button>
+                )}
+              </>
+            )}
+            {(active || past) && (
+              <Link
+                className={`button button-${past ? "primary" : "secondary"}`}
+                to={recordings}
+                onClick={onClose}
               >
-                <Pencil size={15} aria-hidden="true" />
+                <CirclePlay size={16} aria-hidden="true" />
+                Записи и материалы
+              </Link>
+            )}
+            {canEdit && (
+              <Button
+                type="button"
+                variant="secondary"
+                aria-haspopup="dialog"
+                onClick={(event) =>
+                  onEdit ? onEdit() : openAction("edit", event.currentTarget)
+                }
+              >
+                <Pencil size={16} aria-hidden="true" />
                 Изменить расписание
               </Button>
             )}
-          {owner &&
-            onCancel &&
-            ["created", "scheduled"].includes(conference.status) && (
-              <button
+            {canEdit && onCancel && (
+              <Button
                 type="button"
-                className="icon-button meeting-info-cancel-action"
-                aria-label="Отменить встречу"
+                variant="danger"
+                className="meeting-info-destructive"
+                aria-haspopup="dialog"
                 onClick={onCancel}
               >
-                <Trash2 size={17} aria-hidden="true" />
-              </button>
+                <X size={16} aria-hidden="true" />
+                Отменить встречу
+              </Button>
             )}
-          <ConferenceChatActions conference={conference} />
+            {canFinish && (
+              <Button
+                type="button"
+                variant="danger"
+                className="meeting-info-destructive"
+                aria-haspopup="dialog"
+                onClick={(event) => openAction("finish", event.currentTarget)}
+              >
+                <PhoneOff size={16} aria-hidden="true" />
+                Завершить для всех
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="meeting-info-navigation-actions">
-          <Button variant="secondary" onClick={onClose}>
-            Закрыть
-          </Button>
-          <Link
-            className="button button-primary"
-            to={
-              past ? `/history/${conference.id}` : `/meetings/${conference.id}`
-            }
-            onClick={onClose}
-          >
-            {!past && <Video size={18} aria-hidden="true" />}
-            {past ? "Материалы встречи" : "Открыть встречу"}
-          </Link>
-        </div>
-      </footer>
-    </Modal>
+      </Modal>
+      {action === "invite" && code && !past && (
+        <ConferenceInvitationDialog
+          conference={{ ...conference, inviteCode: code }}
+          canInvite={
+            !user?.guestConferenceId &&
+            (owner || (active && joined && membership?.role === "co_host"))
+          }
+          onClose={closeAction}
+        />
+      )}
+      {action === "folder" && (
+        <FolderPicker
+          target={{ type: "conference", id: conference.id }}
+          onClose={closeAction}
+        />
+      )}
+      {action === "edit" && (
+        <EditSchedule conference={conference} onClose={closeAction} />
+      )}
+      {(action === "leave" || action === "finish") && (
+        <Modal
+          title={
+            action === "leave"
+              ? "Выйти из встречи?"
+              : "Завершить встречу для всех?"
+          }
+          className="meeting-info-confirm"
+          onClose={closeAction}
+        >
+          <p className="modal-description">
+            {action === "leave"
+              ? "Вы отключитесь от встречи. Остальные участники продолжат разговор."
+              : "После завершения участники не смогут присоединиться. Текущая запись остановится и будет обработана в фоне."}
+          </p>
+          <ErrorNotice error={mutation.error} />
+          <div className="meeting-info-confirm-actions">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={mutation.isPending}
+              onClick={closeAction}
+              data-autofocus
+            >
+              Отмена
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              busy={mutation.isPending}
+              disabled={action === "leave" ? !canLeave : !canFinish}
+              onClick={() => mutation.mutate(action)}
+            >
+              {action === "leave" ? "Выйти" : "Завершить"}
+            </Button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

@@ -114,10 +114,21 @@
   border: 0;
   background: transparent;
 }
-.meeting-create-modal .meeting-editor-time-grid {
+.schedule-fields .meeting-editor-time-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 12px;
+}
+.schedule-fields .meeting-editor-time-grid > .field {
+  align-content: start;
+}
+.schedule-fields .meeting-editor-time-grid input[type="time"] {
+  margin: 0;
+}
+.meeting-create-modal
+  .meeting-editor-time-grid
+  :is(.meeting-date-input, input[type="time"]) {
+  height: calc(28px + 1.5em);
 }
 .meeting-create-modal .meeting-editor-time-grid .field:last-child {
   grid-column: 1 / -1;
@@ -137,7 +148,7 @@
   .modal.meeting-create-modal {
     padding: 18px;
   }
-  .meeting-create-modal .meeting-editor-time-grid {
+  .schedule-fields .meeting-editor-time-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

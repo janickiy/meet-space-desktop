@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   Circle,
@@ -277,8 +277,15 @@ export function RecordingCard({
 /** A flat catalogue using the same cards, toolbar and empty state as decs_maket. */
 export function RecordingsPage() {
   const { user } = useAuth();
-  const [view, setView] = useState<"past" | "active">("past");
-  const [meeting, setMeeting] = useState("");
+  const [params, setParams] = useSearchParams();
+  const view = params.get("view") === "active" ? "active" : "past";
+  const meeting = params.get("meeting") || "";
+  function setMeeting(id: string) {
+    const next = new URLSearchParams(params);
+    if (id) next.set("meeting", id);
+    else next.delete("meeting");
+    setParams(next, { replace: true });
+  }
   const [days, setDays] = useState("");
   const [sort, setSort] = useState("newest");
   const [search, setSearch] = useState("");
@@ -367,8 +374,11 @@ export function RecordingsPage() {
             key={status}
             aria-pressed={view === status}
             onClick={() => {
-              setView(status);
-              setMeeting("");
+              const next = new URLSearchParams(params);
+              if (status === "active") next.set("view", status);
+              else next.delete("view");
+              next.delete("meeting");
+              setParams(next, { replace: true });
             }}
           >
             {status === "past" ? (
@@ -400,6 +410,9 @@ export function RecordingsPage() {
           <span>Встреча</span>
           <select value={meeting} onChange={(e) => setMeeting(e.target.value)}>
             <option value="">Все встречи</option>
+            {meeting && !meetings.has(meeting) && (
+              <option value={meeting}>Выбранная встреча</option>
+            )}
             {[...meetings].map(([id, title]) => (
               <option key={id} value={id}>
                 {title}
