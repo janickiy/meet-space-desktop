@@ -1473,10 +1473,10 @@ export const api = {
    *
    * @returns Promise с проверенным ответом API; сетевые ошибки и отказ сервера отклоняют Promise.
    */
-  readNotification: (id: string) =>
+  readNotification: (id: string, signal?: AbortSignal) =>
     request<Item<Notification>>(
       `/notifications/${encodeURIComponent(id)}/read`,
-      { method: "POST" },
+      { method: "POST", signal },
     ),
   /**
    * notificationEvents открывает поток SSE через fetch с JWT в заголовке и поддержкой отмены.

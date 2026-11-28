@@ -90,13 +90,13 @@ module.exports = async function avatarEditorChecks({execute,until,visible,click,
   assert.equal(groupUploads(),0);fixture.product.controls.groupAvatarFailure=false;
   await click('.avatar-editor-footer .button-primary');await until(async()=>!await hasEditor(),'Group photo saved');assert.equal(groupUploads(),1);
   await until(()=>execute("!!document.querySelector('.personal-header .personal-avatar img')"),'Group header refreshes');
-  await click('.group-back');await until(()=>execute("!!document.querySelector('.chat-group-photo img')"),'Group hero refreshes');
+  await click('.group-info-modal button[aria-label="Назад к информации о группе"]');await until(()=>execute("!!document.querySelector('.chat-group-photo img')"),'Group hero refreshes');
   await open('.chat-group-photo');await loaded();await close();assert.equal(groupUploads(),1);
-  assert.equal(await execute("!!document.querySelector('.group-info-modal')"),true,'Parent dialog remains after editor cancel');
+  assert.equal(await execute("!!document.querySelector('.group-info-modal')"),true,'Group page remains after editor cancel');
   await click('button[aria-label="Настройки группы"]');await click('.group-avatar-editor .avatar-remove-link');await visible('Удалить фото?');
   await click('.avatar-delete-actions .button-danger');await until(()=>execute("!document.querySelector('.group-avatar-editor img')"),'Group deletion refreshes card');
   assert.equal(fixture.product.controls.groupAvatar,null);
-  assert.equal(await execute("document.querySelector('.group-info-modal').contains(document.activeElement)"),true,'Focus returns to parent group dialog');
-  await click('.group-back');await click('.group-info-modal .modal-close');await route('/app/settings');await visible('Добавить фото');
+  assert.equal(await execute("document.querySelector('.group-info-modal').contains(document.activeElement)"),true,'Focus returns to the group page');
+  await click('.group-info-modal button[aria-label="Назад к информации о группе"]');await click('.group-info-modal button[aria-label="Назад к переписке"]');await route('/app/settings');await visible('Добавить фото');
   return ['profile/group reference photo cards and confirmations; circular crop, real pointer drag, keyboard offsets, zoom, reset, preview, replace, cancel, JPEG512 crop pixels, failures/retry, private API save/delete, cache refresh, nested focus and responsive footer'];
 };

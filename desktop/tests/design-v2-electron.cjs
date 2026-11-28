@@ -179,7 +179,11 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await capture('calendar-meeting-'+theme);
         await click('.meeting-reference-info button[aria-label="Закрыть окно"]');
         await until(()=>execute('!document.querySelector(".meeting-reference-info")'),'calendar meeting dialog closes');
-        await click('.calendar-view-switch button:last-child');
+        await click('.agenda-schedule');
+        await until(()=>execute('!!document.querySelector(".meeting-create-modal #scheduled-date")'),'calendar schedules over its selected day');
+        assert.equal(await execute('!!document.querySelector(".agenda-week") && new URL(location.href).pathname === "/calendar"'),true,'calendar remains under the scheduling dialog');
+        await click('.meeting-create-modal button[aria-label="Закрыть окно"]');
+        await execute(`const view=document.querySelector('select[aria-label="Вид календаря"]');view.value='month';view.dispatchEvent(new Event('change',{bubbles:true}));`);
         await until(()=>execute("!!document.querySelector('.calendar-month-grid .calendar-event')"),'month view retains scheduled meeting');
         await capture('calendar-month-'+theme);
       }

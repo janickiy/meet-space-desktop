@@ -1,10 +1,19 @@
 import { useHiddenChatMessages } from "../hiddenChatMessages";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Download, FileText, Files } from "lucide-react";
+import {
+  Download,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  MessageCircle,
+  Video,
+} from "lucide-react";
 import { ApiError, personalChatAPI } from "../api";
 import { useAuth } from "../auth";
-import { formatBytes } from "../collaboration";
+import { ExternalLink } from "./ExternalLink";
+import { safeRecordingUrl } from "../recordingPresentation";
+import { formatBytes, mergeChatPages } from "../collaboration";
 import { formatDate } from "../utils";
 import { isDesktopBuild } from "../platform/build";
 import { serviceOrigin } from "../platform/urls";
@@ -12,16 +21,44 @@ import type { ChatAttachment } from "../types";
 import { NativeSaveButton } from "./desktop/NativeAssets";
 import { Button, ErrorNotice } from "./ui";
 
-/** Reads the caller's visible conversation history; deleted messages never provide files. */
+const materialTabs = [
+  {
+    id: "media",
+    label: "Медиа",
+    icon: ImageIcon,
+    empty: "Здесь появятся фото и видео из переписки.",
+  },
+  {
+    id: "files",
+    label: "Файлы",
+    icon: FileText,
+    empty: "В этой переписке пока нет файлов.",
+  },
+  {
+    id: "links",
+    label: "Ссылки",
+    icon: LinkIcon,
+    empty: "В этой переписке пока нет ссылок.",
+  },
+] as const;
+
 export function ConversationFiles({
   conversationId,
   onAccessDenied,
+  onShowMessage,
   requireAuthenticated = false,
+  title,
 }: {
   conversationId: string;
   onAccessDenied: () => void;
+  onShowMessage: (id: string) => void;
   requireAuthenticated?: boolean;
+  title?: string;
 }) {
+  const [tab, setTab] = useState<(typeof materialTabs)[number]>(
+    materialTabs[0],
+  );
+  const tabId = useId();
   const { user } = useAuth();
   const { hidden } = useHiddenChatMessages(
     user?.id,
@@ -29,14 +66,13 @@ export function ConversationFiles({
     conversationId,
   );
   const query = useInfiniteQuery({
-    queryKey: ["personal-profile-files", user?.id, conversationId],
+    queryKey: ["personal-chat", conversationId, user?.id],
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }) =>
       personalChatAPI.messages(conversationId, pageParam, signal),
     getNextPageParam: (page) => page.nextCursor || undefined,
     enabled: !!user,
-    gcTime: 0,
-    staleTime: 0,
+    refetchOnMount: "always",
     retry: false,
   });
   const denied =
@@ -44,86 +80,246 @@ export function ConversationFiles({
   useEffect(() => {
     if (denied) onAccessDenied();
   }, [denied, onAccessDenied]);
-  const files = !query.isError
-    ? [
-        ...new Map(
-          (query.data?.pages.flatMap((page) => page.items) || [])
-            .filter((message) => !hidden.has(message.id) && !message.deletedAt)
-            .flatMap((message) =>
-              message.attachments.map(
-                (file) =>
-                  [file.id, { file, createdAt: message.createdAt }] as const,
-              ),
-            ),
-        ).values(),
-      ]
-    : [];
+  const messages = query.isError
+    ? []
+    : mergeChatPages(query.data?.pages || [])
+        .reverse()
+        .filter((message) => !message.deletedAt && !hidden.has(message.id));
+  const links =
+    tab.id !== "links"
+      ? []
+      : messages.flatMap((message) => {
+          const addresses = new Set<string>();
+          for (const match of message.text.matchAll(
+            /(?:https?:\/\/|\bwww\.)[^\s<>"'«»]+/gi,
+          )) {
+            let value = match[0].replace(/[.,!?;:…\]}]+$/u, "");
+            while (
+              value.endsWith(")") &&
+              value.split(")").length > value.split("(").length
+            )
+              value = value.slice(0, -1);
+            const url = safeRecordingUrl(
+              /^www\./i.test(value) ? `https://${value}` : value,
+            );
+            if (url) addresses.add(url);
+          }
+          return [...addresses].map((url) => ({ url, message }));
+        });
+  const files = messages.flatMap((message) =>
+    message.attachments
+      .filter((file) =>
+        tab.id === "media"
+          ? /^(image|video)\//i.test(file.mimeType)
+          : tab.id === "files" && !/^(image|video)\//i.test(file.mimeType),
+      )
+      .map((file) => ({ file, message })),
+  );
+  const jump = (id: string, label: string) => (
+    <button
+      type="button"
+      className="icon-button"
+      title="Показать в переписке"
+      aria-label={`Показать в переписке: ${label}`}
+      onClick={() => onShowMessage(id)}
+    >
+      <MessageCircle size={17} />
+    </button>
+  );
   return (
-    <div className="chat-profile-files">
-      <ErrorNotice error={query.error} />
-      {query.isPending && <p role="status">Загружаем файлы…</p>}
-      {query.isError && !denied && (
-        <Button variant="outline" onClick={() => void query.refetch()}>
-          Повторить загрузку
-        </Button>
-      )}
-      {!query.isPending && !query.isError && !files.length && (
-        <div className="chat-profile-empty">
-          <Files size={32} aria-hidden="true" />
-          <h3>Файлы пока не найдены</h3>
-          <p>
-            {query.hasNextPage
-              ? "Проверьте более ранние сообщения."
-              : "Здесь появятся документы, изображения и другие вложения переписки."}
-          </p>
-        </div>
-      )}
-      <ul className="chat-profile-file-list">
-        {files.map(({ file, createdAt }) => (
-          <li key={file.id} className="chat-profile-file">
-            <span className="chat-profile-file-icon">
-              <FileText size={20} aria-hidden="true" />
-            </span>
-            <span className="chat-profile-file-copy">
-              <strong>{file.filename}</strong>
-              <small>
-                {formatBytes(file.size)} · {formatDate(createdAt)}
-              </small>
-            </span>
-            {isDesktopBuild ? (
-              <NativeSaveButton
-                asset={{
-                  kind: "attachment",
-                  scope: "conversation",
-                  scopeId: conversationId,
-                  attachmentId: file.id,
-                  filename: file.filename,
-                }}
-                className="icon-button"
-                aria-label={`Скачать файл: ${file.filename}`}
-              >
-                <Download size={17} aria-hidden="true" />
-              </NativeSaveButton>
-            ) : (
-              <BrowserFileDownload
-                file={file}
-                conversationId={conversationId}
-                requireAuthenticated={requireAuthenticated}
-              />
-            )}
-          </li>
+    <section
+      className="chat-info-card chat-info-materials"
+      aria-label="Материалы переписки"
+    >
+      {title && <h3>{title}</h3>}
+      <div
+        className="chat-material-tabs"
+        role="tablist"
+        aria-label="Материалы переписки"
+      >
+        {materialTabs.map((item, index) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            id={`${tabId}-${item.id}`}
+            aria-selected={item.id === tab.id}
+            tabIndex={item.id === tab.id ? 0 : -1}
+            aria-controls={`${tabId}-panel`}
+            onClick={() => setTab(item)}
+            onKeyDown={(event) => {
+              const target = {
+                ArrowLeft: (index + 2) % 3,
+                ArrowRight: (index + 1) % 3,
+                Home: 0,
+                End: 2,
+              }[event.key];
+              if (target === undefined) return;
+              event.preventDefault();
+              setTab(materialTabs[target]);
+              document
+                .getElementById(`${tabId}-${materialTabs[target].id}`)
+                ?.focus();
+            }}
+          >
+            {item.label}
+          </button>
         ))}
-      </ul>
-      {query.hasNextPage && !query.isError && (
-        <Button
-          variant="outline"
-          busy={query.isFetchingNextPage}
-          onClick={() => void query.fetchNextPage()}
+      </div>
+      <div
+        className="chat-profile-files"
+        role="tabpanel"
+        id={`${tabId}-panel`}
+        aria-labelledby={`${tabId}-${tab.id}`}
+        tabIndex={0}
+      >
+        <ErrorNotice error={query.error} />
+        {query.isPending && <p role="status">Загружаем материалы…</p>}
+        {query.isError && !denied && (
+          <Button variant="outline" onClick={() => void query.refetch()}>
+            Повторить загрузку
+          </Button>
+        )}
+        {!query.isPending &&
+          !query.isError &&
+          !files.length &&
+          !links.length && (
+            <div className="chat-profile-empty">
+              <tab.icon size={24} aria-hidden="true" />
+              <p>{tab.empty}</p>
+            </div>
+          )}
+        <ul
+          className={`chat-profile-file-list ${tab.id === "media" ? "chat-info-media" : ""}`}
         >
-          Загрузить более ранние сообщения
-        </Button>
+          {links.map(({ url, message }) => (
+            <li className="chat-profile-file" key={message.id + url}>
+              <span className="chat-profile-file-icon">
+                <LinkIcon size={18} />
+              </span>
+              <span className="chat-profile-file-copy">
+                <ExternalLink href={url}>{url}</ExternalLink>
+                <small>
+                  {message.senderName} · {formatDate(message.createdAt)}
+                </small>
+              </span>
+              {jump(message.id, url)}
+            </li>
+          ))}
+          {files.map(({ file, message }) => (
+            <li key={file.id} className="chat-profile-file">
+              {tab.id === "media" ? (
+                <MediaPreview
+                  conversationId={conversationId}
+                  file={file}
+                  onShow={() => onShowMessage(message.id)}
+                />
+              ) : (
+                <span className="chat-profile-file-icon">
+                  <FileText size={20} aria-hidden="true" />
+                </span>
+              )}
+              <span className="chat-profile-file-copy">
+                <strong>{file.filename}</strong>
+                <small>
+                  {formatBytes(file.size)} · {formatDate(message.createdAt)}
+                </small>
+              </span>
+              {tab.id === "files" && jump(message.id, file.filename)}
+              {isDesktopBuild ? (
+                <NativeSaveButton
+                  asset={{
+                    kind: "attachment",
+                    scope: "conversation",
+                    scopeId: conversationId,
+                    attachmentId: file.id,
+                    filename: file.filename,
+                  }}
+                  className="icon-button"
+                  aria-label={`Скачать файл: ${file.filename}`}
+                >
+                  <Download size={17} aria-hidden="true" />
+                </NativeSaveButton>
+              ) : (
+                <BrowserFileDownload
+                  file={file}
+                  conversationId={conversationId}
+                  requireAuthenticated={requireAuthenticated}
+                />
+              )}
+            </li>
+          ))}
+        </ul>
+        {query.hasNextPage && !query.isError && (
+          <Button
+            variant="outline"
+            busy={query.isFetchingNextPage}
+            onClick={() => void query.fetchNextPage()}
+          >
+            Загрузить более ранние сообщения
+          </Button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MediaPreview({
+  conversationId,
+  file,
+  onShow,
+}: {
+  conversationId: string;
+  file: ChatAttachment;
+  onShow: () => void;
+}) {
+  const preview = useRef<HTMLButtonElement>(null);
+  const [source, setSource] = useState("");
+  useEffect(() => {
+    setSource("");
+    if (
+      !preview.current ||
+      !/^image\/(png|jpeg|gif|webp|avif)$/i.test(file.mimeType) ||
+      file.size > 10 * 1024 * 1024
+    )
+      return;
+    const controller = new AbortController();
+    let local = "";
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect();
+      void personalChatAPI
+        .attachmentContent(conversationId, file.id, controller.signal)
+        .then((blob) => {
+          if (controller.signal.aborted) return;
+          local = URL.createObjectURL(blob);
+          setSource(local);
+        })
+        .catch(() => {});
+    });
+    observer.observe(preview.current);
+    return () => {
+      observer.disconnect();
+      controller.abort();
+      if (local) URL.revokeObjectURL(local);
+    };
+  }, [conversationId, file.id, file.mimeType, file.size]);
+  return (
+    <button
+      ref={preview}
+      className="chat-material-preview"
+      type="button"
+      onClick={onShow}
+      aria-label={`Показать в переписке: ${file.filename}`}
+    >
+      {source ? (
+        <img src={source} alt="" onError={() => setSource("")} />
+      ) : file.mimeType.startsWith("video/") ? (
+        <Video />
+      ) : (
+        <ImageIcon />
       )}
-    </div>
+    </button>
   );
 }
 

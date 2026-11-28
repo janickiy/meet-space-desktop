@@ -4,12 +4,13 @@ import { Link, useSearchParams } from "react-router";
 import {
   ArrowUpRight,
   CalendarDays,
+  ChevronDown,
+  Folder,
   UsersRound,
   X,
   Ellipsis,
   RotateCcw,
-  Link2,
-  Plus,
+  Link as LinkIcon,
   MessageCircle,
   DoorOpen,
   Search,
@@ -19,13 +20,17 @@ import {
 import { useAuth } from "../auth";
 import { useConferences } from "../queries";
 import { formatDate } from "../utils";
-import { Button, ErrorNotice, StatusBadge } from "../components/ui";
+import { Button, ErrorNotice, Modal, StatusBadge } from "../components/ui";
 import { CreateConference, JoinByLink } from "../components/ConferenceModals";
 import { MeetingDetailsModal } from "../components/MeetingDetailsModal";
 import { MeetingSkeleton } from "../components/MeetingSkeleton";
 import { NewDirectChatModal } from "../components/NewDirectChatModal";
 import type { Conference, ConferenceFilters } from "../types";
-import { localDayEnd, localSchedule } from "../collaboration";
+import {
+  localDayEnd,
+  localSchedule,
+  localTimeZoneLabel,
+} from "../collaboration";
 import "./dashboard.css";
 import "./dashboard-home.css";
 import "./collections-redesign.css";
@@ -42,17 +47,6 @@ const participantsLabels: Record<string, string> = {
   many: "участников",
   other: "участника",
 };
-
-function localTimeZoneLabel() {
-  const zone = (timeZoneName: "shortGeneric" | "shortOffset") =>
-    new Intl.DateTimeFormat("ru-RU", { timeZoneName })
-      .formatToParts()
-      .find((part) => part.type === "timeZoneName")
-      ?.value.replace("GMT", "UTC");
-  return [...new Set([zone("shortGeneric"), zone("shortOffset")])]
-    .filter(Boolean)
-    .join(" · ");
-}
 
 const views: { id: NonNullable<ConferenceFilters["view"]>; label: string }[] = [
   { id: "upcoming", label: "Предстоящие" },
@@ -71,9 +65,7 @@ function MeetingRow({ conference }: { conference: Conference }) {
     conference.scheduledAt ||
     conference.createdAt;
   const date = new Date(timestamp);
-  const target = past
-    ? `/history/${conference.id}`
-    : `/meetings/${conference.id}`;
+  const target = `/meetings/${conference.id}`;
   const content = (
     <>
       <span className="dashboard-meeting-time" aria-hidden="true">
@@ -150,6 +142,17 @@ function MeetingRow({ conference }: { conference: Conference }) {
           </Link>
         )}
         <div className="dashboard-meeting-action">
+          {past && (
+            <Button
+              variant="secondary"
+              className="meeting-materials"
+              aria-label={`Материалы встречи: ${conference.title}`}
+              aria-haspopup="dialog"
+              onClick={() => setDetails(true)}
+            >
+              <Folder size={14} aria-hidden="true" /> Материалы
+            </Button>
+          )}
           <button
             className="icon-button meeting-info-trigger"
             type="button"
@@ -190,6 +193,71 @@ export function Dashboard({
   );
 }
 
+type MeetingFilters = {
+  scope: NonNullable<ConferenceFilters["scope"]>;
+  from: string;
+  to: string;
+};
+
+const initialFilters: MeetingFilters = { scope: "all", from: "", to: "" };
+const scopeLabels: Record<MeetingFilters["scope"], string> = {
+  all: "Все мои встречи",
+  owned: "Я организатор",
+  participating: "Я участник",
+};
+
+function MeetingFilterFields({
+  value,
+  onChange,
+}: {
+  value: MeetingFilters;
+  onChange: (filters: MeetingFilters) => void;
+}) {
+  return (
+    <>
+      <label className="field">
+        <span>Моё участие</span>
+        <select
+          aria-label="Моё участие"
+          value={value.scope}
+          onChange={(event) =>
+            onChange({
+              ...value,
+              scope: event.target.value as MeetingFilters["scope"],
+            })
+          }
+        >
+          {Object.entries(scopeLabels).map(([scope, label]) => (
+            <option value={scope} key={scope}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="field">
+        <span>С даты</span>
+        <input
+          type="date"
+          aria-label="Встречи с даты"
+          value={value.from}
+          max={value.to || undefined}
+          onChange={(event) => onChange({ ...value, from: event.target.value })}
+        />
+      </label>
+      <label className="field">
+        <span>По дату</span>
+        <input
+          type="date"
+          aria-label="Встречи по дату"
+          value={value.to}
+          min={value.from || undefined}
+          onChange={(event) => onChange({ ...value, to: event.target.value })}
+        />
+      </label>
+    </>
+  );
+}
+
 function ConferenceDashboard({ create = false }: { create?: boolean }) {
   const [params, setParams] = useSearchParams();
   const [creating, setCreating] = useState(false);
@@ -201,10 +269,11 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
       : params.get("view") === "past"
         ? "past"
         : "upcoming";
-  const [scope, setScope] =
-    useState<NonNullable<ConferenceFilters["scope"]>>("all");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
+  const [filters, setFilters] = useState(initialFilters);
+  const [draftFilters, setDraftFilters] = useState<MeetingFilters | null>(null);
+  const { scope, from, to } = filters;
+  const filterCount =
+    Number(scope !== "all") + Number(Boolean(from)) + Number(Boolean(to));
   const query = useConferences({
     view: tab,
     scope,
@@ -222,7 +291,11 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
       },
       { replace: true },
     );
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  function resetFilters() {
+    setFilters(initialFilters);
+    setSearch("");
+    setDraftFilters(null);
+  }
 
   /** @args view — серверная категория встреч. Сохраняет прочие параметры маршрута. */
   function selectView(view: NonNullable<ConferenceFilters["view"]>) {
@@ -273,6 +346,11 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             <strong>Новая встреча</strong>
             <small>Начать разговор сейчас</small>
           </span>
+          <ArrowUpRight
+            className="meeting-quick-arrow"
+            size={16}
+            aria-hidden="true"
+          />
         </button>
         <Link className="meetings-quick-action" to="/meetings/new?scheduled=1">
           <span className="meetings-quick-symbol">
@@ -285,6 +363,11 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             </strong>
             <small>Выбрать дату и время</small>
           </span>
+          <ArrowUpRight
+            className="meeting-quick-arrow"
+            size={16}
+            aria-hidden="true"
+          />
         </Link>
         <button
           type="button"
@@ -292,7 +375,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
           onClick={() => setJoining(true)}
         >
           <span className="meetings-quick-symbol">
-            <Link2 size={22} aria-hidden="true" />
+            <LinkIcon size={22} aria-hidden="true" />
           </span>
           <span>Подключиться по ссылке</span>
         </button>
@@ -350,67 +433,83 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
               variant="outline"
               className="dashboard-mobile-filter"
               aria-label="Фильтры встреч"
-              aria-expanded={filtersOpen}
-              onClick={() => setFiltersOpen(!filtersOpen)}
+              aria-haspopup="dialog"
+              onClick={() => setDraftFilters(filters)}
             >
               <SlidersHorizontal size={18} />
-              Фильтры
+              {filterCount > 0 && (
+                <span className="meeting-filter-count">{filterCount}</span>
+              )}
             </Button>
           </div>
         </div>
-        <div
-          className={`conference-filters ${filtersOpen ? "conference-filters-open" : ""}`}
-        >
-          <label className="field">
-            <span>Моё участие</span>
-            <select
-              aria-label="Моё участие"
-              value={scope}
-              onChange={(event) =>
-                setScope(
-                  event.target.value as NonNullable<ConferenceFilters["scope"]>,
-                )
-              }
-            >
-              <option value="all">Все мои встречи</option>
-              <option value="owned">Я организатор</option>
-              <option value="participating">Я участник</option>
-            </select>
-          </label>
-          <label className="field">
-            <span>С даты</span>
-            <input
-              type="date"
-              aria-label="Встречи с даты"
-              value={from}
-              max={to || undefined}
-              onChange={(event) => setFrom(event.target.value)}
-            />
-          </label>
-          <label className="field">
-            <span>По дату</span>
-            <input
-              type="date"
-              aria-label="Встречи по дату"
-              value={to}
-              min={from || undefined}
-              onChange={(event) => setTo(event.target.value)}
-            />
-          </label>
-          <Button
-            variant="secondary"
+        <div className="conference-filters">
+          <MeetingFilterFields value={filters} onChange={setFilters} />
+          <button
+            type="button"
+            className="icon-button"
             aria-label="Сбросить фильтры"
             title="Сбросить фильтры"
-            onClick={() => {
-              setFrom("");
-              setTo("");
-              setSearch("");
-              setScope("all");
-            }}
+            onClick={resetFilters}
           >
             <RotateCcw size={18} aria-hidden="true" />
-          </Button>
+          </button>
         </div>
+        <div className="meeting-filter-chips">
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => setDraftFilters(filters)}
+          >
+            <UsersRound size={13} aria-hidden="true" />
+            {scopeLabels[scope]}
+            <ChevronDown size={13} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            className={from || to ? "selected" : ""}
+            onClick={() => setDraftFilters(filters)}
+          >
+            <CalendarDays size={13} aria-hidden="true" />
+            {from || to ? "Период выбран" : "Период"}
+          </button>
+          {filterCount > 0 && (
+            <button
+              type="button"
+              className="meeting-chip-reset"
+              aria-label="Сбросить фильтры"
+              onClick={resetFilters}
+            >
+              <X size={14} aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        {draftFilters && (
+          <Modal title="Фильтры встреч" onClose={() => setDraftFilters(null)}>
+            <form
+              className="meeting-filter-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                setFilters(draftFilters);
+                setDraftFilters(null);
+              }}
+            >
+              <MeetingFilterFields
+                value={draftFilters}
+                onChange={setDraftFilters}
+              />
+              <p>
+                Дата включается в период. Встречи без даты доступны без фильтра
+                по периоду.
+              </p>
+              <Button type="submit">Применить</Button>
+              <Button type="button" variant="secondary" onClick={resetFilters}>
+                Сбросить
+              </Button>
+            </form>
+          </Modal>
+        )}
         <p className="meeting-list-caption">
           {tab === "upcoming"
             ? "Предстоящие и без даты"
@@ -436,6 +535,7 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
           role="tabpanel"
           aria-labelledby={`tab-${tab}`}
           tabIndex={0}
+          aria-live="polite"
         >
           {query.isPending ? (
             <MeetingSkeleton rows={4} />
@@ -447,12 +547,12 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
             </div>
           ) : (
             !query.isError && (
-              <div className="empty-state">
+              <div className="meeting-empty">
                 <span className="empty-icon">
                   <CalendarDays size={29} aria-hidden="true" />
                 </span>
                 <h3>
-                  {search
+                  {search || filterCount
                     ? "Встречи не найдены"
                     : tab === "upcoming"
                       ? "Самое время для первой встречи"
@@ -461,22 +561,22 @@ function ConferenceDashboard({ create = false }: { create?: boolean }) {
                         : "Здесь будет история встреч"}
                 </h3>
                 <p>
-                  {search
-                    ? "Поиск работает по загруженным встречам. Попробуйте другое название или загрузите ещё."
-                    : tab === "upcoming"
-                      ? "Создайте конференцию и пригласите коллег по ссылке."
-                      : "Конференции появятся здесь, когда изменится их статус."}
+                  {search || filterCount
+                    ? "Попробуйте другое название или измените фильтры."
+                    : "Создайте встречу и пригласите коллег по ссылке."}
                 </p>
-                {tab === "upcoming" && !search && (
-                  <button
-                    type="button"
-                    className="text-button text-link"
-                    onClick={() => setCreating(true)}
-                  >
-                    <Plus size={16} aria-hidden="true" />
-                    Создать конференцию
-                  </button>
-                )}
+                <Button
+                  variant="secondary"
+                  onClick={
+                    search || filterCount
+                      ? resetFilters
+                      : () => setCreating(true)
+                  }
+                >
+                  {search || filterCount
+                    ? "Сбросить фильтры"
+                    : "Создать встречу"}
+                </Button>
               </div>
             )
           )}

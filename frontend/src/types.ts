@@ -762,6 +762,8 @@ export interface AdminSummary {
 }
 
 export interface PersonalPeer {
+  email?: string;
+  about?: string;
   id: string;
   displayName: string;
 }

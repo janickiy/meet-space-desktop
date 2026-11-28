@@ -1,6 +1,6 @@
 /* Desktop week strip and day timeline from screens.js and app.css. */
 .agenda-page.calendar-page {
-  max-width: 1160px;
+  max-width: none;
   width: 100%;
   margin-inline: auto;
   container-type: inline-size;
@@ -8,8 +8,16 @@
 .agenda-page.calendar-page .page-heading {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin: 0 0 24px;
+  align-items: flex-start;
+  flex-direction: row;
+  gap: 14px;
+  margin: 0 0 22px;
+}
+.agenda-page.calendar-page .page-heading p {
+  margin: 8px 0 0;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.5;
+  color: var(--muted);
 }
 .agenda-page.calendar-page .calendar-card {
   padding: 0;
@@ -30,21 +38,67 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 48px;
   padding: 0;
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   border: none;
 }
-.agenda-page .calendar-period {
-  font-size: calc(20px * var(--text-scale));
+.agenda-view-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  color: var(--muted);
 }
+.agenda-view-select:focus-within {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.agenda-view-select select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  cursor: pointer;
+}
+.agenda-page.calendar-page .calendar-period {
+  text-transform: none;
+  margin: 0;
+  color: var(--text);
+  font-size: calc(20px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 600;
+}
+.agenda-page .calendar-period::first-letter {
+  text-transform: uppercase;
+}
+.agenda-page.calendar-page .calendar-navigation {
+  gap: 2px;
+}
+.agenda-page.calendar-page .calendar-navigation .icon-button {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+}
+.agenda-page.calendar-page .calendar-navigation .button {
+  min-height: 48px;
+  font-size: calc(12px * var(--text-scale));
+}
+.agenda-page .calendar-day-number {
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
 .agenda-page .calendar-navigation .button {
   order: -1;
   border: none;
   background: transparent;
   color: var(--primary);
-}
-.agenda-page:has(.agenda-layout) .calendar-toolbar {
-  width: calc(100% - 304px);
 }
 .agenda-layout {
   display: grid;
@@ -85,7 +139,7 @@
   color: var(--primary-contrast);
 }
 .agenda-week small {
-  font-size: calc(11px * var(--text-scale));
+  font-size: calc(10px * var(--text-scale));
 }
 .agenda-week strong {
   font-size: calc(17px * var(--text-scale));
@@ -99,7 +153,7 @@
   background: currentColor;
 }
 .agenda-day > h3 {
-  margin: 22px 0 14px;
+  margin: 24px 0 16px;
   font-size: calc(14px * var(--text-scale));
 }
 .agenda-time {
@@ -114,7 +168,7 @@
 .agenda-time > span {
   padding-top: 4px;
   color: var(--muted);
-  font-size: calc(11px * var(--text-scale));
+  font-size: calc(10px * var(--text-scale));
 }
 .agenda-time > div {
   padding: 6px 0;
@@ -132,93 +186,96 @@
   width: 100%;
   margin: 0;
   border: 0;
-  border-inline-start: 3px solid var(--primary);
-  border-radius: 6px 12px 12px 6px;
+  border-inline-start: 3px solid #7497ef;
+  border-radius: 5px 13px 13px 5px;
   padding: 12px 15px;
   background: var(--primary-soft);
   color: var(--text);
   overflow-wrap: anywhere;
 }
+.agenda-page .agenda-time .calendar-event[data-agenda-role="guest"] {
+  background: color-mix(in srgb, #a586dc 14%, var(--surface));
+  border-color: #ad90d5;
+}
 .agenda-page .agenda-time .calendar-event strong {
+  color: var(--text);
+  font-weight: 600;
   white-space: normal;
-  font-size: calc(13px * var(--text-scale));
+  font-size: calc(12px * var(--text-scale));
 }
 .agenda-summary {
-  display: grid;
-  gap: 18px;
-  align-content: start;
   min-width: 0;
   padding: 22px;
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 22px;
   background: var(--surface);
 }
 .agenda-eyebrow {
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  font-size: calc(10px * var(--text-scale));
+  font-weight: 600;
+}
+.agenda-summary h3 {
+  margin: 12px 0 0;
+  font-size: calc(19px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 600;
 }
 .agenda-summary header p {
   margin: 9px 0 0;
   color: var(--muted);
-  font-size: var(--text-sm);
-}
-.agenda-page .agenda-time .agenda-event-range {
-  color: var(--muted);
-  font-size: var(--text-xs);
-}
-.agenda-summary h3 {
-  margin: 12px 0 0;
-  font-size: calc(16px * var(--text-scale));
+  font-size: calc(12px * var(--text-scale));
 }
 .agenda-summary ul {
-  display: grid;
-  gap: 9px;
-  list-style: none;
   padding: 0;
+  list-style: none;
   margin: 0;
 }
-.agenda-summary ul:empty {
-  display: none;
-}
-.agenda-summary button {
+.agenda-summary li {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  border: none;
-  border-inline-start: 3px solid var(--primary);
-  background: transparent;
-  color: var(--text);
+  gap: 12px;
+  margin-top: 20px;
   font-size: calc(12px * var(--text-scale));
+}
+.agenda-legend-mark {
+  flex: none;
+  width: 3px;
+  height: 42px;
+  border-radius: 5px;
+  background: #b4c9fe;
+}
+.agenda-legend-mark[data-role="guest"] {
+  background: #cbbde9;
 }
 .agenda-summary small {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  margin-top: 20px;
   overflow-wrap: anywhere;
   border: 1px dashed var(--border);
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 18px;
+  padding: 18px;
+  font-size: calc(12px * var(--text-scale));
   color: var(--muted);
+}
+.agenda-summary small svg {
+  color: var(--primary);
+  flex: none;
+}
+.agenda-page .agenda-time .agenda-event-range {
+  color: var(--muted);
+  font-size: calc(10px * var(--text-scale));
 }
 @container (max-width: 800px) {
   .agenda-layout {
     grid-template-columns: minmax(0, 1fr);
   }
-  .agenda-page:has(.agenda-layout) .calendar-toolbar {
-    width: 100%;
-  }
   .agenda-summary {
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-  }
-  .agenda-summary ul {
-    grid-row: 2;
-    grid-column: 1/-1;
+    display: none;
   }
 }
 @container (max-width: 500px) {

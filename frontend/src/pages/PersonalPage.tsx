@@ -32,7 +32,7 @@ import { api, ApiError, personalChatAPI } from "../api";
 import { useAuth } from "../auth";
 import { chatTime } from "../chatPresentation";
 import { ConversationActions } from "../components/FolderPicker";
-import { DirectUserInfoModal } from "../components/DirectConversationActions";
+import { DirectUserInfoPage } from "../components/DirectConversationActions";
 import { DirectCallButton } from "../components/DirectCallButton";
 import { PersonalPeerStatus } from "../components/PersonalPeerStatus";
 import { PersonalPeerPresenceProvider } from "../usePersonalPeerPresence";
@@ -47,7 +47,7 @@ import { MessagingSkeleton } from "../components/MessagingSkeleton";
 import {
   ConversationAvatar,
   GroupCreateModal,
-  GroupInfoModal,
+  GroupInfoPage,
 } from "../components/GroupChats";
 import type { ConversationFilters, PersonalConversation } from "../types";
 import { revokePersonalConversation } from "../personalRealtime";
@@ -67,14 +67,39 @@ export function PersonalPage() {
     : "all";
   const [creating, setCreating] = useState(false);
   const [newDirect, setNewDirect] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+  const showingInfo = !!id && params.get("view") === "info";
+  const conversationParams = new URLSearchParams(params);
+  conversationParams.delete("view");
+  const conversationSearch = conversationParams.size
+    ? "?" + conversationParams.toString()
+    : "";
+  function openInfo(conversationId: string) {
+    const next = new URLSearchParams(params);
+    next.set("view", "info");
+    navigate({
+      pathname: "/personal/" + encodeURIComponent(conversationId),
+      search: next.toString(),
+    });
+  }
+  function closeInfo() {
+    navigate(
+      { pathname: location.pathname, search: conversationSearch },
+      { replace: true },
+    );
+  }
+  function showMessage(messageId: string) {
+    closeInfo();
+    setMessageFocus((previous) => ({
+      id: messageId,
+      request: (previous?.request || 0) + 1,
+    }));
+  }
   const [messageSearchOpen, setMessageSearchOpen] = useState(false);
   const [messageFocus, setMessageFocus] = useState<{
     id: string;
     request: number;
   }>();
   const messageSearchTrigger = useRef<HTMLButtonElement>(null);
-  const [userInfoOpen, setUserInfoOpen] = useState(false);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const infoTrigger = useRef<HTMLButtonElement>(null);
   const userInfoTrigger = useRef<HTMLButtonElement>(null);
@@ -136,12 +161,10 @@ export function PersonalPage() {
   const revoke = useCallback(() => {
     if (!id || !user) return;
     revokePersonalConversation(client, id, user.id);
-    setInfoOpen(false);
-    setUserInfoOpen(false);
     setMessageSearchOpen(false);
     setMessageFocus(undefined);
-    navigate(`/personal${location.search}`, { replace: true });
-  }, [client, id, user, navigate, location.search]);
+    navigate(`/personal${conversationSearch}`, { replace: true });
+  }, [client, id, user, navigate, conversationSearch]);
   const paramSearch = params.get("search") || "";
   const [search, setSearch] = useState(paramSearch);
   const [searchOpen, setSearchOpen] = useState(!!paramSearch);
@@ -159,7 +182,7 @@ export function PersonalPage() {
       const sidebar =
         root.current?.querySelector<HTMLElement>(".personal-sidebar");
       if (id && sidebar && !sidebar.getClientRects().length)
-        navigate("/personal" + location.search);
+        navigate("/personal" + conversationSearch);
       setSearchOpen(true);
       requestAnimationFrame(() => searchInput.current?.focus());
     }
@@ -218,8 +241,6 @@ export function PersonalPage() {
     if (inaccessible && detail.data?.item.type === "group") revoke();
   }, [inaccessible, detail.data, revoke]);
   useEffect(() => {
-    setInfoOpen(false);
-    setUserInfoOpen(false);
     setMessageSearchOpen(false);
     setMessageFocus(undefined);
   }, [
@@ -299,6 +320,15 @@ export function PersonalPage() {
                 }}
               >
                 {label}
+                {value === "unread" &&
+                  typeof list.data?.pages[0]?.unreadCount === "number" && (
+                    <span
+                      className="personal-filter-count"
+                      aria-label={`${list.data.pages[0].unreadCount} непрочитанных сообщений`}
+                    >
+                      {list.data.pages[0].unreadCount}
+                    </span>
+                  )}
               </button>
             ))}
             <Link to="/folders">
@@ -334,7 +364,7 @@ export function PersonalPage() {
             {conversations.map((c) => (
               <div className="personal-conversation-row" key={c.id}>
                 <NavLink
-                  to={`/personal/${c.id}${location.search}`}
+                  to={`/personal/${c.id}${conversationSearch}`}
                   className={({ isActive }) =>
                     `personal-conversation ${isActive ? "selected" : ""}`
                   }
@@ -358,7 +388,10 @@ export function PersonalPage() {
                       )}
                   </span>
                 </NavLink>
-                <ConversationActions conversation={c} />
+                <ConversationActions
+                  conversation={c}
+                  onInfo={() => openInfo(c.id)}
+                />
               </div>
             ))}
             {!list.isPending && !list.isError && !conversations.length && (
@@ -397,7 +430,7 @@ export function PersonalPage() {
         <div className="personal-content">
           <div
             className="personal-thread-surface"
-            hidden={userInfoOpen || infoOpen}
+            hidden={showingInfo && !!selected}
           >
             {!id ? (
               <div className="personal-placeholder">
@@ -414,7 +447,7 @@ export function PersonalPage() {
                 <header className="personal-header">
                   <Link
                     className="personal-back"
-                    to={`/personal${location.search}`}
+                    to={`/personal${conversationSearch}`}
                     aria-label="Назад к перепискам"
                   >
                     <ArrowLeft />
@@ -425,7 +458,7 @@ export function PersonalPage() {
                       type="button"
                       className="personal-peer-button"
                       aria-label={`Информация о пользователе: ${selected.peer.displayName}`}
-                      onClick={() => setUserInfoOpen(true)}
+                      onClick={() => openInfo(selected.id)}
                     >
                       <ConversationAvatar conversation={selected} />
                       <span className="personal-header-copy">
@@ -443,7 +476,7 @@ export function PersonalPage() {
                       className="personal-peer-button"
                       aria-label="Информация о группе"
                       disabled={!selected}
-                      onClick={() => setInfoOpen(true)}
+                      onClick={() => selected && openInfo(selected.id)}
                     >
                       {selected && (
                         <ConversationAvatar conversation={selected} />
@@ -484,7 +517,7 @@ export function PersonalPage() {
                   {selected && (
                     <ConversationActions
                       conversation={selected}
-                      onGroupInfo={() => setInfoOpen(true)}
+                      onInfo={() => openInfo(selected.id)}
                     />
                   )}
                 </header>
@@ -504,7 +537,7 @@ export function PersonalPage() {
                       scopeId={id}
                       transport={personalChatAPI}
                       personal
-                      visible={!messageSearchOpen && !infoOpen && !userInfoOpen}
+                      visible={!messageSearchOpen && !showingInfo}
                       focusMessageId={messageFocus?.id}
                       focusRequest={messageFocus?.request}
                       onLatest={() => setMessageFocus(undefined)}
@@ -523,19 +556,21 @@ export function PersonalPage() {
               </>
             )}
           </div>
-          {userInfoOpen && selected?.type === "direct" && (
-            <DirectUserInfoModal
-              embedded
+          {showingInfo && selected?.type === "direct" && (
+            <DirectUserInfoPage
+              key={selected.id}
               conversation={selected}
-              onClose={() => setUserInfoOpen(false)}
+              onClose={closeInfo}
+              onShowMessage={showMessage}
               returnFocus={() => userInfoTrigger.current}
             />
           )}
-          {infoOpen && selected?.type === "group" && (
-            <GroupInfoModal
-              embedded
+          {showingInfo && selected?.type === "group" && (
+            <GroupInfoPage
+              key={selected.id}
               group={selected}
-              onClose={() => setInfoOpen(false)}
+              onClose={closeInfo}
+              onShowMessage={showMessage}
               returnFocus={() => infoTrigger.current}
             />
           )}

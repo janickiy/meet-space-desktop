@@ -103,6 +103,10 @@ export function SettingsPage() {
       setActiveSection(mediaTab);
       setMobileSectionOpen(true);
     }
+    if (location.hash === "#notification-settings" && !guest) {
+      setActiveSection("notifications");
+      setMobileSectionOpen(true);
+    }
     if (location.hash === "#accounts" && !guest) {
       setActiveSection("accounts");
       setMobileSectionOpen(true);
@@ -111,7 +115,7 @@ export function SettingsPage() {
       setActiveSection("connection");
       setMobileSectionOpen(true);
     }
-  }, [location.hash, guest]);
+  }, [location.hash, location.key, guest]);
   const prefix = useId();
   const [accountPanelKey, setAccountPanelKey] = useState(0);
   const tabButtons = useRef<(HTMLButtonElement | null)[]>([]);

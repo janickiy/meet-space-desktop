@@ -21,7 +21,7 @@ import type { DirectConversation } from "../types";
 import { FolderPicker } from "./FolderPicker";
 import { ItemActions } from "./ItemActions";
 import { Button, ErrorNotice, Modal } from "./ui";
-import { UserInfoModal } from "./UserInfoModal";
+import { UserInfoPage } from "./UserInfoPage";
 
 /**
  * Фиксирует автора, диалог и поколение интерфейса на момент подтверждения действия.
@@ -38,20 +38,13 @@ interface DirectConversationOperation {
   controller: AbortController;
 }
 
-/**
- * Показывает доступные публичные сведения собеседника в стандартном диалоге.
- * Присутствие читается отдельным защищённым запросом; ошибки и неизвестные ответы не считаются офлайн.
- *
- * @args conversation — личный диалог; onClose — закрытие окна; returnFocus — элемент открытия.
- * @return Стандартное модальное окно с публичным именем, идентификатором и подтверждённым статусом.
- */
-export function DirectUserInfoModal({
+export function DirectUserInfoPage({
   conversation,
   onClose,
   returnFocus,
-  embedded = false,
+  onShowMessage,
 }: {
-  embedded?: boolean;
+  onShowMessage: (id: string) => void;
   conversation: DirectConversation;
   onClose: () => void;
   returnFocus?: () => HTMLElement | null;
@@ -66,11 +59,11 @@ export function DirectUserInfoModal({
     onClose();
   }, [denied, client, conversation.id, user, onClose]);
   return (
-    <UserInfoModal
-      embedded={embedded}
+    <UserInfoPage
+      onShowMessage={onShowMessage}
       person={conversation.peer}
       conversationId={conversation.id}
-      subtitle="Участник вашей переписки"
+
       online={presence.online}
       presencePending={presence.isPending}
       onClose={onClose}
@@ -88,7 +81,9 @@ export function DirectUserInfoModal({
  */
 export function DirectConversationActions({
   conversation,
+  onInfo,
 }: {
+  onInfo: () => void;
   conversation: DirectConversation;
 }) {
   const { user } = useAuth();
@@ -103,9 +98,9 @@ export function DirectConversationActions({
   const scope = useMemo(() => ({}), [user?.id, conversation.id]);
   const activeScope = useRef(scope);
   activeScope.current = scope;
-  const [dialog, setDialog] = useState<
-    "info" | "folder" | "clear" | "hide" | null
-  >(null);
+  const [dialog, setDialog] = useState<"folder" | "clear" | "hide" | null>(
+    null,
+  );
   const mutationKey = ["personal-actions", conversation.id, user?.id];
   const otherBusy = useIsMutating({ mutationKey }) > 0;
   useEffect(() => {
@@ -273,7 +268,7 @@ export function DirectConversationActions({
             label: "Информация",
             icon: <Info size={19} aria-hidden="true" />,
             disabled: busy,
-            run: () => open("info"),
+            run: onInfo,
           },
           {
             label: muted ? "Включить уведомления" : "Без уведомлений",
@@ -311,13 +306,6 @@ export function DirectConversationActions({
         <span className="sr-only" role="status">
           Сохраняем настройки переписки…
         </span>
-      )}
-      {dialog === "info" && (
-        <DirectUserInfoModal
-          conversation={conversation}
-          onClose={close}
-          returnFocus={returnFocus}
-        />
       )}
       {dialog === "folder" && (
         <FolderPicker

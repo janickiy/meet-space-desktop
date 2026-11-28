@@ -25,7 +25,7 @@ const group = { id: GROUP, type: "group", name: "Design group", description: "Au
   createdAt: now, updatedAt: now, lastMessageAt: now, lastMessageId: null, preview: "Authorized team conversation", unreadCount: 0,
   memberCount: 2, myRole: "owner", avatarVersion: null, lastSender: null };
 const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence: id === EARLIER ? "1" : "2", conversationId,
-  senderId: USER_B, senderName: "Design peer", text: "Authorized message", attachments: [file],
+  senderId: USER_B, senderName: "Design peer", text: "Authorized message https://example.org/project.", attachments: [file],
   createdAt: now, updatedAt: now, editedAt: null, deletedAt, version: 1, important: false, replyTo: null });
 
 (async () => {
@@ -69,7 +69,10 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
       saves.push(input);
       return { ok: true, value: { saved: true, cancelled: false } };
     });
-    const execute = code => window.webContents.executeJavaScript(code, true);
+    const execute = code => window.webContents.executeJavaScript(code, true).catch(async error => {
+      const route = await window.webContents.executeJavaScript("location.pathname + location.search");
+      throw new Error("Renderer assertion failed at " + route + ": " + (code.includes("Missing enabled action") ? code.substring(0,220) : String(error)));
+    });
     const until = async (predicate, label) => {
       const end = Date.now() + 10000;
       while (Date.now() < end) { if (await predicate()) return; await new Promise(resolve => setTimeout(resolve, 40)); }
@@ -101,11 +104,25 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
       controls.deny = 0;
       window.webContents.send("meetspace:route", `/personal/${item.id}`);
       await until(() => execute(`location.pathname==='/personal/${item.id}' && !!document.querySelector('.personal-peer-button') && document.body.innerText.includes('Authorized message')`), "Conversation ready");
-      const requestsBefore = fixture.requests.filter(r => r.path === `/api/v1/conversations/${item.id}/messages`).length;
-      await click(".personal-peer-button");
-      await until(() => execute("!!document.querySelector('.personal-content .chat-info-page .group-profile-tabs')"), "Profile ready");
+      if (item.type === "direct") {
+        await click(".personal-header .personal-direct-actions button");
+        await clickText("Информация", ".personal-header [role=menu]");
+      } else {
+        await click(".personal-peer-button");
+      }
+      await until(() => execute("!!document.querySelector('.personal-content .chat-info-page .chat-material-tabs')"), "Profile ready");
+      assert.equal(await execute("location.search.includes('view=info') && !document.querySelector('[role=dialog]')"),true,"Chat information is a navigable page");
+      assert.deepEqual(await execute("[...document.querySelectorAll('.chat-material-tabs [role=tab]')].map(e=>e.textContent)"),["Медиа","Файлы","Ссылки"]);
+      if (item.type === "group") {
+        await until(() => execute("!!document.querySelector('.group-member-profile-button[aria-label=\"Информация о пользователе: Design peer\"]')"), "Group members loaded");
+        await click('.group-member-profile-button[aria-label="Информация о пользователе: Design peer"]');
+        await until(() => execute("document.body.innerText.includes('Информация о пользователе') && !document.querySelector('[role=dialog]')"), "Group member has its own page");
+        await click('.chat-info-page button[aria-label="Назад к информации о группе"]');
+        assert.equal(await execute("document.body.innerText.includes('Информация о группе')"), true);
+      }
       await capture(item.type + "-profile");
-      assert.equal(fixture.requests.filter(r => r.path === `/api/v1/conversations/${item.id}/messages`).length, requestsBefore, "Opening profile does not request file history");
+      await clickText("Ссылки", ".personal-content .chat-info-page");
+      await until(() => execute("!!document.querySelector('.chat-profile-files a[href=\"https://example.org/project\"]')"), "Message links use the real history");
       await clickText("Файлы", ".personal-content .chat-info-page");
       await until(async () => (await profileFiles()).includes(visibleFile.filename), "Visible attachment is rendered");
       assert.deepEqual(await profileFiles(), [visibleFile.filename], "Deleted messages do not reveal their attachments");
@@ -123,21 +140,19 @@ const message = (conversationId, id, file, deletedAt = null) => ({ id, sequence:
         await until(async () => (await profileFiles()).includes(earlierFile.filename), "Explicit pagination loads older file");
         assert.deepEqual((await profileFiles()).sort(), [visibleFile.filename, earlierFile.filename].sort(), "Repeated attachment IDs render once across pages");
         await capture("direct-files-paginated");
-        await click('.personal-content .chat-info-page button[aria-label="Назад к чату"]');
+        await click('.personal-content .chat-info-page button[aria-label="Назад к переписке"]');
         await until(() => execute("!document.querySelector('.personal-content .chat-info-page')"), "Profile closed");
         controls.deny = 403; controls.deniedConversation = item.id;
         await click(".personal-peer-button");
-        await until(() => execute("!!document.querySelector('.personal-content .chat-info-page .group-profile-tabs')"), "Reopened profile ready");
-        await clickText("Файлы", ".personal-content .chat-info-page");
       } else {
         controls.deny = 404; controls.deniedConversation = item.id;
         await clickText("Загрузить более ранние сообщения", ".personal-content .chat-info-page");
       }
       await until(() => execute("!document.querySelector('.personal-content .chat-info-page')"), `${item.type} access loss closes profile`);
       assert.deepEqual(await profileFiles(), [], "No files remain visible after access loss");
-      checks.push(`${item.type}: lazy authorized history, deleted attachments excluded, native save by IDs; ${controls.deny} closes profile and removes visible files`);
+      checks.push(`${item.type}: authorized history, deleted attachments excluded, native save by IDs; ${controls.deny} closes profile and removes visible files`);
     }
-    checks.push("Explicit pagination loads older attachments and deduplicates repeated IDs; no history prefetch or renderer signed URL request");
+    checks.push("Profile opens from the action menu, group member opens and returns without a dialog; media, files and real conversation links use the shared history. Explicit pagination loads older attachments and deduplicates repeated IDs; no history prefetch or renderer signed URL request");
     assert.deepEqual(await execute("window.__profileErrors"), []);
     const report = { ok: true, checks, platform: process.platform, arch: process.arch, source: "Shared production React with disposable TLS data; native save completion is an IPC seam", windowsRuntimeTested: false };
     await fs.writeFile(path.join(output, "result.json"), JSON.stringify(report, null, 2) + "\n");

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type {
   ButtonHTMLAttributes,
+  CSSProperties,
   InputHTMLAttributes,
   ReactNode,
 } from "react";
@@ -245,6 +246,7 @@ export function Modal({
   wide = false,
   className = "",
   returnFocus,
+  style,
 }: {
   title: string;
   children: ReactNode;
@@ -257,6 +259,7 @@ export function Modal({
   wide?: boolean;
   className?: string;
   returnFocus?: () => HTMLElement | null;
+  style?: CSSProperties;
 }) {
   const id = useId();
   const dialog = useRef<HTMLDivElement>(null);
@@ -384,6 +387,7 @@ export function Modal({
     >
       <div
         ref={dialog}
+        style={style}
         className={`modal ${wide ? "modal-wide" : ""} ${className}`}
         role="dialog"
         aria-modal="true"

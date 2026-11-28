@@ -173,6 +173,10 @@
   overflow-x: auto;
 }
 .personal-filters button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
   flex: none;
   border: 0;
   border-bottom: 3px solid transparent;
@@ -554,4 +558,40 @@
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--muted);
+}
+@media (min-width: 780px) {
+  .personal-sidebar {
+    padding: 0 16px 20px;
+  }
+  .personal-filters {
+    margin: 0 -16px 16px;
+    padding: 0 16px;
+  }
+  .personal-conversation-row {
+    margin: 4px 0;
+  }
+  .personal-conversation {
+    min-height: 87px;
+  }
+  .personal-preview strong {
+    font-size: calc(13px * var(--text-scale));
+  }
+  .personal-preview > span {
+    font-size: calc(12px * var(--text-scale));
+  }
+  .personal-header > .icon-button,
+  .personal-header .item-actions > .icon-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+}
+.personal-filter-count {
+  margin-inline-start: 3px;
+  padding: 1px 4px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
 }

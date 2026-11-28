@@ -117,3 +117,14 @@ export function formatBytes(value: number): string {
     ? `${Math.ceil(value / 1024)} КБ`
     : `${(value / 1024 / 1024).toFixed(1)} МБ`;
 }
+
+export function localTimeZoneLabel(date = new Date()) {
+  const zone = (timeZoneName: "shortGeneric" | "shortOffset") =>
+    new Intl.DateTimeFormat("ru-RU", { timeZoneName })
+      .formatToParts(date)
+      .find((part) => part.type === "timeZoneName")
+      ?.value.replace("GMT", "UTC");
+  return [...new Set([zone("shortGeneric"), zone("shortOffset")])]
+    .filter(Boolean)
+    .join(" · ");
+}

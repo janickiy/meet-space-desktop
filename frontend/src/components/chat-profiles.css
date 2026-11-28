@@ -1,364 +1,3 @@
-/* Shared participant and group cards use the supplied profile layout. */
-.modal-backdrop .modal.personal-info-modal,
-.modal-backdrop .modal.group-info-modal {
-  width: min(700px, calc(100vw - 40px));
-  max-width: 700px;
-  padding: 28px 30px;
-  border-radius: 16px;
-}
-.modal.personal-info-modal > h2,
-.modal.group-info-modal > h2 {
-  margin: 0 36px 30px 0;
-  font-size: calc(17px * var(--text-scale));
-  font-weight: 600;
-}
-.personal-info-modal .personal-user-info {
-  display: block;
-}
-.personal-profile-hero,
-.group-info-modal .group-identity {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  margin: 0 0 18px;
-}
-.personal-profile-hero .group-avatar-large,
-.group-info-modal .group-avatar-large {
-  position: relative;
-  flex: 0 0 68px;
-  width: 68px;
-  height: 68px;
-  border-radius: 20px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-size: calc(23px * var(--text-scale));
-}
-.personal-profile-hero .group-avatar-large img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
-}
-.personal-profile-online-dot {
-  position: absolute;
-  width: 13px;
-  height: 13px;
-  right: 1px;
-  bottom: 1px;
-  border: 3px solid var(--surface);
-  border-radius: 50%;
-  background: var(--success);
-}
-.personal-profile-copy {
-  min-width: 0;
-}
-.personal-info-modal .personal-profile-copy h3,
-.group-info-modal .group-identity h3 {
-  margin: 0 0 6px;
-  text-align: left;
-  color: var(--text);
-  font-size: calc(25px * var(--text-scale));
-  letter-spacing: -0.035em;
-  overflow-wrap: anywhere;
-}
-.personal-profile-subtitle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 12px;
-  color: var(--muted);
-  font-size: calc(12px * var(--text-scale));
-}
-.personal-profile-subtitle .personal-user-presence {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 0;
-}
-.personal-profile-subtitle .personal-user-presence-online {
-  color: var(--success);
-}
-.personal-profile-subtitle .personal-user-presence-dot {
-  width: 6px;
-  height: 6px;
-}
-.personal-profile-actions,
-.group-info-modal .group-info-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 22px;
-  padding: 0;
-}
-.personal-profile-actions .button,
-.group-info-modal .group-info-actions .button {
-  min-height: 40px;
-  font-size: calc(12px * var(--text-scale));
-  border-radius: 8px;
-  padding: 9px 13px;
-}
-.group-info-modal .group-info-actions .button {
-  background: var(--surface);
-  border-color: var(--border);
-}
-.personal-profile-actions .button svg,
-.group-info-modal .group-info-actions .button svg {
-  width: 17px;
-  height: 17px;
-}
-.personal-profile-actions .error-notice {
-  flex-basis: 100%;
-}
-.personal-profile-section-label,
-.group-profile-tabs {
-  margin: 0 -30px 24px;
-  padding: 0 30px;
-  min-height: 48px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-soft);
-}
-.personal-profile-section-label {
-  display: flex;
-  align-items: center;
-  color: var(--primary);
-  font-size: calc(13px * var(--text-scale));
-  font-weight: 600;
-}
-.group-profile-tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 28px;
-}
-.group-profile-tabs button {
-  border: 0;
-  border-bottom: 2px solid transparent;
-  padding: 13px 0;
-  color: var(--muted);
-  background: transparent;
-  font: inherit;
-  font-size: calc(13px * var(--text-scale));
-  cursor: pointer;
-}
-.group-profile-tabs button[aria-current="page"] {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  font-weight: 600;
-}
-.personal-info-modal .personal-profile-details,
-.group-info-modal .personal-profile-details {
-  display: block;
-  align-self: stretch;
-  padding: 0;
-  margin: 0;
-  border: 0;
-}
-.personal-profile-details > div {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-}
-.personal-info-modal .personal-profile-details dt,
-.group-info-modal .personal-profile-details dt {
-  display: inline-flex;
-  gap: 9px;
-  align-items: center;
-  flex-shrink: 0;
-  color: var(--muted);
-  font-size: calc(12px * var(--text-scale));
-  margin: 0;
-}
-.personal-info-modal .personal-profile-details dd,
-.group-info-modal .personal-profile-details dd {
-  margin: 0;
-  text-align: right;
-  font-size: calc(12px * var(--text-scale));
-  overflow-wrap: anywhere;
-}
-.personal-info-modal .personal-profile-details .personal-user-id {
-  padding: 0;
-  background: transparent;
-  color: var(--muted);
-  font-size: calc(11px * var(--text-scale));
-}
-.group-info-modal .group-identity p,
-.group-info-modal .group-identity small {
-  margin: 0;
-  color: var(--muted);
-  font-size: calc(12px * var(--text-scale));
-}
-.group-profile-overview > h3 {
-  margin: 0 0 10px;
-  font-size: calc(13px * var(--text-scale));
-}
-.group-profile-overview > p {
-  margin: 0 0 20px;
-  line-height: 1.7;
-  color: var(--muted);
-  font-size: calc(13px * var(--text-scale));
-}
-.group-info-modal .group-danger-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 24px;
-  padding-top: 0;
-  border: 0;
-}
-.group-info-modal .group-danger-actions .button {
-  min-height: 36px;
-  font-size: calc(11px * var(--text-scale));
-}
-.group-info-modal .group-member-profile-button .avatar {
-  border-radius: 50%;
-}
-@media (max-width: 767px) {
-  .modal.personal-info-modal,
-  .modal.group-info-modal {
-    padding: 24px 18px;
-  }
-  .personal-profile-section-label,
-  .group-profile-tabs {
-    margin-inline: -18px;
-    padding-inline: 18px;
-  }
-  .personal-info-modal .personal-profile-copy h3,
-  .group-info-modal .group-identity h3 {
-    font-size: calc(21px * var(--text-scale));
-  }
-  .personal-profile-details > div {
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .personal-profile-details > div:has(.personal-user-id) {
-    flex-direction: column;
-  }
-}
-
-/* Profile dialog geometry from the desktop reference. */
-.modal-backdrop .modal.personal-info-modal,
-.modal-backdrop .modal.group-info-modal {
-  width: min(700px, calc(100vw - 40px));
-  max-width: 700px;
-  max-height: calc(100dvh - 94px);
-  display: flex;
-  flex-direction: column;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 14px;
-}
-.modal.personal-info-modal > h2,
-.modal.group-info-modal > h2 {
-  margin: 0;
-  padding: 20px 62px 16px 26px;
-  flex: none;
-  font-size: calc(15px * var(--text-scale));
-  letter-spacing: 0;
-}
-.personal-info-modal .modal-close,
-.group-info-modal .modal-close {
-  top: 14px;
-  right: 20px;
-}
-.personal-info-modal .personal-user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-height: 0;
-}
-.personal-profile-hero,
-.group-info-modal .group-identity {
-  padding: 10px 30px 18px;
-  margin: 0;
-  gap: 18px;
-  flex: none;
-}
-.personal-profile-hero {
-  align-self: stretch;
-}
-.personal-info-modal .personal-profile-copy h3,
-.group-info-modal .group-identity h3 {
-  font-size: calc(23px * var(--text-scale));
-  line-height: 1.35;
-  letter-spacing: -0.6px;
-  font-weight: 600;
-  margin-bottom: 7px;
-}
-.personal-profile-subtitle,
-.group-info-modal .group-identity p {
-  font-size: calc(11px * var(--text-scale));
-  gap: 6px 12px;
-}
-.personal-profile-actions,
-.group-info-modal .group-info-actions {
-  padding: 0 30px 22px;
-  margin: 0;
-  align-self: stretch;
-  flex: none;
-}
-.personal-profile-actions .button,
-.group-info-modal .group-info-actions .button {
-  min-height: 38px;
-  padding: 10px 14px;
-  font-size: calc(11px * var(--text-scale));
-  border-radius: 8px;
-}
-.group-profile-tabs {
-  align-self: stretch;
-  flex: none;
-  margin: 0;
-  padding: 0 30px;
-  gap: 27px;
-  min-height: 45px;
-}
-.group-profile-tabs button {
-  font-size: calc(12px * var(--text-scale));
-  padding: 14px 0;
-}
-.chat-profile-pane {
-  width: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  padding: 24px 30px 28px;
-}
-.personal-info-modal .personal-profile-details,
-.group-info-modal .personal-profile-details {
-  margin: 0 0 22px;
-}
-.personal-profile-details > div {
-  padding: 11px 0;
-  gap: 18px;
-}
-.personal-info-modal .personal-profile-details dt,
-.group-info-modal .personal-profile-details dt {
-  min-width: 190px;
-  font-size: calc(11px * var(--text-scale));
-}
-.personal-info-modal .personal-profile-details dd,
-.group-info-modal .personal-profile-details dd {
-  font-size: calc(11px * var(--text-scale));
-}
-.group-profile-overview > h3 {
-  font-size: calc(12px * var(--text-scale));
-  margin: 0 0 7px;
-}
-.group-profile-overview > p {
-  font-size: calc(12px * var(--text-scale));
-  line-height: 1.8;
-  margin-bottom: 19px;
-}
-.group-info-modal > .group-back {
-  align-self: flex-start;
-  margin: 0 30px 12px;
-}
-.group-info-modal > .error-notice {
-  margin: 0 30px 12px;
-  flex: none;
-}
 .group-info-modal .group-members-heading h3 {
   font-size: calc(13px * var(--text-scale));
 }
@@ -467,157 +106,257 @@
 .chat-profile-files > .button {
   margin-top: 16px;
 }
-@media (max-width: 800px) {
-  .modal.personal-info-modal > h2,
-  .modal.group-info-modal > h2 {
-    padding: 18px 56px 10px 20px;
-  }
-  .personal-profile-hero,
-  .group-info-modal .group-identity {
-    padding: 8px 22px 15px;
-  }
-  .personal-profile-hero .group-avatar-large,
-  .group-info-modal .group-avatar-large {
-    width: 55px;
-    height: 55px;
-    flex-basis: 55px;
-    border-radius: 16px;
-    font-size: calc(19px * var(--text-scale));
-  }
-  .personal-info-modal .personal-profile-copy h3,
-  .group-info-modal .group-identity h3 {
-    font-size: calc(20px * var(--text-scale));
-  }
-  .personal-profile-actions,
-  .group-info-modal .group-info-actions {
-    padding: 0 22px 18px;
-  }
-  .group-profile-tabs {
-    margin: 0;
-    padding: 0 22px;
-    gap: 24px;
-  }
-  .chat-profile-pane {
-    padding: 20px 22px 24px;
-  }
-  .personal-info-modal .personal-profile-details dt,
-  .group-info-modal .personal-profile-details dt {
-    min-width: 165px;
-  }
-}
-@media (max-width: 500px) {
-  .personal-profile-details > div {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
-  }
-  .personal-info-modal .personal-profile-details dd,
-  .group-info-modal .personal-profile-details dd {
-    text-align: left;
-    margin-left: 24px;
-  }
-  .personal-profile-actions .button {
-    flex: 1;
-  }
-}
-
+.chat-group-surface,
 .chat-info-page {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
   min-width: 0;
-  max-width: none;
+  min-height: 0;
+  overflow: hidden;
+}
+.chat-group-surface[hidden] {
+  display: none;
+}
+.chat-info-page {
   background: var(--canvas);
 }
 .chat-info-heading {
   display: flex;
-  flex: none;
   align-items: center;
+  flex: none;
   gap: 12px;
   min-height: 70px;
-  padding: 0 22px;
+  padding: 10px clamp(16px, 3vw, 24px);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
 }
 .chat-info-heading h2 {
   margin: 0;
   font-size: calc(16px * var(--text-scale));
+  line-height: 1.35;
+  font-weight: 600;
 }
-.chat-info-heading .modal-close {
+.chat-info-heading .icon-button {
   position: static;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
+  flex: none;
   background: transparent;
-  color: var(--text);
+  border: 0;
 }
 .chat-info-body {
   flex: 1;
-  overflow: auto;
   min-height: 0;
-  padding: 26px clamp(14px, 3vw, 48px) 32px;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
-.chat-info-body > *,
-.chat-info-body .personal-user-info > * {
-  width: min(100%, 724px);
+.chat-info-stack {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  max-width: 780px;
   margin-inline: auto;
+  padding: 24px clamp(16px, 3vw, 28px) 32px;
 }
-.chat-info-page .personal-profile-hero,
-.chat-info-page .group-identity {
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 0 0 15px;
+.chat-info-profile {
+  min-width: 0;
+  padding: 4px 12px 8px;
   text-align: center;
 }
-.chat-info-page .personal-profile-copy h3,
-.chat-info-page .group-identity h3 {
-  text-align: center;
-}
-.chat-info-page .personal-profile-subtitle,
-.chat-info-page .group-info-actions,
-.chat-info-page .personal-profile-actions {
-  justify-content: center;
-  text-align: center;
-}
-.chat-info-page .group-identity .group-avatar-large,
-.chat-info-page .personal-profile-hero .group-avatar-large,
-.chat-info-page .group-identity .chat-group-photo {
+.chat-info-profile :is(.chat-info-avatar, .group-avatar-large) {
+  display: inline-grid;
+  place-items: center;
   width: 112px;
   height: 112px;
   border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
   font-size: calc(34px * var(--text-scale));
-  flex: none;
+  font-weight: 600;
 }
-.chat-info-page .group-identity .chat-group-photo > .avatar-settings-image {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
+.chat-info-profile h3 {
+  margin: 13px 0 0;
+  font-size: calc(clamp(20px, 2.5vw, 24px) * var(--text-scale));
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
-.personal-profile-hero .profile-photo {
+.chat-info-profile p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.chat-info-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.chat-info-actions:empty {
+  display: none;
+}
+.chat-info-actions .button {
+  min-height: 36px;
+  border-radius: 6px;
+}
+.chat-info-actions .button svg {
+  width: 17px;
+  height: 17px;
+}
+.chat-info-card,
+.chat-info-page .chat-profile-pane,
+.group-details-actions {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.chat-info-details {
+  margin: 0;
+  padding: 0 20px;
+}
+.chat-info-details > div {
+  display: grid;
+  gap: 4px;
+  padding: 13px 0;
+}
+.chat-info-details > div + div {
+  border-top: 1px solid var(--border);
+}
+.chat-info-details dt {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.chat-info-details dd {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.chat-info-page .chat-profile-pane {
+  padding: 14px 20px;
+  overflow: visible;
+}
+.chat-info-materials > h3 {
+  margin: 0;
+  padding: 14px 20px 5px;
+  font-size: var(--text-base);
+}
+.chat-material-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+.chat-material-tabs button {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+}
+.chat-material-tabs button[aria-selected="true"] {
+  color: var(--primary);
+  border-bottom-color: currentColor;
+}
+.chat-material-tabs button:hover {
+  background: var(--surface-soft);
+}
+.chat-material-tabs button:focus-visible {
+  outline-offset: -3px;
+}
+.chat-profile-files {
+  padding: 12px;
+}
+.chat-profile-files .chat-profile-empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  min-height: 110px;
+  padding: 12px;
+}
+.chat-profile-files .chat-profile-empty svg {
+  margin: 0;
+  color: var(--primary);
+}
+.chat-profile-files .chat-profile-empty p {
+  margin: 0;
+  font-size: var(--text-base);
+}
+.chat-profile-file {
+  min-height: 52px;
+  padding: 7px 8px;
+  margin: 0;
+  border: 0;
+}
+.chat-profile-file-copy {
+  overflow-wrap: anywhere;
+}
+.chat-info-media {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 138px), 1fr));
+  gap: 6px;
+}
+.chat-info-media .chat-profile-file {
+  min-width: 0;
+  align-content: start;
+  gap: 6px;
+  padding: 4px;
+}
+.chat-material-preview {
   display: grid;
   place-items: center;
   width: 100%;
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 6px;
+  background: var(--surface-soft);
+  color: var(--primary);
+}
+.chat-material-preview img {
+  width: 100%;
   height: 100%;
-  border-radius: inherit;
+  object-fit: cover;
 }
-.chat-info-page .group-profile-tabs,
-.chat-info-page .chat-profile-pane {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+.group-details-actions {
+  padding: 14px 20px;
 }
-.chat-info-page .group-profile-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-around;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 0 12px;
+.group-details-actions summary {
+  cursor: pointer;
 }
-.chat-info-page .chat-profile-pane {
-  padding: 18px 20px;
-  overflow-y: visible;
+.chat-info-page .group-member-avatar .avatar {
+  border-radius: 50%;
+}
+@media (max-width: 779px) {
+  .chat-info-heading {
+    min-height: 60px;
+  }
+  .chat-info-stack {
+    padding-top: 16px;
+  }
+  .chat-info-profile :is(.chat-info-avatar, .group-avatar-large) {
+    width: 88px;
+    height: 88px;
+    font-size: calc(28px * var(--text-scale));
+  }
+}
+.chat-info-profile .chat-group-photo,
+.chat-info-profile .chat-group-photo > .avatar-settings-image {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+}
+@media (max-width: 779px) {
+  .chat-info-profile .chat-group-photo,
+  .chat-info-profile .chat-group-photo > .avatar-settings-image {
+    width: 88px;
+    height: 88px;
+  }
 }

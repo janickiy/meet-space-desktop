@@ -64,6 +64,12 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     const recordingPath = `/recordings/${RECORDING}?conference=${CONFERENCE}`;
     window.webContents.send("meetspace:route", recordingPath);
     await until(() => execute(`location.pathname === '/login' && new URLSearchParams(location.search).get('next') === ${JSON.stringify(recordingPath)}`), "Auth return preserves recording context");
+    const notificationTime = new Date().toISOString();
+    fixture.product.controls.notificationRows = [DIRECT, GROUP, FOLDER].map((id, i) => ({
+      id, type: "chat.message", version: 1, userId: fixture.users[0].id,
+      payload: { conversationId: DIRECT, conversationType: "direct" },
+      createdAt: notificationTime, readAt: i === 1 ? notificationTime : null,
+    }));
     await field("#email", fixture.users[0].email); await field("#password", PASSWORD); await click("#auth-form button[type=submit]");
     await visible("Открыть запись");
     assert.equal(await execute("location.pathname + location.search"), recordingPath);
@@ -258,6 +264,21 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
 
     await until(() => contexts.some(context => context.token && context.route.startsWith("/recordings") && typeof context.soundEnabled === "boolean"), "Shared layout publishes authenticated notification context");
     checks.push("actual shared layout supplies current authenticated route and sound preference to native notification context");
+    await click(".notification-bell"); await visible("2 новых");
+    await clickText("Непрочитанные");
+    assert.equal(await execute("document.querySelectorAll('.nt-event').length"), 1);
+    const anchored = await execute(`(() => {
+      const panel = document.querySelector('.nt-panel').getBoundingClientRect();
+      const bell = document.querySelector('.notification-bell').getBoundingClientRect();
+      return Math.abs(panel.top - bell.bottom - 8) < 2 && panel.right <= innerWidth && panel.width <= 400;
+    })()`);
+    assert.ok(anchored, "Notification panel is anchored below the bell");
+    await click(".nt-read-all"); await visible("Всё прочитано");
+    assert.ok(fixture.product.controls.notificationRows.every(row => row.readAt), "Read all includes unopened pages");
+    await click(".nt-footer a");
+    await visible("Каналы доставки");
+    assert.equal(await execute("location.hash"), "#notification-settings");
+    checks.push("Anchored notification panel filters unread events, marks all pages read and opens notification settings");
     await route("/app/settings");
     await clickText("Аккаунты");
     await click(".account-add-button");

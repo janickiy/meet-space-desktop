@@ -1,4 +1,11 @@
-import { useId, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Link } from "react-router";
 import {
   useInfiniteQuery,
@@ -6,10 +13,11 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
-  ArrowRight,
+  ChevronRight,
+  CheckCheck,
+  Settings,
   Bell,
   CalendarClock,
-  Check,
   CircleAlert,
   FileText,
   MessageCircle,
@@ -73,95 +81,131 @@ export function notificationLabel(item: Notification): string {
     return "Вы исключены из встречи";
   return "Обновление вашей конференции";
 }
-/**
- * NotificationBell показывает непрочитанные уведомления, поддерживает страницы и отметку прочтения.
- *
- *
- * @returns JSX-представление компонента для текущих свойств и состояния.
- */
+function notificationCategory(item: Notification) {
+  if (item.type === "chat.message") return "Сообщение";
+  if (item.type === "conference.soon") return "Напоминание";
+  if (item.type === "conference.invited") return "Приглашение";
+  if (item.type.startsWith("recording.")) return "Запись";
+  if (item.type.startsWith("transcript.")) return "Расшифровка";
+  if (item.type.startsWith("summary.")) return "Итоги встречи";
+  return "Встреча";
+}
+
+async function readAllNotifications(signal: AbortSignal) {
+  const unreadIds = new Set<string>();
+  const visited = new Set<string>();
+  let cursor: string | undefined;
+  do {
+    const page = await api.notifications(cursor, signal);
+    for (const row of page.items) {
+      if (!row.readAt) unreadIds.add(row.id);
+    }
+    if (unreadIds.size >= page.unreadCount) break;
+    cursor = page.nextCursor || undefined;
+    if (cursor && visited.has(cursor))
+      throw new Error("Не удалось загрузить все уведомления.");
+    if (cursor) visited.add(cursor);
+  } while (cursor);
+  // Collect the snapshot before writes so changes to unread state cannot skip a page.
+  for (const id of unreadIds) {
+    signal.throwIfAborted();
+    await api.readNotification(id, signal);
+  }
+}
+
 export function NotificationBell() {
   const { user } = useAuth();
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [onlyUnread, setOnlyUnread] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const batch = useRef<AbortController | null>(null);
   const unreadDescriptionId = useId();
+  const [position, setPosition] = useState({ top: 64, right: 12 });
+  useLayoutEffect(() => {
+    if (!open || !trigger.current) return;
+    const place = () => {
+      const rect = trigger.current?.getBoundingClientRect();
+      if (rect)
+        setPosition({
+          top: Math.max(
+            12,
+            Math.min(rect.bottom + 8, window.innerHeight - 240),
+          ),
+          right: Math.max(
+            12,
+            Math.min(window.innerWidth - rect.right, window.innerWidth - 412),
+          ),
+        });
+    };
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [open]);
+  useEffect(() => () => batch.current?.abort(), [user?.id]);
+  const queryKey = ["notifications", user?.id];
   const query = useInfiniteQuery({
-    queryKey: ["notifications", user?.id],
+    queryKey,
     initialPageParam: undefined as string | undefined,
-    /**
-     * queryFn загружает данные запроса с его сигналом отмены для кеша React Query.
-     *
-     * @args
-     *   - объект параметров: pageParam — свойство текущего компонента; signal — сигнал отмены запроса или потока.
-     *
-     * @returns вычисленное значение: api.notifications(pageParam, signal).
-     */
     queryFn: ({ pageParam, signal }) => api.notifications(pageParam, signal),
-    /**
-     * getNextPageParam извлекает курсор продолжения серверной страницы.
-     *
-     * @args
-     *   - last — последняя загруженная страница, по которой определяется продолжение.
-     *
-     * @returns вычисленное значение: last.nextCursor || undefined.
-     */
     getNextPageParam: (last) => last.nextCursor || undefined,
     refetchInterval: 15000,
   });
+  const refresh = () => client.invalidateQueries({ queryKey });
   const read = useMutation({
-    mutationFn: api.readNotification,
-    /**
-     * onSettled обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-     *
-     *
-     * @returns значение не возвращается; функция выполняет описанные действия и обновляет нужное состояние.
-     */
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: ["notifications", user?.id] });
-    },
+    mutationFn: (id: string) => api.readNotification(id),
+    onSettled: refresh,
   });
-  const unread = query.data?.pages[0]?.unreadCount || 0;
+  const readAll = useMutation({
+    mutationFn: () => {
+      const controller = new AbortController();
+      batch.current = controller;
+      return readAllNotifications(controller.signal);
+    },
+    onSettled: refresh,
+  });
+  const unread = query.data?.pages[0]?.unreadCount ?? 0;
   const rows = [
     ...new Map(
-      (
-        query.data?.pages.flatMap(
-          /**
-           * Обработчик flatMap преобразует текущий элемент в данные или представление результирующего списка.
-           *
-           * @args
-           *   - page — изолированная страница Playwright.
-           *
-           * @returns преобразованное значение текущего элемента для результирующего набора.
-           */ (page) => page.items,
-        ) || []
-      ).map(
-        /**
-         * Обработчик map преобразует текущий элемент в данные или представление результирующего списка.
-         *
-         * @args
-         *   - item — элемент списка, который обрабатывает текущий шаг.
-         *
-         * @returns преобразованное значение текущего элемента для результирующего набора.
-         */ (item) => [item.id, item],
-      ),
+      query.data?.pages
+        .flatMap((page) => page.items)
+        .map((item) => [item.id, item]),
     ).values(),
   ];
+  const visible = onlyUnread ? rows.filter((row) => !row.readAt) : rows;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const groups = [
+    {
+      title: "Недавно",
+      items: visible.filter((row) => Date.parse(row.createdAt) >= +today),
+    },
+    {
+      title: "Ранее",
+      items: visible.filter((row) => !(Date.parse(row.createdAt) >= +today)),
+    },
+  ];
+  const hasUnseen = onlyUnread && unread > 0 && query.hasNextPage;
+  const close = () => setOpen(false);
+  const countForm = new Intl.PluralRules("ru").select(unread);
   return (
     <>
       <button
         type="button"
+        ref={trigger}
         className="icon-button notification-bell"
         aria-label="Уведомления"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-describedby={unread > 0 ? unreadDescriptionId : undefined}
-        onClick={
-          /**
-           * onClick обрабатывает соответствующее событие интерфейса и изменяет состояние текущего действия.
-           *
-           *
-           * @returns вычисленное значение: setOpen(true).
-           */ () => setOpen(true)
-        }
+        aria-describedby={unread ? unreadDescriptionId : undefined}
+        onClick={() => {
+          setOnlyUnread(false);
+          setOpen(true);
+        }}
       >
         <span className="notification-bell-glyph" aria-hidden="true">
           <Bell size={22} strokeWidth={1.8} />
@@ -173,121 +217,138 @@ export function NotificationBell() {
         </span>
         {unread > 0 && (
           <span id={unreadDescriptionId} className="sr-only">
-            {unread} непрочитанных уведомлений
+            Непрочитанных уведомлений — {unread}
           </span>
         )}
       </button>
       {open && (
         <Modal
           title="Уведомления"
-          className="notification-modal notification-center"
-          onClose={() => setOpen(false)}
+          className="notification-modal nt-panel"
+          onClose={close}
+          style={
+            {
+              "--nt-panel-top": position.top + "px",
+              right: position.right,
+            } as CSSProperties
+          }
         >
-          <header className="notification-center-header">
-            <div className="notification-center-heading">
-              <div className="notification-center-title">
-                <h3>Уведомления</h3>
-                {unread > 0 && (
-                  <span className="notification-center-count">
-                    Новых: {unread}
-                  </span>
-                )}
-              </div>
-            </div>
+          <header className="nt-heading">
+            <h3>Уведомления</h3>
+            <span className="nt-total" aria-live="polite">
+              {query.isPending
+                ? "…"
+                : unread
+                  ? unread + (countForm === "one" ? " новое" : " новых")
+                  : "Всё прочитано"}
+            </span>
           </header>
-          <div className="notification-center-content">
-            <ErrorNotice error={query.error || read.error} />
+          <div className="nt-toolbar">
+            <div
+              className="nt-filters"
+              role="group"
+              aria-label="Фильтр уведомлений"
+            >
+              <button
+                type="button"
+                aria-pressed={!onlyUnread}
+                onClick={() => setOnlyUnread(false)}
+              >
+                Все
+              </button>
+              <button
+                type="button"
+                aria-pressed={onlyUnread}
+                onClick={() => setOnlyUnread(true)}
+              >
+                Непрочитанные
+              </button>
+            </div>
+            <button
+              type="button"
+              className="nt-read-all"
+              disabled={!unread || readAll.isPending}
+              aria-label="Прочитать все уведомления"
+              onClick={() => readAll.mutate()}
+            >
+              <CheckCheck aria-hidden="true" />
+              Прочитать все
+            </button>
+          </div>
+          <div
+            className="nt-list"
+            role="region"
+            aria-label="Список уведомлений"
+          >
+            <ErrorNotice error={query.error || read.error || readAll.error} />
             {query.isPending ? (
               <Loading />
             ) : (
               <>
-                {!rows.length && !query.isError && (
-                  <div className="notification-center-empty">
-                    <span aria-hidden="true">
-                      <Bell size={30} />
-                    </span>
-                    <h4>Пока нет уведомлений</h4>
+                {groups
+                  .filter((group) => group.items.length > 0)
+                  .map((group) => (
+                    <section key={group.title}>
+                      <h4 className="nt-date">{group.title}</h4>
+                      {group.items.map((item) => {
+                        const Icon = notificationIcon(item);
+                        return (
+                          <Link
+                            key={item.id}
+                            className={
+                              "nt-event" + (item.readAt ? "" : " is-unread")
+                            }
+                            to={notificationLink(item)}
+                            onClick={() => {
+                              if (!item.readAt) read.mutate(item.id);
+                              close();
+                            }}
+                          >
+                            <span className="nt-event-icon">
+                              <Icon aria-hidden="true" />
+                            </span>
+                            <span className="nt-event-copy">
+                              <strong>{notificationLabel(item)}</strong>
+                              {item.payload.scheduledAt && (
+                                <span className="nt-event-description">
+                                  {formatDate(item.payload.scheduledAt)}
+                                </span>
+                              )}
+                              <span className="nt-event-meta">
+                                <time dateTime={item.createdAt}>
+                                  {formatDate(item.createdAt)}
+                                </time>{" "}
+                                · {notificationCategory(item)}
+                              </span>
+                            </span>
+                            {!item.readAt && (
+                              <span
+                                className="nt-unread-dot"
+                                role="img"
+                                aria-label="Непрочитанное"
+                              />
+                            )}
+                            <ChevronRight aria-hidden="true" />
+                          </Link>
+                        );
+                      })}
+                    </section>
+                  ))}
+                {!visible.length && !query.isError && !hasUnseen && (
+                  <div className="nt-empty">
+                    <CheckCheck aria-hidden="true" />
+                    <h3>
+                      {onlyUnread ? "Всё прочитано" : "Пока нет уведомлений"}
+                    </h3>
                     <p>
-                      Здесь появятся приглашения на встречи, новые сообщения и
-                      готовые записи.
+                      {onlyUnread
+                        ? "Все события доступны во вкладке «Все»."
+                        : "Здесь появятся приглашения, новые сообщения и готовые записи."}
                     </p>
                   </div>
                 )}
-                {!!rows.length && (
-                  <ul
-                    className="notification-center-list"
-                    aria-label="Последние уведомления"
-                  >
-                    {rows.map((item) => {
-                      const Icon = notificationIcon(item);
-                      return (
-                        <li key={item.id}>
-                          <article
-                            className={`notification-center-item ${item.readAt ? "is-read" : "is-unread"}`}
-                          >
-                            <span
-                              className="notification-center-item-icon"
-                              aria-hidden="true"
-                            >
-                              <Icon size={20} />
-                            </span>
-                            <div className="notification-center-item-copy">
-                              <div className="notification-center-item-title">
-                                <h4>{notificationLabel(item)}</h4>
-                                {!item.readAt && (
-                                  <span
-                                    className="notification-center-unread-dot"
-                                    role="img"
-                                    aria-label="Непрочитанное"
-                                  />
-                                )}
-                              </div>
-                              <time dateTime={item.createdAt}>
-                                {formatDate(item.createdAt)}
-                              </time>
-                              {(item.payload.conferenceId ||
-                                item.payload.conversationId) && (
-                                <Link
-                                  className="notification-center-destination"
-                                  to={notificationLink(item)}
-                                  onClick={() => {
-                                    if (!item.readAt) read.mutate(item.id);
-                                    setOpen(false);
-                                  }}
-                                >
-                                  {item.payload.conversationId
-                                    ? "Открыть чат"
-                                    : item.type === "chat.message"
-                                      ? "Открыть комментарий"
-                                      : "Открыть встречу"}
-                                  <ArrowRight size={16} aria-hidden="true" />
-                                </Link>
-                              )}
-                            </div>
-                            {!item.readAt && (
-                              <Button
-                                className="notification-center-read"
-                                variant="outline"
-                                busy={
-                                  read.isPending && read.variables === item.id
-                                }
-                                disabled={read.isPending}
-                                onClick={() => read.mutate(item.id)}
-                                title="Отметить как прочитанное"
-                                aria-label={`Отметить как прочитанное: ${notificationLabel(item)}`}
-                              >
-                                <Check size={18} aria-hidden="true" />
-                              </Button>
-                            )}
-                          </article>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-                {query.hasNextPage && (
+                {query.hasNextPage && (!onlyUnread || unread > 0) && (
                   <Button
-                    className="notification-center-more"
                     variant="outline"
                     busy={query.isFetchingNextPage}
                     onClick={() => void query.fetchNextPage()}
@@ -297,9 +358,7 @@ export function NotificationBell() {
                 )}
                 {query.isError && (
                   <Button
-                    className="notification-center-more"
                     variant="outline"
-                    busy={query.isFetching}
                     onClick={() => void query.refetch()}
                   >
                     Попробовать снова
@@ -308,13 +367,12 @@ export function NotificationBell() {
               </>
             )}
           </div>
-          <footer className="notification-center-footer">
-            <Link to="/notifications" onClick={() => setOpen(false)}>
-              Все уведомления <ArrowRight size={16} aria-hidden="true" />
+          <footer className="nt-footer">
+            <Link to="/settings#notification-settings" onClick={close}>
+              <Settings aria-hidden="true" />
+              Настроить уведомления
+              <ChevronRight aria-hidden="true" />
             </Link>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Закрыть
-            </Button>
           </footer>
         </Modal>
       )}

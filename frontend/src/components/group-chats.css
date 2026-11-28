@@ -271,33 +271,6 @@
 .group-confirmation .button {
   margin: 4px;
 }
-.personal-filters {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-.personal-filters button {
-  flex: 1;
-  min-width: 0;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  min-height: 40px;
-  padding: 9px 4px;
-  font: inherit;
-  font-size: calc(11px * var(--text-scale));
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-.personal-filters button[aria-pressed="true"] {
-  background: var(--primary-soft);
-  color: var(--primary);
-  font-weight: 600;
-}
-.personal-filters button:hover {
-  background: var(--surface-soft);
-}
 .personal-header-copy {
   flex: 1;
   min-width: 0;

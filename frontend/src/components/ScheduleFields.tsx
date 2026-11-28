@@ -1,4 +1,4 @@
-import { localSchedule } from "../collaboration";
+import { localSchedule, localTimeZoneLabel } from "../collaboration";
 
 /**
  * ScheduleFields показывает управляемые поля локального времени и плановой длительности встречи.
@@ -65,7 +65,7 @@ export function ScheduleFields({
             />
           </label>
           <label className="field" htmlFor="scheduled-time">
-            Начало
+            Время
             <input
               id="scheduled-time"
               type="time"
@@ -85,14 +85,18 @@ export function ScheduleFields({
               <option value="">Не указана</option>
               {options.map((minutes) => (
                 <option key={minutes} value={minutes}>
-                  {minutes} минут
+                  {minutes === 60
+                    ? "1 час"
+                    : minutes === 90
+                      ? "1,5 часа"
+                      : `${minutes} минут`}
                 </option>
               ))}
             </select>
           </label>
         </div>
         <p className="field-hint">
-          Часовой пояс: {Intl.DateTimeFormat().resolvedOptions().timeZone}
+          {localTimeZoneLabel(utc ? new Date(utc) : undefined)}
         </p>
       </div>
     );

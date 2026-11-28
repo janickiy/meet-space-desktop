@@ -4,12 +4,14 @@ import { ArrowLeft } from "lucide-react";
 /** Inline chat detail retains navigation and the composing thread beside the chat list. */
 export function ChatInfoPage({
   title,
+  backLabel = "Назад к переписке",
   className,
   children,
   onClose,
   returnFocus,
 }: {
   title: string;
+  backLabel?: string;
   className?: string;
   children: ReactNode;
   onClose: () => void;
@@ -46,15 +48,18 @@ export function ChatInfoPage({
         <button
           ref={back}
           type="button"
-          className="icon-button modal-close"
+          className="icon-button"
           onClick={close}
-          aria-label="Назад к чату"
+          aria-label={backLabel}
+          title={backLabel}
         >
           <ArrowLeft size={19} aria-hidden="true" />
         </button>
         <h2 id={headingId}>{title}</h2>
       </header>
-      <div className="chat-info-body">{children}</div>
+      <div className="chat-info-body">
+        <div className="chat-info-stack">{children}</div>
+      </div>
     </section>
   );
 }

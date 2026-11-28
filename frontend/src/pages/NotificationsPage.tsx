@@ -25,7 +25,7 @@ export function NotificationsPage() {
     getNextPageParam: (last) => last.nextCursor || undefined,
   });
   const read = useMutation({
-    mutationFn: api.readNotification,
+    mutationFn: (id: string) => api.readNotification(id),
     onSettled: () => {
       void client.invalidateQueries({ queryKey: ["notifications", user?.id] });
     },

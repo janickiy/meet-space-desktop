@@ -36,6 +36,17 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     const reply = (body, status = 200) => { send(response, status, { status: "success", ...body }); return true; };
     if (controls.offline) { request.socket.destroy(); return true; }
     const route = url.pathname.slice("/api/v1".length);
+    if (controls.notificationRows && route === "/notifications") {
+      const rows = controls.notificationRows;
+      const offset = Number(url.searchParams.get("cursor") || 0);
+      return reply({items: rows.slice(offset, offset + 2), nextCursor: offset + 2 < rows.length ? String(offset + 2) : null, unreadCount: rows.filter(item => !item.readAt).length});
+    }
+    if (controls.notificationRows && route.startsWith("/notifications/") && route.endsWith("/read") && request.method === "POST") {
+      const item = controls.notificationRows.find(row => row.id === route.split("/")[2]);
+      if (!item) return reply({status: "failed"}, 404);
+      item.readAt = new Date().toISOString();
+      return reply({item});
+    }
     if (route === "/integrations/capabilities") return reply({ email:"smtp", push:"noop", calendar:"noop", calendarOAuthConfigured:false });
     if (route === "/notifications/preferences") {
       controls.notificationPreferences ||= {invitation:true,reminder:true,recording:true,summary:true,email:true,push:true};

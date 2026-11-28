@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  ArrowRight,
+  ChevronDown,
   CalendarDays,
   Clock3,
   ChevronLeft,
@@ -14,11 +14,11 @@ import { useAuth } from "../auth";
 import { isDesktopBuild } from "../platform/build";
 import { useConferences } from "../queries";
 import { Button, ErrorNotice, Modal } from "../components/ui";
-import { EditSchedule } from "../components/ConferenceModals";
+import { CreateConference, EditSchedule } from "../components/ConferenceModals";
 import { MeetingDetailsModal } from "../components/MeetingDetailsModal";
 import { MeetingSkeleton } from "../components/MeetingSkeleton";
 import { formatDate } from "../utils";
-import { toLocalInput } from "../collaboration";
+import { toLocalInput, localTimeZoneLabel } from "../collaboration";
 import type { Conference } from "../types";
 import "./calendar.css";
 import "./collections-redesign.css";
@@ -104,11 +104,11 @@ export function scheduledMeetingDate(conference: Conference) {
 function CalendarMeeting({
   meeting,
   onSelect,
-  agenda = false,
+  agenda,
 }: {
   meeting: Conference;
   onSelect: (meeting: Conference) => void;
-  agenda?: boolean;
+  agenda?: "owner" | "guest";
 }) {
   const date = scheduledMeetingDate(meeting)!;
   const time = date.toLocaleTimeString("ru-RU", {
@@ -123,6 +123,7 @@ function CalendarMeeting({
     <button
       type="button"
       className={`calendar-event calendar-event-${meeting.status}`}
+      data-agenda-role={agenda}
       onClick={() => onSelect(meeting)}
       aria-label={`${meeting.title}, ${formatDate(date.toISOString())}`}
     >
@@ -149,6 +150,8 @@ function CalendarMeeting({
               </time>
             </>
           )}
+          {" · "}
+          {agenda === "owner" ? "Вы организатор" : "Вы участник"}
         </span>
       )}
       {meeting.status === "cancelled" && <span>Отменена</span>}
@@ -233,13 +236,16 @@ function DayAgenda({
   byDay,
   onDay,
   onMeeting,
+  toolbar,
 }: {
+  toolbar: ReactNode;
   days: Date[];
   date: Date;
   byDay: Map<string, Conference[]>;
   onDay: (date: Date) => void;
   onMeeting: (meeting: Conference) => void;
 }) {
+  const { user } = useAuth();
   const dayKey = calendarDayKey(date);
   const meetings = byDay.get(dayKey) || [];
   const byHour = new Map<number, Conference[]>();
@@ -251,10 +257,11 @@ function DayAgenda({
   }
   const firstHour = Math.min(9, ...byHour.keys());
   const lastHour = Math.max(18, ...byHour.keys());
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = localTimeZoneLabel(date);
   return (
     <div className="agenda-layout">
       <section className="agenda-day">
+        {toolbar}
         <div className="agenda-week" role="group" aria-label="Дни недели">
           {days.map((day, index) => {
             const key = calendarDayKey(day);
@@ -295,7 +302,7 @@ function DayAgenda({
                       key={meeting.id}
                       meeting={meeting}
                       onSelect={onMeeting}
-                      agenda
+                      agenda={meeting.ownerId === user?.id ? "owner" : "guest"}
                     />
                   ))}
                 </div>
@@ -309,19 +316,18 @@ function DayAgenda({
           <h3>Хороший ритм</h3>
           <p>Все встречи команды в вашем часовом поясе.</p>
         </header>
-        <ul>
-          {days.map((day, index) => {
-            const key = calendarDayKey(day);
-            const count = byDay.get(key)?.length;
-            return count ? (
-              <li key={key}>
-                <button type="button" onClick={() => onDay(day)}>
-                  <span>{weekdayNames[index]}</span>
-                  <strong>{count}</strong>
-                </button>
-              </li>
-            ) : null;
-          })}
+        <ul aria-label="Обозначения встреч">
+          <li>
+            <i className="agenda-legend-mark" aria-hidden="true" />Я организую
+          </li>
+          <li>
+            <i
+              className="agenda-legend-mark"
+              data-role="guest"
+              aria-hidden="true"
+            />
+            Я участвую
+          </li>
         </ul>
         <small>
           <Clock3 size={15} aria-hidden="true" />
@@ -347,6 +353,7 @@ export function CalendarPage() {
       : new Date();
   });
   const [view, setView] = useState<CalendarView | "agenda">("agenda");
+  const [schedule, setSchedule] = useState<{ at?: string } | null>(null);
   const [selected, setSelected] = useState<Conference | null>(null);
   const [editing, setEditing] = useState<Conference | null>(null);
   const [agendaDay, setAgendaDay] = useState(() => calendarDayKey(new Date()));
@@ -408,7 +415,7 @@ export function CalendarPage() {
 
   const label =
     view !== "week"
-      ? anchor.toLocaleDateString("ru-RU", { month: "long", year: "numeric" })
+      ? `${anchor.toLocaleDateString("ru-RU", { month: "long" })} ${anchor.getFullYear()}`
       : `${range.days[0].toLocaleDateString("ru-RU", { day: "numeric", month: "short" })} — ${range.days[6].toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}`;
   const today = calendarDayKey(new Date());
   const agendaDate =
@@ -417,70 +424,77 @@ export function CalendarPage() {
     range.days[0];
   const agendaDays =
     view === "week" ? range.days : calendarRange(agendaDate, "week").days;
+  function planOn(date: Date) {
+    const nextHour = new Date(Date.now() + 3_600_000);
+    const start =
+      calendarDayKey(date) === today
+        ? nextHour
+        : new Date(date.getFullYear(), date.getMonth(), date.getDate(), 9);
+    setSchedule({ at: toLocalInput(start.toISOString()) });
+  }
+
+  const toolbar = (
+    <div className="calendar-toolbar">
+      <div className="agenda-view-select">
+        <h2 className="calendar-period" aria-live="polite">
+          {label}
+        </h2>
+        <ChevronDown size={14} aria-hidden="true" />
+        <select
+          aria-label="Вид календаря"
+          value={view}
+          onChange={(event) =>
+            setView(event.target.value as CalendarView | "agenda")
+          }
+        >
+          <option value="agenda">День</option>
+          <option value="week">Неделя</option>
+          <option value="month">Месяц</option>
+        </select>
+      </div>
+      <div className="calendar-navigation">
+        <Button variant="outline" onClick={() => setAnchor(new Date())}>
+          Сегодня
+        </Button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Предыдущий период"
+          onClick={() => move(-1)}
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Следующий период"
+          onClick={() => move(1)}
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="calendar-page agenda-page">
-      {!isDesktopBuild && <h1>Календарь</h1>}
       <section className="page-heading">
-        <div
-          className="calendar-view-switch"
-          role="group"
-          aria-label="Вид календаря"
-        >
-          {(
-            [
-              ["agenda", "День"],
-              ["week", "Неделя"],
-              ["month", "Месяц"],
-            ] as const
-          ).map(([id, title]) => (
-            <button
-              type="button"
-              key={id}
-              aria-pressed={view === id}
-              onClick={() => setView(id)}
-            >
-              {title}
-            </button>
-          ))}
+        <div>
+          {!isDesktopBuild && <h1>Календарь</h1>}
+          <p>Время для важных разговоров.</p>
         </div>
-        <Link
+        <button
+          type="button"
           className="icon-button agenda-schedule"
           aria-label="Запланировать встречу"
           title="Запланировать встречу"
-          to="/meetings/new?scheduled=1&returnTo=calendar"
+          onClick={() => planOn(anchor)}
         >
           <Plus size={18} aria-hidden="true" />
-        </Link>
+        </button>
       </section>
       <section className="calendar-card" aria-label="Календарь встреч">
-        <div className="calendar-toolbar">
-          <div className="calendar-period-group">
-            <h2 className="calendar-period" aria-live="polite">
-              {label}
-            </h2>
-          </div>
-          <div className="calendar-navigation">
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Предыдущий период"
-              onClick={() => move(-1)}
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Следующий период"
-              onClick={() => move(1)}
-            >
-              <ChevronRight size={18} />
-            </button>
-            <Button variant="outline" onClick={() => setAnchor(new Date())}>
-              Сегодня
-            </Button>
-          </div>
-        </div>
+        {(view !== "agenda" || query.isPending) && toolbar}
         <ErrorNotice error={query.error} />
         {query.isError && (
           <Button variant="outline" onClick={() => void query.refetch()}>
@@ -493,6 +507,7 @@ export function CalendarPage() {
           <>
             {view === "agenda" ? (
               <DayAgenda
+                toolbar={toolbar}
                 days={range.days}
                 date={anchor}
                 byDay={byDay}
@@ -580,14 +595,6 @@ export function CalendarPage() {
                     ))}
                     {range.days.map((date) => {
                       const key = calendarDayKey(date);
-                      const at = toLocalInput(
-                        new Date(
-                          date.getFullYear(),
-                          date.getMonth(),
-                          date.getDate(),
-                          9,
-                        ).toISOString(),
-                      );
                       return (
                         <section
                           key={key}
@@ -595,13 +602,14 @@ export function CalendarPage() {
                           aria-label={formatDate(date.toISOString())}
                         >
                           <div className="calendar-day-heading">
-                            <Link
+                            <button
+                              type="button"
                               className="calendar-day-number"
                               aria-label={`Запланировать на ${date.toLocaleDateString("ru-RU")}`}
-                              to={`/meetings/new?scheduled=1&returnTo=calendar&at=${encodeURIComponent(at)}`}
+                              onClick={() => planOn(date)}
                             >
                               <time dateTime={key}>{date.getDate()}</time>
-                            </Link>
+                            </button>
                           </div>
                           {(byDay.get(key) || []).map((meeting) => (
                             <CalendarMeeting
@@ -669,13 +677,14 @@ export function CalendarPage() {
                 </span>
                 <h3>В этом периоде пока свободно</h3>
                 <p>Запланируйте встречу — она появится в календаре.</p>
-                <Link
+                <button
+                  type="button"
                   className="button button-primary"
-                  to="/meetings/new?scheduled=1&returnTo=calendar"
+                  onClick={() => planOn(anchor)}
                 >
                   <Plus size={18} />
                   Запланировать
-                </Link>
+                </button>
               </div>
             )}
             {query.hasNextPage && (
@@ -707,13 +716,12 @@ export function CalendarPage() {
           />
         )}
       </section>
-      <p className="calendar-footer-note">
-        Здесь только встречи с датой, которые ещё не начались. Остальные — в{" "}
-        <Link className="text-link" to="/meetings">
-          списке встреч <ArrowRight size={13} aria-hidden="true" />
-        </Link>
-        .
-      </p>
+      {schedule && (
+        <CreateConference
+          schedule={schedule}
+          onClose={() => setSchedule(null)}
+        />
+      )}
       {editing && (
         <EditSchedule conference={editing} onClose={() => setEditing(null)} />
       )}

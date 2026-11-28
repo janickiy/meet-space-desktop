@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { FolderPlus, Info } from "lucide-react";
 import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
@@ -205,31 +206,34 @@ function FolderPickerContent({
 }
 export function ConversationActions({
   conversation,
-  onGroupInfo,
+  onInfo,
 }: {
   conversation: PersonalConversation;
-  onGroupInfo?: () => void;
+  onInfo?: () => void;
 }) {
+  const navigate = useNavigate();
+  const openInfo =
+    onInfo ||
+    (() =>
+      navigate(`/personal/${encodeURIComponent(conversation.id)}?view=info`));
   return conversation.type === "direct" ? (
     <DirectConversationActions
       key={conversation.id}
+      onInfo={openInfo}
       conversation={conversation}
     />
   ) : (
-    <FolderConversationActions
-      conversation={conversation}
-      onGroupInfo={onGroupInfo}
-    />
+    <FolderConversationActions conversation={conversation} onInfo={openInfo} />
   );
 }
 
 /** Сохраняет прежнее меню папок для групповых переписок. */
 function FolderConversationActions({
   conversation,
-  onGroupInfo,
+  onInfo,
 }: {
   conversation: PersonalConversation;
-  onGroupInfo?: () => void;
+  onInfo: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const name =
@@ -241,15 +245,11 @@ function FolderConversationActions({
       <ItemActions
         label={`Действия с перепиской: ${name}`}
         actions={[
-          ...(onGroupInfo
-            ? [
-                {
-                  label: "Информация",
-                  icon: <Info size={19} aria-hidden="true" />,
-                  run: onGroupInfo,
-                },
-              ]
-            : []),
+          {
+            label: "Информация",
+            icon: <Info size={19} aria-hidden="true" />,
+            run: onInfo,
+          },
           {
             label: "Добавить в папку",
             icon: <FolderPlus size={19} aria-hidden="true" />,

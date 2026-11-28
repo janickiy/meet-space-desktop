@@ -13,7 +13,6 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import {
-  ArrowLeft,
   LogOut,
   MessageCircle,
   Pencil,
@@ -38,7 +37,7 @@ import { initials } from "../utils";
 import { Button, ErrorNotice, Modal } from "./ui";
 import { ItemActions } from "./ItemActions";
 import { MessagingSkeleton } from "./MessagingSkeleton";
-import { UserInfoModal } from "./UserInfoModal";
+import { UserInfoPage } from "./UserInfoPage";
 import { ConversationFiles } from "./ConversationFiles";
 import "./group-chats.css";
 import "./chat-profiles.css";
@@ -391,25 +390,21 @@ export function GroupCreateModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-type GroupView =
-  | "info"
-  | "members"
-  | "files"
-  | "add"
-  | "edit"
-  | "leave"
-  | "transfer"
-  | "delete";
+type GroupView = "info" | "add" | "edit" | "leave" | "transfer" | "delete";
 const roles = { owner: "Владелец", admin: "Администратор", member: "Участник" };
 
-function GroupMemberInfoModal({
+function GroupMemberInfoPage({
   member,
+  group,
+  onShowMessage,
   online,
   onClose,
   onNavigate,
   returnFocus,
 }: {
   member: GroupMember;
+  group: GroupConversation;
+  onShowMessage: (id: string) => void;
   online?: boolean;
   onClose: () => void;
   onNavigate: () => void;
@@ -446,9 +441,14 @@ function GroupMemberInfoModal({
     },
   });
   return (
-    <UserInfoModal
+    <UserInfoPage
       person={member}
-      subtitle={roles[member.role]}
+      groupName={group.name}
+      conversationId={group.id}
+      onShowMessage={onShowMessage}
+      subtitle={
+        member.id === user?.id ? "Вы" : `Участник группы «${group.name}»`
+      }
       online={online}
       onClose={() => {
         if (!pending.current) onClose();
@@ -478,13 +478,13 @@ function GroupMemberInfoModal({
   );
 }
 
-export function GroupInfoModal({
+export function GroupInfoPage({
   group,
   onClose,
   returnFocus,
-  embedded = false,
+  onShowMessage,
 }: {
-  embedded?: boolean;
+  onShowMessage: (id: string) => void;
   group: GroupConversation;
   onClose: () => void;
   returnFocus: () => HTMLElement | null;
@@ -492,8 +492,7 @@ export function GroupInfoModal({
   const { user } = useAuth();
   const client = useQueryClient();
   const navigate = useNavigate();
-  const Info = embedded ? ChatInfoPage : Modal;
-  const [view, setView] = useState<GroupView>(embedded ? "members" : "info");
+  const [view, setView] = useState<GroupView>("info");
   const [selected, setSelected] = useState<PersonalPeer[]>([]);
   const [search, setSearch] = useState("");
   const [validation, setValidation] = useState("");
@@ -585,8 +584,6 @@ export function GroupInfoModal({
   };
   const titles: Record<GroupView, string> = {
     info: "Информация о группе",
-    members: "Участники группы",
-    files: "Файлы группы",
     add: "Добавить участников",
     edit: "Настройки группы",
     leave: "Выйти из группы",
@@ -596,8 +593,8 @@ export function GroupInfoModal({
   const photoControl = (compact: boolean) => (
     <AvatarPicker
       key={`${user?.id}:${group.id}:${compact}`}
-      kind="group"
       compact={compact}
+      kind="group"
       hasPhoto={Boolean(current.avatarVersion)}
       disabled={mutation.isPending}
       fallback={<ConversationAvatar conversation={current} large />}
@@ -619,146 +616,92 @@ export function GroupInfoModal({
   if (accessError) return <ErrorNotice error={accessError} />;
   return (
     <>
-      <Info
-        title={embedded && view === "members" ? titles.info : titles[view]}
-        className="group-modal group-info-modal"
-        returnFocus={returnFocus}
-        onClose={() => {
-          if (submitting.current) return;
-          if (removeTarget) setRemoveTarget(undefined);
-          else if (view !== "info" && !(embedded && view === "members"))
-            setView("info");
-          else onClose();
-        }}
-      >
-        {view !== "info" && view !== "members" && view !== "files" && (
-          <Button
-            className="group-back"
-            variant="outline"
-            disabled={mutation.isPending}
-            onClick={() => {
-              setView("info");
-              setRemoveTarget(undefined);
-              mutation.reset();
-            }}
-          >
-            <ArrowLeft size={16} />О группе
-          </Button>
-        )}
-        <ErrorNotice error={detail.error || mutation.error}>
-          {validation || null}
-        </ErrorNotice>
-        {(view === "info" || view === "members" || view === "files") && (
-          <>
-            <div className="group-identity">
-              {manages ? (
-                photoControl(true)
-              ) : (
-                <ConversationAvatar conversation={current} large />
-              )}
-              <div>
+      <div className="chat-group-surface" hidden={!!profile}>
+        <ChatInfoPage
+          title={titles[view]}
+          backLabel={
+            view === "info"
+              ? "Назад к переписке"
+              : "Назад к информации о группе"
+          }
+          className="group-modal group-info-modal"
+          returnFocus={returnFocus}
+          onClose={() => {
+            if (submitting.current) return;
+            if (removeTarget) setRemoveTarget(undefined);
+            else if (view !== "info") setView("info");
+            else onClose();
+          }}
+        >
+          <ErrorNotice error={detail.error || mutation.error}>
+            {validation || null}
+          </ErrorNotice>
+          {view === "info" && (
+            <>
+              <section className="chat-info-profile" aria-label={current.name}>
+                {manages ? (
+                  photoControl(true)
+                ) : (
+                  <ConversationAvatar conversation={current} large />
+                )}
                 <h3>{current.name}</h3>
-                <p>Групповой чат · {current.memberCount} участн.</p>
-              </div>
-            </div>
-            <div className="group-info-actions">
-              {manages && (
-                <>
+                <p>
+                  {new Intl.NumberFormat("ru").format(current.memberCount)}{" "}
+                  {(
+                    { one: "участник", few: "участника" } as Record<
+                      string,
+                      string
+                    >
+                  )[new Intl.PluralRules("ru").select(current.memberCount)] ||
+                    "участников"}
+                </p>
+                <div className="chat-info-actions">
+                  <Button variant="outline" onClick={onClose}>
+                    <MessageCircle size={17} />
+                    Чат
+                  </Button>
+                  {manages && (
+                    <Button
+                      variant="outline"
+                      aria-label="Настройки группы"
+                      onClick={() => {
+                        setName(current.name);
+                        setDescription(current.description);
+                        setView("edit");
+                      }}
+                    >
+                      <Pencil size={17} />
+                      Управление группой
+                    </Button>
+                  )}
+                </div>
+              </section>
+              {current.description && (
+                <section className="chat-info-card">
+                  <dl className="chat-info-details">
+                    <div>
+                      <dt>О группе</dt>
+                      <dd>{current.description}</dd>
+                    </div>
+                  </dl>
+                </section>
+              )}
+            </>
+          )}
+          {(view === "info" || view === "transfer") && (
+            <section className="chat-profile-pane">
+              <div className="group-members-heading">
+                <h3>Участники</h3>
+                {view === "info" && manages && (
                   <Button
                     variant="outline"
                     aria-label="Добавить участников"
                     onClick={() => setView("add")}
                   >
-                    <UserPlus size={20} />
+                    <UserPlus size={16} />
                     Добавить
                   </Button>
-                  <Button
-                    variant="outline"
-                    aria-label="Настройки группы"
-                    onClick={() => {
-                      setName(current.name);
-                      setDescription(current.description);
-                      setView("edit");
-                    }}
-                  >
-                    <Pencil size={20} />
-                    Управление группой
-                  </Button>
-                </>
-              )}
-            </div>
-          </>
-        )}
-        {(view === "info" || view === "members" || view === "files") && (
-          <nav
-            className="group-profile-tabs"
-            aria-label="Разделы информации о группе"
-          >
-            <button
-              type="button"
-              aria-current={view === "info" ? "page" : undefined}
-              onClick={() => setView("info")}
-            >
-              Обзор
-            </button>
-            <button
-              type="button"
-              aria-current={view === "members" ? "page" : undefined}
-              onClick={() => setView("members")}
-            >
-              Участники
-            </button>
-            <button
-              type="button"
-              aria-current={view === "files" ? "page" : undefined}
-              onClick={() => setView("files")}
-            >
-              Файлы
-            </button>
-          </nav>
-        )}
-        <div className="chat-profile-pane">
-          {view === "files" && (
-            <ConversationFiles
-              conversationId={group.id}
-              onAccessDenied={onClose}
-              requireAuthenticated
-            />
-          )}
-          {view === "info" && (
-            <div className="group-profile-overview">
-              <h3>Описание группы</h3>
-              <p>{current.description || "Описание пока не добавлено."}</p>
-              <dl className="personal-profile-details">
-                <div>
-                  <dt>
-                    <Users size={16} aria-hidden="true" />
-                    Тип чата
-                  </dt>
-                  <dd>Групповой чат</dd>
-                </div>
-                <div>
-                  <dt>
-                    <ShieldCheck size={16} aria-hidden="true" />
-                    Ваша роль
-                  </dt>
-                  <dd>{roles[current.myRole]}</dd>
-                </div>
-                <div>
-                  <dt>
-                    <Users size={16} aria-hidden="true" />
-                    Участники
-                  </dt>
-                  <dd>{current.memberCount}</dd>
-                </div>
-              </dl>
-            </div>
-          )}
-          {(view === "members" || view === "transfer") && (
-            <>
-              <div className="group-members-heading">
-                <h3>Участники</h3>
-                <span>{current.memberCount} / 100</span>
+                )}
               </div>
               <label className="field">
                 Найти участника
@@ -793,9 +736,11 @@ export function GroupInfoModal({
                           className="group-member-avatar"
                           aria-hidden="true"
                         >
-                          <span className="avatar avatar-small">
-                            {initials(person.displayName)}
-                          </span>
+                          <UserAvatar
+                            id={person.id}
+                            name={person.displayName}
+                            className="avatar avatar-small"
+                          />
                           {connected &&
                             !members.isPaused &&
                             !members.isError &&
@@ -930,154 +875,171 @@ export function GroupInfoModal({
                   </Button>
                 </>
               )}
-            </>
+            </section>
           )}
           {view === "info" && (
-            <div className="group-danger-actions">
-              {owner && (
-                <Button variant="outline" onClick={() => setView("transfer")}>
-                  <ShieldCheck size={18} />
-                  Передать владение
+            <ConversationFiles
+              conversationId={group.id}
+              onAccessDenied={onClose}
+              onShowMessage={onShowMessage}
+              requireAuthenticated
+            />
+          )}
+          {view === "info" && (
+            <details className="group-details-actions">
+              <summary>Действия с группой</summary>
+              <div className="group-danger-actions">
+                {owner && (
+                  <Button variant="outline" onClick={() => setView("transfer")}>
+                    <ShieldCheck size={18} />
+                    Передать владение
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setView("leave")}>
+                  <LogOut size={18} />
+                  Выйти из группы
                 </Button>
-              )}
-              <Button variant="outline" onClick={() => setView("leave")}>
-                <LogOut size={18} />
-                Выйти из группы
-              </Button>
-              {owner && (
-                <Button variant="danger" onClick={() => setView("delete")}>
-                  <Trash2 size={18} />
-                  Удалить группу
-                </Button>
-              )}
-            </div>
+                {owner && (
+                  <Button variant="danger" onClick={() => setView("delete")}>
+                    <Trash2 size={18} />
+                    Удалить группу
+                  </Button>
+                )}
+              </div>
+            </details>
           )}
-          {view === "add" && (
-            <>
-              <GroupUserPicker
-                selected={selected}
-                onChange={setSelected}
-                excluded={people.map((person) => person.id)}
-                disabled={mutation.isPending}
-                max={Math.max(0, 100 - current.memberCount)}
-              />
-              <Button
-                busy={mutation.isPending}
-                disabled={!selected.length || !manages}
-                onClick={() =>
-                  run(async () => {
-                    const result = await api.addGroupMembers(
-                      group.id,
-                      selected.map((person) => person.id),
-                    );
-                    setSelected([]);
-                    return result;
-                  }, "members")
-                }
-              >
-                Добавить выбранных
-              </Button>
-            </>
-          )}
-          {view === "edit" && (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                if (
-                  !name.trim() ||
-                  Array.from(name.trim()).length > 50 ||
-                  Array.from(description.trim()).length > 200
-                ) {
-                  setValidation(
-                    "Название — до 50 символов, описание — до 200.",
-                  );
-                  return;
-                }
-                setValidation("");
-                run(async () => {
-                  await api.updateGroup(group.id, {
-                    name: name.trim(),
-                    description: description.trim(),
-                  });
-                }, "info");
-              }}
-            >
-              {manages && photoControl(false)}
-              <label className="field">
-                Название группы
-                <input
-                  value={name}
-                  maxLength={100}
-                  disabled={mutation.isPending}
-                  onChange={(event) => setName(event.target.value)}
-                />
-              </label>
-              <label className="field">
-                Описание
-                <textarea
-                  rows={3}
-                  value={description}
-                  maxLength={400}
-                  disabled={mutation.isPending}
-                  onChange={(event) => setDescription(event.target.value)}
-                />
-              </label>
-              <Button
-                type="submit"
-                busy={mutation.isPending}
-                disabled={!manages}
-              >
-                Сохранить
-              </Button>
-            </form>
-          )}
-          {view === "leave" && (
-            <>
-              {owner && current.memberCount > 1 ? (
+          {view !== "info" && view !== "transfer" && (
+            <div className="chat-profile-pane">
+              {view === "add" && (
                 <>
-                  <p>Перед выходом передайте владение другому участнику.</p>
-                  <Button onClick={() => setView("transfer")}>
-                    Выбрать нового владельца
+                  <GroupUserPicker
+                    selected={selected}
+                    onChange={setSelected}
+                    excluded={people.map((person) => person.id)}
+                    disabled={mutation.isPending}
+                    max={Math.max(0, 100 - current.memberCount)}
+                  />
+                  <Button
+                    busy={mutation.isPending}
+                    disabled={!selected.length || !manages}
+                    onClick={() =>
+                      run(async () => {
+                        const result = await api.addGroupMembers(
+                          group.id,
+                          selected.map((person) => person.id),
+                        );
+                        setSelected([]);
+                        return result;
+                      }, "info")
+                    }
+                  >
+                    Добавить выбранных
                   </Button>
                 </>
-              ) : (
+              )}
+              {view === "edit" && (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (
+                      !name.trim() ||
+                      Array.from(name.trim()).length > 50 ||
+                      Array.from(description.trim()).length > 200
+                    ) {
+                      setValidation(
+                        "Название — до 50 символов, описание — до 200.",
+                      );
+                      return;
+                    }
+                    setValidation("");
+                    run(async () => {
+                      await api.updateGroup(group.id, {
+                        name: name.trim(),
+                        description: description.trim(),
+                      });
+                    }, "info");
+                  }}
+                >
+                  {manages && photoControl(false)}
+                  <label className="field">
+                    Название группы
+                    <input
+                      value={name}
+                      maxLength={100}
+                      disabled={mutation.isPending}
+                      onChange={(event) => setName(event.target.value)}
+                    />
+                  </label>
+                  <label className="field">
+                    Описание
+                    <textarea
+                      rows={3}
+                      value={description}
+                      maxLength={400}
+                      disabled={mutation.isPending}
+                      onChange={(event) => setDescription(event.target.value)}
+                    />
+                  </label>
+                  <Button
+                    type="submit"
+                    busy={mutation.isPending}
+                    disabled={!manages}
+                  >
+                    Сохранить
+                  </Button>
+                </form>
+              )}
+              {view === "leave" && (
+                <>
+                  {owner && current.memberCount > 1 ? (
+                    <>
+                      <p>Перед выходом передайте владение другому участнику.</p>
+                      <Button onClick={() => setView("transfer")}>
+                        Выбрать нового владельца
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p>
+                        Выйти из группы «{current.name}»? Доступ к сообщениям и
+                        файлам будет закрыт.
+                      </p>
+                      <Button
+                        variant="danger"
+                        busy={mutation.isPending}
+                        onClick={() => run(() => exit(false))}
+                      >
+                        Подтвердить выход
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
+              {view === "delete" && (
                 <>
                   <p>
-                    Выйти из группы «{current.name}»? Доступ к сообщениям и
-                    файлам будет закрыт.
+                    Удалить группу «{current.name}» для всех участников? Доступ
+                    к её сообщениям и файлам будет закрыт.
                   </p>
                   <Button
                     variant="danger"
                     busy={mutation.isPending}
-                    onClick={() => run(() => exit(false))}
+                    disabled={!owner}
+                    onClick={() => run(() => exit(true))}
                   >
-                    Подтвердить выход
+                    Подтвердить удаление группы
                   </Button>
                 </>
               )}
-            </>
+            </div>
           )}
-          {view === "delete" && (
-            <>
-              <p>
-                Удалить группу «{current.name}» для всех участников? Доступ к её
-                сообщениям и файлам будет закрыт.
-              </p>
-              <Button
-                variant="danger"
-                busy={mutation.isPending}
-                disabled={!owner}
-                onClick={() => run(() => exit(true))}
-              >
-                Подтвердить удаление группы
-              </Button>
-            </>
-          )}
-        </div>
-      </Info>
+        </ChatInfoPage>
+      </div>
       {profile && (
-        <GroupMemberInfoModal
+        <GroupMemberInfoPage
           key={profile.id}
+          group={current}
+          onShowMessage={onShowMessage}
           member={profile}
           online={
             presenceKnown && typeof profile.online === "boolean"

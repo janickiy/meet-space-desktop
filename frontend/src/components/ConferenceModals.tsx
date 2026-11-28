@@ -3,16 +3,7 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  CalendarDays,
-  CalendarClock,
-  Link2,
-  Users,
-  ShieldCheck,
-  Mail,
-  Video,
-} from "lucide-react";
+import { ArrowRight, Mail, Video } from "lucide-react";
 import { api } from "../api";
 import type { Conference } from "../types";
 import { inviteCode, inviteLink } from "../utils";
@@ -23,6 +14,7 @@ import { PRODUCT_NAME } from "../brand";
 import { ConferenceInvitationDialog } from "./ConferenceInvitations";
 import { MeetingInvitationCard } from "./MeetingInvitationCard";
 import "./meeting-modals.css";
+import "./meeting-create.css";
 
 /**
  * ShareConference показывает результат создания встречи и действия копирования ссылки и перехода в комнату.
@@ -46,6 +38,9 @@ export function ShareConference({
 }) {
   const [inviting, setInviting] = useState(false);
   const link = inviteLink(conference.inviteCode);
+  const heading = conference.scheduledAt
+    ? "Встреча запланирована"
+    : "Встреча создана";
   if (inviting)
     return (
       <ConferenceInvitationDialog
@@ -58,14 +53,14 @@ export function ShareConference({
   return (
     <Modal
       key="share"
-      title="Встреча создана"
+      title={heading}
       onClose={onClose}
       className="meeting-design-modal meeting-share-modal"
     >
       <header className="meeting-created-header">
         <SuccessMark />
         <div>
-          <h3>Встреча создана</h3>
+          <h3>{heading}</h3>
           <p>Пригласите коллег и начните разговор.</p>
         </div>
       </header>
@@ -94,7 +89,13 @@ export function ShareConference({
  * @args onClose — закрывает форму на текущей странице; без него используется маршрут возврата.
  * @returns JSX-представление компонента для текущих свойств и состояния.
  */
-export function CreateConference({ onClose }: { onClose?: () => void }) {
+export function CreateConference({
+  onClose,
+  schedule,
+}: {
+  onClose?: () => void;
+  schedule?: { at?: string };
+}) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const client = useQueryClient();
@@ -102,7 +103,9 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
   const [validation, setValidation] = useState("");
   const [created, setCreated] = useState<Conference | null>(null);
   const [waitingRoom, setWaitingRoom] = useState(false);
-  const [planned, setPlanned] = useState(params.get("scheduled") === "1");
+  const [planned, setPlanned] = useState(
+    !!schedule || params.get("scheduled") === "1",
+  );
   const [scheduledAt, setScheduledAt] = useState(
     /**
      * Обработчик useState выполняет переданный шаг вызова useState в конференциях, расписании и истории.
@@ -110,13 +113,13 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
      *
      * @returns вычисленное значение: toLocalInput(new Date(Date.now() + 3600000).toISOString()).
      */ () => {
-      const selected = localSchedule(params.get("at") || "");
+      const selected = localSchedule(schedule?.at || params.get("at") || "");
       return selected
         ? toLocalInput(selected)
         : toLocalInput(new Date(Date.now() + 3600000).toISOString());
     },
   );
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("30");
   const mutation = useMutation({
     /**
      * mutationFn выполняет изменяющий запрос по переданным параметрам действия.
@@ -202,152 +205,68 @@ export function CreateConference({ onClose }: { onClose?: () => void }) {
     <Modal
       title={planned ? "Запланировать встречу" : "Новая встреча"}
       onClose={close}
-      className="meeting-design-modal meeting-create-modal meeting-reference-editor"
+      className="meeting-create-modal meeting-reference-editor"
     >
-      <header className="meeting-editor-header">
-        <span className="meeting-editor-emblem">
-          {planned ? (
-            <CalendarClock size={25} aria-hidden="true" />
-          ) : (
-            <Video size={25} aria-hidden="true" />
-          )}
-        </span>
-        <div>
-          <h3>{planned ? "Запланировать встречу" : "Новая встреча"}</h3>
-          <p>
-            {planned
-              ? "Выберите время и подготовьте разговор с командой."
-              : "Соберите команду для быстрого разговора."}
-          </p>
-        </div>
-      </header>
       <form onSubmit={submit} noValidate>
-        <div className="meeting-editor-body">
-          <div className="meeting-editor-main">
-            <label
-              className="field meeting-editor-title"
-              htmlFor="conference-title"
-            >
-              Название встречи
-              <input
-                id="conference-title"
-                data-autofocus
-                placeholder="Например, планы на неделю"
-                value={title}
-                maxLength={200}
-                onChange={(event) => setTitle(event.target.value)}
-                disabled={mutation.isPending}
-              />
-            </label>
-            <section
-              className="meeting-editor-section"
-              aria-label="Дата и время встречи"
-            >
-              <label className="meeting-option-row meeting-editor-planned">
-                <span className="meeting-option-icon">
-                  <CalendarDays size={18} aria-hidden="true" />
-                </span>
-                <span className="meeting-option-copy">
-                  <strong>Дата и время</strong>
-                  <small>
-                    {planned
-                      ? "Встреча по расписанию"
-                      : "Выберите время заранее"}
-                  </small>
-                </span>
-                <input
-                  className="meeting-switch"
-                  type="checkbox"
-                  aria-label="Запланировать встречу"
-                  checked={planned}
-                  onChange={(event) => setPlanned(event.target.checked)}
-                  disabled={mutation.isPending}
-                />
-              </label>
-              {planned && (
-                <ScheduleFields
-                  value={scheduledAt}
-                  onChange={setScheduledAt}
-                  duration={duration}
-                  onDuration={setDuration}
-                  disabled={mutation.isPending}
-                  layout="editor"
-                />
-              )}
-            </section>
-            <ErrorNotice error={mutation.error}>
-              {validation || null}
-            </ErrorNotice>
-          </div>
-          <aside
-            className="meeting-editor-side"
-            aria-label="Участники и параметры встречи"
-          >
-            <h4>
-              <Users size={17} aria-hidden="true" />
-              Участники и доступ
-            </h4>
-            <div className="meeting-editor-access">
-              <span>Пригласить команду</span>
-              <p>
-                <Link2 size={16} aria-hidden="true" />
-                По ссылке на встречу
-              </p>
-              <small>Ссылка появится после создания.</small>
-            </div>
-            <div className="meeting-editor-options">
-              <label className="meeting-option-row">
-                <span className="meeting-option-icon">
-                  <ShieldCheck size={18} aria-hidden="true" />
-                </span>
-                <span className="meeting-option-copy">
-                  <strong>Зал ожидания</strong>
-                  <small>Впускайте гостей во встречу</small>
-                </span>
-                <input
-                  className="meeting-switch"
-                  type="checkbox"
-                  checked={waitingRoom}
-                  onChange={(event) => setWaitingRoom(event.target.checked)}
-                  disabled={mutation.isPending}
-                />
-              </label>
-              <p className="field-hint meeting-waiting-policy">
-                Участники с действующей ссылкой-приглашением входят без
-                ожидания.
-              </p>
-              <div className="meeting-editor-recording">
-                <Video size={18} aria-hidden="true" />
-                <span>
-                  <strong>Запись встречи</strong>
-                  <small>Можно включить после начала</small>
-                </span>
-              </div>
-            </div>
-          </aside>
-        </div>
-        <footer className="meeting-dialog-footer meeting-editor-footer">
-          <span className="meeting-editor-footer-note">
-            <Link2 size={14} aria-hidden="true" />
-            Ссылка появится после создания
-          </span>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={close}
+        <label className="field" htmlFor="conference-title">
+          Название встречи
+          <input
+            id="conference-title"
+            data-autofocus
+            placeholder="Например, обсуждение проекта"
+            value={title}
+            maxLength={200}
+            required
+            onChange={(event) => setTitle(event.target.value)}
             disabled={mutation.isPending}
-          >
-            Отмена
-          </Button>
-          <Button type="submit" busy={mutation.isPending}>
-            {planned ? (
-              <CalendarClock size={17} aria-hidden="true" />
-            ) : (
-              <ArrowRight size={17} aria-hidden="true" />
-            )}
-            Создать встречу
-          </Button>
-        </footer>
+          />
+        </label>
+        <label className="create-meeting-switch">
+          <span>
+            <strong>Запланировать встречу</strong>
+            <small>Выберите дату и время заранее</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label="Запланировать встречу"
+            checked={planned}
+            disabled={mutation.isPending}
+            onChange={(event) => setPlanned(event.target.checked)}
+          />
+        </label>
+        {planned && (
+          <ScheduleFields
+            value={scheduledAt}
+            onChange={setScheduledAt}
+            duration={duration}
+            onDuration={setDuration}
+            disabled={mutation.isPending}
+            layout="editor"
+          />
+        )}
+        <label className="create-meeting-switch">
+          <span>
+            <strong>Зал ожидания</strong>
+            <small>Участники с действующей ссылкой входят без ожидания</small>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label="Зал ожидания"
+            checked={waitingRoom}
+            disabled={mutation.isPending}
+            onChange={(event) => setWaitingRoom(event.target.checked)}
+          />
+        </label>
+        <p className="create-meeting-note">
+          Пригласите коллег по ссылке после создания. Встречу запускает
+          организатор.
+        </p>
+        <ErrorNotice error={mutation.error}>{validation || null}</ErrorNotice>
+        <Button type="submit" busy={mutation.isPending}>
+          {planned ? "Запланировать" : "Создать встречу"}
+        </Button>
       </form>
     </Modal>
   );
