@@ -1,0 +1,155 @@
+.modal-backdrop:has(> .meeting-recording-modal) {
+  background: var(--overlay);
+  backdrop-filter: blur(5px);
+}
+.modal.meeting-recording-modal {
+  width: min(440px, 100%);
+  max-width: 440px;
+  max-height: calc(100dvh - 80px);
+  padding: 24px;
+  border-radius: 12px;
+}
+.meeting-recording-modal > h2 {
+  margin: 0 36px 18px 0;
+  font-size: calc(21px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 600;
+}
+.meeting-recording-modal > .modal-close {
+  top: 22px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+}
+.recording-control-dialog {
+  display: grid;
+  gap: 18px;
+}
+.recording-control-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.recording-control-heading h3 {
+  margin: 0;
+  font-size: calc(15px * var(--text-scale));
+  font-weight: 600;
+}
+.recording-control-symbol {
+  flex: 0 0 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.recording-control-symbol svg {
+  width: 24px;
+  height: 24px;
+}
+.recording-control-dialog p,
+.recording-control-dialog > small {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.recording-control-dialog .recording-control-heading p,
+.recording-control-dialog > small {
+  font-size: calc(12px * var(--text-scale));
+}
+.recording-control-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.recording-control-modes legend {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.5;
+  font-weight: 600;
+}
+.recording-control-mode {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+.recording-control-mode:has(:checked) {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.recording-control-mode:has(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.recording-control-mode input {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin: 3px 3px 3px 5px;
+  accent-color: var(--primary);
+}
+.recording-control-mode > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+.recording-control-mode strong,
+.recording-control-mode small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.recording-control-mode strong {
+  font-size: calc(13px * var(--text-scale));
+  line-height: 1.5;
+}
+.recording-control-mode small {
+  margin-top: 3px;
+  font-size: calc(11px * var(--text-scale));
+  line-height: 1.5;
+  color: var(--muted);
+}
+.recording-control-dialog > .button {
+  min-height: 36px;
+  border-radius: 7px;
+  padding: 8px 16px;
+  font-size: calc(12px * var(--text-scale));
+}
+.recording-control-notice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border-radius: 10px;
+  color: var(--primary);
+  background: var(--primary-soft);
+  font-size: calc(12px * var(--text-scale));
+}
+.recording-control-notice svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 575px), (max-height: 650px) {
+  .modal.meeting-recording-modal {
+    max-height: calc(100dvh - 28px);
+  }
+}
+@media (max-width: 440px) {
+  .recording-control-modes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

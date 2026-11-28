@@ -234,9 +234,25 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         await capture('calendar-month-'+theme);
       }
       if(name==='recording'){
-        const recordingLayout=await execute(`(()=>{const player=document.querySelector('.recording-detail-player')?.getBoundingClientRect();const about=document.querySelector('.recording-detail-sidebar')?.getBoundingClientRect();return {right:!!player&&!!about&&about.left>=player.right,actions:document.querySelector('.recording-detail-about-actions')?.innerText||'',nativePlayerPending:!!document.querySelector('.recording-detail-player .button')};})()`);
-        assert.equal(recordingLayout.right,true,'Recording information is beside the player');
-        assert.ok(recordingLayout.actions.includes('Скачать видеозапись')&&recordingLayout.actions.includes('Скопировать ссылку'),'Recording actions are in the information card');
+        const recordingLayout=await execute(`(()=>{
+          const stage=document.querySelector('.recording-detail-stage').getBoundingClientRect();
+          const about=document.querySelector('.recording-detail-sidebar').getBoundingClientRect();
+          return {
+            beside: about.left >= stage.right && Math.abs(about.top-stage.top)<1,
+            aspect: stage.width/stage.height,
+            titles: [...document.querySelectorAll('.recording-detail-card h2')].map(e=>e.textContent),
+            metadataRows: document.querySelectorAll('.recording-detail-metadata > div').length,
+            download: document.querySelector('.recording-material-download')?.textContent.trim(),
+            canOpen: !!document.querySelector('.recording-detail-center-play'),
+            nativePlayerPending: !document.querySelector('.recording-detail-player video, .recording-detail-player audio')
+          };
+        })()`);
+        assert.equal(recordingLayout.beside,true,'Recording information is aligned beside the player');
+        assert.ok(Math.abs(recordingLayout.aspect-1.6)<0.01,'Player stage uses the reference aspect ratio');
+        assert.deepEqual(recordingLayout.titles,['О записи','Материалы']);
+        assert.equal(recordingLayout.metadataRows,6);
+        assert.equal(recordingLayout.download,'Скачать видеозапись');
+        assert.equal(recordingLayout.canOpen,true,'The cover offers an explicit play action');
         assert.equal(recordingLayout.nativePlayerPending,true,'Opening the page does not fetch private media before user action');
       }
       if(['chat','group'].includes(name)){
@@ -277,6 +293,22 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
           const select = (query, value) => execute(`(()=>{const e=document.querySelector(${JSON.stringify(query)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
           const titles = () => execute(`[...document.querySelectorAll('.recordings-row-title')].map(e=>e.textContent)`);
           assert.deepEqual(await titles(),['Product finished meeting','Older audio meeting']);
+          assert.equal(await execute("document.querySelector('.recordings-results-caption').textContent.trim()"),'Найдено: 2');
+          assert.match(await execute("document.querySelector('.recordings-row .recordings-meta').textContent"),/\d{2}:\d{2} · 2 участника/);
+          const covers = await execute(`[...document.querySelectorAll('.recordings-thumbnail')].map(cover=>{
+            const {width,height}=cover.getBoundingClientRect();
+            return {width, ratio: +(width/height).toFixed(2), duration: cover.querySelector('.recordings-thumbnail-duration')?.textContent };
+          })`);
+          assert.deepEqual(covers,[{width:150,ratio:1.6,duration:'0:12'},{width:150,ratio:1.6,duration:'0:12'}]);
+          assert.ok(await execute("Boolean(document.querySelector('.recordings-thumbnail-audio .recordings-thumbnail-wave'))"));
+          await click('.recordings-list-toolbar [aria-label="Плитка"]');
+          const grid = await execute(`(()=>{const nodes=document.querySelectorAll('.recordings-layout-grid .recordings-thumbnail');
+            const [video,audio]=[...nodes].map(e=>e.getBoundingClientRect());
+            return {sameRow:video.top===audio.top, ratio:+(video.width/video.height).toFixed(2)};
+          })()`);
+          assert.deepEqual(grid,{sameRow:true,ratio:1.78});
+          await capture('recordings-grid-light');
+          await click('.recordings-list-toolbar [aria-label="Список"]');
           await select('[aria-label="Сортировка записей"]','oldest');
           assert.deepEqual(await titles(),['Older audio meeting','Product finished meeting']);
           await select('[aria-label="Период записей"]','7');
@@ -286,13 +318,20 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
           assert.deepEqual(await titles(),['Older audio meeting']);
           await click('.recordings-status-tabs button:last-child');await visible('Live recording meeting');
           assert.deepEqual(await titles(),['Live recording meeting']);
-          assert.equal(await execute("document.querySelector('.recordings-row a') === null"),true,'Recording in progress has no playback or download action');
+          assert.equal(await execute("document.querySelector('.recordings-row a, .recordings-row .recordings-menu-trigger') === null"),true,'Recording in progress has no playback or download action');
+          assert.equal(await execute("document.querySelector('.recordings-thumbnail-live').textContent.trim()"),'В эфире');
           await capture('recordings-live-light');
           await click('.recordings-status-tabs button:first-child');await visible('Product finished meeting');
           delete fixture.product.controls.libraryExamples;
           await reload();await visible('Product finished meeting');
         }
-        assert.equal(await execute(`document.querySelectorAll('.recordings-count,.recordings-catalogue-footer,.recordings-page a[href="/conferences?view=past"]').length`),0,'Recording library omits the count and completed-meeting links');
+        assert.ok(await execute(`(()=>{
+          const caption=document.querySelector('.recordings-results-caption').getBoundingClientRect();
+          const toolbar=document.querySelector('.recordings-list-toolbar').getBoundingClientRect();
+          const row=document.querySelector('.recordings-row').getBoundingClientRect();
+          return caption.top>toolbar.bottom && caption.bottom<row.top;
+        })()`), 'The results count is immediately below the filters');
+        assert.equal(await execute(`document.querySelectorAll('.recordings-page a[href="/conferences?view=past"]').length`),0,'Recording library omits completed-meeting links');
         await field('.recordings-search input','No matching recording');
         await until(()=>execute('!!document.querySelector(".recordings-empty")'),'empty recording search appears');
         assert.equal(await execute(`document.querySelectorAll('.recordings-page a[href="/conferences?view=past"]').length`),0,'Empty recording search omits completed-meeting links');
@@ -301,7 +340,8 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
     }
     fixture.product.recording.status='failed';
     await route('/recordings');await reload();await visible('Записей пока нет');
-    assert.equal(await execute(`document.querySelectorAll('.recordings-count,.recordings-page a[href="/conferences?view=past"]').length`),0,'Empty recording library omits the count and completed-meeting links');
+    assert.equal(await execute("document.querySelector('.recordings-results-caption').textContent.trim()"),'Найдено: 0');
+    assert.equal(await execute(`document.querySelectorAll('.recordings-page a[href="/conferences?view=past"]').length`),0,'Empty recording library omits completed-meeting links');
     await capture('recordings-empty-'+theme);
     fixture.product.recording.status='ready';
     await reload();await visible('Product finished meeting');
@@ -356,7 +396,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await route('/app/settings');await visible('Мой профиль');await capture('settings-mobile');
   await tab('Мой профиль');await visible('Электронная почта');await capture('profile-mobile');
   checks.push('onboarding introduction leads to server connection; settings render as a page with combined devices; meeting and calendar information dialogs close without mutation; recording information and native download actions sit beside the player');
-  checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; the 36px filter reset aligns with the 40px date and participation fields at the reference spacing, including 150% text; mobile filter chips apply and reset all three controls; recordings omit count and completed links while completed meetings remain available');
+  checks.push('incoming answer and decline match device control dimensions with centered captions and green/red colors in both themes at desktop/mobile widths; the 36px filter reset aligns with the 40px date and participation fields at the reference spacing, including 150% text; mobile filter chips apply and reset all three controls; recording cards show mode, duration and metadata in list and grid views, with the result count below filters and no completed-meeting links');
   checks.push('shared routes render in both themes; 1280x800 and 1920x1080 workspace and meeting editors, 1280x800 onboarding/login and 150% settings/meetings; desktop/compact/mobile have no document or content-region horizontal overflow, clipped button content, out-of-viewport dialog or missing image');
   assert.deepEqual(await execute('window.__designErrors'),[]);
   await fs.writeFile(path.join(output,'result.json'),JSON.stringify({ok:true,checks,captures,platform:process.platform,arch:process.arch,source:'shared production React; synthetic local TLS API data',windowsRuntimeTested:false},null,2)+'\n');

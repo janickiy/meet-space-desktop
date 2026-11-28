@@ -1493,23 +1493,6 @@
   border-top: 1px solid var(--border);
   padding-top: 16px;
 }
-.modal .recording-panel-control {
-  border: 0;
-  box-shadow: none;
-  padding: 0;
-  margin: 0;
-}
-.recording-panel-control .meeting-actions {
-  max-width: none;
-  align-items: flex-end;
-}
-.recording-panel-control .meeting-actions > .field {
-  width: 100%;
-  margin-bottom: 10px;
-}
-.recording-panel-control .meeting-actions > .button {
-  min-width: 160px;
-}
 @media (max-width: 900px) and (min-width: 768px) {
   .room-panel-open .conference-stage-main {
     opacity: 0.45;

@@ -3,21 +3,18 @@ import { Link, useParams, useSearchParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  CalendarDays,
-  Clock3,
-  Check,
   Download,
-  FileArchive,
-  FileAudio,
-  FileImage,
-  FileVideo,
-  Link as LinkIcon,
+  FolderOpen,
+  Image,
+  Info,
+  Mic,
+  Play,
+  Video,
   RefreshCw,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { isDesktopBuild } from "../platform/build";
-import { serviceOrigin } from "../platform/urls";
 import { RecordingActions } from "../components/RecordingActions";
 import {
   NativeAssetStatus,
@@ -28,29 +25,104 @@ import { Button, ErrorNotice, Loading } from "../components/ui";
 import {
   formatRecordingDuration,
   formatRecordingSize,
-  recordingDate,
   recordingMediaFile,
   recordingFileAvailable,
   recordingPreviewFile,
+  recordingTracksFile,
   recordingDetailPath,
   safeRecordingUrl,
 } from "../recordingPresentation";
+import type { ConferenceRecording } from "../types";
+import { initials } from "../utils";
 import "./recordings.css";
-import "./collections-redesign.css";
-import "./recording-library-reference.css";
+import "./recording-detail-reference.css";
 
-const materialLabels: Record<string, string> = {
-  final_mp4: "Видеозапись (MP4)",
-  final_audio: "Аудиозапись",
-  preview_jpg: "Превью записи",
-  tracks_archive: "Архив дорожек",
+const formats = {
+  final_mp4: { title: "Видеозапись", extension: "MP4", Icon: Video },
+  final_audio: { title: "Аудиозапись", extension: "M4A", Icon: Mic },
+  preview_jpg: { title: "Превью записи", extension: "JPG", Icon: Image },
+  tracks_archive: {
+    title: "Архив дорожек",
+    extension: "ZIP",
+    Icon: FolderOpen,
+  },
 };
-const materialIcons = {
-  final_mp4: FileVideo,
-  final_audio: FileAudio,
-  preview_jpg: FileImage,
-  tracks_archive: FileArchive,
+const modeLabels: Record<ConferenceRecording["mode"], string> = {
+  composite: "Видеозапись",
+  screen_focus: "Видеозапись",
+  audio_only: "Аудиозапись",
+  individual_tracks: "Дорожки участников",
 };
+const activeStatuses = new Set(["starting", "recording", "degraded"]);
+const waveform = [
+  18, 23, 34, 18, 29, 21, 33, 20, 24, 31, 20, 35, 27, 16, 34, 21, 28, 35, 18,
+  23, 34, 18, 29, 21, 33,
+];
+
+function RecordingWaveform() {
+  return (
+    <span className="recording-preview-wave">
+      {waveform.map((height, index) => (
+        <i key={index} style={{ height: `${height * 2.4}%` }} />
+      ))}
+    </span>
+  );
+}
+
+function RecordingDetailCover({
+  mode,
+  participants,
+  poster,
+}: {
+  mode: ConferenceRecording["mode"];
+  participants: string[];
+  poster?: string;
+}) {
+  if (poster)
+    return <img className="recording-preview-image" src={poster} alt="" />;
+  return (
+    <div
+      className={`recording-preview recording-preview-${mode}`}
+      aria-hidden="true"
+    >
+      {mode === "audio_only" ? (
+        <RecordingWaveform />
+      ) : mode === "individual_tracks" ? (
+        <div className="recording-preview-tracks">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index}>
+              <b>{participants[index] ? initials(participants[index]) : ""}</b>
+              <RecordingWaveform />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="recording-preview-participants">
+          {Array.from({ length: 4 }, (_, index) => (
+            <div key={index}>
+              {participants[index] && <b>{initials(participants[index])}</b>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function participantLabel(count: number) {
+  const form = new Intl.PluralRules("ru").select(count);
+  return `${count} ${form === "one" ? "участник" : form === "few" ? "участника" : "участников"}`;
+}
+
+function displayDate(value: string) {
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+    .format(new Date(value))
+    .replace(/\s*г\.$/, "");
+}
 
 /** RecordingDetailPage открывает приватную запись только в контексте указанной встречи.
  * Идентификатор записи сам по себе не даёт права доступа: все материалы подтверждает API.
@@ -64,8 +136,8 @@ export function RecordingDetailPage() {
 
   if (!id || !conferenceId)
     return (
-      <section className="recordings-page recording-detail-page recordings-empty">
-        <FileVideo size={36} aria-hidden="true" />
+      <section className="recording-detail-page recording-detail-unavailable">
+        <Video size={36} aria-hidden="true" />
         <h1>Не удалось открыть запись</h1>
         <p>
           Откройте запись из списка записей встречи, чтобы перейти к её
@@ -78,7 +150,7 @@ export function RecordingDetailPage() {
     );
   if (!user)
     return (
-      <section className="recordings-page recording-detail-page recordings-empty">
+      <section className="recording-detail-page recording-detail-unavailable">
         <h1>Войдите, чтобы открыть запись</h1>
         <p>Материалы встречи доступны только авторизованным участникам.</p>
         <Link className="button button-primary" to="/login">
@@ -113,8 +185,6 @@ function RecordingDetailContent({
   const [mediaFailed, setMediaFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [mediaRevision, setMediaRevision] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [manualLink, setManualLink] = useState("");
   const mounted = useRef(true);
   const native = useNativeAsset(`${userId}:${conferenceId}:${recordingId}`);
   useEffect(() => {
@@ -188,7 +258,7 @@ function RecordingDetailContent({
   }
 
   const backLink = (
-    <Link className="recordings-back" to={backPath}>
+    <Link className="recording-detail-back" to={backPath}>
       <ArrowLeft size={18} aria-hidden="true" />
       Все записи
     </Link>
@@ -200,10 +270,10 @@ function RecordingDetailContent({
     (recording.isSuccess && !recordingMatches)
   )
     return (
-      <div className="recordings-page recording-detail-page">
+      <div className="recording-detail-page">
         {backLink}
-        <section className="recordings-empty recording-detail-unavailable">
-          <FileVideo size={36} aria-hidden="true" />
+        <section className="recording-detail-unavailable">
+          <Video size={36} aria-hidden="true" />
           <h1>Не удалось открыть запись</h1>
           <ErrorNotice>
             Запись недоступна. Проверьте доступ к встрече или попробуйте позже.
@@ -221,7 +291,7 @@ function RecordingDetailContent({
     );
   if (conference.isPending || recording.isPending)
     return (
-      <div className="recordings-page recording-detail-page">
+      <div className="recording-detail-page">
         {backLink}
         <Loading />
       </div>
@@ -239,7 +309,10 @@ function RecordingDetailContent({
   const mediaUrl = isDesktopBuild
     ? native.source
     : safeRecordingUrl(media?.url);
-  const previewUrl = safeRecordingUrl(recordingPreviewFile(item)?.url);
+  // Desktop must only open private files by object ID after explicit user action.
+  const poster = isDesktopBuild
+    ? undefined
+    : safeRecordingUrl(recordingPreviewFile(item)?.url);
   const playable = item.status === "ready" && !!media;
   const mediaAsset = media?.uuid
     ? {
@@ -250,274 +323,291 @@ function RecordingDetailContent({
       }
     : undefined;
   const audioOnly = media?.fileType === "final_audio";
-  const materials = (item.status === "ready" ? item.files : []).flatMap(
-    (file, index) => {
-      const url = safeRecordingUrl(file.url);
-      return recordingFileAvailable(file) &&
-        Object.hasOwn(materialLabels, file.fileType)
-        ? [{ ...file, url, index }]
-        : [];
-    },
-  );
+  const materials =
+    item.status === "ready"
+      ? item.files.flatMap((file, index) => {
+          const format = formats[file.fileType as keyof typeof formats];
+          return Object.hasOwn(formats, file.fileType) &&
+            recordingFileAvailable(file)
+            ? [{ ...file, url: safeRecordingUrl(file.url), index, format }]
+            : [];
+        })
+      : [];
   const meetingHistory =
     history.isSuccess && history.data.item.conference.id === conferenceId
       ? history.data.item
       : undefined;
-  const detailPath = recordingDetailPath(conferenceId, recordingId);
-  async function copyLink() {
-    const link = new URL(detailPath, serviceOrigin()).href;
-    try {
-      await navigator.clipboard.writeText(link);
-      if (!mounted.current) return;
-      setCopied(true);
-      setManualLink("");
-    } catch {
-      if (!mounted.current) return;
-      setCopied(false);
-      setManualLink(link);
-    }
+  const participantCount =
+    meetingHistory?.participantCount ?? meeting.participantCount;
+  const participants =
+    meetingHistory?.participants.map(
+      (participant) => participant.displayName,
+    ) ?? [];
+  const date = [item.startedAt, item.createdAt].find(
+    (value) => value && Number.isFinite(Date.parse(value)),
+  );
+  const dateLabel = date ? displayDate(date) : "Дата не указана";
+  const recordedAt = date
+    ? `${dateLabel} · ${new Intl.DateTimeFormat("ru-RU", { timeStyle: "short" }).format(new Date(date))}`
+    : dateLabel;
+  const active = activeStatuses.has(item.status);
+  const processing = item.status === "processing" || item.status === "stopping";
+  const duration = active
+    ? "Идёт запись"
+    : formatRecordingDuration(item.durationSec);
+  const archive =
+    item.status === "ready" ? recordingTracksFile(item) : undefined;
+  const primaryFile = media ?? archive;
+  const pendingPlay = playable && isDesktopBuild && !mediaUrl && !!mediaAsset;
+  const showPlayer = playable && !!mediaUrl && !mediaFailed;
+  const archiveOnly =
+    item.mode === "individual_tracks" && !playable && !!archive;
+
+  function openRecording() {
+    if (!mediaAsset) return;
+    setMediaFailed(false);
+    void native.run(mediaAsset, "play");
   }
-  const downloadAction =
-    playable && isDesktopBuild && mediaAsset ? (
-      <NativeSaveButton asset={mediaAsset} className="button button-primary">
-        <Download size={17} aria-hidden="true" />
-        {audioOnly ? "Скачать аудиозапись" : "Скачать видеозапись"}
-      </NativeSaveButton>
-    ) : playable && !isDesktopBuild ? (
-      <a
-        className="button button-primary"
-        href={mediaUrl}
-        download
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Download size={17} aria-hidden="true" />
-        {audioOnly ? "Скачать аудиозапись" : "Скачать видеозапись"}
-      </a>
-    ) : null;
 
   return (
-    <div className="recordings-page recording-detail-page">
+    <div className="recording-detail-page">
       {backLink}
-      <header className="recordings-heading recording-detail-heading">
-        <div>
-          <span className="recordings-kind">
-            {item.mode === "individual_tracks"
-              ? "Аудиомикс и дорожки"
-              : item.mode === "audio_only"
-                ? "Аудиозапись"
-                : "Видеозапись"}
-          </span>
-          <h1>{meeting.title || "Запись встречи"}</h1>
-          <p className="recordings-meta">
-            <span>
-              <CalendarDays size={15} aria-hidden="true" />
-              {recordingDate(item)}
-            </span>
-            <span>
-              <Clock3 size={15} aria-hidden="true" />
-              {formatRecordingDuration(item.durationSec)}
-            </span>
-          </p>
-        </div>
-        <div className="recording-detail-header-actions">
-          <RecordingActions
-            title={meeting.title}
-            path={detailPath}
-            downloadUrl={playable ? media?.url : undefined}
-            asset={playable ? mediaAsset : undefined}
-          />
-        </div>
+      <header className="recording-detail-heading">
+        <span className="recording-detail-kind">{modeLabels[item.mode]}</span>
+        <h1>{meeting.title || "Запись встречи"}</h1>
+        <p>
+          {dateLabel}
+          {typeof participantCount === "number" &&
+            ` · ${participantLabel(participantCount)}`}
+        </p>
       </header>
+
       <div className="recording-detail-layout">
-        <div className="recording-detail-main">
+        <div className="recording-detail-playback">
           <div
-            className={`recording-detail-player${audioOnly ? " recording-detail-player-audio" : ""}${!playable || mediaFailed ? " recording-detail-player-unavailable" : ""}`}
+            className={`recording-detail-player${pendingPlay || (showPlayer && audioOnly) ? " has-controls" : ""}`}
           >
-            {playable && isDesktopBuild && !mediaUrl && mediaAsset ? (
-              <div className="recordings-empty">
-                <FileVideo size={40} aria-hidden="true" />
-                <p>
-                  Откройте запись, чтобы проверить доступ и подготовить
-                  воспроизведение.
-                </p>
-                <Button
-                  busy={native.busy}
-                  onClick={() => {
-                    setMediaFailed(false);
-                    void native.run(mediaAsset, "play");
-                  }}
+            <div className="recording-detail-stage">
+              {(!showPlayer || audioOnly) && (
+                <RecordingDetailCover
+                  mode={item.mode}
+                  participants={participants}
+                  poster={poster}
+                />
+              )}
+              {pendingPlay && !native.busy && !native.error && (
+                <button
+                  type="button"
+                  className="recording-detail-center-play"
+                  onClick={openRecording}
+                  title="Открыть запись"
                 >
-                  Открыть запись
-                </Button>
-                <NativeAssetStatus operation={native} />
-              </div>
-            ) : playable && !!mediaUrl && !mediaFailed ? (
-              audioOnly ? (
-                <div className="recording-detail-audio">
-                  <FileAudio size={48} aria-hidden="true" />
-                  <p>Аудиозапись встречи</p>
-                  <audio
-                    key={mediaRevision}
-                    aria-label="Аудиозапись встречи"
-                    controls
-                    preload="metadata"
-                    src={mediaUrl}
-                    onError={() => setMediaFailed(true)}
-                  />
+                  <Play aria-hidden="true" />
+                  <span className="sr-only">Открыть запись</span>
+                </button>
+              )}
+              {pendingPlay && (native.busy || native.error) && (
+                <div className="recording-detail-stage-message">
+                  <NativeAssetStatus operation={native} />
+                  {native.error && (
+                    <Button variant="outline" onClick={openRecording}>
+                      Повторить
+                    </Button>
+                  )}
                 </div>
-              ) : (
+              )}
+              {showPlayer && !audioOnly && (
                 <video
                   key={mediaRevision}
                   aria-label="Видеозапись встречи"
                   controls
                   playsInline
+                  autoPlay={isDesktopBuild}
                   preload="metadata"
                   src={mediaUrl}
-                  poster={previewUrl}
+                  poster={poster}
                   onError={() => setMediaFailed(true)}
                 />
-              )
-            ) : (
-              <div className="recordings-empty recording-detail-unavailable">
-                <FileVideo size={40} aria-hidden="true" />
-                <h2>Запись пока недоступна</h2>
-                <p>
-                  {mediaFailed
-                    ? "Не удалось воспроизвести запись. Обновите ссылку и попробуйте снова."
-                    : "Не удалось открыть материалы записи. Попробуйте обновить страницу позже."}
-                </p>
-                <Button
-                  variant="secondary"
-                  busy={refreshing}
-                  onClick={() => void refresh()}
+              )}
+              {!pendingPlay && !showPlayer && (
+                <div className="recording-detail-stage-message">
+                  {archiveOnly ? (
+                    <>
+                      <strong>Отдельная дорожка каждого участника</strong>
+                      <p>Скачайте архив в блоке «Материалы».</p>
+                    </>
+                  ) : (
+                    <>
+                      <strong>
+                        {active
+                          ? "Встреча ещё в эфире"
+                          : processing
+                            ? "Запись обрабатывается"
+                            : "Запись пока недоступна"}
+                      </strong>
+                      <p>
+                        {mediaFailed
+                          ? "Не удалось воспроизвести запись. Обновите ссылку и попробуйте снова."
+                          : active || processing
+                            ? "Запись будет доступна после обработки."
+                            : "Не удалось открыть материалы записи."}
+                      </p>
+                      <Button
+                        variant="outline"
+                        busy={refreshing}
+                        onClick={() => void refresh()}
+                      >
+                        <RefreshCw size={16} aria-hidden="true" />
+                        {mediaFailed ? "Обновить ссылку" : "Обновить запись"}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            {pendingPlay && (
+              <div className="recording-detail-controls">
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={openRecording}
+                  disabled={native.busy}
+                  aria-label="Начать воспроизведение"
                 >
-                  <RefreshCw size={16} aria-hidden="true" />
-                  {mediaFailed ? "Обновить ссылку" : "Обновить запись"}
-                </Button>
+                  <Play size={20} aria-hidden="true" />
+                </button>
+                <span>00:00</span>
+                <span
+                  className="recording-detail-timeline"
+                  aria-hidden="true"
+                />
+                <span>{duration}</span>
+              </div>
+            )}
+            {showPlayer && audioOnly && (
+              <div className="recording-detail-controls">
+                <audio
+                  key={mediaRevision}
+                  aria-label="Аудиозапись встречи"
+                  controls
+                  autoPlay={isDesktopBuild}
+                  preload="metadata"
+                  src={mediaUrl}
+                  onError={() => setMediaFailed(true)}
+                />
               </div>
             )}
           </div>
+          <div className="recording-detail-access">
+            <Info size={16} aria-hidden="true" />
+            <p>Материалы записи доступны участникам встречи.</p>
+            <RecordingActions
+              title={meeting.title}
+              path={recordingDetailPath(conferenceId, recordingId)}
+            />
+          </div>
         </div>
+
         <aside className="recording-detail-sidebar">
           <section
-            className="recording-detail-section"
+            className="recording-detail-card"
             aria-labelledby="recording-info-title"
           >
             <h2 id="recording-info-title">О записи</h2>
-            <dl className="recording-detail-info">
+            <dl className="recording-detail-metadata">
               <div>
                 <dt>Дата записи</dt>
-                <dd>{recordingDate(item)}</dd>
+                <dd>{recordedAt}</dd>
               </div>
               <div>
                 <dt>Длительность</dt>
-                <dd>{formatRecordingDuration(item.durationSec)}</dd>
+                <dd>{duration}</dd>
               </div>
-              {media && (
-                <div>
-                  <dt>Размер файла</dt>
-                  <dd>{formatRecordingSize(media.sizeBytes)}</dd>
-                </div>
-              )}
-              {meetingHistory?.owner.displayName && (
-                <div>
-                  <dt>Организатор</dt>
-                  <dd>{meetingHistory.owner.displayName}</dd>
-                </div>
-              )}
-              {meetingHistory && (
-                <div>
-                  <dt>Участники</dt>
-                  <dd>{meetingHistory.participantCount}</dd>
-                </div>
-              )}
+              <div>
+                <dt>Размер</dt>
+                <dd>{formatRecordingSize(primaryFile?.sizeBytes)}</dd>
+              </div>
+              <div>
+                <dt>Организатор</dt>
+                <dd>
+                  {meetingHistory?.owner.displayName ??
+                    (meeting.ownerId === userId ? "Вы" : "—")}
+                </dd>
+              </div>
+              <div>
+                <dt>Участники</dt>
+                <dd>{participantCount ?? "—"}</dd>
+              </div>
+              <div>
+                <dt>Доступ</dt>
+                <dd>Участники встречи</dd>
+              </div>
             </dl>
-            <div className="recording-detail-about-actions">
-              {downloadAction}
-              <Button variant="outline" onClick={() => void copyLink()}>
-                {copied ? (
-                  <Check size={17} aria-hidden="true" />
-                ) : (
-                  <LinkIcon size={17} aria-hidden="true" />
-                )}
-                {copied ? "Ссылка скопирована" : "Скопировать ссылку"}
-              </Button>
-              {manualLink && (
-                <label className="recordings-copy-fallback">
-                  Скопируйте ссылку вручную
-                  <input
-                    aria-label="Ссылка на запись"
-                    value={manualLink}
-                    readOnly
-                    onFocus={(event) => event.currentTarget.select()}
-                  />
-                </label>
-              )}
-            </div>
           </section>
-          {materials.length > 0 && (
-            <section
-              className="recording-detail-section recording-detail-materials"
-              aria-labelledby="recording-materials-title"
-            >
-              <h2 id="recording-materials-title">Материалы записи</h2>
-              <ul className="recording-detail-files">
-                {materials.map((file) => {
-                  const Icon =
-                    materialIcons[file.fileType as keyof typeof materialIcons];
-                  return (
-                    <li
-                      key={`${file.fileType}:${file.index}`}
-                      className="recording-detail-file"
-                    >
-                      <span className="recordings-file-icon">
-                        <Icon size={22} aria-hidden="true" />
-                      </span>
-                      <div className="recording-detail-file-info">
-                        <strong>{materialLabels[file.fileType]}</strong>
-                        <span>{formatRecordingSize(file.sizeBytes)}</span>
-                      </div>
-                      {isDesktopBuild && file.uuid ? (
-                        <NativeSaveButton
-                          asset={{
-                            kind: "recording",
-                            conferenceId,
-                            recordingId,
-                            fileId: file.uuid,
-                          }}
-                          className="recording-detail-download"
-                          aria-label={`Скачать: ${materialLabels[file.fileType]}`}
-                        >
-                          <Download size={18} aria-hidden="true" />
-                          <span>Скачать</span>
-                        </NativeSaveButton>
-                      ) : (
-                        !isDesktopBuild && (
-                          <a
-                            className="recording-detail-download"
-                            href={file.url}
-                            download
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`Скачать: ${materialLabels[file.fileType]}`}
+          <section
+            className="recording-detail-card"
+            aria-labelledby="recording-materials-title"
+          >
+            <h2 id="recording-materials-title">Материалы</h2>
+            {materials.length ? (
+              <ul className="recording-detail-material-list">
+                {materials.map(
+                  ({ uuid, fileType, sizeBytes, index, url, format }) => {
+                    const label = `Скачать ${format.title.toLocaleLowerCase("ru-RU")}`;
+                    return (
+                      <li
+                        key={uuid || `${fileType}:${index}`}
+                        className="recording-detail-material"
+                      >
+                        <span className="recording-material-icon">
+                          <format.Icon size={18} aria-hidden="true" />
+                        </span>
+                        <div className="recording-material-label">
+                          <strong>{format.title}</strong>
+                          <small>
+                            {format.extension}
+                            {typeof sizeBytes === "number" &&
+                              ` · ${formatRecordingSize(sizeBytes)}`}
+                          </small>
+                        </div>
+                        {isDesktopBuild && uuid ? (
+                          <NativeSaveButton
+                            asset={{
+                              kind: "recording",
+                              conferenceId,
+                              recordingId,
+                              fileId: uuid,
+                            }}
+                            className="icon-button recording-material-download"
+                            title={label}
                           >
                             <Download size={18} aria-hidden="true" />
-                            <span>Скачать</span>
-                          </a>
-                        )
-                      )}
-                    </li>
-                  );
-                })}
+                            <span className="sr-only">{label}</span>
+                          </NativeSaveButton>
+                        ) : (
+                          !isDesktopBuild && (
+                            <a
+                              className="icon-button recording-material-download"
+                              href={url}
+                              download
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={label}
+                              title={label}
+                            >
+                              <Download size={18} aria-hidden="true" />
+                            </a>
+                          )
+                        )}
+                      </li>
+                    );
+                  },
+                )}
               </ul>
-              <p className="field-hint recording-detail-download-note">
-                {isDesktopBuild
-                  ? "Выберите место сохранения в системном окне. Доступ к файлу проверяется заново."
-                  : "Если файл открылся в браузере, сохраните его через меню плеера или браузера."}
-              </p>
-            </section>
-          )}
+            ) : (
+              <p>Материалы пока не готовы.</p>
+            )}
+          </section>
         </aside>
       </div>
     </div>

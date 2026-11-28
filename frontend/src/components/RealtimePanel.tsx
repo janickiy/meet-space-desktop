@@ -10,7 +10,9 @@ import { createPortal } from "react-dom";
 import {
   Grid2X2,
   UserRound,
-  Pin,
+  PinOff,
+  AudioLines,
+  Users,
   Mic,
   MicOff,
   Settings,
@@ -69,6 +71,9 @@ export const MediaTile = memo(function MediaTile({
   reconnecting = false,
   covered = false,
   featured = false,
+  onSpotlight,
+  pinned = false,
+  meetingRoom = false,
 }: {
   stream?: MediaStream;
   name: string;
@@ -83,6 +88,9 @@ export const MediaTile = memo(function MediaTile({
   reconnecting?: boolean;
   covered?: boolean;
   featured?: boolean;
+  onSpotlight?: () => void;
+  pinned?: boolean;
+  meetingRoom?: boolean;
 }) {
   const element = useRef<HTMLMediaElement | null>(null);
   const remotePlayback = useRef<ReturnType<typeof createRemotePlayback> | null>(
@@ -241,10 +249,31 @@ export const MediaTile = memo(function MediaTile({
             )}
           </>
         )}
+        {onSpotlight && (
+          <button
+            type="button"
+            className={pinned ? "room-speaker-badge" : "room-tile-spotlight"}
+            aria-label={
+              pinned ? "Открепить участника" : `Закрепить участника: ${name}`
+            }
+            onClick={onSpotlight}
+          >
+            {pinned && (
+              <>
+                <PinOff size={14} aria-hidden="true" /> Открепить
+              </>
+            )}
+          </button>
+        )}
+        {featured && !pinned && speakingNow && (
+          <span className="room-speaker-badge is-speaking">
+            <AudioLines size={14} aria-hidden="true" /> Говорит
+          </span>
+        )}
         <div className="media-tile-label">
           <span>
-            {name}
-            {local ? " · вы" : ""}
+            {local && meetingRoom && !featured ? "Вы" : name}
+            {local && (!meetingRoom || featured) ? " · вы" : ""}
           </span>
           {!screen && (
             <span className="media-tile-badges">
@@ -398,7 +427,18 @@ export function RealtimePanel({
     membership.admissionState,
   ]);
   const hasSelection = hasDevicePreferences(user?.id || "guest");
-  const [layout, setLayout] = useState<"gallery" | "speaker">("gallery");
+  const [selectedLayout, setLayout] = useState<"gallery" | "speaker">();
+  const [compactViewport, setCompactViewport] = useState(
+    () => window.matchMedia("(max-width: 779px)").matches,
+  );
+  useEffect(() => {
+    if (!compactControls) return;
+    const query = window.matchMedia("(max-width: 779px)");
+    const update = () => setCompactViewport(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, [compactControls]);
+  const layout = selectedLayout || (compactViewport ? "speaker" : "gallery");
   const [pinnedId, setPinnedId] = useState("");
   const [online, setOnline] = useState(() => navigator.onLine);
   useEffect(() => {
@@ -497,8 +537,33 @@ export function RealtimePanel({
     pinned?.id ||
     loudest ||
     selectable.find((p) => p.id === lastSpeaker.current)?.id ||
+    selectable.find((p) => p.id !== membership.id)?.id ||
     selectable[0]?.id;
   const speakerView = compactControls && !showingScreen && layout === "speaker";
+  const spotlight = (participantId: string, visible = true) => {
+    if (!compactControls || showingScreen || !visible) return {};
+    const featured = speakerView && featuredId === participantId;
+    const pinnedHere = featured && pinned?.id === participantId;
+    return {
+      featured,
+      pinned: pinnedHere,
+      onSpotlight:
+        cameraTileCount > 1 || pinnedHere
+          ? () => {
+              setPinnedId(pinnedHere ? "" : participantId);
+              setLayout("speaker");
+            }
+          : undefined,
+    };
+  };
+  const onlineCount = roster.length;
+  const participantForm = new Intl.PluralRules("ru").select(onlineCount);
+  const participantLabel =
+    participantForm === "one"
+      ? "участник"
+      : participantForm === "few"
+        ? "участника"
+        : "участников";
   const localAudioLevel =
     media.view.microphoneEnabled &&
     !membership.microphoneBlocked &&
@@ -662,7 +727,6 @@ export function RealtimePanel({
         {media.view.error && <ErrorNotice>{media.view.error}</ErrorNotice>}
         {compactControls && !media.running && live.state && online && (
           <div className="room-media-connection">
-            <span>Камера и микрофон выключены</span>
             <Button
               variant="secondary"
               onClick={() => media.start(false, preferences)}
@@ -1005,133 +1069,137 @@ export function RealtimePanel({
                 Выступающий
               </button>
             </div>
-            {speakerView && (
-              <label className="room-pin-picker">
-                <Pin size={14} />
-                <select
-                  aria-label="Закрепить участника"
-                  value={pinned?.id || ""}
-                  onChange={(e) => setPinnedId(e.target.value)}
-                >
-                  <option value="">Активный выступающий</option>
-                  {selectable.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.displayName || "Участник"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+            <span className="room-participant-count">
+              <Users size={15} aria-hidden="true" />
+              {onlineCount} {participantLabel}
+            </span>
           </div>
         )}
         {(localStream ||
           localScreen ||
           visibleRemoteStreams.length > 0 ||
           present.length > 0) && (
-          <div
-            className={`media-grid ${showingScreen ? "media-grid-sharing" : pairedTiles ? "media-grid-pair" : ""}`}
-            data-layout={speakerView ? "speaker" : "gallery"}
-            role="region"
-            aria-label={
-              showingScreen
-                ? "Демонстрация экрана"
-                : pairedTiles
-                  ? "Видео участников"
-                  : "Медиапотоки встречи"
-            }
-            tabIndex={0}
-          >
-            {localScreen && (
-              <MediaTile local screen stream={localScreen} name="Ваш экран" />
-            )}
-            {localStream && (
-              <MediaTile
-                local
-                featured={speakerView && featuredId === membership.id}
-                stream={localStream}
-                video={media.view.cameraEnabled}
-                name={membership.displayName || "Вы"}
-                microphoneEnabled={media.view.microphoneEnabled}
-                audioLevel={localAudioLevel}
-                role={membership.role}
-                reconnecting={connectionProblem}
-                covered={showingScreen}
-              />
-            )}
-            {visibleRemoteStreams.map(
-              /**
-               * Обработчик map преобразует текущий элемент в данные или представление результирующего списка.
-               *
-               * @args
-               *   - remote — снимок медиа одного удалённого подключения.
-               *
-               * @returns преобразованное значение текущего элемента для результирующего набора.
-               */ (remote) => (
+          <div className={compactControls ? "room-video-stage" : "media-stage"}>
+            <div
+              className={`media-grid ${showingScreen ? "media-grid-sharing" : pairedTiles ? "media-grid-pair" : ""}`}
+              data-layout={speakerView ? "speaker" : "gallery"}
+              data-count={cameraTileCount}
+              style={
+                compactControls
+                  ? ({
+                      "--room-thumbnail-count": Math.max(
+                        1,
+                        cameraTileCount - 1,
+                      ),
+                    } as CSSProperties)
+                  : undefined
+              }
+              role="region"
+              aria-label={
+                showingScreen
+                  ? "Демонстрация экрана"
+                  : pairedTiles
+                    ? "Видео участников"
+                    : "Медиапотоки встречи"
+              }
+              tabIndex={0}
+            >
+              {localScreen && (
+                <MediaTile local screen stream={localScreen} name="Ваш экран" />
+              )}
+              {localStream && (
                 <MediaTile
-                  key={remote.id}
-                  featured={
-                    speakerView &&
-                    primaryStreams.get(remote.participantId) === remote &&
-                    featuredId === remote.participantId
-                  }
-                  screen={remote.screen && !preferences.hideParticipantVideo}
-                  covered={
-                    remote.screen
-                      ? preferences.hideParticipantVideo
-                      : showingScreen ||
-                        primaryStreams.get(remote.participantId) !== remote
-                  }
-                  stream={remote.stream}
-                  audioLevel={speaking.get(remote.participantId) ?? 0}
-                  video={
-                    !preferences.hideParticipantVideo &&
-                    remote.kinds.includes("video")
-                  }
-                  sinkId={preferences.audioOutputId}
-                  volume={preferences.outputVolume}
-                  microphoneEnabled={
-                    roster.find((person) => person.id === remote.participantId)
-                      ?.microphoneEnabled ?? remote.kinds.includes("audio")
-                  }
-                  role={
-                    roster.find((person) => person.id === remote.participantId)
-                      ?.role
-                  }
+                  local
+                  meetingRoom={compactControls}
+                  {...spotlight(membership.id)}
+                  stream={localStream}
+                  video={media.view.cameraEnabled}
+                  name={membership.displayName || "Вы"}
+                  microphoneEnabled={media.view.microphoneEnabled}
+                  audioLevel={localAudioLevel}
+                  role={membership.role}
                   reconnecting={connectionProblem}
-                  name={
-                    (remote.screen ? "Экран · " : "") +
-                    (roster.find(
-                      /**
-                       * Обработчик find проверяет, соответствует ли текущий элемент условию выборки или поиска.
-                       *
-                       * @args
-                       *   - p — сведения об участнике конференции.
-                       *
-                       * @returns true, если проверяемый элемент удовлетворяет условию; false в противном случае.
-                       */
-                      (p) => p.id === remote.participantId,
-                    )?.displayName || "Участник")
-                  }
+                  covered={showingScreen}
                 />
-              ),
-            )}
-            {participantsWithoutStream.map((person) => (
-              <MediaTile
-                key={`waiting-${person.id}`}
-                featured={speakerView && featuredId === person.id}
-                name={person.displayName || "Участник"}
-                local={person.id === membership.id}
-                video={false}
-                covered={showingScreen}
-                microphoneEnabled={
-                  person.id === membership.id
-                    ? media.view.microphoneEnabled
-                    : person.microphoneEnabled
-                }
-                role={person.role}
-                reconnecting={connectionProblem}
-              />
-            ))}
+              )}
+              {visibleRemoteStreams.map(
+                /**
+                 * Обработчик map преобразует текущий элемент в данные или представление результирующего списка.
+                 *
+                 * @args
+                 *   - remote — снимок медиа одного удалённого подключения.
+                 *
+                 * @returns преобразованное значение текущего элемента для результирующего набора.
+                 */ (remote) => (
+                  <MediaTile
+                    key={remote.id}
+                    meetingRoom={compactControls}
+                    {...spotlight(
+                      remote.participantId,
+                      primaryStreams.get(remote.participantId) === remote,
+                    )}
+                    screen={remote.screen && !preferences.hideParticipantVideo}
+                    covered={
+                      remote.screen
+                        ? preferences.hideParticipantVideo
+                        : showingScreen ||
+                          primaryStreams.get(remote.participantId) !== remote
+                    }
+                    stream={remote.stream}
+                    audioLevel={speaking.get(remote.participantId) ?? 0}
+                    video={
+                      !preferences.hideParticipantVideo &&
+                      remote.kinds.includes("video")
+                    }
+                    sinkId={preferences.audioOutputId}
+                    volume={preferences.outputVolume}
+                    microphoneEnabled={
+                      roster.find(
+                        (person) => person.id === remote.participantId,
+                      )?.microphoneEnabled ?? remote.kinds.includes("audio")
+                    }
+                    role={
+                      roster.find(
+                        (person) => person.id === remote.participantId,
+                      )?.role
+                    }
+                    reconnecting={connectionProblem}
+                    name={
+                      (remote.screen ? "Экран · " : "") +
+                      (roster.find(
+                        /**
+                         * Обработчик find проверяет, соответствует ли текущий элемент условию выборки или поиска.
+                         *
+                         * @args
+                         *   - p — сведения об участнике конференции.
+                         *
+                         * @returns true, если проверяемый элемент удовлетворяет условию; false в противном случае.
+                         */
+                        (p) => p.id === remote.participantId,
+                      )?.displayName || "Участник")
+                    }
+                  />
+                ),
+              )}
+              {participantsWithoutStream.map((person) => (
+                <MediaTile
+                  key={`waiting-${person.id}`}
+                  meetingRoom={compactControls}
+                  {...spotlight(person.id)}
+                  name={person.displayName || "Участник"}
+                  local={person.id === membership.id}
+                  video={false}
+                  covered={showingScreen}
+                  microphoneEnabled={
+                    person.id === membership.id
+                      ? media.view.microphoneEnabled
+                      : person.microphoneEnabled
+                  }
+                  role={person.role}
+                  reconnecting={connectionProblem}
+                />
+              ))}
+            </div>
           </div>
         )}
         <p className="field-hint">

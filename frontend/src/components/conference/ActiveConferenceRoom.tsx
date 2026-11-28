@@ -84,17 +84,17 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           <span>К встречам</span>
         </Link>
         <div className="room-title">
-          <h1>{conference.title}</h1>
-          <div className="room-title-meta">
-            <span>
-              {live.state
-                ? `В эфире · Участников: ${onlinePeople.length}`
-                : "Подключаемся к встрече"}
-            </span>
-          </div>
+          <h1 title={conference.title}>{conference.title}</h1>
+          <p className="room-title-meta" role="status">
+            {live.state ? "Встреча в эфире" : "Подключаемся к встрече"}
+          </p>
         </div>
-        <div className="room-header-actions">
-          <MeetingClock startedAt={conference.startedAt} />
+        <MeetingClock startedAt={conference.startedAt} />
+        <div
+          className="room-header-actions"
+          role="group"
+          aria-label="Действия встречи"
+        >
           {activeRecording && (
             <span
               className="room-recording-status"
@@ -149,6 +149,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
                 setUtility("recording");
               }}
               aria-label="Записи конференции"
+              aria-haspopup="dialog"
             >
               <Circle size={17} />
               <span>Запись</span>
@@ -157,6 +158,7 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
           <button
             className="room-header-action"
             aria-label="Пригласить"
+            aria-haspopup="dialog"
             title="Пригласить"
             onClick={() => setUtility("invite")}
           >
@@ -295,7 +297,8 @@ export function ActiveConferenceRoom(props: ActiveConferenceViewProps) {
       )}
       {utility === "recording" && recordingAccess && (
         <Modal
-          title="Записи конференции"
+          title="Запись встречи"
+          className="meeting-recording-modal"
           onClose={() => setUtility(null)}
           returnFocus={() =>
             recordingOpener.current?.isConnected

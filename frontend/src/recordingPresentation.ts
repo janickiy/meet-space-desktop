@@ -60,6 +60,22 @@ export function recordingMediaFile(
   )[0];
 }
 
+/** Return the authorized archive, if individual tracks are available. */
+export function recordingTracksFile(
+  record: ConferenceRecording,
+): RecordingFile | undefined {
+  return record.files?.find(
+    (file) =>
+      file.fileType === "tracks_archive" && recordingFileAvailable(file),
+  );
+}
+
+export function recordingHasMediaOrTracks(
+  record: ConferenceRecording,
+): boolean {
+  return Boolean(recordingMediaFile(record) || recordingTracksFile(record));
+}
+
 /** recordingPreviewFile выбирает настоящее превью, не подставляя чужие фотографии.
  * @args record — запись с доступными артефактами.
  * @return разрешённое JPEG-превью или undefined, если сервер не создал изображение.

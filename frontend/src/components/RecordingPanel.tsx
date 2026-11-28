@@ -1,9 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { Circle, Download, Square } from "lucide-react";
+import { Link } from "react-router";
+import {
+  AudioLines,
+  Circle,
+  CircleDot,
+  CirclePlay,
+  Clock,
+  Download,
+  MonitorUp,
+  Square,
+  Users,
+  Video,
+} from "lucide-react";
 import { api } from "../api";
 import { isDesktopBuild } from "../platform/build";
-import { recordingFileAvailable } from "../recordingPresentation";
+import {
+  recordingDetailPath,
+  recordingFileAvailable,
+  recordingHasMediaOrTracks,
+} from "../recordingPresentation";
 import { NativeSaveButton } from "./desktop/NativeAssets";
 import type {
   Conference,
@@ -18,6 +34,34 @@ import { isAdmitted } from "../collaboration";
 import { RecordingInsights } from "./RecordingInsights";
 import { useCapabilities } from "../useCapabilities";
 import { useAuth } from "../auth";
+import "./recording-control-dialog.css";
+
+const formats = {
+  composite: {
+    label: "Общая запись",
+    hint: "Видео участников, звук и демонстрация экрана",
+    Icon: Video,
+  },
+  audio_only: {
+    label: "Только аудио",
+    hint: "Разговор без видеодорожки",
+    Icon: AudioLines,
+  },
+  individual_tracks: {
+    label: "Отдельные дорожки",
+    hint: "Дорожки участников и общий микс",
+    Icon: Users,
+  },
+  screen_focus: {
+    label: "Фокус на экране",
+    hint: "Демонстрация экрана и звук встречи",
+    Icon: MonitorUp,
+  },
+} satisfies Record<
+  RecordingMode,
+  { label: string; hint: string; Icon: typeof Video }
+>;
+const formatOrder = Object.keys(formats) as RecordingMode[];
 
 const labels = {
   starting: "Запись запускается",
@@ -69,6 +113,7 @@ export function RecordingPanel({
       ? capabilities.data.capabilities.recordingModes
       : [];
   const [mode, setMode] = useState<RecordingMode>("composite");
+  const [stopConfirmation, setStopConfirmation] = useState<string>();
   const commandPending = useRef(false);
   const selectedMode = recordingModes.includes(mode) ? mode : recordingModes[0];
   const query = useQuery({
@@ -183,12 +228,167 @@ export function RecordingPanel({
       (membership?.role === "owner" && conference.ownerId === user?.id));
   if (!membership || !isAdmitted(membership)) return null;
   const controlsOnly = !showHistory && !showInsights;
+  if (controlsOnly) {
+    const latest =
+      !current &&
+      items.find(
+        (item) =>
+          item.conferenceId === conference.id &&
+          item.status === "ready" &&
+          recordingHasMediaOrTracks(item),
+      );
+    const status = current
+      ? labels[current.status]
+      : latest
+        ? labels.ready
+        : "Запись";
+    const canConfigure = joined && conference.status === "active" && !current;
+    const modes = formatOrder.filter((key) => recordingModes.includes(key));
+    if (
+      recording &&
+      canStop &&
+      current.uuid === stopConfirmation &&
+      current.status !== "stopping"
+    ) {
+      return (
+        <section className="recording-control-dialog">
+          <h3>Остановить запись?</h3>
+          <p>Встреча продолжится. Файлы будут доступны после обработки.</p>
+          <Button
+            variant="danger"
+            onClick={() => {
+              setStopConfirmation(undefined);
+              runCommand(current.uuid);
+            }}
+          >
+            <Square size={16} aria-hidden="true" />
+            Остановить запись
+          </Button>
+          <Button
+            variant="outline"
+            autoFocus
+            onClick={() => setStopConfirmation(undefined)}
+          >
+            Продолжить запись
+          </Button>
+        </section>
+      );
+    }
+
+    return (
+      <section
+        className="recording-control-dialog"
+        aria-label="Управление записью"
+      >
+        <header className="recording-control-heading">
+          <span className="recording-control-symbol">
+            <Video aria-hidden="true" />
+          </span>
+          <div>
+            <h3
+              role="status"
+              data-testid={current ? "recording-dialog-indicator" : undefined}
+            >
+              {status}
+            </h3>
+            <p>{conference.title || "Встреча"}</p>
+          </div>
+        </header>
+        <ErrorNotice
+          error={query.error || mutation.error || capabilities.error}
+        />
+        {latest && (
+          <Link
+            className="button button-outline"
+            to={recordingDetailPath(conference.id, latest.uuid)}
+          >
+            <CirclePlay size={18} aria-hidden="true" />
+            Открыть запись
+          </Link>
+        )}
+        {query.isPending && <p role="status">Проверяем состояние записи…</p>}
+        {canConfigure && modes.length > 0 && (
+          <>
+            <fieldset
+              className="recording-control-modes"
+              disabled={mutation.isPending}
+            >
+              <legend>Формат записи</legend>
+              {modes.map((key) => {
+                const { label, hint, Icon } = formats[key];
+                return (
+                  <label className="recording-control-mode" key={key}>
+                    <input
+                      type="radio"
+                      name="meeting-recording-mode"
+                      value={key}
+                      checked={selectedMode === key}
+                      onChange={() => setMode(key)}
+                    />
+                    <Icon aria-hidden="true" />
+                    <span>
+                      <strong>{label}</strong>
+                      <small>{hint}</small>
+                    </span>
+                  </label>
+                );
+              })}
+            </fieldset>
+            <Button
+              onClick={() => runCommand(null)}
+              busy={mutation.isPending}
+              disabled={!canStart}
+            >
+              <Circle size={18} aria-hidden="true" />
+              Начать запись
+            </Button>
+          </>
+        )}
+        {canConfigure && modes.length === 0 && (
+          <p role="status">
+            {capabilities.isPending
+              ? "Проверяем доступные режимы записи…"
+              : "Режимы записи сейчас недоступны."}
+          </p>
+        )}
+        {current && (
+          <div className="recording-control-notice">
+            {recording ? (
+              <CircleDot aria-hidden="true" />
+            ) : (
+              <Clock aria-hidden="true" />
+            )}
+            {current.status === "processing"
+              ? "Файлы появятся в записях встречи после обработки."
+              : current.status === "starting"
+                ? "Для начала записи нужен медиапоток участника."
+                : formats[current.mode]?.label || "Запись встречи"}
+          </div>
+        )}
+        {recording && canStop && (
+          <Button
+            variant="danger"
+            onClick={() => setStopConfirmation(current.uuid)}
+            busy={mutation.isPending}
+            disabled={current.status === "stopping"}
+          >
+            <Square size={16} aria-hidden="true" />
+            Остановить запись
+          </Button>
+        )}
+        <p>Остановить запись может её инициатор или организатор встречи.</p>
+        {canConfigure && modes.length > 0 && (
+          <small>Все участники увидят уведомление о начале записи.</small>
+        )}
+      </section>
+    );
+  }
   return (
     <section
-      className={`content-card recording-panel${materialOnly ? " recording-panel-material" : ""}${controlsOnly ? " recording-panel-control" : ""}`}
+      className={`content-card recording-panel${materialOnly ? " recording-panel-material" : ""}`}
       aria-label="Записи конференции"
     >
-      {!materialOnly && !controlsOnly && (
+      {!materialOnly && (
         <div className="section-heading">
           <h2>Записи конференции</h2>
           {current && (
@@ -204,16 +404,6 @@ export function RecordingPanel({
             </span>
           )}
         </div>
-      )}
-      {controlsOnly && current && (
-        <p
-          role="status"
-          data-testid="recording-indicator"
-          className={recording ? "recording-indicator" : "participant-status"}
-        >
-          {recording && <Circle size={10} fill="currentColor" />}
-          {labels[current.status]}
-        </p>
       )}
       <ErrorNotice
         error={query.error || mutation.error || capabilities.error}
@@ -246,11 +436,6 @@ export function RecordingPanel({
                   <option value="screen_focus">Фокус на экране</option>
                 )}
               </select>
-              {controlsOnly && (
-                <span className="field-hint">
-                  Все участники получат уведомление о начале записи.
-                </span>
-              )}
             </label>
           )}
           {!current && recordingModes.length === 0 && (

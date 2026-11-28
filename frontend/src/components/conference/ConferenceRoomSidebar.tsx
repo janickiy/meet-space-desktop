@@ -35,60 +35,24 @@ export function ConferenceRoomSidebar(props: ActiveConferenceViewProps) {
     setConfirm,
   } = props.controls;
   const panels = captionsEnabled
-    ? (["participants", "chat", "captions"] as const)
-    : (["participants", "chat"] as const);
+    ? (["chat", "participants", "captions"] as const)
+    : (["chat", "participants"] as const);
   return (
     <aside
       className="conference-stage-rail"
       aria-label="Панели встречи"
       hidden={!panelOpen}
     >
-      <div className="room-panel-header">
-        <div
-          className="conference-stage-tabs"
-          role="tablist"
-          aria-label="Панель встречи"
-          onKeyDown={(event) => {
-            const index = panels.findIndex((panel) => panel === stagePanel);
-            let next = index;
-            if (event.key === "ArrowRight") next = (index + 1) % panels.length;
-            else if (event.key === "ArrowLeft")
-              next = (index - 1 + panels.length) % panels.length;
-            else if (event.key === "Home") next = 0;
-            else if (event.key === "End") next = panels.length - 1;
-            else return;
-            event.preventDefault();
-            setStagePanel(panels[next]);
-            document.getElementById(`meeting-tab-${panels[next]}`)?.focus();
-          }}
-        >
-          {panels.map((panel) => (
-            <button
-              type="button"
-              key={panel}
-              role="tab"
-              id={`meeting-tab-${panel}`}
-              aria-controls={`meeting-panel-${panel}`}
-              aria-selected={stagePanel === panel}
-              tabIndex={stagePanel === panel ? 0 : -1}
-              onClick={() => setStagePanel(panel)}
-            >
-              {panel === "chat" ? (
-                "Чат"
-              ) : panel === "participants" ? (
-                <>
-                  Участники{" "}
-                  <span className="room-panel-tab-count">
-                    {onlinePeople.length}
-                  </span>
-                </>
-              ) : (
-                "Субтитры"
-              )}
-            </button>
-          ))}
-        </div>
+      <header className="room-panel-header">
+        <h2>
+          {stagePanel === "chat"
+            ? "Чат встречи"
+            : stagePanel === "participants"
+              ? "Участники встречи"
+              : "Субтитры"}
+        </h2>
         <button
+          type="button"
           className="icon-button"
           aria-label="Закрыть панель встречи"
           onClick={() => {
@@ -96,8 +60,47 @@ export function ConferenceRoomSidebar(props: ActiveConferenceViewProps) {
             panelTrigger.current?.focus();
           }}
         >
-          <X size={14} />
+          <X size={16} aria-hidden="true" />
         </button>
+      </header>
+      <div
+        className="conference-stage-tabs"
+        role="tablist"
+        aria-label="Панель встречи"
+        onKeyDown={(event) => {
+          const index = panels.findIndex((panel) => panel === stagePanel);
+          let next = index;
+          if (event.key === "ArrowRight") next = (index + 1) % panels.length;
+          else if (event.key === "ArrowLeft")
+            next = (index - 1 + panels.length) % panels.length;
+          else if (event.key === "Home") next = 0;
+          else if (event.key === "End") next = panels.length - 1;
+          else return;
+          event.preventDefault();
+          setStagePanel(panels[next]);
+          document.getElementById(`meeting-tab-${panels[next]}`)?.focus();
+        }}
+      >
+        {panels.map((panel) => (
+          <button
+            type="button"
+            key={panel}
+            role="tab"
+            id={`meeting-tab-${panel}`}
+            aria-controls={`meeting-panel-${panel}`}
+            aria-selected={stagePanel === panel}
+            tabIndex={stagePanel === panel ? 0 : -1}
+            onClick={() => setStagePanel(panel)}
+          >
+            {panel === "chat" ? (
+              "Чат"
+            ) : panel === "participants" ? (
+              <>Участники ({onlinePeople.length})</>
+            ) : (
+              "Субтитры"
+            )}
+          </button>
+        ))}
       </div>
       <div
         id="meeting-panel-chat"

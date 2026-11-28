@@ -2,18 +2,21 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
+  Circle,
   CirclePlay,
-  AudioLines,
   FolderOpen,
-  Video,
-  FileArchive,
+  Info,
+  Mic,
   Play,
   Search,
+  UserRound,
   Users,
+  Video,
 } from "lucide-react";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { isDesktopBuild } from "../platform/build";
+import { initials } from "../utils";
 import type {
   Conference,
   ConferenceHistory,
@@ -26,9 +29,10 @@ import {
   formatRecordingSize,
   recordingDate,
   recordingDetailPath,
-  recordingFileAvailable,
+  recordingHasMediaOrTracks,
   recordingMediaFile,
   recordingPreviewFile,
+  recordingTracksFile,
 } from "../recordingPresentation";
 import "./recordings.css";
 import "./collections-redesign.css";
@@ -49,6 +53,36 @@ const modeLabels = {
   screen_focus: "Видеозапись",
   individual_tracks: "Дорожки участников",
 } as const;
+
+const recordingParticipants = new Intl.PluralRules("ru-RU");
+const participantLabels: Record<string, string> = {
+  one: "участник",
+  few: "участника",
+  many: "участников",
+  other: "участника",
+};
+const recordingDay = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+});
+const recordingTime = new Intl.DateTimeFormat("ru-RU", {
+  hour: "2-digit",
+  minute: "2-digit",
+});
+const waveHeights = Array.from(
+  { length: 25 },
+  (_, index) => 32 + ((index * 17) % 66),
+);
+
+function RecordingWave() {
+  return (
+    <span className="recordings-thumbnail-wave" aria-hidden="true">
+      {waveHeights.map((height, index) => (
+        <i key={index} style={{ height: `${height}%` }} />
+      ))}
+    </span>
+  );
+}
 
 const recordingProgress: Partial<
   Record<ConferenceRecording["status"], string>
@@ -75,76 +109,91 @@ export function RecordingCard({
 }) {
   const { user } = useAuth();
   const [brokenPreview, setBrokenPreview] = useState<string | null>(null);
-  const preview = recordingPreviewFile(record);
-  const file = recordingMediaFile(record);
+  const preview = recordingPreviewFile(record)?.url;
   const path = recordingDetailPath(conference.id, record.uuid);
-  const hasPreview = !!preview?.url && brokenPreview !== preview.url;
+  const hasPreview = !!preview && brokenPreview !== preview;
   const audioOnly = record.mode === "audio_only";
   const tracks = record.mode === "individual_tracks";
   const progress = recordingProgress[record.status];
-  const listen = audioOnly ? "Слушать" : "Смотреть";
-  const ModeIcon = tracks ? FileArchive : audioOnly ? AudioLines : Video;
-  const thumbnailClass = `recordings-thumbnail${hasPreview ? "" : " recordings-thumbnail-placeholder"}${audioOnly ? " recordings-thumbnail-audio" : ""}${tracks ? " recordings-thumbnail-tracks" : ""}`;
+  const ModeIcon = tracks ? Users : audioOnly ? Mic : Video;
+  const CoverIcon = progress ? Circle : ModeIcon;
+  const watchAction = tracks ? "Материалы" : audioOnly ? "Слушать" : "Смотреть";
+  const file = tracks
+    ? (recordingTracksFile(record) ?? recordingMediaFile(record))
+    : recordingMediaFile(record);
+  const startedAt = [record.startedAt, record.createdAt].find(
+    (date) => date && Number.isFinite(Date.parse(date)),
+  );
+  const timestamp = startedAt ? new Date(startedAt) : undefined;
+  const count = history?.participantCount ?? conference.participantCount;
+  const participants =
+    typeof count === "number"
+      ? `${count} ${participantLabels[recordingParticipants.select(count)]}`
+      : file?.sizeBytes !== undefined
+        ? formatRecordingSize(file.sizeBytes)
+        : undefined;
+  const organizer = history?.owner;
+  const ownMeeting = (organizer?.id ?? conference.ownerId) === user?.id;
+  const owner = organizer?.displayName
+    ? organizer.displayName + (ownMeeting ? " (вы)" : "")
+    : ownMeeting
+      ? "Вы"
+      : undefined;
+  const names =
+    history?.participants?.map((person) => person.displayName) ?? [];
+  const thumbnailClass = [
+    "recordings-thumbnail",
+    !hasPreview && "recordings-thumbnail-placeholder",
+    audioOnly && "recordings-thumbnail-audio",
+    tracks && "recordings-thumbnail-tracks",
+  ]
+    .filter(Boolean)
+    .join(" ");
   const cover = (
     <>
       {hasPreview ? (
         <img
-          src={preview!.url}
+          src={preview}
           alt=""
           loading="lazy"
-          onError={() => setBrokenPreview(preview!.url!)}
+          onError={() => setBrokenPreview(preview)}
         />
-      ) : (
-        <>
-          {audioOnly ? (
-            <span className="recordings-thumbnail-wave" aria-hidden="true">
-              {Array.from({ length: 19 }, (_, index) => (
-                <i
-                  key={index}
-                  style={{ height: `${12 + ((index * 13) % 37)}px` }}
-                />
-              ))}
-            </span>
-          ) : tracks ? (
-            <span
-              className="recordings-thumbnail-tracks-art"
-              aria-hidden="true"
-            >
-              <FileArchive size={25} />
+      ) : audioOnly ? (
+        <RecordingWave />
+      ) : tracks ? (
+        <span className="recordings-thumbnail-tracks-art" aria-hidden="true">
+          {[0, 1, 2].map((row) => (
+            <span className="recordings-thumbnail-track" key={row}>
               <span>
-                {[0, 1, 2].map((row) => (
-                  <i key={row}>
-                    <b />
-                    <b />
-                    <b />
-                    <b />
-                    <b />
-                    <b />
-                  </i>
-                ))}
+                {names[row] ? initials(names[row]) : <UserRound size={9} />}
               </span>
+              <RecordingWave />
             </span>
-          ) : (
-            <span className="recordings-thumbnail-tiles" aria-hidden="true">
-              {[0, 1, 2, 3].map((tile) => (
-                <i key={tile}>
-                  <Users size={19} strokeWidth={1.4} />
-                </i>
-              ))}
-            </span>
-          )}
-        </>
-      )}
-      {!progress && (
-        <span className="recordings-thumbnail-play" aria-hidden="true">
-          <Play size={19} />
+          ))}
+        </span>
+      ) : (
+        <span className="recordings-thumbnail-tiles" aria-hidden="true">
+          {[0, 1, 2, 3].map((tile) => (
+            <i key={tile}>
+              <b>
+                {names[tile] ? initials(names[tile]) : <UserRound size={11} />}
+              </b>
+            </i>
+          ))}
         </span>
       )}
-      {!progress && record.durationSec !== undefined && (
+      <span className="recordings-thumbnail-play" aria-hidden="true">
+        <CoverIcon size={19} />
+      </span>
+      {progress ? (
+        <span className="recordings-thumbnail-duration recordings-thumbnail-live">
+          В эфире
+        </span>
+      ) : record.durationSec !== undefined ? (
         <span className="recordings-thumbnail-duration">
           {formatRecordingDuration(record.durationSec)}
         </span>
-      )}
+      ) : null}
     </>
   );
   return (
@@ -155,14 +204,16 @@ export function RecordingCard({
         <Link
           to={path}
           className={thumbnailClass}
-          aria-label={`${listen} запись: ${conference.title}`}
+          aria-label={`Открыть запись: ${conference.title}`}
         >
           {cover}
         </Link>
       )}
       <div className="recordings-row-info">
         <span className="recordings-kind">
-          <ModeIcon size={13} aria-hidden="true" /> {modeLabels[record.mode]}
+          <ModeIcon size={13} aria-hidden="true" />
+          {modeLabels[record.mode]}
+          {progress && ` · ${progress}`}
         </span>
         {progress ? (
           <strong className="recordings-row-title">{conference.title}</strong>
@@ -172,49 +223,34 @@ export function RecordingCard({
           </Link>
         )}
         <p className="recordings-meta">
-          <time
-            dateTime={record.startedAt || record.createdAt}
-            title={recordingDate(record)}
-          >
-            {new Date(record.startedAt || record.createdAt).toLocaleDateString(
-              "ru-RU",
-              { day: "numeric", month: "long", year: "numeric" },
-            )}
-          </time>
-          {(history || file?.sizeBytes !== undefined) && (
-            <span aria-hidden="true">·</span>
-          )}
-          {history ? (
-            <span>{history.participantCount} участников</span>
+          {timestamp ? (
+            <time dateTime={startedAt} title={recordingDate(record)}>
+              {recordingDay.format(timestamp)} ·{" "}
+              {recordingTime.format(timestamp)}
+            </time>
           ) : (
-            file?.sizeBytes !== undefined && (
-              <span>{formatRecordingSize(file.sizeBytes)}</span>
-            )
+            "Дата не указана"
           )}
+          {participants && <> · {participants}</>}
         </p>
-        {history?.owner.displayName && (
-          <p className="recordings-row-owner">
-            Организатор: {history.owner.displayName}
-            {history.owner.id === user?.id ? " (вы)" : ""}
-          </p>
-        )}
+        {owner && <p className="recordings-row-owner">Организатор: {owner}</p>}
       </div>
       <div className="recordings-row-actions">
         {progress ? (
-          <span className="recordings-progress">{progress}</span>
+          <span className="recordings-progress">В эфире</span>
         ) : (
           <>
             <Link
               to={path}
               className="button button-outline recordings-watch"
-              aria-label={`${tracks ? "Материалы" : listen}: ${conference.title}`}
+              aria-label={`${watchAction}: ${conference.title}`}
             >
               {tracks ? (
                 <FolderOpen size={17} aria-hidden="true" />
               ) : (
                 <Play size={17} aria-hidden="true" />
               )}
-              {tracks ? "Материалы" : listen}
+              <span>{watchAction}</span>
             </Link>
             <RecordingActions
               title={conference.title}
@@ -278,12 +314,7 @@ export function RecordingsPage() {
     ({ record, conference }) =>
       (view === "past" || conference.status === "active") &&
       (record.status === "ready"
-        ? !!recordingMediaFile(record) ||
-          record.files?.some(
-            (file) =>
-              file.fileType === "tracks_archive" &&
-              recordingFileAvailable(file),
-          )
+        ? recordingHasMediaOrTracks(record)
         : view === "active" && !!recordingProgress[record.status]),
   );
   const meetings = new Map(
@@ -356,7 +387,7 @@ export function RecordingsPage() {
         aria-label="Поиск записей"
       >
         <label className="recordings-search">
-          <Search size={17} aria-hidden="true" />
+          <Search size={18} aria-hidden="true" />
           <input
             type="search"
             aria-label="Найти запись встречи"
@@ -409,6 +440,12 @@ export function RecordingsPage() {
           label="Вид записей"
         />
       </section>
+      {!library.isPending && !library.isError && (
+        <p className="recordings-results-caption" role="status">
+          Найдено: {visible.length}
+          {library.hasNextPage ? " среди загруженных" : ""}
+        </p>
+      )}
       {(library.isError || failed) && (
         <div className="recordings-error">
           <ErrorNotice>
@@ -487,6 +524,10 @@ export function RecordingsPage() {
           </Button>
         </div>
       )}
+      <p className="recordings-retention">
+        <Info size={16} aria-hidden="true" />
+        Ссылку на запись могут открыть участники встречи с доступом.
+      </p>
     </div>
   );
 }

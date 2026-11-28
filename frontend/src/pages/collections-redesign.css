@@ -1207,129 +1207,6 @@
   font-size: calc(12px * var(--text-scale));
   margin: 10px auto 20px;
 }
-.recording-detail-page .recording-detail-heading {
-  margin-bottom: 24px;
-}
-.recording-detail-page .recording-detail-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-.recording-detail-page .recordings-back {
-  margin: 0;
-  font-size: calc(11px * var(--text-scale));
-}
-.recording-detail-page
-  .recording-detail-header-actions
-  .recordings-menu-trigger {
-  width: 38px;
-  height: 38px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-.recording-detail-page .recording-detail-layout {
-  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
-  gap: 24px;
-}
-.recording-detail-page .recording-detail-player {
-  aspect-ratio: 16 / 10;
-  border-radius: 12px;
-  background: #1b2233;
-  color: #fff;
-  overflow: hidden;
-}
-.recording-detail-page .recording-detail-player video {
-  aspect-ratio: 16 / 10;
-}
-.recording-detail-page .recording-detail-player .recordings-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100%;
-  padding: 24px;
-  border: 0;
-  background: transparent;
-  color: #c2c9d8;
-}
-.recording-detail-page .recording-detail-player .recordings-empty h2 {
-  color: #fff;
-}
-.recording-detail-page .recording-detail-player .recordings-empty p {
-  font-size: calc(12px * var(--text-scale));
-}
-.recording-detail-page .recording-detail-player-audio {
-  aspect-ratio: 16 / 10;
-}
-.recording-detail-page .recording-detail-audio {
-  min-height: 100%;
-  color: #c2c9d8;
-}
-.recording-detail-page .recording-detail-sidebar {
-  grid-template-columns: minmax(0, 1fr);
-  padding: 24px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  gap: 20px;
-}
-.recording-detail-page .recording-detail-section h2 {
-  font-size: calc(16px * var(--text-scale));
-  font-weight: 600;
-  margin: 0 0 20px;
-}
-.recording-detail-page .recording-detail-info {
-  display: block;
-  margin-bottom: 24px;
-}
-.recording-detail-page .recording-detail-info > div {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 20px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: calc(11px * var(--text-scale));
-  line-height: 1.7;
-}
-.recording-detail-page .recording-detail-info dd {
-  font-size: inherit;
-  text-align: right;
-  max-width: 62%;
-}
-.recording-detail-page .recording-detail-about-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.recording-detail-page .recording-detail-about-actions > .button,
-.recording-detail-page .recording-detail-about-actions .button {
-  width: 100%;
-  font-size: calc(11px * var(--text-scale));
-  white-space: normal;
-}
-.recording-detail-page .recording-detail-materials > summary {
-  color: var(--muted);
-  font-size: calc(11px * var(--text-scale));
-  cursor: pointer;
-}
-.recording-detail-page .recording-detail-materials {
-  border-inline-start: 0;
-  border-top: 1px solid var(--border);
-  padding: 20px 0 0;
-}
-.recording-detail-page
-  .recording-detail-about-actions
-  > .recordings-copy-fallback {
-  position: static;
-  min-width: 0;
-  width: 100%;
-  max-width: 100%;
-  box-shadow: none;
-}
-.recording-detail-page .recording-detail-materials[open] > summary {
-  margin-bottom: 18px;
-}
 .calendar-page .calendar-toolbar {
   justify-content: flex-start;
   gap: 10px;
@@ -1476,18 +1353,6 @@
     margin-left: auto;
   }
 }
-@media (max-width: 950px) {
-  .recording-detail-page .recording-detail-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .recording-detail-page .recording-detail-about-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .recording-detail-page .recording-detail-about-actions > * {
-    flex: 1 1 210px;
-  }
-}
 @media (min-width: 701px) and (max-width: 1023px) {
   .calendar-page .calendar-grid-scroll {
     display: block;
@@ -1541,12 +1406,6 @@
   }
   .recordings-page .recordings-selection .collection-view-toggle {
     grid-column: 1 / -1;
-  }
-  .recording-detail-page .recording-detail-header-actions {
-    flex-wrap: wrap;
-  }
-  .recording-detail-page .recording-detail-heading {
-    align-items: flex-start;
   }
   .calendar-page .calendar-toolbar-zone {
     flex-basis: 100%;

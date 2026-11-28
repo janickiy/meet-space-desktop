@@ -38,6 +38,10 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     microphoneBlocked: false, cameraBlocked: false, screenBlocked: false, mediaPolicyVersion: 1,
     admissionState: 'admitted', admissionDecidedAt: null, admissionVersion: 1 };
   let joined = false;
+  const recordingId = '77777777-7777-4777-8777-777777777777';
+  const recordingModes = ['composite', 'audio_only', 'individual_tracks', 'screen_focus'];
+  const recordingStarts = [];
+  let recording, recordingStops = 0;
   const watchdog = setTimeout(() => { console.error('Call UI QA timeout'); app.exit(1); }, 110000);
   try {
     await fs.mkdir(output, { recursive: true });
@@ -69,7 +73,23 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         { id:'aaaaaaaa-aaaa-4aaa-8aaa-000000000002',conferenceId:CONFERENCE,sequence:'2',senderId:USER_A,senderName:'Call UI fixture 1',text:'Да, всё подготовил. Давайте обсудим основные изменения.',createdAt:now,updatedAt:now,version:1,deletedAt:null,attachments:[] },
       ], nextCursor:null,unreadCount:0 });
       if (route === `/conferences/${CONFERENCE}/chat/read`) return reply({ item: {conferenceId:CONFERENCE,unreadCount:0,lastReadSequence:'2',lastReadMessageId:'aaaaaaaa-aaaa-4aaa-8aaa-000000000002'} });
-      if (route === `/conferences/${CONFERENCE}/recordings`) return reply({ items: [], nextCursor: null });
+      if (route === '/capabilities') return reply({ capabilities: { recordingModes } });
+      if (route === `/conferences/${CONFERENCE}/recordings`) {
+        if (request.method === 'POST') {
+          recordingStarts.push(body.mode);
+          recording = {
+            uuid: recordingId, conferenceId: CONFERENCE, requestedBy: USER_A,
+            mode: body.mode, status: 'recording', createdAt: now, files: [],
+          };
+          return reply({ item: recording });
+        }
+        return reply({ items: recording ? [recording] : [], nextCursor: null });
+      }
+      if (route === `/conferences/${CONFERENCE}/recordings/${recordingId}/stop`) {
+        recordingStops++;
+        recording = { ...recording, status: 'processing' };
+        return reply({ item: recording });
+      }
       return false;
     } });
     const transport = createNodeHttpsTransport({ ca: certificates.ca, timeoutMs: 3000 });
@@ -125,6 +145,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
             const ir=icon?.getBoundingClientRect(),lr=label?.getBoundingClientRect(),r=e.getBoundingClientRect();
             return {tag:e.tagName,label:label?.textContent.trim(),compact:e.matches('button.conference-room-control'),disabled:e.disabled,left:r.left,top:r.top,
               icon:!!icon,labelBelowIcon:!!ir&&!!lr&&lr.top>=ir.bottom-1,
+              singleLine:!!lr&&lr.height<=parseFloat(getComputedStyle(label).lineHeight)+1,
               withinViewport:r.left>=-1&&r.right<=innerWidth+1&&r.top>=-1&&r.bottom<=innerHeight+1,
               labelCentered:!!ir&&!!lr&&Math.abs((ir.left+ir.right)/2-(lr.left+lr.right)/2)<=2};})};
         const previewTop=document.querySelector('.prejoin-preview-top')?.getBoundingClientRect();
@@ -166,9 +187,12 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         assert.ok(metrics.toolbar, `${name}: room toolbar remains visible`);
         assert.deepEqual(metrics.toolbar.buttons.map(button => button.label), ['Микрофон','Камера','Экран','Участники','Чат','Настройки','Выйти'], `${name}: exact reference control order`);
         assert.deepEqual([...metrics.toolbar.buttons].sort((a,b) => Math.abs(a.top-b.top)>2 ? a.top-b.top : a.left-b.left).map(button => button.label), ['Микрофон','Камера','Экран','Участники','Чат','Настройки','Выйти'], `${name}: visual order matches DOM and reference order`);
-        if (metrics.width >= 1000) assert.ok(Math.max(...metrics.toolbar.buttons.map(button => button.top))-Math.min(...metrics.toolbar.buttons.map(button => button.top)) <= 2, `${name}: desktop controls share one row`);
+        if (metrics.width >= 1000) {
+          assert.ok(Math.max(...metrics.toolbar.buttons.map(button => button.top))-Math.min(...metrics.toolbar.buttons.map(button => button.top)) <= 2, `${name}: desktop controls share one row`);
+          assert.ok(metrics.toolbar.buttons.every(button => button.singleLine), `${name}: desktop labels stay on one line`);
+        }
         assert.ok(metrics.toolbar.buttons.every(button => button.tag === 'BUTTON' && button.compact && button.icon && button.labelBelowIcon && button.labelCentered && button.withinViewport), `${name}: each compact icon tile has its own centered label below it and fits the viewport`);
-        assert.notEqual(metrics.toolbar.background, 'rgba(0, 0, 0, 0)', `${name}: room controls share the reference toolbar surface`);
+        assert.equal(metrics.toolbar.background, metrics.width >= 780 ? 'rgb(36, 30, 44)' : 'rgba(0, 0, 0, 0)', `${name}: room controls use the reference surface at the current width`);
         assert.equal(metrics.toolbar.backgroundImage, 'none', `${name}: no enclosing toolbar background image`);
         assert.equal(metrics.toolbar.boxShadow, 'none', `${name}: no enclosing toolbar shadow`);
         assert.deepEqual(metrics.toolbar.borders, ['1px','1px','1px','1px'], `${name}: room controls retain the toolbar outline`);
@@ -283,13 +307,14 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     // Model a real presence event from the local server, without pretending to
     // negotiate a media connection or publishing a synthetic remote video.
     let stateRevision = 0;
-    const sendPresence = async (withPeer = false) => {
+    const sendPresence = async (withPeer = false, extraPeers = []) => {
       await until(() => Promise.resolve(conferenceSockets.at(-1)?.readyState === WebSocket.OPEN), 'Conference realtime socket opens');
       const connectionId = `fixture-connection-${++stateRevision}`;
       const stateEvent = JSON.stringify({ id: `fixture-call-state-${stateRevision}`, version: 1, type: 'conference.state', userId: USER_A,
         conferenceId: CONFERENCE, timestamp: now, data: { connectionId, participantId: membership.id,
           status: 'active', participants: [{ ...membership, online: true, connections: 1, connectionIds: [connectionId] },
-            ...(withPeer ? [{...membership,id:'55555555-5555-4555-8555-555555555555',userId:USER_B,displayName:'Анна Кузнецова',role:'participant',online:true,connections:1,connectionIds:['fixture-peer']}] : [])] } });
+            ...(withPeer ? [{...membership,id:'55555555-5555-4555-8555-555555555555',userId:USER_B,displayName:'Анна Кузнецова',role:'participant',online:true,connections:1,connectionIds:['fixture-peer']}] : []),
+            ...extraPeers] } });
       for (const socket of fixture.sockets) {
         if (!observedSockets.has(socket)) {
           observedSockets.add(socket);
@@ -305,17 +330,54 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         }
         if (socket.readyState === WebSocket.OPEN) socket.send(stateEvent);
       }
-      await visible('В эфире · Участников: '+(withPeer ? 2 : 1));
+      await visible('Встреча в эфире');
+      await visible(extraPeers.length ? '5 участников' : withPeer ? '2 участника' : '1 участник');
       await until(() => execute('!document.querySelector(".room-microphone-control")?.disabled'), 'Presence enables independent mic/camera start');
     };
     await sendPresence();
+    assert.equal(await execute(`(() => {
+      const stage = document.querySelector('.room-video-stage').getBoundingClientRect();
+      const tile = document.querySelector('.room-video-stage .media-tile').getBoundingClientRect();
+      return tile.width > stage.width / 2 && Math.abs(tile.width / tile.height - 16/9) < .01;
+    })()`), true, 'A single desktop video tile uses the available stage height');
     await capture('active-room-before-media', 'before-media');
+    await sendPresence(true, ['Мария Полякова', 'Дмитрий Волков', 'Максим Петров'].map((name, index) => ({
+      ...membership, displayName:name, role:'participant', online:true, connections:1,
+      id:`77777777-7777-4777-8777-77777777777${index}`,
+      userId:`aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa${index}`, connectionIds:[`fixture-peer-${index}`],
+    })));
+    assert.deepEqual(await execute(`Object.values([...document.querySelectorAll('.room-video-stage .media-tile')].reduce((rows,tile) => {
+      const top = Math.round(tile.getBoundingClientRect().top);
+      rows[top] = (rows[top] || 0) + 1;
+      return rows;
+    }, {}))`), [3,2], 'A wide desktop gallery shows five participants in two centered rows');
+    await capture('active-room-gallery-five');
     await sendPresence(true);
-    await click('.room-view-options button:nth-child(2)'); await exists('.room-pin-picker select');
-    await execute("(()=>{const picker=document.querySelector('.room-pin-picker select');picker.value='55555555-5555-4555-8555-555555555555';picker.dispatchEvent(new Event('change',{bubbles:true}));})()");
+    const pairedGallery = await execute(`(() => {
+      const tiles = [...document.querySelectorAll('.media-grid[data-layout="gallery"][data-count="2"] .media-tile')];
+      if (tiles.length !== 2) return null;
+      const [left, right] = tiles.map(tile => tile.getBoundingClientRect()).sort((a,b) => a.left - b.left);
+      return {
+        sameRow: Math.abs(left.top - right.top) <= 1,
+        ratio: left.width / left.height,
+        gap: right.left - left.right,
+        labelInset: tiles[0].querySelector('.media-tile-label').getBoundingClientRect().left - tiles[0].getBoundingClientRect().left,
+      };
+    })()`);
+    assert.ok(pairedGallery?.sameRow && Math.abs(pairedGallery.ratio - 16/9) < .01, 'Gallery respects a 16:9 two-tile row');
+    assert.ok(Math.abs(pairedGallery.gap - 10) <= 1 && Math.abs(pairedGallery.labelInset - 10) <= 1, 'Gallery tile gap and label inset match the mockup: '+JSON.stringify(pairedGallery));
+    await capture('active-room-gallery');
+    await click('.room-tile-spotlight[aria-label="Закрепить участника: Анна Кузнецова"]');
     await until(()=>execute("document.querySelector('.media-tile[data-featured=true]')?.innerText.includes('Анна Кузнецова')"), 'Pinned member appears in the speaker tile');
     assert.equal(await execute("document.querySelectorAll('.media-tile[data-featured=true]:not([hidden])').length"),1,'Exactly one visible speaker tile');
+    assert.equal(await execute(`(() => {
+      const featured = document.querySelector('.media-tile[data-featured="true"]').getBoundingClientRect();
+      const other = document.querySelector('.media-tile:not([data-featured])').getBoundingClientRect();
+      return featured.bottom <= other.top && featured.width > other.width;
+    })()`), true, 'Speaker appears above the horizontal strip');
     await capture('active-room-speaker-pin');
+    await click('button.room-speaker-badge');
+    assert.equal(await execute('!!document.querySelector("button.room-speaker-badge")'), false, 'Unpin clears the badge');
     await click('.room-view-options button:first-child'); await sendPresence();
     await click('.room-header button[aria-label="Пригласить"]'); await exists('[role=dialog]');
     await capture('active-room-invitation'); await click('[role=dialog] button[aria-label="Закрыть окно"]');
@@ -329,13 +391,14 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await exists('#meeting-tab-chat[aria-selected=true]'); await visible('Коллеги, давайте начнём.'); await capture('active-room-chat');
     const chatGeometry=await execute(`(()=>{const root=document.querySelector('.meeting-thread');const bubble=root.querySelector('.chat-message-own .chat-message-bubble');const input=root.querySelector('textarea').getBoundingClientRect(),send=root.querySelector('.chat-send-button').getBoundingClientRect();return {times:root.querySelectorAll('.chat-message-bubble footer time').length,headerTimes:root.querySelectorAll('.chat-message header time').length,ownHeaderHidden:getComputedStyle(root.querySelector('.chat-message-own header')).display==='none',bubble:getComputedStyle(bubble).backgroundColor,ownBorder:getComputedStyle(root.querySelector('.chat-message-own')).borderLeftWidth,composerTwoRows:send.top>=input.bottom-1,tabs:[...document.querySelectorAll('.conference-stage-tabs button')].map(e=>e.textContent.trim())};})()`);
     assert.equal(chatGeometry.times,2);assert.equal(chatGeometry.headerTimes,0);assert.equal(chatGeometry.ownHeaderHidden,true);
-    assert.equal(chatGeometry.bubble,'rgb(52, 72, 63)');assert.equal(chatGeometry.ownBorder,'0px');assert.equal(chatGeometry.composerTwoRows,true);
-    assert.ok(chatGeometry.tabs[0].startsWith('Участники'),'Participant tab precedes chat as in the reference');
+    assert.equal(chatGeometry.bubble,'rgb(240, 230, 244)');assert.equal(chatGeometry.ownBorder,'0px');assert.equal(chatGeometry.composerTwoRows,true);
+    assert.equal(chatGeometry.tabs[0], 'Чат', 'Chat tab precedes participants as in the reference');
     assert.equal(await execute(`(()=>{const root=document.querySelector('.meeting-thread');const input=root.querySelector('textarea').getBoundingClientRect();return [...root.querySelectorAll('.chat-attachment-trigger,.emoji-picker-trigger')].every(e=>e.getBoundingClientRect().top>=input.bottom-1);})()`),true,'Attachment and emoji controls sit below the input without overlapping its placeholder');
     await click(chatControl); await exists(`${chatControl}[aria-expanded=false]`);
     assert.equal(await execute('document.querySelector(".conference-stage-rail").hidden'), true, 'Second chat click closes the same panel');
     await click('.room-settings-control'); await exists('[role=dialog]');
     await capture('active-room-settings'); await click('[role=dialog] button[aria-label="Закрыть окно"]');
+    checks.push('Gallery tiles use the reference aspect ratio, gap and caption position; selecting a participant switches to speaker view, pins the participant in the top tile, and supports unpinning; chat uses the reference tab order and tinted panel.');
     checks.push('Production join saves the selected audio output and transitions to the active room; local realtime presence, invite, participants and settings controls work without a media connection');
     checks.push('Prejoin light/dark, 1440/1280/390 widths, 150% text and device dialogs have no horizontal overflow, clipped controls, unnamed controls, broken images or out-of-viewport dialogs');
 
@@ -360,7 +423,7 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
         }
       }
     }
-    checks.push('The seven icon-and-label controls stay in reference order while disconnected and before media, in light/dark, 1440/1280/390 widths and 150% text; each label stays below its icon, all controls fit within the outlined toolbar');
+    checks.push('The seven icon-and-label controls stay in reference order while disconnected and before media, in light/dark, 1440/1280/390 widths and 150% text; each label stays below its icon, all controls fit within the toolbar');
     checks.push('Microphone, camera and screen are disabled before conference.state; local participants, chat, settings and leave remain available, and clicking disabled capture controls never requests devices');
 
     const shareOpener = '.room-header button[aria-label="Пригласить"]';
@@ -508,6 +571,36 @@ const { createCertificates, createFixture, PASSWORD, CONFERENCE, USER_A, USER_B,
     await tracksAre(0,0);
     assert.equal(await execute('window.__callUI.requests.length'), receiveOnlyBefore, 'Receive-only start does not request camera or microphone');
     await capture('toolbar-receive-only-without-sfu', 'media-starting');
+    const openRecording = 'button[aria-label="Записи конференции"]';
+    const recordingDialog = '.meeting-recording-modal';
+    const startRecording = recordingDialog + ' .button-primary';
+    const stopRecording = recordingDialog + ' .button-danger';
+    await click(openRecording);
+    await until(() => execute(`document.querySelectorAll('${recordingDialog} input[type=radio]').length === 4 && !document.querySelector('${startRecording}')?.disabled`), 'Recording shows the four server-supported formats');
+    assert.equal(await execute(`document.querySelector('${recordingDialog} input:checked').value`), 'composite');
+    await capture('meeting-recording-modal-desktop');
+    window.setMinimumSize(320,500);
+    window.setContentSize(390,650);
+    await until(() => execute('Math.abs(innerWidth - 390) <= 2'), 'Compact recording dialog viewport');
+    await capture('meeting-recording-modal-compact');
+    window.setContentSize(1440,1000);
+    await click(recordingDialog + ' input[value="audio_only"]');
+    await until(() => execute(`!document.querySelector('${startRecording}')?.disabled`), 'Selected format can start');
+    await click(startRecording);
+    await until(() => execute(`!document.querySelector('${recordingDialog}')`), 'Successful start closes recording dialog');
+    assert.deepEqual(recordingStarts, ['audio_only']);
+    await click(openRecording);
+    await exists(stopRecording);
+    await click(stopRecording); await visible('Остановить запись?');
+    assert.equal(recordingStops, 0, 'Stop awaits confirmation');
+    await click(recordingDialog + ' .button-outline');
+    assert.equal(recordingStops, 0, 'Cancel leaves the recording running');
+    await click(stopRecording); await click(stopRecording);
+    await visible('Файлы появятся в записях встречи после обработки.');
+    assert.equal(recordingStops, 1, 'Confirm sends one stop command');
+    await click(recordingDialog + ' .modal-close');
+    checks.push('Recording dialog fits desktop and compact widths, renders server-supported radio cards, starts the selected mode, confirms stop, and shows processing from the API');
+
     await route('/conferences'); await tracksAre(0,0);
     await route(`${room}?chat=1`); await exists('.call-reference-room.room-panel-open');
     await exists(`${chatControl}[aria-expanded=true]`);

@@ -3,8 +3,8 @@
   "applicationLicense": "UNLICENSED",
   "inventory": "actual installed production closure plus Vite injected helper and vendored QR generator; conservative installed peers included",
   "lockfiles": {
-    "frontend": "c40e40f763b944fb79780cc14ec84648ada752f767dc2c985a5bd0020458e115",
-    "desktop": "ef769e1281756f03e50943291953482273f57412bc6c3429de5418d051c42669"
+    "frontend": "3d34c011a244685725a28115db26709ed3b25cbdc2d01c78f598c52abbd50945",
+    "desktop": "2956c5ec9e4852fc44f6bbbc22beffd6628c1bcc7fcc5fe259dcc58fe3264a07"
   },
   "noticesSha256": "cadeb3c0ea77520db8876714e4e97d0e9d649100e941e7e742caac9baf482241",
   "separateNotices": [
