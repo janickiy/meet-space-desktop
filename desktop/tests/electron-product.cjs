@@ -262,6 +262,43 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING, FILE, ATTACHMENT
     await until(() => execute("document.querySelectorAll('[data-testid=recordings-row]').length === 1"), "Ready recording catalog row loads");
     checks.push("existing recordings catalog renders the server ready artifact with UUID-backed actions");
 
+    const deleteRoute = `/api/v1/conferences/${CONFERENCE}/recordings/${RECORDING}`;
+    const deletes = () => fixture.requests.filter(request => request.method === "DELETE" && request.path === deleteRoute);
+    const trash = ".recordings-row button[aria-label='Удалить запись: Product finished meeting']";
+    const confirmDelete = "[role=dialog] button.button-danger";
+    await click(trash);
+    await visible("Удалить запись?");
+    await clickText("Отмена");
+    assert.equal(deletes().length, 0, "Cancellation does not request deletion");
+    assert.equal(await execute(`document.activeElement.matches(${JSON.stringify(trash)})`), true);
+    await click(trash);
+    const attempts = [[403, "У вас больше нет доступа к удалению этой записи."], [409, "Запись ещё обрабатывается. Попробуйте позже."]];
+    for (const [status, message] of attempts) {
+      fixture.product.controls.recordingDeleteStatus = status;
+      await click(confirmDelete);
+      await visible(message);
+      assert.equal(await execute("Boolean(document.querySelector('.recordings-row'))"), true);
+    }
+    assert.equal(deletes().length, 2);
+    fixture.product.controls.recordingDeleteStatus = 200;
+    let releaseDelete;
+    fixture.product.controls.recordingDeleteRelease = new Promise(resolve => { releaseDelete = resolve; });
+    await click(confirmDelete);
+    try {
+      await until(() => deletes().length === 3, "Deletion uses the authenticated recording endpoint");
+      assert.ok(deletes().at(-1).headers.authorization);
+      assert.equal(deletes().at(-1).headers.cookie, undefined);
+      assert.equal(await execute(`document.querySelector(${JSON.stringify(confirmDelete)}).disabled`), true);
+      assert.equal(await execute("Boolean(document.querySelector('.recordings-row'))"), true, "Record stays visible while server deletion is pending");
+    } finally {
+      releaseDelete();
+    }
+    await until(() => execute("!document.querySelector('.recordings-row, [role=dialog]')"), "Successful deletion removes the record and closes its confirmation");
+    assert.equal(deletes().length, 3);
+    assert.equal(await execute("document.activeElement.matches('.recordings-search input')"), true);
+    checks.push("Recording deletion confirms through the authenticated broker, preserves rows on 403/409 and removes them only after server success");
+
+
     await until(() => contexts.some(context => context.token && context.route.startsWith("/recordings") && typeof context.soundEnabled === "boolean"), "Shared layout publishes authenticated notification context");
     checks.push("actual shared layout supplies current authenticated route and sound preference to native notification context");
     await click(".notification-bell"); await visible("2 новых");

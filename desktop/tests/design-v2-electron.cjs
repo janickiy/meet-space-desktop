@@ -381,13 +381,86 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
         if (theme === 'light') {
           const activeId = '30303030-3030-4030-8030-303030303030', pastId = '40404040-4040-4040-8040-404040404040';
           const now = new Date(), older = new Date(now.getTime()-15*86400000).toISOString();
+          const previousRequester = fixture.product.recording.requestedBy;
+          fixture.product.recording.requestedBy = USER_A;
           fixture.product.controls.libraryExamples = {
             live: {...fixture.product.conference, id:activeId, status:'active', title:'Live recording meeting'},
-            past: {...fixture.product.conference, id:pastId, status:'finished', title:'Older audio meeting'},
+            past: {...fixture.product.conference, id:pastId, ownerId:USER_B, status:'finished', title:'Older audio meeting'},
             activeRecord: {...fixture.product.recording, conferenceId:activeId, status:'recording', files:[]},
-            olderRecord: {...fixture.product.recording, conferenceId:pastId, startedAt:older, mode:'audio_only'}
+            olderRecord: {...fixture.product.recording, conferenceId:pastId, requestedBy:USER_B, startedAt:older, mode:'audio_only'}
           };
           await reload();await visible('Older audio meeting');
+          const layout = () => execute(`(() => {
+            const library = document.querySelector('.recordings-reference-library');
+            const row = library.querySelector('.recordings-row');
+            const bounds = element => {
+              const rect = element?.getBoundingClientRect();
+              return rect ? [rect.x, rect.y, rect.width, rect.height].map(value => Math.round(value * 100) / 100) : null;
+            };
+            const box = (selector, root = library) => bounds(root.querySelector(selector));
+            const font = selector => {
+              const {fontSize, fontWeight} = getComputedStyle(library.querySelector(selector));
+              return [fontSize, fontWeight];
+            };
+            const playIcon = row.querySelector('.recordings-thumbnail-play svg');
+            return {
+              libraryWidth: Math.round(library.getBoundingClientRect().width), title: box('.recordings-library-intro h2'),
+              tabs: box('.recordings-status-tabs'), search: box('.recordings-search'), meeting: box('.recordings-meeting-filter select'),
+              filters: box('.recordings-list-toolbar'), switch: box('.collection-view-toggle'), count: box('.recordings-results-caption'),
+              row: box('.recordings-row'), cover: box('.recordings-thumbnail', row), body: box('.recordings-row-info', row),
+              watch: box('.recordings-watch', row), remove: box('.recordings-delete', row),
+              playBadge: bounds(playIcon?.parentElement), playIcon: bounds(playIcon),
+              playIconPadding: playIcon ? getComputedStyle(playIcon).padding : null,
+              headingFont: font('.recordings-library-intro h2'), kindFont: font('.recordings-kind'),
+              rowTitleFont: font('.recordings-row-title'), metaFont: font('.recordings-meta'), ownerFont: font('.recordings-row-owner'),
+              watchFont: font('.recordings-watch'),
+              overflow: library.scrollWidth > library.clientWidth + 1,
+            };
+          })()`);
+          window.setContentSize(1728,999);
+          await until(()=>execute('innerWidth === 1728'),'Reference-size recording library viewport');
+          const cold = await layout();
+          const near = (actual, expected, label) => assert.ok(Math.abs(actual - expected) < 1, `${label}: ${actual} vs ${expected}`);
+          assert.equal(cold.libraryWidth, 1140, 'The catalogue uses the reference centered max width');
+          assert.deepEqual(cold.row.slice(2),[1140,119.75], 'Desktop list row follows the prototype');
+          assert.deepEqual(cold.cover.slice(2),[150,93.75]);
+          assert.deepEqual(cold.playBadge?.slice(2),[38,38], 'List cover play badge has the reference diameter');
+          assert.deepEqual(cold.playIcon?.slice(2),[18,18], 'List cover play glyph keeps its own drawable area');
+          assert.equal(cold.playIconPadding,'0px','The glyph stays visible when shared catalogue styles load last');
+          near(cold.cover[0] - cold.row[0], 13, 'List inset includes its border');
+          near(cold.body[0] - cold.cover[0] - cold.cover[2], 18, 'Desktop cover-to-body gutter');
+          near(cold.body[1] + cold.body[3] / 2, cold.row[1] + cold.row[3] / 2, 'Recording metadata is vertically centered');
+          near(cold.search[3], 48, 'Search height');
+          near(cold.meeting[2], 350, 'Meeting filter max width');
+          near(cold.meeting[1], cold.search[1], 'Meeting filter and search align at desktop widths');
+          near(cold.filters[1], cold.switch[1], 'View switch belongs in filters row');
+          near(cold.row[1] - cold.count[1] - cold.count[3], 10, 'Results count-to-card gutter');
+          assert.deepEqual(cold.watch.slice(2),[112,44]);
+          assert.deepEqual(cold.remove.slice(2),[44,44]);
+          near(cold.remove[0] - cold.watch[0] - cold.watch[2], 8, 'Watch and delete gap');
+          near(cold.watch[1], cold.remove[1], 'Watch and delete are aligned');
+          assert.deepEqual(cold.headingFont, ['26px','600']);
+          assert.deepEqual(cold.kindFont, ['10px','600']);
+          assert.deepEqual(cold.rowTitleFont, ['14px','650']);
+          assert.deepEqual(cold.metaFont, ['11px','400']);
+          assert.deepEqual(cold.ownerFont, ['10px','400']);
+          assert.deepEqual(cold.watchFont, ['11px','400']);
+          assert.equal(cold.overflow,false);
+          const deleteColor = await execute("getComputedStyle(document.querySelector('.recordings-delete')).color");
+          const [red, green, blue] = deleteColor.match(/\d+/g).map(Number);
+          assert.ok(red > green && red > blue, 'The eligible delete action uses a red foreground');
+          await capture('recordings-reference-cold-light');
+          assert.deepEqual(await execute(`Array.from(document.querySelectorAll('.recordings-row')).map(row=>({
+            watch:!!row.querySelector('.recordings-watch[href]'),
+            remove:row.querySelector('.recordings-delete')?.getAttribute('aria-label') || null,
+            overflow:!!row.querySelector('.recordings-menu-trigger'),
+          }))`),[{watch:true,remove:'Удалить запись: Product finished meeting',overflow:false},
+            {watch:true,remove:null,overflow:false}], 'Only an eligible ready recording has a destructive action');
+          await route(`/recordings/${RECORDING}?conference=${CONFERENCE}`);await visible('Открыть запись');
+          await route('/conferences');await visible('Product scheduled meeting');
+          await route('/recordings');await visible('Older audio meeting');
+          assert.deepEqual(await layout(),cold,'Detail and Meetings lazy styles preserve catalogue geometry on return');
+          await capture('recordings-reference-warm-light');
           const select = (query, value) => execute(`(()=>{const e=document.querySelector(${JSON.stringify(query)});e.value=${JSON.stringify(value)};e.dispatchEvent(new Event('change',{bubbles:true}));})()`);
           const titles = () => execute(`[...document.querySelectorAll('.recordings-row-title')].map(e=>e.textContent)`);
           assert.deepEqual(await titles(),['Product finished meeting','Older audio meeting']);
@@ -397,7 +470,7 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
             const {width,height}=cover.getBoundingClientRect();
             return {width, ratio: +(width/height).toFixed(2), duration: cover.querySelector('.recordings-thumbnail-duration')?.textContent };
           })`);
-          assert.deepEqual(covers,[{width:150,ratio:1.6,duration:'0:12'},{width:150,ratio:1.6,duration:'0:12'}]);
+          assert.deepEqual(covers,[{width:150,ratio:1.6,duration:'00:12'},{width:150,ratio:1.6,duration:'00:12'}]);
           assert.ok(await execute("Boolean(document.querySelector('.recordings-thumbnail-audio .recordings-thumbnail-wave'))"));
           await click('.recordings-list-toolbar [aria-label="Плитка"]');
           const grid = await execute(`(()=>{const nodes=document.querySelectorAll('.recordings-layout-grid .recordings-thumbnail');
@@ -405,8 +478,30 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
             return {sameRow:video.top===audio.top, ratio:+(video.width/video.height).toFixed(2)};
           })()`);
           assert.deepEqual(grid,{sameRow:true,ratio:1.78});
+          near((await layout()).row[2],369.33,'Desktop recordings grid has three columns');
           await capture('recordings-grid-light');
           await click('.recordings-list-toolbar [aria-label="Список"]');
+          window.setMinimumSize(320,500);
+          window.setContentSize(840,900);
+          await until(()=>execute('innerWidth === 840'),'Medium recording library viewport');
+          const medium = await layout();
+          assert.deepEqual(medium.cover.slice(2),[128,80]);
+          assert.equal(medium.overflow,false);
+          await click('.recordings-list-toolbar [aria-label="Плитка"]');
+          near((await layout()).row[2],354,'Medium recordings grid has two columns');
+          await click('.recordings-list-toolbar [aria-label="Список"]');
+          window.setContentSize(390,844);
+          await until(()=>execute('innerWidth === 390'),'Compact recording library viewport');
+          const compact = await layout();
+          assert.deepEqual(compact.cover.slice(2),[84,84],'Compact list uses the reference square covers');
+          assert.ok(compact.meeting[1] > compact.search[1] + compact.search[3], 'Compact meeting filter stacks below search');
+          assert.equal(compact.overflow,false);
+          await capture('recordings-reference-compact-light');
+          await click('.recordings-list-toolbar [aria-label="Плитка"]');
+          near((await layout()).row[2],compact.libraryWidth,'Compact recordings grid has one column');
+          await click('.recordings-list-toolbar [aria-label="Список"]');
+          window.setMinimumSize(1000,700);
+          window.setContentSize(1440,1000);
           await select('[aria-label="Сортировка записей"]','oldest');
           assert.deepEqual(await titles(),['Older audio meeting','Product finished meeting']);
           await select('[aria-label="Период записей"]','7');
@@ -416,11 +511,13 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
           assert.deepEqual(await titles(),['Older audio meeting']);
           await click('.recordings-status-tabs button:last-child');await visible('Live recording meeting');
           assert.deepEqual(await titles(),['Live recording meeting']);
-          assert.equal(await execute("document.querySelector('.recordings-row a, .recordings-row .recordings-menu-trigger') === null"),true,'Recording in progress has no playback or download action');
+          assert.equal(await execute("document.querySelector('.recordings-row a, .recordings-row .recordings-menu-trigger, .recordings-row .recordings-delete') === null"),true,'Recording in progress has no playback, overflow, or delete action');
           assert.equal(await execute("document.querySelector('.recordings-thumbnail-live').textContent.trim()"),'В эфире');
           await capture('recordings-live-light');
           await click('.recordings-status-tabs button:first-child');await visible('Product finished meeting');
           delete fixture.product.controls.libraryExamples;
+          if (previousRequester === undefined) delete fixture.product.recording.requestedBy;
+          else fixture.product.recording.requestedBy = previousRequester;
           await reload();await visible('Product finished meeting');
         }
         assert.ok(await execute(`(()=>{
@@ -488,6 +585,9 @@ const { createProductFixture, DIRECT, GROUP, FOLDER, RECORDING } = require('./fi
   await capture('settings-text150-1280x800');
   await route('/conferences');await visible('Product scheduled meeting');await capture('meetings-text150');
   await checkMeetingFilters('meeting-filters-text150');
+  await route('/recordings');await visible('Product finished meeting');
+  assert.deepEqual(await execute(`[...document.querySelectorAll('.recordings-library-intro h2, .recordings-row-title')].map(e=>getComputedStyle(e).fontSize)`), ['39px','21px'], 'Recording titles respect the 150% app text preference');
+  await capture('recordings-text150');
   await route('/app/settings');await visible('Мой профиль');await tab('Внешний вид');
   await execute(`(()=>{const s=document.querySelector('.appearance-text-size select');s.value='100';s.dispatchEvent(new Event('change',{bubbles:true}));})()`);
   await route('/conferences');await visible('Product scheduled meeting');

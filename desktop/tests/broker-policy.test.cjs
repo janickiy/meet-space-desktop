@@ -64,6 +64,29 @@ test("forwarding is allowed only to a target conversation through its POST route
   assert.throws(() => validateApiPath("POST", `/api/v1/conferences/${USER}/messages/forward`));
 });
 
+test("recording deletion is authenticated and scoped to one recording", async t => {
+  const route = `/conferences/${USER}/recordings/${OTHER}`;
+  assert.equal(validateApiPath("DELETE", "/api/v1" + route), "/api/v1" + route);
+  for (const suffix of ["/stop", "/summary", "/transcript"])
+    assert.throws(() => validateApiPath("DELETE", "/api/v1" + route + suffix), /operation_not_allowed/);
+  assert.throws(() => validateApiPath("DELETE", `/api/v1/conferences/${USER}/recordings`), /operation_not_allowed/);
+  assert.throws(() => validateApiPath("DELETE", `/api/v1/conferences/${USER}/recordings/not-a-uuid`), /operation_not_allowed/);
+
+  const { http, login, calls } = await setup(t, {
+    handle: (request, resource) => request.method === "DELETE" && resource === "/api/v1" + route
+      ? json(200, { status: "success" })
+      : undefined,
+  });
+  await assert.rejects(http(route, { method: "DELETE" }), /authentication_required/);
+  const token = await login();
+  const result = await http(route, { method: "DELETE", token });
+  assert.equal(result.status, 200);
+  const forwarded = calls.at(-1);
+  assert.equal(forwarded.headers.Authorization, `Bearer ${JWT}`);
+  assert.equal(forwarded.headers.Cookie, undefined);
+  assert.equal(forwarded.body, undefined);
+});
+
 test("credential fields are removed recursively without rewriting signed resource URLs", () => {
   const url = "https://storage.fixture/file%20name?X-Amz-Credential=a%2Fb&X-Amz-Signature=opaque";
   assert.deepEqual(redactCredentials({ url, nested: [{ accessToken: "secret", ticket: "secret", text: "visible" }], cookie: "secret" }), { url, nested: [{ text: "visible" }] });

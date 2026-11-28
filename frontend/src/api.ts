@@ -845,6 +845,11 @@ export const api = {
       `/conferences/${encodeURIComponent(id)}/recordings/${encodeURIComponent(recordingId)}`,
       { signal },
     ),
+  deleteRecording: (id: string, recordingId: string) =>
+    request<{ status: string }>(
+      `/conferences/${encodeURIComponent(id)}/recordings/${encodeURIComponent(recordingId)}`,
+      { method: "DELETE" },
+    ),
   /**
    * Читает состояние расшифровки без запуска обработки.
    * @args id, recordingId — идентификаторы; signal — отмена запроса.

@@ -698,3 +698,15 @@ html[data-large-text="true"] .recordings-row-actions {
   grid-column: auto;
   flex-wrap: wrap;
 }
+
+.recordings-delete-dialog p {
+  margin: 0 0 12px;
+}
+
+.recordings-delete-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-block-start: 16px;
+}

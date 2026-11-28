@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -9,6 +9,7 @@ import {
   Mic,
   Play,
   Search,
+  Trash2,
   UserRound,
   Users,
   Video,
@@ -24,6 +25,7 @@ import type {
 } from "../types";
 import { Button, ErrorNotice, Loading } from "../components/ui";
 import { RecordingActions } from "../components/RecordingActions";
+import { DeleteRecordingDialog } from "../components/DeleteRecordingDialog";
 import {
   formatRecordingDuration,
   formatRecordingSize,
@@ -71,14 +73,14 @@ const recordingTime = new Intl.DateTimeFormat("ru-RU", {
 });
 const waveHeights = Array.from(
   { length: 25 },
-  (_, index) => 32 + ((index * 17) % 66),
+  (_, index) => 18 + ((index * 17) % 38),
 );
 
-function RecordingWave() {
+function RecordingWave({ track = false }: { track?: boolean }) {
   return (
     <span className="recordings-thumbnail-wave" aria-hidden="true">
       {waveHeights.map((height, index) => (
-        <i key={index} style={{ height: `${height}%` }} />
+        <i key={index} style={{ height: track ? height / 3 : height }} />
       ))}
     </span>
   );
@@ -102,13 +104,23 @@ export function RecordingCard({
   record,
   conference,
   history,
+  catalogue = false,
 }: {
   record: ConferenceRecording;
   conference: Conference;
   history?: ConferenceHistory;
+  catalogue?: boolean;
 }) {
   const { user } = useAuth();
   const [brokenPreview, setBrokenPreview] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const deleteTrigger = useRef<HTMLButtonElement>(null);
+  const canDelete =
+    catalogue &&
+    record.status === "ready" &&
+    !!user &&
+    !user.guestConferenceId &&
+    (conference.ownerId === user.id || record.requestedBy === user.id);
   const preview = recordingPreviewFile(record)?.url;
   const path = recordingDetailPath(conference.id, record.uuid);
   const hasPreview = !!preview && brokenPreview !== preview;
@@ -134,18 +146,28 @@ export function RecordingCard({
         : undefined;
   const organizer = history?.owner;
   const ownMeeting = (organizer?.id ?? conference.ownerId) === user?.id;
-  const owner = organizer?.displayName
-    ? organizer.displayName + (ownMeeting ? " (вы)" : "")
+  const organizerName =
+    organizer?.displayName || (ownMeeting ? user?.displayName : undefined);
+  const owner = organizerName
+    ? organizerName + (ownMeeting ? " (вы)" : "")
     : ownMeeting
       ? "Вы"
       : undefined;
-  const names =
-    history?.participants?.map((person) => person.displayName) ?? [];
+  const names = history?.participants?.map((person) =>
+    initials(person.displayName),
+  );
+  const tone = (record.uuid.codePointAt(record.uuid.length - 1) ?? 0) % 3;
+  const duration = formatRecordingDuration(record.durationSec);
   const thumbnailClass = [
     "recordings-thumbnail",
     !hasPreview && "recordings-thumbnail-placeholder",
     audioOnly && "recordings-thumbnail-audio",
     tracks && "recordings-thumbnail-tracks",
+    !hasPreview &&
+      !audioOnly &&
+      !tracks &&
+      tone > 0 &&
+      `recordings-thumbnail-tone-${tone}`,
   ]
     .filter(Boolean)
     .join(" ");
@@ -164,10 +186,10 @@ export function RecordingCard({
         <span className="recordings-thumbnail-tracks-art" aria-hidden="true">
           {[0, 1, 2].map((row) => (
             <span className="recordings-thumbnail-track" key={row}>
-              <span>
-                {names[row] ? initials(names[row]) : <UserRound size={9} />}
+              <span className="recordings-thumbnail-track-person">
+                {names?.[row] || <UserRound size={9} />}
               </span>
-              <RecordingWave />
+              <RecordingWave track />
             </span>
           ))}
         </span>
@@ -175,23 +197,23 @@ export function RecordingCard({
         <span className="recordings-thumbnail-tiles" aria-hidden="true">
           {[0, 1, 2, 3].map((tile) => (
             <i key={tile}>
-              <b>
-                {names[tile] ? initials(names[tile]) : <UserRound size={11} />}
-              </b>
+              <b>{names?.[tile] || <UserRound size={11} />}</b>
             </i>
           ))}
         </span>
       )}
       <span className="recordings-thumbnail-play" aria-hidden="true">
-        <CoverIcon size={19} />
+        <span className="recordings-thumbnail-badge">
+          <CoverIcon size={18} />
+        </span>
       </span>
       {progress ? (
         <span className="recordings-thumbnail-duration recordings-thumbnail-live">
           В эфире
         </span>
-      ) : record.durationSec !== undefined ? (
+      ) : duration !== "—" ? (
         <span className="recordings-thumbnail-duration">
-          {formatRecordingDuration(record.durationSec)}
+          {duration.padStart(5, "0")}
         </span>
       ) : null}
     </>
@@ -252,24 +274,53 @@ export function RecordingCard({
               )}
               <span>{watchAction}</span>
             </Link>
-            <RecordingActions
-              title={conference.title}
-              path={path}
-              downloadUrl={file?.url}
-              asset={
-                file?.uuid
-                  ? {
-                      kind: "recording",
-                      conferenceId: conference.id,
-                      recordingId: record.uuid,
-                      fileId: file.uuid,
-                    }
-                  : undefined
-              }
-            />
+            {canDelete && (
+              <button
+                ref={deleteTrigger}
+                className="icon-button recordings-delete"
+                type="button"
+                aria-label={`Удалить запись: ${conference.title}`}
+                title="Удалить запись"
+                aria-haspopup="dialog"
+                onClick={() => setConfirmDelete(true)}
+              >
+                <Trash2 size={17} aria-hidden="true" />
+              </button>
+            )}
+            {!catalogue && (
+              <RecordingActions
+                title={conference.title}
+                path={path}
+                downloadUrl={file?.url}
+                asset={
+                  file?.uuid
+                    ? {
+                        kind: "recording",
+                        conferenceId: conference.id,
+                        recordingId: record.uuid,
+                        fileId: file.uuid,
+                      }
+                    : undefined
+                }
+              />
+            )}
           </>
         )}
       </div>
+      {canDelete && confirmDelete && (
+        <DeleteRecordingDialog
+          record={record}
+          title={conference.title}
+          onClose={() => setConfirmDelete(false)}
+          returnFocus={() =>
+            deleteTrigger.current?.isConnected
+              ? deleteTrigger.current
+              : document.querySelector<HTMLInputElement>(
+                  ".recordings-search input",
+                )
+          }
+        />
+      )}
     </article>
   );
 }
@@ -481,6 +532,7 @@ export function RecordingsPage() {
               record={record}
               conference={conference}
               history={history}
+              catalogue
             />
           ))}
           {!visible.length && !library.isError && !failed && (

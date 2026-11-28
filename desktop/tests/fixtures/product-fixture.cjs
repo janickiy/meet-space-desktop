@@ -107,8 +107,17 @@ async function createProductFixture(certificates, { notificationHeartbeatMs = 0 
     if (route === `/conferences/${CONFERENCE}/participants`) return reply({ items: controls.activeConference ? [membership] : [] });
     if (route === `/conferences/${CONFERENCE}/messages` && request.method === "GET") return reply({ items: controls.actionThreads?.get(CONFERENCE) || controls.sentMessages.filter(message => message.route === route).map(message => message.item), nextCursor: null, unreadCount: 0 });
     if (route === `/conferences/${CONFERENCE}/chat/read`) return reply({ item: { conferenceId: CONFERENCE, unreadCount: 0, lastReadSequence: "0", lastReadMessageId: null } });
-    if (route === `/conferences/${CONFERENCE}/recordings`) return reply({ items: [recording] });
-    if (route === `/conferences/${CONFERENCE}/recordings/${RECORDING}`) return reply({ item: recording });
+    if (route === `/conferences/${CONFERENCE}/recordings`) return reply({ items: controls.recordingDeleted ? [] : [recording] });
+    if (route === `/conferences/${CONFERENCE}/recordings/${RECORDING}`) {
+      if (request.method === "DELETE") {
+        const status = controls.recordingDeleteStatus ?? 405;
+        if (status !== 200) return reply({ status: "failed" }, status);
+        await controls.recordingDeleteRelease;
+        controls.recordingDeleted = true;
+        return reply({});
+      }
+      return controls.recordingDeleted ? reply({ status: "failed" }, 404) : reply({ item: recording });
+    }
     if (route === `/conferences/${CONFERENCE}/history`) return reply({ item: { conference: finished,
       owner: { id: USER_A, displayName: "Product owner" }, durationSec: 12, participantCount: 2, participants: [],
       participantsTruncated: false, recordings: { total: 1, ready: 1, processing: 0, failed: 0 }, chatAvailable: false, chatReadOnly: true } });

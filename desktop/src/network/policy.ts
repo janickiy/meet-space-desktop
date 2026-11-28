@@ -20,6 +20,7 @@ allow("POST", `/conferences/${ID}/participants/${ID}/(admission|moderation)`);
 allow("GET PUT", `/conferences/${ID}/captions`);
 allow("GET POST", `/conferences/${ID}/recordings`);
 allow("GET", `/conferences/${ID}/recordings/${ID}(/(transcript|transcript/segments|summary))?`);
+allow("DELETE", `/conferences/${ID}/recordings/${ID}`);
 allow("POST", `/conferences/${ID}/recordings/${ID}/(stop|transcript/retry|summary/regenerate|search/reindex)`);
 allow("GET", "/conference-invites/[A-Za-z0-9_-]{32}");
 allow("POST", "/conference-invites/[A-Za-z0-9_-]{32}/(join|guest)");
